@@ -15,3 +15,5 @@ HOSTNAME = "0.0.0.0"
 
 [deployment]
 deploymentTarget = "cloudrun"
+build = ["npm", "run", "build"]
+run = ["npm", "run", "start"]
