@@ -41,6 +41,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  /** Null until they've completed signup/invite-acceptance via Supabase Auth. See supabase/schema.sql. */
+  authUserId: string | null;
   createdAt: string;
 }
 

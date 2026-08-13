@@ -18,8 +18,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { ViewerSwitcher } from "@/components/viewer-switcher";
-import type { Viewer } from "@/lib/viewer-options";
+import { UserMenu } from "@/components/user-menu";
+import type { Viewer } from "@/lib/viewer";
 
 const STUDENT_ITEMS = [
   { href: "/home", label: "Home", icon: Compass },
@@ -107,7 +107,7 @@ export function Nav({ viewer }: { viewer: Viewer }) {
           </nav>
           <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
-            <ViewerSwitcher viewer={viewer} />
+            <UserMenu viewer={viewer} />
           </div>
         </div>
       </header>
@@ -116,7 +116,7 @@ export function Nav({ viewer }: { viewer: Viewer }) {
         <Wordmark href={homeHref} />
         <div className="flex items-center gap-2">
           <ThemeToggle compact />
-          <ViewerSwitcher viewer={viewer} compact />
+          <UserMenu viewer={viewer} compact />
         </div>
       </header>
 

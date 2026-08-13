@@ -220,6 +220,16 @@ export class SupabaseRepository implements Repository {
     return data ? mapUser(data) : null;
   }
 
+  async getUserByAuthId(authUserId: string): Promise<User | null> {
+    const { data } = await this.db.from("users").select("*").eq("auth_user_id", authUserId).maybeSingle();
+    return data ? mapUser(data) : null;
+  }
+
+  async getUserByEmail(email: string): Promise<User | null> {
+    const { data } = await this.db.from("users").select("*").ilike("email", email).maybeSingle();
+    return data ? mapUser(data) : null;
+  }
+
   async listUsers(): Promise<User[]> {
     const { data, error } = await this.db.from("users").select("*");
     if (error) throw error;
@@ -260,10 +270,19 @@ export class SupabaseRepository implements Repository {
     return (data ?? []).map(mapMember);
   }
 
-  async createUser(input: { name: string; email: string }): Promise<User> {
-    const { data, error } = await this.db.from("users").insert({ name: input.name, email: input.email }).select("*").single();
+  async createUser(input: { name: string; email: string; authUserId?: string | null }): Promise<User> {
+    const { data, error } = await this.db
+      .from("users")
+      .insert({ name: input.name, email: input.email, auth_user_id: input.authUserId ?? null })
+      .select("*")
+      .single();
     if (error) throw error;
     return mapUser(data);
+  }
+
+  async setUserAuthId(userId: string, authUserId: string): Promise<void> {
+    const { error } = await this.db.from("users").update({ auth_user_id: authUserId }).eq("id", userId);
+    if (error) throw error;
   }
 
   async addMember(input: { organizationId: string; userId: string; role: OrgRole }): Promise<OrganizationMember> {
@@ -422,6 +441,7 @@ function mapUser(row: Record<string, unknown>): User {
     id: row.id as string,
     name: row.name as string,
     email: row.email as string,
+    authUserId: (row.auth_user_id as string | null) ?? null,
     createdAt: row.created_at as string,
   };
 }

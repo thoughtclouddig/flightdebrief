@@ -97,8 +97,11 @@ export interface Repository {
 
   // --- Identity / organizations ---
   getUser(id: string): Promise<User | null>;
+  getUserByAuthId(authUserId: string): Promise<User | null>;
+  getUserByEmail(email: string): Promise<User | null>;
   listUsers(): Promise<User[]>;
-  createUser(input: { name: string; email: string }): Promise<User>;
+  createUser(input: { name: string; email: string; authUserId?: string | null }): Promise<User>;
+  setUserAuthId(userId: string, authUserId: string): Promise<void>;
   getOrganization(id: string): Promise<Organization | null>;
   listOrganizations(): Promise<Organization[]>;
   listOrganizationsForUser(userId: string): Promise<Organization[]>;

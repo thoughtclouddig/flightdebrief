@@ -205,6 +205,14 @@ export class MockRepository implements Repository {
     return getStore().users.find((u) => u.id === id) ?? null;
   }
 
+  async getUserByAuthId(authUserId: string) {
+    return getStore().users.find((u) => u.authUserId === authUserId) ?? null;
+  }
+
+  async getUserByEmail(email: string) {
+    return getStore().users.find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? null;
+  }
+
   async listUsers() {
     return getStore().users;
   }
@@ -232,11 +240,23 @@ export class MockRepository implements Repository {
     return getStore().organizationMembers.filter((m) => m.userId === userId);
   }
 
-  async createUser(input: { name: string; email: string }) {
+  async createUser(input: { name: string; email: string; authUserId?: string | null }) {
     const store = getStore();
-    const user: User = { id: randomUUID(), name: input.name, email: input.email, createdAt: new Date().toISOString() };
+    const user: User = {
+      id: randomUUID(),
+      name: input.name,
+      email: input.email,
+      authUserId: input.authUserId ?? null,
+      createdAt: new Date().toISOString(),
+    };
     store.users.push(user);
     return user;
+  }
+
+  async setUserAuthId(userId: string, authUserId: string) {
+    const store = getStore();
+    const user = store.users.find((u) => u.id === userId);
+    if (user) user.authUserId = authUserId;
   }
 
   async addMember(input: { organizationId: string; userId: string; role: OrgRole }) {
