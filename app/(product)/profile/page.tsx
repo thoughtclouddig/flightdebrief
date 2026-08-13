@@ -1,5 +1,6 @@
-import { Building2, Mail, User as UserIcon, Users } from "lucide-react";
+import { Building2, Mail, User as UserIcon, Users, Volume2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { VoicePreferencePicker } from "@/components/voice-preference-picker";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function ProfilePage() {
   const repo = getRepository();
   const viewer = await getViewer();
+  const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
 
   const links = await repo.listInstructorLinksForStudent(viewer.user.id);
   const activeLinks = links.filter((l) => l.status === "active");
@@ -48,6 +50,23 @@ export default async function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {ttsEnabled ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Volume2 className="size-4 text-brand" />
+              Listen Voice
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Used whenever you tap Listen on a brief or debrief.
+            </p>
+            <VoicePreferencePicker />
+          </CardContent>
+        </Card>
+      ) : null}
 
       {instructors.length > 0 ? (
         <Card>

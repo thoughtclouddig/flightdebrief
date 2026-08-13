@@ -1,6 +1,7 @@
 /**
- * Deepgram Flux TTS voices offered in the "Listen" picker (see components/listen-button.tsx).
- * Confirmed against the actual outgoing request in Deepgram's own playground
+ * Deepgram Flux TTS voices, set once in Profile (see components/voice-preference-picker.tsx)
+ * and read wherever a Listen button plays audio (components/listen-button.tsx). Confirmed
+ * against the actual outgoing request in Deepgram's own playground
  * (https://playground.deepgram.com/text-to-speech), not guessed from docs --
  * Flux's voice names/slugs weren't in the public model-list docs at the time
  * this was written.
@@ -21,8 +22,20 @@ export const TTS_VOICES: TtsVoice[] = [
   { id: "flux-cole-en", name: "Cole", description: "American, masculine" },
 ];
 
-export const DEFAULT_TTS_VOICE = TTS_VOICES[0].id;
+export const DEFAULT_TTS_VOICE = "flux-cole-en";
 
 export function isValidTtsVoice(id: string): boolean {
   return TTS_VOICES.some((v) => v.id === id);
+}
+
+const STORAGE_KEY = "flightbrief-tts-voice";
+
+export function readStoredVoice(): string {
+  if (typeof window === "undefined") return DEFAULT_TTS_VOICE;
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored && isValidTtsVoice(stored) ? stored : DEFAULT_TTS_VOICE;
+}
+
+export function setStoredVoice(id: string): void {
+  localStorage.setItem(STORAGE_KEY, id);
 }
