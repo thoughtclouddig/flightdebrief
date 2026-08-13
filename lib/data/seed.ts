@@ -27,11 +27,11 @@ export const ORG_FALCON: Organization = {
   createdAt: new Date().toISOString(),
 };
 
-export const USER_ANDY: User = { id: "user-andy", name: "Andy Renk", email: "andy@example.com", createdAt: new Date().toISOString() };
-export const USER_DANNY: User = { id: "user-danny", name: "Danny Franks", email: "danny@falconaviation.example", createdAt: new Date().toISOString() };
-export const USER_MARIA: User = { id: "user-maria", name: "Maria Chen", email: "maria@falconaviation.example", createdAt: new Date().toISOString() };
-export const USER_SARAH: User = { id: "user-sarah", name: "Sarah Miller", email: "sarah@example.com", createdAt: new Date().toISOString() };
-export const USER_JORDAN: User = { id: "user-jordan", name: "Jordan Reyes", email: "jordan@falconaviation.example", createdAt: new Date().toISOString() };
+export const USER_ANDY: User = { id: "user-andy", name: "Andy Renk", email: "andy@example.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_DANNY: User = { id: "user-danny", name: "Danny Franks", email: "danny@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_MARIA: User = { id: "user-maria", name: "Maria Chen", email: "maria@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_SARAH: User = { id: "user-sarah", name: "Sarah Miller", email: "sarah@example.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_JORDAN: User = { id: "user-jordan", name: "Jordan Reyes", email: "jordan@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
 
 /** The default viewer when the app first loads (see lib/viewer.ts). */
 export const DEMO_USER_ID = USER_ANDY.id;

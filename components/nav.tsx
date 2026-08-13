@@ -18,8 +18,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { ViewerSwitcher } from "@/components/viewer-switcher";
-import type { Viewer } from "@/lib/viewer-options";
+import { UserMenu } from "@/components/user-menu";
+import type { Viewer } from "@/lib/viewer";
 
 const STUDENT_ITEMS = [
   { href: "/home", label: "Home", icon: Compass },
@@ -84,9 +84,9 @@ export function Nav({ viewer }: { viewer: Viewer }) {
   return (
     <>
       <header className="sticky top-0 z-20 hidden border-b border-hairline bg-surface/90 backdrop-blur md:block">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
           <Wordmark href={homeHref} />
-          <nav className="flex items-center gap-1">
+          <nav className="flex min-w-0 items-center gap-0.5">
             {items.map((item) => {
               const active = pathname.startsWith(item.href);
               return (
@@ -94,7 +94,7 @@ export function Nav({ viewer }: { viewer: Viewer }) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                    "shrink-0 whitespace-nowrap rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
                     active
                       ? "bg-brand/10 text-brand-dark dark:bg-brand/20 dark:text-brand-light"
                       : "text-foreground-soft hover:bg-surface-sunken",
@@ -105,9 +105,9 @@ export function Nav({ viewer }: { viewer: Viewer }) {
               );
             })}
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
-            <ViewerSwitcher viewer={viewer} />
+            <UserMenu viewer={viewer} />
           </div>
         </div>
       </header>
@@ -116,7 +116,7 @@ export function Nav({ viewer }: { viewer: Viewer }) {
         <Wordmark href={homeHref} />
         <div className="flex items-center gap-2">
           <ThemeToggle compact />
-          <ViewerSwitcher viewer={viewer} compact />
+          <UserMenu viewer={viewer} compact />
         </div>
       </header>
 

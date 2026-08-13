@@ -29,6 +29,11 @@ create table if not exists users (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   email text not null unique,
+  -- Null until the person actually completes signup/invite-acceptance via
+  -- Supabase Auth. users.id stays the stable app identity everything else
+  -- references (organization_members, flights, training_signals, ...) --
+  -- this column just links it to a real auth.users identity once one exists.
+  auth_user_id uuid unique references auth.users (id),
   created_at timestamptz not null default now()
 );
 

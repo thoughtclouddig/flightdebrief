@@ -1,60 +1,59 @@
-import { cookies } from "next/headers";
 import { getRepository } from "@/lib/data";
+import { getSupabaseSessionClient } from "@/lib/supabase/session";
 import { DEMO_USER_ID, ORG_FALCON } from "@/lib/data/seed";
-import { VIEWER_COOKIE_NAME, type Viewer } from "@/lib/viewer-options";
-import type { OrgRole } from "@/lib/types";
+import type { Organization, OrgRole, User } from "@/lib/types";
 
-export type { Viewer } from "@/lib/viewer-options";
-export { VIEWER_COOKIE_NAME, VIEWER_OPTIONS } from "@/lib/viewer-options";
-
-interface ViewerCookiePayload {
-  userId: string;
-  organizationId: string;
+export interface Viewer {
+  user: User;
+  organization: Organization;
   role: OrgRole;
 }
 
-function defaultPayload(): ViewerCookiePayload {
-  return { userId: DEMO_USER_ID, organizationId: ORG_FALCON.id, role: "student" };
-}
-
 /**
- * This prototype has no real login (see supabase/schema.sql's note on auth).
- * "Viewer" stands in for a session: which user, in which organization, under
- * which role, is currently looking at the app. Stored in a cookie so server
- * components can read it synchronously; changed via the switcher in the nav.
- * Server-only -- see lib/viewer-options.ts for the client-safe pieces.
+ * Resolves who's actually signed in, server-only. When Supabase is
+ * configured: real session via lib/supabase/session.ts -> users row via
+ * auth_user_id -> their organization_members row for role/org. Throws if
+ * there's no session (proxy.ts should have already redirected before a
+ * page gets this far -- this is a defensive backstop, not the primary guard)
+ * or if a signed-in auth user has no matching app-level user/membership yet.
+ *
+ * When Supabase isn't configured (mock mode, e.g. local dev with no keys
+ * set): no session concept exists, so this always resolves to the seeded
+ * demo student -- matches how getRepository() falls back to MockRepository
+ * in the same mode.
  */
 export async function getViewer(): Promise<Viewer> {
-  const store = await cookies();
-  const raw = store.get(VIEWER_COOKIE_NAME)?.value;
-  let payload = defaultPayload();
-
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as Partial<ViewerCookiePayload>;
-      if (parsed.userId && parsed.organizationId && parsed.role) {
-        payload = parsed as ViewerCookiePayload;
-      }
-    } catch {
-      // malformed cookie -- fall through to default
-    }
-  }
-
   const repo = getRepository();
-  const [user, organization] = await Promise.all([
-    repo.getUser(payload.userId),
-    repo.getOrganization(payload.organizationId),
-  ]);
+  const session = await getSupabaseSessionClient();
 
-  if (user && organization) {
-    return { user, organization, role: payload.role };
+  if (!session) {
+    const [user, organization] = await Promise.all([repo.getUser(DEMO_USER_ID), repo.getOrganization(ORG_FALCON.id)]);
+    if (!user || !organization) throw new Error("Seed data missing -- demo user/org not found.");
+    return { user, organization, role: "student" };
   }
 
-  // Cookie pointed at something that no longer exists (e.g. stale seed) -- fall back cleanly.
-  const fallback = defaultPayload();
-  const [fallbackUser, fallbackOrg] = await Promise.all([
-    repo.getUser(fallback.userId),
-    repo.getOrganization(fallback.organizationId),
-  ]);
-  return { user: fallbackUser!, organization: fallbackOrg!, role: fallback.role };
+  const {
+    data: { user: authUser },
+  } = await session.auth.getUser();
+  if (!authUser) {
+    throw new Error("Not signed in.");
+  }
+
+  const user = await repo.getUserByAuthId(authUser.id);
+  if (!user) {
+    throw new Error("Signed in, but no matching user profile -- invite may not have completed.");
+  }
+
+  const memberships = await repo.listMembershipsForUser(user.id);
+  const activeMembership = memberships.find((m) => m.status === "active");
+  if (!activeMembership) {
+    throw new Error("Signed in, but not an active member of any organization.");
+  }
+
+  const organization = await repo.getOrganization(activeMembership.organizationId);
+  if (!organization) {
+    throw new Error("Membership points at a missing organization.");
+  }
+
+  return { user, organization, role: activeMembership.role };
 }
