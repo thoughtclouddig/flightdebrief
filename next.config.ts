@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The auth e2e run (e2e/auth-journey.mjs) spawns a second dev server on its
+  // own port; a separate distDir keeps it from colliding with the main one.
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },

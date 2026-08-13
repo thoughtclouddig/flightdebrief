@@ -13,7 +13,12 @@ export async function getOidcConfig(): Promise<client.Configuration> {
   const issuer = process.env.ISSUER_URL ?? "https://replit.com/oidc";
   const replId = process.env.REPL_ID;
   if (!replId) throw new Error("REPL_ID is not set -- Replit Auth requires it as the OIDC client id.");
-  cached = await client.discovery(new URL(issuer), replId);
+  const issuerUrl = new URL(issuer);
+  // ISSUER_URL may point at a plain-http mock issuer for e2e tests, but only
+  // ever on loopback -- never allow insecure OIDC to a remote host.
+  const isLoopback = issuerUrl.hostname === "127.0.0.1" || issuerUrl.hostname === "localhost";
+  const options = issuerUrl.protocol === "http:" && isLoopback ? { execute: [client.allowInsecureRequests] } : undefined;
+  cached = await client.discovery(issuerUrl, replId, undefined, undefined, options);
   return cached;
 }
 
