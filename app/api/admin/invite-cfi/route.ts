@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
 import { inviteUser } from "@/lib/auth/invite";
 import { authorize } from "@/lib/auth/guard";
+import { sendInviteEmail } from "@/lib/email";
 
 interface InviteCfiBody {
   name: string;
@@ -37,5 +38,12 @@ export async function POST(request: Request) {
   // Keep the lightweight Instructor lookup (used by Flight.instructorId) in sync -- see lib/types.ts's note on the convention.
   await repo.getOrCreateInstructor(body.name.trim(), viewer.organization.id);
 
-  return NextResponse.json({ user });
+  const emailSent = await sendInviteEmail({
+    to: user.email,
+    name: user.name,
+    role: "instructor",
+    organizationName: viewer.organization.name,
+  });
+
+  return NextResponse.json({ user, emailSent });
 }

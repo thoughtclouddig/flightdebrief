@@ -14,13 +14,17 @@ export function InviteCfiForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   if (!open) {
     return (
-      <Button size="sm" onClick={() => setOpen(true)}>
-        <UserPlus className="size-4" />
-        Invite CFI
-      </Button>
+      <div className="flex flex-col items-end gap-1.5">
+        <Button size="sm" onClick={() => setOpen(true)}>
+          <UserPlus className="size-4" />
+          Invite CFI
+        </Button>
+        {notice ? <p className="text-xs text-muted-foreground">{notice}</p> : null}
+      </div>
     );
   }
 
@@ -28,15 +32,27 @@ export function InviteCfiForm() {
     if (!name.trim() || !email.trim()) return;
     setSaving(true);
     try {
-      await fetch("/api/admin/invite-cfi", {
+      const res = await fetch("/api/admin/invite-cfi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNotice(data.error ?? "Invite failed. Please try again.");
+        return;
+      }
+      setNotice(
+        data.emailSent
+          ? `Invite email sent to ${email}.`
+          : `${name} was added, but the invite email could not be sent — share the login link with them directly.`,
+      );
       setOpen(false);
       setName("");
       setEmail("");
       router.refresh();
+    } catch {
+      setNotice("Invite failed — check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -55,6 +71,7 @@ export function InviteCfiForm() {
             <Input id="cfi-email" type="email" className="mt-1.5" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
         </div>
+        {notice ? <p className="text-xs text-destructive">{notice}</p> : null}
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setOpen(false)} className="flex-1">
             Cancel

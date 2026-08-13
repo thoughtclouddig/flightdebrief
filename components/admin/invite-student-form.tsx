@@ -20,13 +20,17 @@ export function InviteStudentForm({ instructors }: { instructors: InstructorOpti
   const [email, setEmail] = useState("");
   const [primaryInstructorId, setPrimaryInstructorId] = useState(instructors[0]?.id ?? "");
   const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   if (!open) {
     return (
-      <Button size="sm" onClick={() => setOpen(true)}>
-        <UserPlus className="size-4" />
-        Invite Student
-      </Button>
+      <div className="flex flex-col items-end gap-1.5">
+        <Button size="sm" onClick={() => setOpen(true)}>
+          <UserPlus className="size-4" />
+          Invite Student
+        </Button>
+        {notice ? <p className="text-xs text-muted-foreground">{notice}</p> : null}
+      </div>
     );
   }
 
@@ -34,15 +38,27 @@ export function InviteStudentForm({ instructors }: { instructors: InstructorOpti
     if (!name.trim() || !email.trim()) return;
     setSaving(true);
     try {
-      await fetch("/api/admin/invite-student", {
+      const res = await fetch("/api/admin/invite-student", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, primaryInstructorId: primaryInstructorId || undefined }),
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNotice(data.error ?? "Invite failed. Please try again.");
+        return;
+      }
+      setNotice(
+        data.emailSent
+          ? `Invite email sent to ${email}.`
+          : `${name} was added, but the invite email could not be sent — share the login link with them directly.`,
+      );
       setOpen(false);
       setName("");
       setEmail("");
       router.refresh();
+    } catch {
+      setNotice("Invite failed — check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -84,6 +100,7 @@ export function InviteStudentForm({ instructors }: { instructors: InstructorOpti
             </select>
           </div>
         ) : null}
+        {notice ? <p className="text-xs text-destructive">{notice}</p> : null}
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setOpen(false)} className="flex-1">
             Cancel

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
 import { inviteUser } from "@/lib/auth/invite";
 import { authorize } from "@/lib/auth/guard";
+import { sendInviteEmail } from "@/lib/email";
 
 interface InviteStudentBody {
   name: string;
@@ -45,5 +46,12 @@ export async function POST(request: Request) {
     });
   }
 
-  return NextResponse.json({ user });
+  const emailSent = await sendInviteEmail({
+    to: user.email,
+    name: user.name,
+    role: "student",
+    organizationName: viewer.organization.name,
+  });
+
+  return NextResponse.json({ user, emailSent });
 }
