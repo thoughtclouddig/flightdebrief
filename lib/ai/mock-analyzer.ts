@@ -111,7 +111,10 @@ function toActionItem(sentence: string) {
     return "Practice tower readback scenarios, including amended instructions";
   if (lower.includes("configur")) return "Practice configuring the aircraft earlier in the pattern";
   if (lower.includes("short field")) return "Review short-field landing checklist";
-  return capitalize(sentence.replace(/^(i|we)\s+/i, "").trim());
+  if (lower.includes("crosswind") || lower.includes("squirrelly")) return "Practice crosswind correction technique on final";
+  if (lower.includes("bounc")) return "Practice smooth control inputs through the landing flare";
+  if (lower.includes("behind") || lower.includes("late")) return "Practice staying ahead of the aircraft during the approach";
+  return `Work on: ${capitalize(sentence.replace(/^(i|we)\s+/i, "").replace(/,?\s*but\s+.*$/i, "").trim())}`;
 }
 
 function buildNextLessonFocus(topics: string[], needsWork: string[]) {

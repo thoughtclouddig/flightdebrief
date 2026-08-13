@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Activity,
   CalendarClock,
+  ChevronDown,
   Compass,
   History,
   LayoutDashboard,
@@ -76,10 +78,61 @@ function Wordmark({ href }: { href: string }) {
   );
 }
 
+const MAX_VISIBLE_DESKTOP_ITEMS = 5;
+
+function NavOverflowMenu({
+  items,
+  active,
+}: {
+  items: { href: string; label: string }[];
+  active: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
+          active
+            ? "bg-brand/10 text-brand-dark dark:bg-brand/20 dark:text-brand-light"
+            : "text-foreground-soft hover:bg-surface-sunken",
+        )}
+      >
+        More
+        <ChevronDown className="size-3.5" />
+      </button>
+
+      {open ? (
+        <>
+          <button aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-40 mt-2 w-44 overflow-hidden rounded-xl border border-hairline bg-surface py-1 shadow-lg">
+            {items.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="block px-3 py-2 text-sm font-medium text-foreground-soft hover:bg-surface-sunken"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 export function Nav({ viewer }: { viewer: Viewer }) {
   const pathname = usePathname();
   const items = itemsForRole(viewer.role);
   const homeHref = homeHrefForRole(viewer.role);
+
+  const visibleItems = items.length > MAX_VISIBLE_DESKTOP_ITEMS ? items.slice(0, MAX_VISIBLE_DESKTOP_ITEMS - 1) : items;
+  const overflowItems = items.length > MAX_VISIBLE_DESKTOP_ITEMS ? items.slice(MAX_VISIBLE_DESKTOP_ITEMS - 1) : [];
+  const overflowActive = overflowItems.some((item) => pathname.startsWith(item.href));
 
   return (
     <>
@@ -87,7 +140,7 @@ export function Nav({ viewer }: { viewer: Viewer }) {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
           <Wordmark href={homeHref} />
           <nav className="flex min-w-0 items-center gap-0.5">
-            {items.map((item) => {
+            {visibleItems.map((item) => {
               const active = pathname.startsWith(item.href);
               return (
                 <Link
@@ -104,6 +157,7 @@ export function Nav({ viewer }: { viewer: Viewer }) {
                 </Link>
               );
             })}
+            {overflowItems.length > 0 ? <NavOverflowMenu items={overflowItems} active={overflowActive} /> : null}
           </nav>
           <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
