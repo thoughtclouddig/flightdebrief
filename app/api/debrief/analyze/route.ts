@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authorize } from "@/lib/auth/guard";
+import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { analyzeDebrief } from "@/lib/ai";
 import { getRepository } from "@/lib/data";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
@@ -21,8 +21,8 @@ export async function POST(request: Request) {
 
   const repo = getRepository();
   const flight = await repo.getFlight(body.flightId);
-  if (!flight) {
-    return NextResponse.json({ error: "Flight not found" }, { status: 404 });
+  if (!flight || !canAccessRecord(auth.viewer, { studentId: flight.userId, organizationId: flight.organizationId })) {
+    return recordNotFound();
   }
 
   const previousActionItems = await getPreviousActionItems(flight.userId, flight.flightDate, flight.id);

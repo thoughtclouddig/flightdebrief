@@ -25,3 +25,23 @@ export async function authorize(
 
   return { viewer };
 }
+
+/**
+ * Record-level access check: the viewer may access a record if they own it,
+ * or if they are an instructor/admin in the record's organization.
+ */
+export function canAccessRecord(
+  viewer: Viewer,
+  record: { studentId: string; organizationId: string | null },
+): boolean {
+  if (record.studentId === viewer.user.id) return true;
+  return (
+    (viewer.role === "instructor" || viewer.role === "admin") &&
+    record.organizationId === viewer.organization.id
+  );
+}
+
+/** Ready-to-return 404 so callers don't leak which ids exist. */
+export function recordNotFound(): NextResponse {
+  return NextResponse.json({ error: "Not found" }, { status: 404 });
+}

@@ -15,12 +15,15 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
 import { getRepository } from "@/lib/data";
+import { getAuthorizedFlight } from "@/lib/auth/access";
 
 export default async function DebriefResultsPage(props: PageProps<"/flights/[id]/debrief/results">) {
   const { id } = await props.params;
-  const repo = getRepository();
-  const [flight, debrief] = await Promise.all([repo.getFlight(id), repo.getDebriefByFlight(id)]);
-  if (!flight || !debrief) notFound();
+  const authorized = await getAuthorizedFlight(id);
+  if (!authorized) notFound();
+  const { flight } = authorized;
+  const debrief = await getRepository().getDebriefByFlight(id);
+  if (!debrief) notFound();
 
   const { structuredResult: result } = debrief;
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);

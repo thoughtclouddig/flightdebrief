@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getFlightDataProvider } from "@/lib/flight-data";
 import { getRepository } from "@/lib/data";
-import { getViewer } from "@/lib/viewer";
+import { authorize } from "@/lib/auth/guard";
 
 interface CreateFlightBody {
   tailNumber: string;
@@ -15,6 +15,10 @@ interface CreateFlightBody {
 }
 
 export async function POST(request: Request) {
+  const auth = await authorize();
+  if (auth.response) return auth.response;
+  const viewer = auth.viewer;
+
   const body = (await request.json()) as CreateFlightBody;
 
   if (!body.tailNumber || !body.departureAirport || !body.arrivalAirport || !body.flightDate || !body.durationMinutes) {
@@ -22,7 +26,6 @@ export async function POST(request: Request) {
   }
 
   const repo = getRepository();
-  const viewer = await getViewer();
 
   const aircraft = await repo.getOrCreateAircraft({
     tailNumber: body.tailNumber,

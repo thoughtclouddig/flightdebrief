@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authorize } from "@/lib/auth/guard";
+import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 import { buildDebriefNarration } from "@/lib/debrief-narration";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
@@ -16,6 +16,11 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
 
   const { id } = await params;
   const repo = getRepository();
+  const flight = await repo.getFlight(id);
+  if (!flight || !canAccessRecord(auth.viewer, { studentId: flight.userId, organizationId: flight.organizationId })) {
+    return recordNotFound();
+  }
+
   const debrief = await repo.getDebriefByFlight(id);
   if (!debrief) {
     return NextResponse.json({ error: "No debrief for this flight." }, { status: 404 });

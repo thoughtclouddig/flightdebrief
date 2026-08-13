@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AcsBadge } from "@/components/acs-badge";
 import { getRepository } from "@/lib/data";
+import { getAuthorizedStudent } from "@/lib/auth/access";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 
 export const dynamic = "force-dynamic";
@@ -13,14 +14,14 @@ export const dynamic = "force-dynamic";
 export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/students/[id]/handoff">) {
   const { id } = await props.params;
   const repo = getRepository();
+  const authorized = await getAuthorizedStudent(id);
+  if (!authorized) notFound();
+  const { student, memberships } = authorized;
 
-  const [student, flights, brief, memberships] = await Promise.all([
-    repo.getUser(id),
+  const [flights, brief] = await Promise.all([
     repo.listFlights({ studentId: id }),
     computeNextLessonBrief(repo, id),
-    repo.listMembershipsForUser(id),
   ]);
-  if (!student) notFound();
   const certificateType = memberships.find((m) => m.role === "student")?.certificateType ?? null;
 
   const recentCompleted = [...flights]

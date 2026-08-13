@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authorize } from "@/lib/auth/guard";
+import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 
 interface SetDoneBody {
@@ -17,6 +17,14 @@ export async function PATCH(request: Request, { params }: RouteContext<"/api/tra
   }
 
   const repo = getRepository();
+  const item = (await repo.listTrainingItems()).find((t) => t.id === id);
+  if (!item) return recordNotFound();
+
+  const flight = await repo.getFlight(item.flightId);
+  if (!flight || !canAccessRecord(auth.viewer, { studentId: flight.userId, organizationId: flight.organizationId })) {
+    return recordNotFound();
+  }
+
   await repo.setTrainingItemDone(id, body.done);
 
   return NextResponse.json({ ok: true });

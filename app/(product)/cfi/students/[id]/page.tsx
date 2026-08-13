@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getRepository } from "@/lib/data";
-import { getViewer } from "@/lib/viewer";
+import { getAuthorizedStudent } from "@/lib/auth/access";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { formatDurationShort } from "@/lib/utils";
 
@@ -23,15 +23,15 @@ export const dynamic = "force-dynamic";
 export default async function CfiStudentProfilePage(props: PageProps<"/cfi/students/[id]">) {
   const { id } = await props.params;
   const repo = getRepository();
-  const viewer = await getViewer();
+  const authorized = await getAuthorizedStudent(id);
+  if (!authorized) notFound();
+  const { viewer, student } = authorized;
 
-  const [student, flights, trainingItems, brief] = await Promise.all([
-    repo.getUser(id),
+  const [flights, trainingItems, brief] = await Promise.all([
     repo.listFlights({ studentId: id }),
     repo.listTrainingItems(),
     computeNextLessonBrief(repo, id),
   ]);
-  if (!student) notFound();
 
   const flightIds = new Set(flights.map((f) => f.id));
   const relevantItems = trainingItems.filter((t) => flightIds.has(t.flightId) && t.visibility === "shared");

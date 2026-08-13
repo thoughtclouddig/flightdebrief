@@ -5,14 +5,14 @@ import { FlightMap } from "@/components/flight-map";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getRepository } from "@/lib/data";
+import { getAuthorizedFlight } from "@/lib/auth/access";
 import { formatDuration } from "@/lib/utils";
 
 export default async function FlightDetailPage(props: PageProps<"/flights/[id]">) {
   const { id } = await props.params;
-  const repo = getRepository();
-  const flight = await repo.getFlight(id);
-  if (!flight) notFound();
+  const authorized = await getAuthorizedFlight(id);
+  if (!authorized) notFound();
+  const { flight } = authorized;
 
   const dateLabel = new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
     weekday: "long",

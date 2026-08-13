@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { DebriefRecorder } from "@/components/debrief-recorder";
-import { getRepository } from "@/lib/data";
+import { getAuthorizedFlight } from "@/lib/auth/access";
 
 export default async function DebriefPage(props: PageProps<"/flights/[id]/debrief">) {
   const { id } = await props.params;
-  const repo = getRepository();
-  const flight = await repo.getFlight(id);
-  if (!flight) notFound();
+  const authorized = await getAuthorizedFlight(id);
+  if (!authorized) notFound();
+  const { flight } = authorized;
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
