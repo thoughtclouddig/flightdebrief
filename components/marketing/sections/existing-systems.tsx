@@ -1,0 +1,39 @@
+import { ArrowDown } from "lucide-react";
+import { Reveal } from "@/components/marketing/reveal";
+
+const SCHEDULING_ITEMS = ["Students", "CFIs", "Aircraft", "Reservations"];
+const FLIGHTBRIEF_ITEMS = ["Flight Context", "Training History", "CFI Feedback", "Action Items", "Next Flight Brief"];
+
+export function ExistingSystems() {
+  return (
+    <section className="border-t border-hairline bg-surface-sunken px-6 py-24 sm:py-28">
+      <div className="mx-auto max-w-3xl">
+        <Reveal className="text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Works with what you have</p>
+          <h2 className="font-display mt-3 text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
+            Keep the systems you already use.
+          </h2>
+          <p className="mx-auto mt-5 max-w-md text-pretty text-[17px] leading-relaxed text-foreground-soft">
+            Your scheduling platform handles the operation. FlightBrief handles the training continuity.
+          </p>
+        </Reveal>
+
+        <Reveal delay={150} className="mx-auto mt-12 flex max-w-xs flex-col items-center gap-3">
+          <div className="w-full rounded-lg border border-hairline bg-surface p-5 text-center">
+            <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Scheduling system</p>
+            <p className="mt-2 text-sm text-foreground-soft">{SCHEDULING_ITEMS.join(" · ")}</p>
+          </div>
+
+          <ArrowDown className="size-5 text-foreground-faint" />
+
+          <div className="w-full rounded-lg border border-brand bg-brand/5 p-5 text-center">
+            <p className="font-display text-sm font-extrabold uppercase tracking-wide text-brand">FlightBrief</p>
+            <p className="mt-2 text-sm text-foreground-soft">{FLIGHTBRIEF_ITEMS.join(" · ")}</p>
+          </div>
+
+          <p className="mt-3 text-xs text-foreground-faint">Flight Schedule Pro integration planned.</p>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
