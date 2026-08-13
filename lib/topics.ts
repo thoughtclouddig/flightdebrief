@@ -6,9 +6,20 @@ export interface StudyReference {
   url: string;
 }
 
-const AFH_URL = "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook";
-const PHAK_URL = "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/phak";
-const AIM_URL = "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/aim";
+// Direct chapter-level links (FAA-H-8083-3C / FAA-H-8083-25C current editions, verified
+// against faa.gov's own per-chapter file listing) instead of the handbook's generic
+// landing page -- a student clicking a "Crosswind Landings" reference should not land
+// on a 260MB table of contents. AFH chapter numbers shifted in the 3C revision (e.g.
+// Approaches & Landings moved from Ch.8 to Ch.9), so these are re-verified, not carried
+// over from the prior edition's numbering.
+const AFH_CH5_URL = "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/06_afh_ch5.pdf"; // Slow Flight, Stalls, and Spins
+const AFH_CH8_URL = "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/09_afh_ch8.pdf"; // Airport Traffic Patterns
+const AFH_CH9_URL = "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/10_afh_ch9.pdf"; // Approaches and Landings
+const AFH_CH10_URL = "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/11_afh_ch10.pdf"; // Performance Maneuvers
+const AFH_CH18_URL = "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/19_afh_ch18.pdf"; // Emergency Procedures
+const PHAK_CH5_URL = "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-5-aerodynamics-flight";
+const PHAK_CH16_URL = "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-16-navigation";
+const AIM_CH4_URL = "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap_4.html"; // Air Traffic Control
 
 /**
  * Curated topic -> FAA reference-material lookup, doubling as the taxonomy
@@ -29,40 +40,40 @@ const TOPIC_LIBRARY: {
   {
     topic: "Traffic pattern work",
     keywords: ["pattern work", "traffic pattern", "the pattern", "pattern altitude"],
-    source: "Airplane Flying Handbook (FAA-H-8083-3), Ch. 7 — Traffic Patterns",
-    url: AFH_URL,
+    source: "Airplane Flying Handbook (FAA-H-8083-3C), Ch. 8 — Airport Traffic Patterns",
+    url: AFH_CH8_URL,
     category: "MANEUVERS",
     skill: "TRAFFIC_PATTERN",
   },
   {
     topic: "Landings",
     keywords: ["landing", "landings", "touch and go", "touch-and-go", "float", "floated", "flare"],
-    source: "Airplane Flying Handbook, Ch. 8 — Approaches and Landings",
-    url: AFH_URL,
+    source: "Airplane Flying Handbook, Ch. 9 — Approaches and Landings",
+    url: AFH_CH9_URL,
     category: "LANDINGS",
     skill: "STABILIZED_APPROACH",
   },
   {
     topic: "Go-around",
     keywords: ["go-around", "go around"],
-    source: "Airplane Flying Handbook, Ch. 8 — Go-Arounds",
-    url: AFH_URL,
+    source: "Airplane Flying Handbook, Ch. 9 — Go-Arounds",
+    url: AFH_CH9_URL,
     category: "LANDINGS",
     skill: "GO_AROUND",
   },
   {
     topic: "Short-field landings",
     keywords: ["short field", "short-field"],
-    source: "Airplane Flying Handbook, Ch. 8 — Short-Field Approach and Landing",
-    url: AFH_URL,
+    source: "Airplane Flying Handbook, Ch. 9 — Short-Field Approach and Landing",
+    url: AFH_CH9_URL,
     category: "LANDINGS",
     skill: "SHORT_FIELD_LANDING",
   },
   {
     topic: "Crosswind landings",
     keywords: ["crosswind"],
-    source: "Airplane Flying Handbook, Ch. 8 — Crosswind Approach and Landing",
-    url: AFH_URL,
+    source: "Airplane Flying Handbook, Ch. 9 — Crosswind Approach and Landing",
+    url: AFH_CH9_URL,
     category: "LANDINGS",
     skill: "CROSSWIND_LANDING",
   },
@@ -70,39 +81,39 @@ const TOPIC_LIBRARY: {
     topic: "Steep turns",
     keywords: ["steep turn"],
     source: "Airplane Flying Handbook, Ch. 10 — Performance Maneuvers",
-    url: AFH_URL,
+    url: AFH_CH10_URL,
     category: "MANEUVERS",
     skill: "STEEP_TURNS",
   },
   {
     topic: "Slow flight",
     keywords: ["slow flight"],
-    source: "Airplane Flying Handbook, Ch. 4 — Slow Flight",
-    url: AFH_URL,
+    source: "Airplane Flying Handbook, Ch. 5 — Slow Flight, Stalls, and Spins",
+    url: AFH_CH5_URL,
     category: "MANEUVERS",
     skill: "SLOW_FLIGHT",
   },
   {
     topic: "Stalls",
     keywords: ["stall"],
-    source: "Airplane Flying Handbook, Ch. 4 — Stalls",
-    url: AFH_URL,
+    source: "Airplane Flying Handbook, Ch. 5 — Slow Flight, Stalls, and Spins",
+    url: AFH_CH5_URL,
     category: "MANEUVERS",
     skill: "STALLS",
   },
   {
     topic: "Emergency procedures",
     keywords: ["emergency", "engine-out", "engine out", "forced landing"],
-    source: "Airplane Flying Handbook, Ch. 17 — Emergency Procedures",
-    url: AFH_URL,
+    source: "Airplane Flying Handbook, Ch. 18 — Emergency Procedures",
+    url: AFH_CH18_URL,
     category: "PROCEDURES",
     skill: "EMERGENCY_PROCEDURES",
   },
   {
     topic: "Checklist discipline",
     keywords: ["checklist"],
-    source: "Airplane Flying Handbook, Ch. 17 — Emergency Procedures",
-    url: AFH_URL,
+    source: "Airplane Flying Handbook, Ch. 18 — Emergency Procedures",
+    url: AFH_CH18_URL,
     category: "PROCEDURES",
     skill: "CHECKLIST_DISCIPLINE",
   },
@@ -110,15 +121,15 @@ const TOPIC_LIBRARY: {
     topic: "Tower communications",
     keywords: ["radio", "tower", "readback", "clearance", "amended"],
     source: "Aeronautical Information Manual (AIM), Ch. 4 — Air Traffic Control",
-    url: AIM_URL,
+    url: AIM_CH4_URL,
     category: "COMMUNICATIONS",
     skill: "TOWER_READBACKS",
   },
   {
     topic: "Airspeed control",
     keywords: ["speed", "airspeed", "configur"],
-    source: "Pilot's Handbook of Aeronautical Knowledge (FAA-H-8083-25), Ch. 5 — Aerodynamics of Flight",
-    url: PHAK_URL,
+    source: "Pilot's Handbook of Aeronautical Knowledge (FAA-H-8083-25C), Ch. 5 — Aerodynamics of Flight",
+    url: PHAK_CH5_URL,
     category: "AIRSPEED_CONTROL",
     skill: "AIRSPEED_CONTROL",
   },
@@ -126,7 +137,7 @@ const TOPIC_LIBRARY: {
     topic: "Navigation",
     keywords: ["navigation", "cross country", "cross-country", "diversion"],
     source: "Pilot's Handbook of Aeronautical Knowledge, Ch. 16 — Navigation",
-    url: PHAK_URL,
+    url: PHAK_CH16_URL,
     category: "NAVIGATION",
     skill: "NAVIGATION",
   },
