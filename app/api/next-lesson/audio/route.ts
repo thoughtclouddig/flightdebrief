@@ -3,6 +3,8 @@ import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { buildNextLessonNarration } from "@/lib/next-lesson-narration";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
+import { getCachedAudio, setCachedAudio } from "@/lib/audio-cache";
+import { DEFAULT_TTS_VOICE, isValidTtsVoice } from "@/lib/tts-voices";
 
 /** Server-side TTS for the Next-Lesson Brief -- see lib/next-lesson-narration.ts for the script. */
 export async function GET(request: Request) {
@@ -10,6 +12,9 @@ export async function GET(request: Request) {
   if (!apiKey) {
     return NextResponse.json({ error: "Text-to-speech is not configured." }, { status: 501 });
   }
+
+  const requestedVoice = new URL(request.url).searchParams.get("voice");
+  const voice = requestedVoice && isValidTtsVoice(requestedVoice) ? requestedVoice : DEFAULT_TTS_VOICE;
 
   const repo = getRepository();
   const viewer = await getViewer();
@@ -19,6 +24,12 @@ export async function GET(request: Request) {
     .sort((a, b) => b.flightDate.localeCompare(a.flightDate))[0];
   if (!lastDebriefed) {
     return NextResponse.json({ error: "No debriefed flight yet." }, { status: 404 });
+  }
+
+  const cacheKey = `next-lesson:${lastDebriefed.id}:${voice}`;
+  const cached = getCachedAudio(cacheKey);
+  if (cached) {
+    return new NextResponse(new Uint8Array(cached), { headers: { "Content-Type": "audio/mpeg" } });
   }
 
   const [debrief, trainingItems] = await Promise.all([
@@ -36,11 +47,11 @@ export async function GET(request: Request) {
     focus: debrief?.structuredResult.nextLessonFocus ?? [],
   });
 
-  const voice = new URL(request.url).searchParams.get("voice");
-  const stream = await synthesizeSpeech(script, apiKey, voice);
-  if (!stream) {
+  const audio = await synthesizeSpeech(script, apiKey, voice);
+  if (!audio) {
     return NextResponse.json({ error: "Failed to generate audio." }, { status: 502 });
   }
 
-  return new NextResponse(stream, { headers: { "Content-Type": "audio/mpeg" } });
+  setCachedAudio(cacheKey, audio);
+  return new NextResponse(new Uint8Array(audio), { headers: { "Content-Type": "audio/mpeg" } });
 }
