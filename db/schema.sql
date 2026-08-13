@@ -1,5 +1,7 @@
--- Identity schema for Replit Postgres (DATABASE_URL) -- the source of truth
--- for app-level user/org/role data, used by Replit Auth (lib/auth/store.ts).
+-- Schema for Replit Postgres (DATABASE_URL) -- the source of truth for all
+-- app data: identity (users/orgs/roles, used by Replit Auth in
+-- lib/auth/store.ts) plus flights, debriefs, reservations, and training data
+-- (used by PostgresRepository in lib/data/postgres-repository.ts).
 -- Ids are text so they can match the seeded ids in lib/data/seed.ts.
 -- Applied to the development database; production is migrated automatically
 -- by Replit's Publish flow.
@@ -31,6 +33,121 @@ CREATE TABLE IF NOT EXISTS organization_members (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (organization_id, user_id, role)
 );
+
+-- --- Flight / training domain -----------------------------------------------
+-- Ids are text (seeded ids like 'flight-1' plus runtime UUIDs). Dates that the
+-- app treats as plain strings (flight_date) stay text to avoid TZ drift.
+
+CREATE TABLE IF NOT EXISTS instructors (
+  id text PRIMARY KEY,
+  name text NOT NULL,
+  organization_id text REFERENCES organizations(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS aircraft (
+  id text PRIMARY KEY,
+  tail_number text NOT NULL,
+  type text NOT NULL,
+  make text NOT NULL DEFAULT '',
+  model text NOT NULL DEFAULT '',
+  home_airport text NOT NULL DEFAULT '',
+  organization_id text REFERENCES organizations(id) ON DELETE SET NULL,
+  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active','inactive','maintenance')),
+  external_provider text,
+  external_id text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS aircraft_tail_number_idx ON aircraft (upper(tail_number));
+
+CREATE TABLE IF NOT EXISTS student_instructors (
+  id text PRIMARY KEY,
+  student_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  instructor_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organization_id text NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  is_primary boolean NOT NULL DEFAULT false,
+  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active','inactive')),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (student_id, instructor_id, organization_id)
+);
+
+CREATE TABLE IF NOT EXISTS reservations (
+  id text PRIMARY KEY,
+  organization_id text NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  student_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  instructor_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  aircraft_id text NOT NULL REFERENCES aircraft(id) ON DELETE CASCADE,
+  scheduled_start timestamptz NOT NULL,
+  scheduled_end timestamptz NOT NULL,
+  status text NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled','completed','cancelled')),
+  external_provider text,
+  external_id text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS flights (
+  id text PRIMARY KEY,
+  student_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organization_id text REFERENCES organizations(id) ON DELETE SET NULL,
+  aircraft_id text NOT NULL REFERENCES aircraft(id) ON DELETE RESTRICT,
+  departure_airport text NOT NULL,
+  arrival_airport text NOT NULL,
+  flight_date text NOT NULL,
+  duration_minutes integer NOT NULL,
+  instructor_id text REFERENCES instructors(id) ON DELETE SET NULL,
+  reservation_id text REFERENCES reservations(id) ON DELETE SET NULL,
+  fr24_flight_id text,
+  external_provider text,
+  external_id text,
+  debrief_status text NOT NULL DEFAULT 'not_started' CHECK (debrief_status IN ('not_started','in_progress','complete')),
+  track jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS flights_student_idx ON flights (student_id);
+CREATE INDEX IF NOT EXISTS flights_org_idx ON flights (organization_id);
+
+CREATE TABLE IF NOT EXISTS debriefs (
+  id text PRIMARY KEY,
+  flight_id text NOT NULL REFERENCES flights(id) ON DELETE CASCADE,
+  transcript text NOT NULL,
+  audio_duration_seconds integer NOT NULL DEFAULT 0,
+  structured_result jsonb NOT NULL,
+  analyzed_with text NOT NULL CHECK (analyzed_with IN ('claude','mock')),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (flight_id)
+);
+
+CREATE TABLE IF NOT EXISTS training_items (
+  id text PRIMARY KEY,
+  flight_id text NOT NULL REFERENCES flights(id) ON DELETE CASCADE,
+  debrief_id text NOT NULL REFERENCES debriefs(id) ON DELETE CASCADE,
+  category text NOT NULL CHECK (category IN ('keep_working_on','before_next_flight','todo')),
+  description text NOT NULL,
+  done boolean NOT NULL DEFAULT false,
+  completed_at timestamptz,
+  visibility text NOT NULL DEFAULT 'shared' CHECK (visibility IN ('shared','instructor_only','admin_only')),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS training_items_flight_idx ON training_items (flight_id);
+
+CREATE TABLE IF NOT EXISTS training_signals (
+  id text PRIMARY KEY,
+  organization_id text REFERENCES organizations(id) ON DELETE SET NULL,
+  student_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  instructor_id text,
+  aircraft_id text REFERENCES aircraft(id) ON DELETE SET NULL,
+  flight_id text NOT NULL REFERENCES flights(id) ON DELETE CASCADE,
+  debrief_id text NOT NULL REFERENCES debriefs(id) ON DELETE CASCADE,
+  flight_date text NOT NULL,
+  category text NOT NULL,
+  skill text NOT NULL,
+  status text NOT NULL CHECK (status IN ('NEEDS_WORK','IMPROVING')),
+  source text NOT NULL CHECK (source IN ('STUDENT','INSTRUCTOR','STUDENT_AND_INSTRUCTOR')),
+  statement text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS training_signals_student_idx ON training_signals (student_id);
+CREATE INDEX IF NOT EXISTS training_signals_org_idx ON training_signals (organization_id);
 
 -- Seed rows mirroring lib/data/seed.ts (same ids).
 INSERT INTO organizations (id, name, kind) VALUES ('org-falcon','Falcon Aviation','school') ON CONFLICT (id) DO NOTHING;

@@ -16,8 +16,8 @@ Next.js 16 (App Router, React 19) flight-training debrief app for students, CFIs
 - Invites (`lib/auth/invite.ts`) create a `users` row keyed by email; the invitee logs in with the Replit account using that email.
 
 ## Data
-- Flight/roster/debrief data still goes through the repository in `lib/data` (in-memory `MockRepository` by default; `SupabaseRepository` if Supabase data keys are set). User/org/role identity now lives in Replit Postgres, seeded with the same ids as `lib/data/seed.ts` so cross-references line up.
-- Supabase auth scaffolding was removed (login page, invite acceptance, session client); `lib/supabase/server.ts` remains only for the optional data repository.
+- All app data now lives in Replit Postgres (`DATABASE_URL`): identity (users/orgs/roles via `lib/auth/store.ts`) plus flights, debriefs, reservations, and training data via `PostgresRepository` (`lib/data/postgres-repository.ts`). Schema in `db/schema.sql` (applied idempotently by `scripts/init-db.mjs` before dev). The repository seeds the demo dataset from `lib/data/seed.ts` into empty domain tables on first use (idempotent, stable ids).
+- Supabase is fully removed (auth scaffolding, `SupabaseRepository`, `lib/supabase/`, packages); the in-memory `MockRepository` is gone too — persistence requires `DATABASE_URL`.
 
 ## User preferences
 - Keep the existing app structure; do not scaffold a new app.

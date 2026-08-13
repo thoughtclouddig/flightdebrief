@@ -63,10 +63,9 @@ export interface ListTrainingSignalsFilter {
 }
 
 /**
- * Data access boundary for the whole app. MockRepository (in-memory, seeded)
- * backs the prototype by default; SupabaseRepository implements the exact
- * same interface against real Postgres tables once Supabase credentials are
- * configured -- no call sites need to change.
+ * Data access boundary for the whole app, implemented by PostgresRepository
+ * against the Replit Postgres database (DATABASE_URL, schema in
+ * db/schema.sql) -- call sites never talk to the database directly.
  */
 export interface Repository {
   listAircraft(organizationId?: string): Promise<Aircraft[]>;

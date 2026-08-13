@@ -1,6 +1,5 @@
-import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { MockRepository } from "./mock-repository";
-import { SupabaseRepository } from "./supabase-repository";
+import { getDb } from "@/lib/db";
+import { PostgresRepository } from "./postgres-repository";
 import type { Repository } from "./types";
 
 export type { Repository } from "./types";
@@ -17,10 +16,14 @@ export {
 
 let cached: Repository | null = null;
 
-/** Server-only: Supabase-backed when configured, otherwise the seeded in-memory mock. */
+/**
+ * Server-only: Replit Postgres-backed repository (DATABASE_URL), the same
+ * database that holds identity data (lib/auth/store.ts). Throws at first use
+ * if DATABASE_URL is missing -- persistence is required, there is no
+ * in-memory fallback.
+ */
 export function getRepository(): Repository {
   if (cached) return cached;
-  const supabase = getSupabaseServerClient();
-  cached = supabase ? new SupabaseRepository(supabase) : new MockRepository();
+  cached = new PostgresRepository(getDb());
   return cached;
 }
