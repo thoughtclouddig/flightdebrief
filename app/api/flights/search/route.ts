@@ -9,6 +9,14 @@ export async function GET(request: Request) {
   }
 
   const provider = getFlightDataProvider();
-  const candidates = await provider.searchFlightsByTailNumber(tail);
-  return NextResponse.json({ provider: provider.name, candidates });
+  try {
+    const candidates = await provider.searchFlightsByTailNumber(tail);
+    return NextResponse.json({ provider: provider.name, candidates });
+  } catch (err) {
+    console.error(`[flights/search] ${provider.name} lookup failed for ${tail}:`, err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Flight data provider request failed" },
+      { status: 502 },
+    );
+  }
 }
