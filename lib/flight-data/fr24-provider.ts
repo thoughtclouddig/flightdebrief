@@ -58,9 +58,18 @@ export class FR24Provider implements FlightDataProvider {
   }
 
   async searchFlightsByTailNumber(tailNumber: string): Promise<FlightCandidate[]> {
+    // flight-summary/full requires a datetime range alongside `registrations` -- max 14 days.
+    // Training flights are always recent, so "last 14 days" comfortably covers the real use case.
+    const now = new Date();
+    const from = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const data = await this.request<{ data: FR24FlightSummary[] }>(
       "/api/flight-summary/full",
-      { registrations: tailNumber.toUpperCase(), limit: "10" },
+      {
+        registrations: tailNumber.toUpperCase(),
+        flight_datetime_from: toFr24Datetime(from),
+        flight_datetime_to: toFr24Datetime(now),
+        limit: "10",
+      },
     );
     return (data.data ?? []).map(toCandidate);
   }
@@ -88,6 +97,11 @@ export class FR24Provider implements FlightDataProvider {
       timestamp: p.timestamp,
     }));
   }
+}
+
+/** FR24 wants `YYYY-MM-DDTHH:MM:SS` in UTC, no `Z` suffix (per their flight-summary docs example). */
+function toFr24Datetime(d: Date): string {
+  return d.toISOString().replace(/\.\d{3}Z$/, "");
 }
 
 function toCandidate(s: FR24FlightSummary): FlightCandidate {
