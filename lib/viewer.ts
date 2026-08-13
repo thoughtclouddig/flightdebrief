@@ -1,6 +1,5 @@
-import { getRepository } from "@/lib/data";
-import { getSupabaseSessionClient } from "@/lib/supabase/session";
-import { DEMO_USER_ID, ORG_FALCON } from "@/lib/data/seed";
+import { getSession } from "@/lib/auth/session";
+import * as store from "@/lib/auth/store";
 import type { Organization, OrgRole, User } from "@/lib/types";
 
 export interface Viewer {
@@ -10,47 +9,32 @@ export interface Viewer {
 }
 
 /**
- * Resolves who's actually signed in, server-only. When Supabase is
- * configured: real session via lib/supabase/session.ts -> users row via
- * auth_user_id -> their organization_members row for role/org. Throws if
- * there's no session (proxy.ts should have already redirected before a
- * page gets this far -- this is a defensive backstop, not the primary guard)
- * or if a signed-in auth user has no matching app-level user/membership yet.
- *
- * When Supabase isn't configured (mock mode, e.g. local dev with no keys
- * set): no session concept exists, so this always resolves to the seeded
- * demo student -- matches how getRepository() falls back to MockRepository
- * in the same mode.
+ * Resolves who's actually signed in, server-only. Replit Auth session
+ * (signed cookie) -> users row via auth_user_id -> organization_members row
+ * for role/org, all from Replit Postgres (the source of truth for app-level
+ * identity). Throws if there's no session (proxy.ts should have already
+ * redirected before a page gets this far -- this is a defensive backstop,
+ * not the primary guard) or if a signed-in Replit user has no matching
+ * app-level user/membership yet.
  */
 export async function getViewer(): Promise<Viewer> {
-  const repo = getRepository();
-  const session = await getSupabaseSessionClient();
-
+  const session = await getSession();
   if (!session) {
-    const [user, organization] = await Promise.all([repo.getUser(DEMO_USER_ID), repo.getOrganization(ORG_FALCON.id)]);
-    if (!user || !organization) throw new Error("Seed data missing -- demo user/org not found.");
-    return { user, organization, role: "student" };
-  }
-
-  const {
-    data: { user: authUser },
-  } = await session.auth.getUser();
-  if (!authUser) {
     throw new Error("Not signed in.");
   }
 
-  const user = await repo.getUserByAuthId(authUser.id);
+  const user = await store.getUserByAuthId(session.sub);
   if (!user) {
-    throw new Error("Signed in, but no matching user profile -- invite may not have completed.");
+    throw new Error("Signed in, but no matching user profile -- ask an admin for an invite.");
   }
 
-  const memberships = await repo.listMembershipsForUser(user.id);
+  const memberships = await store.listMembershipsForUser(user.id);
   const activeMembership = memberships.find((m) => m.status === "active");
   if (!activeMembership) {
     throw new Error("Signed in, but not an active member of any organization.");
   }
 
-  const organization = await repo.getOrganization(activeMembership.organizationId);
+  const organization = await store.getOrganization(activeMembership.organizationId);
   if (!organization) {
     throw new Error("Membership points at a missing organization.");
   }

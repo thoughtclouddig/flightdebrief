@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
+import { authorize } from "@/lib/auth/guard";
 import { getFlightDataProvider } from "@/lib/flight-data";
 
 export async function GET(request: Request) {
+  const auth = await authorize();
+  if (auth.response) return auth.response;
+
   const { searchParams } = new URL(request.url);
   const tail = searchParams.get("tail")?.trim() ?? "";
   if (!tail) {

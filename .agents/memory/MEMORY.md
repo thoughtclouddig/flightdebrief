@@ -1,0 +1,1 @@
+- [Replit Auth in this Next.js app](replit-auth-nextjs.md) — auth is a hand-rolled OIDC PKCE flow + JWT cookie; identity truth is Replit Postgres, mirrored into lib/data repository with shared ids.

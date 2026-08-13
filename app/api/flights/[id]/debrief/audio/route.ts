@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
+import { authorize } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 import { buildDebriefNarration } from "@/lib/debrief-narration";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
 
 /** Server-side TTS for a completed debrief -- see lib/debrief-narration.ts for the script. */
 export async function GET(request: Request, { params }: RouteContext<"/api/flights/[id]/debrief/audio">) {
+  const auth = await authorize();
+  if (auth.response) return auth.response;
+
   const apiKey = process.env.DEEPGRAM_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "Text-to-speech is not configured." }, { status: 501 });

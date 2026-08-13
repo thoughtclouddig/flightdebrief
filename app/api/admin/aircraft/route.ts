@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
-import { getViewer } from "@/lib/viewer";
+import { authorize } from "@/lib/auth/guard";
 
 interface AddAircraftBody {
   tailNumber: string;
@@ -16,7 +16,9 @@ export async function POST(request: Request) {
   }
 
   const repo = getRepository();
-  const viewer = await getViewer();
+  const auth = await authorize("admin");
+  if (auth.response) return auth.response;
+  const viewer = auth.viewer;
 
   const aircraft = await repo.getOrCreateAircraft({
     tailNumber: body.tailNumber.trim(),

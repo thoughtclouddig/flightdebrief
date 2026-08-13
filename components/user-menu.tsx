@@ -1,23 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Viewer } from "@/lib/viewer";
 
 export function UserMenu({ viewer, compact = false }: { viewer: Viewer; compact?: boolean }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
-  async function signOut() {
+  function signOut() {
     setSigningOut(true);
-    const supabase = getSupabaseBrowserClient();
-    await supabase?.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    // Full navigation (not router.push) -- /api/auth/logout clears the
+    // session cookie and signs out of Replit Auth, then redirects home.
+    window.location.href = "/api/auth/logout";
   }
 
   return (

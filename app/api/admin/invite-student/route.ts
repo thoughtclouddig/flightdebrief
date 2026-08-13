@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
-import { getViewer } from "@/lib/viewer";
 import { inviteUser } from "@/lib/auth/invite";
+import { authorize } from "@/lib/auth/guard";
 
 interface InviteStudentBody {
   name: string;
@@ -16,11 +16,18 @@ export async function POST(request: Request) {
   }
 
   const repo = getRepository();
-  const viewer = await getViewer();
+  const auth = await authorize("admin");
+  if (auth.response) return auth.response;
+  const viewer = auth.viewer;
 
   let user;
   try {
-    user = await inviteUser({ name: body.name.trim(), email: body.email.trim(), origin: new URL(request.url).origin });
+    user = await inviteUser({
+      name: body.name.trim(),
+      email: body.email.trim(),
+      organizationId: viewer.organization.id,
+      role: "student",
+    });
   } catch (err) {
     console.error("[invite-student] failed to provision account:", err);
     return NextResponse.json(
@@ -28,8 +35,6 @@ export async function POST(request: Request) {
       { status: 502 },
     );
   }
-
-  await repo.addMember({ organizationId: viewer.organization.id, userId: user.id, role: "student" });
 
   if (body.primaryInstructorId) {
     await repo.linkStudentInstructor({

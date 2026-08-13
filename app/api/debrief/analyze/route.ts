@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { authorize } from "@/lib/auth/guard";
 import { analyzeDebrief } from "@/lib/ai";
 import { getRepository } from "@/lib/data";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
@@ -10,6 +11,9 @@ interface AnalyzeBody {
 }
 
 export async function POST(request: Request) {
+  const auth = await authorize();
+  if (auth.response) return auth.response;
+
   const body = (await request.json()) as AnalyzeBody;
   if (!body.flightId || !body.transcript?.trim()) {
     return NextResponse.json({ error: "Missing flightId or transcript" }, { status: 400 });
