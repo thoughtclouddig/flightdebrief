@@ -1,13 +1,11 @@
-import { createClient } from "@deepgram/sdk";
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { buildNextLessonNarration } from "@/lib/next-lesson-narration";
-
-const DEFAULT_MODEL = "aura-asteria-en";
+import { synthesizeSpeech } from "@/lib/deepgram-tts";
 
 /** Server-side TTS for the Next-Lesson Brief -- see lib/next-lesson-narration.ts for the script. */
-export async function GET() {
+export async function GET(request: Request) {
   const apiKey = process.env.DEEPGRAM_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "Text-to-speech is not configured." }, { status: 501 });
@@ -38,12 +36,8 @@ export async function GET() {
     focus: debrief?.structuredResult.nextLessonFocus ?? [],
   });
 
-  const deepgram = createClient(apiKey);
-  const ttsResponse = await deepgram.speak.request(
-    { text: script },
-    { model: process.env.DEEPGRAM_TTS_MODEL || DEFAULT_MODEL, encoding: "mp3" },
-  );
-  const stream = await ttsResponse.getStream();
+  const voice = new URL(request.url).searchParams.get("voice");
+  const stream = await synthesizeSpeech(script, apiKey, voice);
   if (!stream) {
     return NextResponse.json({ error: "Failed to generate audio." }, { status: 502 });
   }

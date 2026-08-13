@@ -51,7 +51,7 @@ export default async function NextLessonPage() {
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <div className="flex flex-col items-center gap-3 text-center">
         <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Ready to Fly?</h1>
-        {ttsEnabled ? <ListenButton src="/api/next-lesson/audio" label="Listen to your brief" /> : null}
+        {ttsEnabled ? <ListenButton baseSrc="/api/next-lesson/audio" label="Listen to your brief" /> : null}
       </div>
 
       <Card>

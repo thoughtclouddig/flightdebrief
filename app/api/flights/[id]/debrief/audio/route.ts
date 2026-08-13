@@ -1,9 +1,7 @@
-import { createClient } from "@deepgram/sdk";
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
 import { buildDebriefNarration } from "@/lib/debrief-narration";
-
-const DEFAULT_MODEL = "aura-asteria-en";
+import { synthesizeSpeech } from "@/lib/deepgram-tts";
 
 /** Server-side TTS for a completed debrief -- see lib/debrief-narration.ts for the script. */
 export async function GET(request: Request, { params }: RouteContext<"/api/flights/[id]/debrief/audio">) {
@@ -27,12 +25,8 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
     actionItems: debrief.structuredResult.actionItems,
   });
 
-  const deepgram = createClient(apiKey);
-  const ttsResponse = await deepgram.speak.request(
-    { text: script },
-    { model: process.env.DEEPGRAM_TTS_MODEL || DEFAULT_MODEL, encoding: "mp3" },
-  );
-  const stream = await ttsResponse.getStream();
+  const voice = new URL(request.url).searchParams.get("voice");
+  const stream = await synthesizeSpeech(script, apiKey, voice);
   if (!stream) {
     return NextResponse.json({ error: "Failed to generate audio." }, { status: 502 });
   }

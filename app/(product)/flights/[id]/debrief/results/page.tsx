@@ -46,7 +46,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
         </Badge>
       </div>
 
-      {ttsEnabled ? <ListenButton src={`/api/flights/${flight.id}/debrief/audio`} label="Listen to your debrief" /> : null}
+      {ttsEnabled ? <ListenButton baseSrc={`/api/flights/${flight.id}/debrief/audio`} label="Listen to your debrief" /> : null}
 
       <Section icon={ListChecks} title="What We Did" items={result.whatWeDid} empty="Nothing captured yet." />
       <Section icon={CheckCircle2} title="Went Well" items={result.wentWell} empty="Nothing flagged." tone="success" />
