@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
-import { getViewer } from "@/lib/viewer";
+import { authorize } from "@/lib/auth/guard";
 import { buildNextLessonNarration } from "@/lib/next-lesson-narration";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
 
@@ -11,8 +11,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Text-to-speech is not configured." }, { status: 501 });
   }
 
+  const auth = await authorize();
+  if (auth.response) return auth.response;
+  const { viewer } = auth;
+
   const repo = getRepository();
-  const viewer = await getViewer();
   const flights = await repo.listFlights({ studentId: viewer.user.id });
   const lastDebriefed = flights
     .filter((f) => f.debriefStatus === "complete")
