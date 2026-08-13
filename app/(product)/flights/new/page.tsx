@@ -62,11 +62,11 @@ function SearchFlow() {
     setCandidates(null);
     try {
       const res = await fetch(`/api/flights/search?tail=${encodeURIComponent(tail.trim())}`);
-      if (!res.ok) throw new Error("Search failed");
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Search failed");
       setCandidates(data.candidates);
-    } catch {
-      setError("Couldn't search for that tail number. Try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't search for that tail number. Try again.");
     } finally {
       setLoading(false);
     }
