@@ -1,26 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import * as client from "openid-client";
-import { getOidcConfig, requestOrigin } from "@/lib/auth/replit";
+import { requestOrigin } from "@/lib/auth/origin";
 import { SESSION_COOKIE } from "@/lib/auth/session";
+import { appOrigin } from "@/lib/email";
 
-/** Clears the app session and signs the user out of Replit Auth. */
+/** Clears the app session cookie. */
 export async function GET(request: NextRequest) {
-  const origin = requestOrigin(request);
-
-  let redirectTo = `${origin}/`;
-  try {
-    const config = await getOidcConfig();
-    redirectTo = client
-      .buildEndSessionUrl(config, {
-        client_id: process.env.REPL_ID ?? "",
-        post_logout_redirect_uri: `${origin}/`,
-      })
-      .href;
-  } catch {
-    // If discovery fails, still clear the local session and go home.
-  }
-
-  const response = NextResponse.redirect(redirectTo);
+  const origin = appOrigin() ?? requestOrigin(request);
+  const response = NextResponse.redirect(`${origin}/`);
   response.cookies.delete(SESSION_COOKIE);
   return response;
 }

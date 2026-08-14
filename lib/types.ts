@@ -41,8 +41,10 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  /** Replit user id (OIDC `sub`); null until they've completed signup/invite-acceptance. See db/schema.sql. */
+  /** Stable auth identity anchor (normalized email for magic-link sign-in); null until first login. See db/schema.sql. */
   authUserId: string | null;
+  /** True once they've confirmed their name on the one-time onboarding form. */
+  profileCompleted?: boolean;
   createdAt: string;
 }
 

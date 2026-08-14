@@ -1,28 +1,46 @@
 import { NextResponse, type NextRequest } from "next/server";
-import * as client from "openid-client";
-import { getOidcConfig, requestOrigin } from "@/lib/auth/replit";
+import { createMagicLinkJwt } from "@/lib/auth/session";
+import { tryMarkMagicLinkSent } from "@/lib/auth/store";
+import { appOrigin, sendMagicLinkEmail } from "@/lib/email";
 
-/** Starts the Replit Auth OIDC flow (PKCE public client). */
-export async function GET(request: NextRequest) {
-  const config = await getOidcConfig();
-  const origin = requestOrigin(request);
+/**
+ * Email magic-link sign-in, step 1: POST { email } mints a short-lived
+ * signed token and emails a callback link. Always responds success so the
+ * endpoint can't be used to probe which emails have accounts. A persistent
+ * per-email cooldown (Postgres, survives restarts/instances) keeps it from
+ * spamming arbitrary inboxes.
+ */
+const COOLDOWN_SECONDS = 60;
 
-  const codeVerifier = client.randomPKCECodeVerifier();
-  const codeChallenge = await client.calculatePKCECodeChallenge(codeVerifier);
-  const state = client.randomState();
+export async function POST(request: NextRequest) {
+  let email: string | undefined;
+  try {
+    email = (await request.json())?.email;
+  } catch {
+    /* fall through to validation */
+  }
+  const normalized = typeof email === "string" ? email.trim().toLowerCase() : "";
+  if (!normalized || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+    return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+  }
 
-  const authUrl = client.buildAuthorizationUrl(config, {
-    redirect_uri: `${origin}/api/auth/callback`,
-    scope: "openid email profile offline_access",
-    state,
-    code_challenge: codeChallenge,
-    code_challenge_method: "S256",
-    prompt: "login consent",
-  });
+  try {
+    if (await tryMarkMagicLinkSent(normalized, COOLDOWN_SECONDS)) {
+      const origin = appOrigin();
+      if (!origin) {
+        console.error("[auth] cannot determine app origin; magic link not sent.");
+      } else {
+        const token = await createMagicLinkJwt(normalized);
+        const url = new URL("/api/auth/callback", origin);
+        url.searchParams.set("token", token);
+        await sendMagicLinkEmail({ to: normalized, url: url.toString() });
+      }
+    }
+  } catch (err) {
+    // Still return the uniform success response -- no behavior leak.
+    console.error("[auth] magic-link send failed:", err);
+  }
 
-  const response = NextResponse.redirect(authUrl);
-  const cookieOpts = { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/", maxAge: 600 };
-  response.cookies.set("fb_pkce", codeVerifier, cookieOpts);
-  response.cookies.set("fb_state", state, cookieOpts);
-  return response;
+  // Identical response whether or not the email exists or was actually sent.
+  return NextResponse.json({ ok: true });
 }

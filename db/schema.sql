@@ -17,10 +17,31 @@ CREATE TABLE IF NOT EXISTS users (
   id text PRIMARY KEY,
   name text NOT NULL,
   email text NOT NULL UNIQUE,
-  -- Replit user id (OIDC `sub`). Null until the person first logs in with
-  -- the Replit account matching their invited email.
+  -- Stable auth identity anchor. With magic-link sign-in this is the
+  -- normalized (lowercased) email; null until their first successful login.
   auth_user_id text UNIQUE,
+  -- Set once they confirm their name on the one-time onboarding form.
+  profile_completed boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Idempotent column additions for existing databases.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed boolean NOT NULL DEFAULT false;
+
+-- Legacy migration (idempotent): auth_user_id used to hold a Replit OIDC
+-- subject; with magic-link sign-in it must be the normalized email. Rewrite
+-- old subjects so previously linked users can still sign in. Guarded against
+-- (theoretical) case-collisions on the unique auth_user_id.
+UPDATE users u SET auth_user_id = lower(u.email)
+WHERE u.auth_user_id IS NOT NULL
+  AND u.auth_user_id <> lower(u.email)
+  AND NOT EXISTS (SELECT 1 FROM users o WHERE o.auth_user_id = lower(u.email) AND o.id <> u.id);
+
+-- Persistent per-email cooldown for magic-link sends (survives restarts and
+-- multiple instances, unlike in-memory state).
+CREATE TABLE IF NOT EXISTS magic_link_requests (
+  email text PRIMARY KEY,
+  last_sent_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS organization_members (

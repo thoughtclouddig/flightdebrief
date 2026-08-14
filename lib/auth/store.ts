@@ -15,6 +15,7 @@ interface UserRow {
   name: string;
   email: string;
   auth_user_id: string | null;
+  profile_completed: boolean;
   created_at: string;
 }
 
@@ -24,8 +25,28 @@ function toUser(row: UserRow): User {
     name: row.name,
     email: row.email,
     authUserId: row.auth_user_id,
+    profileCompleted: row.profile_completed,
     createdAt: new Date(row.created_at).toISOString(),
   };
+}
+
+/**
+ * Persistent per-email cooldown for magic-link sends. Returns true when a
+ * send is allowed now (and records it atomically); false while cooling down.
+ */
+export async function tryMarkMagicLinkSent(email: string, cooldownSeconds: number): Promise<boolean> {
+  const { rowCount } = await getDb().query(
+    `INSERT INTO magic_link_requests (email, last_sent_at) VALUES ($1, now())
+     ON CONFLICT (email) DO UPDATE SET last_sent_at = now()
+     WHERE magic_link_requests.last_sent_at < now() - make_interval(secs => $2)`,
+    [email, cooldownSeconds],
+  );
+  return (rowCount ?? 0) > 0;
+}
+
+/** One-time onboarding: confirm/edit name and mark the profile complete. */
+export async function completeProfile(userId: string, name: string): Promise<void> {
+  await getDb().query("UPDATE users SET name = $1, profile_completed = true WHERE id = $2", [name, userId]);
 }
 
 export async function getUserByAuthId(authUserId: string): Promise<User | null> {

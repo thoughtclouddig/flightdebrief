@@ -23,7 +23,7 @@ function getSecret(): Uint8Array {
 }
 
 export async function createSessionJwt(claims: SessionClaims): Promise<string> {
-  return new SignJWT({ email: claims.email, name: claims.name })
+  return new SignJWT({ email: claims.email, name: claims.name, purpose: "session" })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(claims.sub)
     .setIssuedAt()
@@ -34,12 +34,40 @@ export async function createSessionJwt(claims: SessionClaims): Promise<string> {
 export async function verifySessionJwt(token: string): Promise<SessionClaims | null> {
   try {
     const { payload } = await jwtVerify(token, getSecret());
-    if (!payload.sub) return null;
+    // Purpose-bound: a magic-link token must never be usable as a session.
+    if (!payload.sub || payload.purpose !== "session") return null;
     return {
       sub: payload.sub,
       email: typeof payload.email === "string" ? payload.email : null,
       name: typeof payload.name === "string" ? payload.name : null,
     };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Magic-link tokens: short-lived JWTs emailed to the user. Signed with the
+ * same secret but a distinct `purpose` claim so a magic-link token can never
+ * be replayed as a session cookie (and vice versa).
+ */
+export const MAGIC_LINK_MAX_AGE_SECONDS = 60 * 15; // 15 minutes
+
+export async function createMagicLinkJwt(email: string): Promise<string> {
+  return new SignJWT({ purpose: "magic-link" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(email.trim().toLowerCase())
+    .setIssuedAt()
+    .setExpirationTime(Math.floor(Date.now() / 1000) + MAGIC_LINK_MAX_AGE_SECONDS)
+    .sign(getSecret());
+}
+
+/** Returns the normalized email the link was minted for, or null. */
+export async function verifyMagicLinkJwt(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (payload.purpose !== "magic-link" || typeof payload.sub !== "string" || !payload.sub) return null;
+    return payload.sub;
   } catch {
     return null;
   }

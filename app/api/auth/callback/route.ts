@@ -1,54 +1,35 @@
 import { NextResponse, type NextRequest } from "next/server";
-import * as client from "openid-client";
-import { getOidcConfig, requestOrigin } from "@/lib/auth/replit";
-import { createSessionJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
+import { requestOrigin } from "@/lib/auth/origin";
+import { createSessionJwt, verifyMagicLinkJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
 import { resolveUserOnLogin } from "@/lib/auth/store";
+import { appOrigin } from "@/lib/email";
 
-/** Completes the Replit Auth OIDC flow and establishes the app session. */
+/**
+ * Email magic-link sign-in, step 2: verify the emailed token and establish
+ * the app session. The normalized email is the stable identity anchor
+ * (users.auth_user_id) -- resolveUserOnLogin keeps the owner-bootstrap /
+ * invite-linking / invite-only logic unchanged.
+ */
 export async function GET(request: NextRequest) {
-  const origin = requestOrigin(request);
-  const codeVerifier = request.cookies.get("fb_pkce")?.value;
-  const expectedState = request.cookies.get("fb_state")?.value;
+  // Prefer the server-configured origin; forwarded headers are attacker-
+  // influenceable and must not decide where we redirect after auth.
+  const origin = appOrigin() ?? requestOrigin(request);
+  const token = request.nextUrl.searchParams.get("token");
 
-  if (!codeVerifier || !expectedState) {
+  const email = token ? await verifyMagicLinkJwt(token) : null;
+  if (!email) {
     return NextResponse.redirect(`${origin}/login?error=expired`);
   }
 
   try {
-    const config = await getOidcConfig();
-    // Rebuild the callback URL on the external origin -- behind the Replit
-    // proxy request.url may carry the internal host.
-    const currentUrl = new URL(request.url);
-    const externalUrl = new URL(`${origin}/api/auth/callback${currentUrl.search}`);
-
-    const tokens = await client.authorizationCodeGrant(config, externalUrl, {
-      pkceCodeVerifier: codeVerifier,
-      expectedState,
-    });
-
-    const claims = tokens.claims();
-    if (!claims?.sub) throw new Error("No subject in ID token.");
-
-    const session = {
-      sub: claims.sub,
-      email: typeof claims.email === "string" ? claims.email : null,
-      name:
-        [claims.first_name, claims.last_name].filter((v) => typeof v === "string" && v).join(" ") ||
-        (typeof claims.username === "string" ? claims.username : null),
-    };
-
-    const user = await resolveUserOnLogin(session);
+    const user = await resolveUserOnLogin({ sub: email, email, name: null });
     if (!user) {
-      const response = NextResponse.redirect(`${origin}/login?error=not-invited`);
-      response.cookies.delete("fb_pkce");
-      response.cookies.delete("fb_state");
-      return response;
+      return NextResponse.redirect(`${origin}/login?error=not-invited`);
     }
 
-    const jwt = await createSessionJwt(session);
-    const response = NextResponse.redirect(`${origin}/app`);
-    response.cookies.delete("fb_pkce");
-    response.cookies.delete("fb_state");
+    const jwt = await createSessionJwt({ sub: email, email, name: user.name });
+    const destination = user.profileCompleted ? "/app" : "/onboarding";
+    const response = NextResponse.redirect(`${origin}${destination}`);
     response.cookies.set(SESSION_COOKIE, jwt, {
       httpOnly: true,
       secure: true,
@@ -58,7 +39,7 @@ export async function GET(request: NextRequest) {
     });
     return response;
   } catch (err) {
-    console.error("Replit Auth callback failed:", err);
+    console.error("Magic-link callback failed:", err);
     return NextResponse.redirect(`${origin}/login?error=auth-failed`);
   }
 }

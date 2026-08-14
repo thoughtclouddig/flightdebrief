@@ -8,12 +8,19 @@ import type { OrgRole } from "@/lib/types";
  */
 export async function authorize(
   requiredRole?: OrgRole | OrgRole[],
+  options?: { allowIncompleteProfile?: boolean },
 ): Promise<{ viewer: Viewer; response?: undefined } | { viewer?: undefined; response: NextResponse }> {
   let viewer: Viewer;
   try {
     viewer = await getViewer();
   } catch {
     return { response: NextResponse.json({ error: "Not signed in" }, { status: 401 }) };
+  }
+
+  // Onboarding is mandatory: incomplete profiles may only hit the routes
+  // that explicitly opt in (the onboarding endpoint itself).
+  if (!viewer.user.profileCompleted && !options?.allowIncompleteProfile) {
+    return { response: NextResponse.json({ error: "Profile incomplete" }, { status: 403 }) };
   }
 
   if (requiredRole) {

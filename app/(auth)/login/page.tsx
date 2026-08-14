@@ -1,15 +1,17 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Loader2, MailCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const ERROR_MESSAGES: Record<string, string> = {
   "not-invited":
-    "Your Replit account isn't linked to a FlightBrief profile yet. Ask your school's admin or CFI to invite the email on your Replit account.",
-  expired: "That sign-in attempt expired. Please try again.",
+    "That email isn't linked to a FlightBrief profile yet. Ask your school's admin or CFI to invite you, then request a new sign-in link with the invited email.",
+  expired: "That sign-in link is invalid or has expired. Request a new one below.",
   "auth-failed": "Sign-in failed. Please try again.",
 };
 
@@ -17,6 +19,35 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const errorCode = searchParams.get("error");
   const error = errorCode ? (ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES["auth-failed"]) : null;
+
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSending(true);
+    setFormError(null);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setFormError(data.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+      setSent(true);
+    } catch {
+      setFormError("Something went wrong — check your connection and try again.");
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -27,22 +58,55 @@ function LoginContent() {
         <p className="mt-1 text-sm text-foreground-soft">Sign in to your account</p>
       </div>
 
-      {error ? (
+      {error && !sent ? (
         <p className="rounded-lg bg-red-500/10 px-4 py-3 text-center text-sm text-red-600 dark:text-red-400">
           {error}
         </p>
       ) : null}
 
-      <a href="/api/auth/login" className={cn(buttonVariants({ size: "lg" }))}>
-        Log in with Replit
-      </a>
+      {sent ? (
+        <div className="flex flex-col items-center gap-3 rounded-lg bg-emerald-500/10 px-4 py-6 text-center">
+          <MailCheck className="size-8 text-emerald-600 dark:text-emerald-400" />
+          <p className="text-sm text-foreground">
+            Check your email — if <span className="font-medium">{email.trim().toLowerCase()}</span> has an
+            account, a sign-in link is on its way. The link expires in 15 minutes.
+          </p>
+          <button
+            type="button"
+            className="text-xs text-foreground-faint hover:underline"
+            onClick={() => setSent(false)}
+          >
+            Use a different email
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          <div>
+            <Label htmlFor="login-email">Email</Label>
+            <Input
+              id="login-email"
+              type="email"
+              autoComplete="email"
+              className="mt-1.5"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+          </div>
+          {formError ? <p className="text-sm text-red-600 dark:text-red-400">{formError}</p> : null}
+          <Button type="submit" size="lg" disabled={sending || !email.trim()}>
+            {sending ? <Loader2 className="size-4 animate-spin" /> : null}
+            Email me a sign-in link
+          </Button>
+        </form>
+      )}
 
       <p className="text-center text-xs text-foreground-faint">
-        Need an account? Ask your school’s admin or CFI for an invite, then log in with the Replit
-        account that uses the invited email.
+        Need an account? Ask your school&apos;s admin or CFI for an invite, then request a sign-in
+        link with the invited email.
       </p>
       <Link href="/" className="text-center text-xs text-foreground-faint hover:underline">
-        ← Back to flightbrief.com
+        &larr; Back to flightbrief.com
       </Link>
     </div>
   );

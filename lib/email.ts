@@ -7,6 +7,26 @@ const connectors = new ReplitConnectors();
 const FROM = process.env.INVITE_EMAIL_FROM ?? "FlightDebrief <onboarding@resend.dev>";
 
 /**
+ * Sends via the Resend HTTP API. Prefers RESEND_API_KEY when set (portable
+ * across environments); otherwise uses the workspace's Resend connection.
+ */
+async function sendViaResend(payload: object): Promise<Response> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (apiKey) {
+    return fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(payload),
+    });
+  }
+  return connectors.proxy("resend", "/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
  * Sends the "you've been invited" email via the Resend connection.
  * Best-effort: callers should not fail the invite if the email fails --
  * the invitee can still log in once told the URL. Returns true on success.
@@ -17,7 +37,7 @@ const FROM = process.env.INVITE_EMAIL_FROM ?? "FlightDebrief <onboarding@resend.
  * and would end up as phishing links in real inboxes. REPLIT_DOMAINS holds
  * the deployment's domain in production and the dev domain in the workspace.
  */
-function appOrigin(): string | null {
+export function appOrigin(): string | null {
   const configured = process.env.APP_BASE_URL;
   if (configured) return configured.replace(/\/$/, "");
   const domain = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
@@ -43,29 +63,25 @@ export async function sendInviteEmail(input: {
     ``,
     `You've been added to ${input.organizationName} on FlightDebrief as ${roleLabel}.`,
     ``,
-    `To get started, log in with the Replit account that uses this email address (${input.to}):`,
+    `To get started, enter this email address (${input.to}) on the sign-in page and we'll send you a one-time sign-in link:`,
     loginUrl,
     ``,
-    `If you don't have a Replit account yet, you can create one at that link -- just make sure it uses this same email so your invitation is recognized.`,
+    `No password or account setup needed -- just make sure you use this same email so your invitation is recognized.`,
   ].join("\n");
   const html = `
     <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1a1a1a">
       <h2 style="margin:0 0 16px">You're invited to ${escapeHtml(input.organizationName)}</h2>
       <p>Hi ${escapeHtml(input.name)},</p>
       <p>You've been added to <strong>${escapeHtml(input.organizationName)}</strong> on FlightDebrief as ${roleLabel}.</p>
-      <p>To get started, log in with the Replit account that uses this email address (<strong>${escapeHtml(input.to)}</strong>):</p>
+      <p>To get started, enter this email address (<strong>${escapeHtml(input.to)}</strong>) on the sign-in page and we'll send you a one-time sign-in link:</p>
       <p style="margin:24px 0">
         <a href="${escapeHtml(loginUrl)}" style="background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Log in to FlightDebrief</a>
       </p>
-      <p style="color:#666;font-size:14px">If you don't have a Replit account yet, you can create one at that link — just make sure it uses this same email so your invitation is recognized.</p>
+      <p style="color:#666;font-size:14px">No password or account setup needed — just make sure you use this same email so your invitation is recognized.</p>
     </div>`;
 
   try {
-    const response = await connectors.proxy("resend", "/emails", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM, to: [input.to], subject, text, html }),
-    });
+    const response = await sendViaResend({ from: FROM, to: [input.to], subject, text, html });
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
       console.error(`[email] invite email to ${input.to} failed: ${response.status} ${detail}`);
@@ -74,6 +90,42 @@ export async function sendInviteEmail(input: {
     return true;
   } catch (err) {
     console.error(`[email] invite email to ${input.to} failed:`, err);
+    return false;
+  }
+}
+
+/**
+ * Emails a sign-in (magic) link. Same conventions as sendInviteEmail:
+ * server-controlled origin, escaped HTML, best-effort (returns false on
+ * failure, never throws).
+ */
+export async function sendMagicLinkEmail(input: { to: string; url: string }): Promise<boolean> {
+  const subject = "Your FlightDebrief sign-in link";
+  const text = [
+    `Click to sign in to FlightDebrief:`,
+    input.url,
+    ``,
+    `This link expires in 15 minutes. If you didn't request it, you can ignore this email.`,
+  ].join("\n");
+  const html = `
+    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1a1a1a">
+      <h2 style="margin:0 0 16px">Sign in to FlightDebrief</h2>
+      <p style="margin:24px 0">
+        <a href="${escapeHtml(input.url)}" style="background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Sign in</a>
+      </p>
+      <p style="color:#666;font-size:14px">This link expires in 15 minutes. If you didn't request it, you can ignore this email.</p>
+    </div>`;
+
+  try {
+    const response = await sendViaResend({ from: FROM, to: [input.to], subject, text, html });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      console.error(`[email] magic link to ${input.to} failed: ${response.status} ${detail}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`[email] magic link to ${input.to} failed:`, err);
     return false;
   }
 }
