@@ -157,9 +157,19 @@ function SearchFlow({ instructorNames }: { instructorNames: string[] }) {
                         day: "numeric",
                         year: "numeric",
                       })}
+                      {" · "}
+                      {new Date(c.scheduledDeparture).toLocaleTimeString("en-US", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
                       {c.durationMinutes ? ` · ${formatDurationShort(c.durationMinutes)}` : ""}
                       {c.aircraftType ? ` · ${c.aircraftType}` : ""}
                     </p>
+                    {!c.departureAirport && !c.arrivalAirport ? (
+                      <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
+                        No resolved airports for this leg -- may have limited or no track data.
+                      </p>
+                    ) : null}
                   </div>
                   <Button size="sm" variant="secondary" onClick={() => setSelecting(c)}>
                     This was my flight

@@ -10,7 +10,6 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
@@ -30,23 +29,18 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-brand">Debrief Summary</p>
-          <h1 className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">
-            {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </p>
-        </div>
-        <Badge variant={debrief.analyzedWith === "claude" ? "brand" : "outline"}>
-          {debrief.analyzedWith === "claude" ? "Analyzed by Claude" : "Analyzed locally (demo mode)"}
-        </Badge>
+      <div>
+        <p className="text-sm font-medium uppercase tracking-wide text-brand">Debrief Summary</p>
+        <h1 className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">
+          {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+        </h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </p>
       </div>
 
       {ttsEnabled ? <ListenButton baseSrc={`/api/flights/${flight.id}/debrief/audio`} label="Listen to your debrief" /> : null}
