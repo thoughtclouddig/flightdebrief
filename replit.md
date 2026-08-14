@@ -19,7 +19,7 @@ Next.js 16 (App Router, React 19) flight-training debrief app for students, CFIs
 - E2E: `npm run test:e2e:auth` (mints magic-link tokens directly; isolated Postgres schema).
 
 ## Data
-- All app data now lives in Replit Postgres (`DATABASE_URL`): identity (users/orgs/roles via `lib/auth/store.ts`) plus flights, debriefs, reservations, and training data via `PostgresRepository` (`lib/data/postgres-repository.ts`). Schema in `db/schema.sql` (applied idempotently by `scripts/init-db.mjs` before dev). The repository seeds the demo dataset from `lib/data/seed.ts` into empty domain tables on first use (idempotent, stable ids).
+- All app data now lives in Replit Postgres (`DATABASE_URL`): identity (users/orgs/roles via `lib/auth/store.ts`) plus flights, debriefs, reservations, and training data via `PostgresRepository` (`lib/data/postgres-repository.ts`). Schema in `db/schema.sql` (applied idempotently by `scripts/init-db.mjs` before dev). Demo seeding from `lib/data/seed.ts` is opt-in: it only runs when `SEED_DEMO_DATA=1` (or true/yes) and never in production deployments (`REPLIT_DEPLOYMENT`), so fresh production databases start empty except real identity data (idempotent, stable ids).
 - Supabase is fully removed (auth scaffolding, `SupabaseRepository`, `lib/supabase/`, packages); the in-memory `MockRepository` is gone too — persistence requires `DATABASE_URL`.
 
 ## User preferences

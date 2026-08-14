@@ -151,6 +151,12 @@ export async function resolveUserOnLogin(claims: SessionClaims): Promise<User | 
       "INSERT INTO users (id, name, email, auth_user_id) VALUES ($1, $2, $3, $4) RETURNING *",
       [id, claims.name ?? claims.email ?? "Owner", claims.email ?? `${claims.sub}@replit.user`, claims.sub],
     );
+    // Ensure the default org exists — production schema pushes apply DDL but
+    // may not carry the schema.sql seed row for it.
+    await db.query(
+      "INSERT INTO organizations (id, name, kind) VALUES ($1, 'Falcon Aviation', 'school') ON CONFLICT (id) DO NOTHING",
+      [DEFAULT_ORG_ID],
+    );
     await db.query(
       `INSERT INTO organization_members (id, organization_id, user_id, role)
        VALUES ($1, $2, $3, 'admin')`,

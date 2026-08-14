@@ -31,10 +31,11 @@ import type {
  * The identity tables (users/organizations/organization_members) are shared
  * with lib/auth/store.ts; the schema lives in db/schema.sql.
  *
- * On first use it seeds the demo dataset (lib/data/seed.ts) into any empty
- * domain tables so a fresh database starts with the same data the in-memory
- * mock used to fabricate. Seeding is idempotent (ON CONFLICT DO NOTHING with
- * stable seeded ids) and never overwrites user-created rows.
+ * When SEED_DEMO_DATA is set (and never in a production deployment), it seeds
+ * the demo dataset (lib/data/seed.ts) into any empty domain tables on first
+ * use. Seeding is idempotent (ON CONFLICT DO NOTHING with stable seeded ids)
+ * and never overwrites user-created rows. Without the flag a fresh database
+ * starts empty except for real identity data.
  */
 export class PostgresRepository implements Repository {
   private seeded: Promise<void> | null = null;
@@ -48,6 +49,7 @@ export class PostgresRepository implements Repository {
   }
 
   private async seedIfEmpty(): Promise<void> {
+    if (!shouldSeedDemoData()) return;
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
@@ -501,6 +503,17 @@ export class PostgresRepository implements Repository {
   }
 }
 
+/**
+ * Demo seeding is strictly opt-in: it requires SEED_DEMO_DATA to be set to a
+ * truthy value ("1"/"true"/"yes") and never runs inside a Replit deployment,
+ * so a fresh production database starts empty except for real identity data.
+ */
+export function shouldSeedDemoData(): boolean {
+  if (process.env.REPLIT_DEPLOYMENT) return false;
+  const flag = (process.env.SEED_DEMO_DATA ?? "").trim().toLowerCase();
+  return flag === "1" || flag === "true" || flag === "yes";
+}
+
 // --- SQL helpers ---------------------------------------------------------------
 
 /** Builds "($1,$2,...),($n+1,...)" placeholder groups for a multi-row INSERT. */
@@ -518,6 +531,27 @@ function buildValuesPlaceholders(rowCount: number, columnCount: number): string 
 
 async function seedDomainTables(client: PoolClient): Promise<void> {
   const seed = buildSeed();
+  // Identity rows first (org, users, memberships) so the domain rows' foreign
+  // keys resolve even on a database that was initialized without demo data.
+  for (const o of seed.organizations) {
+    await client.query(
+      "INSERT INTO organizations (id, name, kind) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
+      [o.id, o.name, o.kind],
+    );
+  }
+  for (const u of seed.users) {
+    await client.query(
+      "INSERT INTO users (id, name, email) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
+      [u.id, u.name, u.email],
+    );
+  }
+  for (const m of seed.organizationMembers) {
+    await client.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, certificate_type)
+       VALUES ($1,$2,$3,$4,$5) ON CONFLICT (id) DO NOTHING`,
+      [m.id, m.organizationId, m.userId, m.role, m.certificateType ?? null],
+    );
+  }
   for (const i of seed.instructors) {
     await client.query(
       "INSERT INTO instructors (id, name, organization_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
