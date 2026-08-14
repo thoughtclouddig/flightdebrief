@@ -56,7 +56,11 @@ export class PostgresRepository implements Repository {
       // Serialize concurrent server instances racing to seed.
       await client.query("SELECT pg_advisory_xact_lock(727275001)");
       const { rows } = await client.query("SELECT count(*)::int AS n FROM flights");
-      if (rows[0].n === 0) {
+      // FORCE_RESEED re-runs the seed against a non-empty database to pick up
+      // *new* seed.ts additions (e.g. a newly added demo student) -- safe because
+      // every insert in seedDomainTables is ON CONFLICT (id) DO NOTHING, so
+      // already-seeded and real user-created rows are untouched either way.
+      if (rows[0].n === 0 || process.env.FORCE_RESEED) {
         await seedDomainTables(client);
         console.log("[Data] PostgresRepository seeded demo flight/training data");
       }
