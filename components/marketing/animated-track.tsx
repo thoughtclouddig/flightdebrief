@@ -79,7 +79,7 @@ export function AnimatedTrack({
           className="transition-[stroke-dashoffset] duration-[1400ms] ease-out motion-reduce:transition-none"
         />
         <circle cx={startX} cy={startY} r={6} fill="var(--color-brand)" stroke="white" strokeWidth={2} />
-        {inView ? <circle cx={endX} cy={endY} r={6} fill="#0f172a" stroke="white" strokeWidth={2} className="transition-opacity duration-500" /> : null}
+        {inView ? <circle cx={endX} cy={endY} r={6} fill="#101727" stroke="white" strokeWidth={2} className="transition-opacity duration-500" /> : null}
       </svg>
     </div>
   );

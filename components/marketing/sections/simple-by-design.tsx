@@ -2,7 +2,7 @@ import { Reveal } from "@/components/marketing/reveal";
 
 const STEPS = [
   { label: "Talk", body: "Have the conversation you're already having." },
-  { label: "Remember", body: "FlightBrief captures what matters from the lesson." },
+  { label: "Remember", body: "AfterFlight captures what matters from the lesson." },
   { label: "Return", body: "The next flight starts where the last one ended." },
 ];
 

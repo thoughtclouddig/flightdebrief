@@ -42,7 +42,7 @@ export function TrackPreview({ track }: { track: TrackPosition[] }) {
       <path d={`${path} L${endX},${height} L${startX},${height} Z`} fill="url(#trackFade)" />
       <path d={path} fill="none" stroke="var(--color-brand)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={startX} cy={startY} r={6} fill="var(--color-brand)" stroke="white" strokeWidth={2} />
-      <circle cx={endX} cy={endY} r={6} fill="#0f172a" stroke="white" strokeWidth={2} />
+      <circle cx={endX} cy={endY} r={6} fill="#101727" stroke="white" strokeWidth={2} />
     </svg>
   );
 }

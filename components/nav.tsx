@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Activity,
@@ -61,19 +62,27 @@ function homeHrefForRole(role: Viewer["role"]) {
   return "/home";
 }
 
-function BrandMark() {
+function Wordmark({ href, compact = false }: { href: string; compact?: boolean }) {
+  const height = compact ? 22 : 26;
+  const width = Math.round(height * (484.41 / 77.27));
   return (
-    <span className="relative inline-flex size-[18px] shrink-0 items-center justify-center rounded-full border-[1.6px] border-brand">
-      <span className="absolute h-[10px] w-[1.6px] rotate-[35deg] bg-brand" />
-    </span>
-  );
-}
-
-function Wordmark({ href }: { href: string }) {
-  return (
-    <Link href={href} className="font-display flex items-center gap-1.5 text-[17px] font-extrabold uppercase tracking-wide text-foreground">
-      <BrandMark />
-      FlightBrief
+    <Link href={href} className="flex shrink-0 items-center">
+      <Image
+        src="/brand/afterflight-lockup-dark.svg"
+        alt="AfterFlight"
+        width={width}
+        height={height}
+        priority
+        className="dark:hidden"
+      />
+      <Image
+        src="/brand/afterflight-lockup-light.svg"
+        alt="AfterFlight"
+        width={width}
+        height={height}
+        priority
+        className="hidden dark:block"
+      />
     </Link>
   );
 }
@@ -167,7 +176,7 @@ export function Nav({ viewer }: { viewer: Viewer }) {
       </header>
 
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-hairline bg-surface/90 px-3 backdrop-blur md:hidden">
-        <Wordmark href={homeHref} />
+        <Wordmark href={homeHref} compact />
         <div className="flex items-center gap-2">
           <ThemeToggle compact />
           <UserMenu viewer={viewer} compact />

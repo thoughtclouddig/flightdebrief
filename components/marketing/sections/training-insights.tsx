@@ -12,7 +12,7 @@ export function TrainingInsights() {
           See patterns before they become problems.
         </h2>
         <p className="mt-5 max-w-md text-pretty text-[17px] leading-relaxed text-foreground-soft">
-          FlightBrief surfaces patterns worth reviewing. Chief instructors make the call.
+          AfterFlight surfaces patterns worth reviewing. Chief instructors make the call.
         </p>
       </Reveal>
 

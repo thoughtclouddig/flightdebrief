@@ -3,8 +3,8 @@ import { Reveal } from "@/components/marketing/reveal";
 
 export function FinalCta() {
   return (
-    <section className="relative overflow-hidden bg-[#0a0f1a] px-6 py-28 text-center sm:py-32">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#101a2b_0%,_#04070c_75%)]" />
+    <section className="relative overflow-hidden bg-[#101727] px-6 py-28 text-center sm:py-32">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#171f33_0%,_#0c1220_75%)]" />
 
       <div className="relative mx-auto max-w-2xl">
         <Reveal>
@@ -17,11 +17,11 @@ export function FinalCta() {
         </Reveal>
 
         <Reveal delay={150} className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/app" className="rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#0a0f1a] hover:bg-white/90">
-            Start with FlightBrief
+          <Link href="/app" className="rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark">
+            Start with AfterFlight
           </Link>
           <Link href="#schools" className="rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
-            Bring FlightBrief to Your Flight School
+            Bring AfterFlight to Your Flight School
           </Link>
         </Reveal>
 

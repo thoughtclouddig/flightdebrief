@@ -66,24 +66,24 @@ function MapLibreTrack({ track }: { track: TrackPosition[] }) {
           type: "line",
           source: "track",
           layout: { "line-join": "round", "line-cap": "round" },
-          paint: { "line-color": "#1d6fa5", "line-width": 8, "line-opacity": 0.25, "line-blur": 2 },
+          paint: { "line-color": "#f07621", "line-width": 8, "line-opacity": 0.25, "line-blur": 2 },
         });
         localMap.addLayer({
           id: "track-line",
           type: "line",
           source: "track",
           layout: { "line-join": "round", "line-cap": "round" },
-          paint: { "line-color": "#1d6fa5", "line-width": 3 },
+          paint: { "line-color": "#f07621", "line-width": 3 },
         });
 
         const startEl = document.createElement("div");
         startEl.style.cssText =
-          "width:14px;height:14px;border-radius:50%;background:#1d6fa5;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4)";
+          "width:14px;height:14px;border-radius:50%;background:#f07621;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4)";
         new maplibregl.Marker({ element: startEl }).setLngLat(coords[0]).addTo(localMap);
 
         const endEl = document.createElement("div");
         endEl.style.cssText =
-          "width:14px;height:14px;border-radius:50%;background:#101826;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4)";
+          "width:14px;height:14px;border-radius:50%;background:#101727;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4)";
         new maplibregl.Marker({ element: endEl }).setLngLat(coords[coords.length - 1]).addTo(localMap);
       });
     })();

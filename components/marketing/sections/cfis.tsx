@@ -4,10 +4,10 @@ import { DEMO_CFI_STUDENTS } from "@/lib/marketing/demo-data";
 
 export function Cfis() {
   return (
-    <section className="bg-[#0a0f1a] px-6 py-24 sm:py-28">
+    <section className="bg-[#101727] px-6 py-24 sm:py-28">
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
         <Reveal>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#5aa8d6]">For CFIs</p>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">For CFIs</p>
           <h2 className="font-display mt-3 text-balance text-4xl font-extrabold uppercase leading-[1.02] text-white sm:text-5xl">
             Know where you left off.
           </h2>

@@ -174,3 +174,11 @@ CREATE INDEX IF NOT EXISTS training_signals_org_idx ON training_signals (organiz
 -- real identity data, not demo content; demo users/flights are seeded
 -- separately and only when SEED_DEMO_DATA is set (lib/data/postgres-repository.ts).
 INSERT INTO organizations (id, name, kind) VALUES ('org-falcon','Falcon Aviation','school') ON CONFLICT (id) DO NOTHING;
+-- The real app owner's admin login -- real identity data, not demo
+-- content, same category as the org-falcon insert above.
+INSERT INTO users (id, name, email) VALUES
+  ('user-owner','Andy Renk','andyrenk@gmail.com')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO organization_members (id, organization_id, user_id, role) VALUES
+  ('member-owner','org-falcon','user-owner','admin')
+ON CONFLICT (id) DO NOTHING;
