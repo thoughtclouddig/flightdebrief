@@ -83,6 +83,8 @@ export interface Repository {
   listFlights(filter?: ListFlightsFilter): Promise<FlightWithRelations[]>;
   getFlight(id: string): Promise<FlightWithRelations | null>;
   createFlight(input: CreateFlightInput): Promise<FlightWithRelations>;
+  /** Cascades to its debrief, training items, and training signals (ON DELETE CASCADE). */
+  deleteFlight(id: string): Promise<void>;
   setFlightDebriefStatus(id: string, status: Flight["debriefStatus"]): Promise<void>;
 
   getDebriefByFlight(flightId: string): Promise<Debrief | null>;

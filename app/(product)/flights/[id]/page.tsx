@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, Clock, User } from "lucide-react";
 import { FlightMap } from "@/components/flight-map";
+import { DeleteFlightButton } from "@/components/delete-flight-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +13,7 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
   const { id } = await props.params;
   const authorized = await getAuthorizedFlight(id);
   if (!authorized) notFound();
-  const { flight } = authorized;
+  const { flight, viewer } = authorized;
 
   const dateLabel = new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
     weekday: "long",
@@ -63,6 +64,12 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
           Back to flights
         </Link>
       </div>
+
+      {viewer.role === "admin" ? (
+        <div className="border-t border-hairline pt-6">
+          <DeleteFlightButton flightId={flight.id} />
+        </div>
+      ) : null}
     </div>
   );
 }

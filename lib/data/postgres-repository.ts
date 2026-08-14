@@ -213,6 +213,11 @@ export class PostgresRepository implements Repository {
     return created;
   }
 
+  async deleteFlight(id: string): Promise<void> {
+    const db = await this.db();
+    await db.query("DELETE FROM flights WHERE id = $1", [id]);
+  }
+
   async setFlightDebriefStatus(id: string, status: Flight["debriefStatus"]): Promise<void> {
     const db = await this.db();
     await db.query("UPDATE flights SET debrief_status = $2 WHERE id = $1", [id, status]);

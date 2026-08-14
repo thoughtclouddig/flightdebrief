@@ -13,8 +13,12 @@ const BASEMAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.
 export function FlightMap({ track }: { track: TrackPosition[] | null }) {
   if (!track || track.length < 2) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-400 dark:border-white/15">
-        No track data available for this flight.
+      <div className="flex h-64 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-6 text-center dark:border-white/15">
+        <p className="text-sm text-slate-400">No track data available for this flight.</p>
+        <p className="text-xs text-slate-400">
+          Some aircraft have sparse or no public ADS-B position history even when the flight itself was found --
+          this doesn&rsquo;t affect the rest of the debrief.
+        </p>
       </div>
     );
   }
