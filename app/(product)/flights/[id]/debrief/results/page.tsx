@@ -5,14 +5,18 @@ import {
   CheckCircle2,
   ClipboardList,
   ExternalLink,
+  LifeBuoy,
   ListChecks,
   MessageSquareQuote,
+  ShieldAlert,
   Sparkles,
   Target,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
+import { ComparisonTable, type ComparisonRow } from "@/components/debrief/comparison-table";
+import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { getRepository } from "@/lib/data";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 
@@ -26,6 +30,13 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
 
   const { structuredResult: result } = debrief;
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
+
+  const differenceRows: ComparisonRow[] = result.assessmentDifferences.map((d) => ({
+    taskLabel: d.taskLabel,
+    studentLevel: d.studentLevel,
+    instructorLevel: d.instructorLevel,
+    status: discrepancyStatusFor(discrepancyDistance(d.studentLevel, d.instructorLevel)),
+  }));
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -43,7 +54,25 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
         </p>
       </div>
 
+      {result.flightSummary ? (
+        <p className="text-lg text-slate-700 dark:text-slate-200">{result.flightSummary}</p>
+      ) : null}
+
       {ttsEnabled ? <ListenButton baseSrc={`/api/flights/${flight.id}/debrief/audio`} label="Listen to your debrief" /> : null}
+
+      {differenceRows.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldAlert className="size-4 text-brand" />
+              Where Your Perceptions Differed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ComparisonTable rows={differenceRows} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Section icon={ListChecks} title="What We Did" items={result.whatWeDid} empty="Nothing captured yet." />
       <Section icon={CheckCircle2} title="Went Well" items={result.wentWell} empty="Nothing flagged." tone="success" />
@@ -67,6 +96,14 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
           </CardContent>
         </Card>
       ) : null}
+
+      <Section
+        icon={LifeBuoy}
+        title="Instructor Assistance"
+        items={result.instructorAssistance}
+        empty="No instructor intervention noted."
+      />
+      <Section icon={ShieldAlert} title="Risk Management & ADM" items={result.riskManagementNotes} empty="Nothing flagged." />
 
       <Section icon={ClipboardList} title="Action Items" items={result.actionItems} empty="No action items." />
 

@@ -34,6 +34,8 @@ export interface Organization {
   id: string;
   name: string;
   kind: OrganizationKind;
+  /** One default guidance mode per org for now -- see DebriefGuidanceMode below. */
+  defaultGuidanceMode: DebriefGuidanceMode;
   createdAt: string;
 }
 
@@ -152,11 +154,26 @@ export interface StudyReference {
   url: string;
 }
 
+/** One student/instructor perception gap, surfaced on the results page. Populated deterministically from debrief_assessment_ratings, never trusted from the LLM -- same "don't let the model reconstruct ground truth we already have" rule as studyReferences. */
+export interface AssessmentDifference {
+  taskLabel: string;
+  studentLevel: import("@/lib/performance-levels").PerformanceLevelCode;
+  instructorLevel: import("@/lib/performance-levels").PerformanceLevelCode;
+  note: string;
+}
+
 export interface StructuredDebrief {
+  /** Short summary of the lesson. Empty string for older debriefs analyzed before this field existed. */
+  flightSummary: string;
   whatWeDid: string[];
   wentWell: string[];
   needsWork: string[];
   instructorGuidance: InstructorGuidance[];
+  /** Factual "CFI intervened/prompted/corrected" observations -- distinct from instructorGuidance's verbatim attributed quotes. */
+  instructorAssistance: string[];
+  riskManagementNotes: string[];
+  /** Empty for freeform-mode debriefs (no assessments exist to diff) and for older debriefs. */
+  assessmentDifferences: AssessmentDifference[];
   actionItems: string[];
   nextLessonFocus: string[];
   studyReferences: StudyReference[];
@@ -169,6 +186,10 @@ export interface Debrief {
   audioDurationSeconds: number;
   structuredResult: StructuredDebrief;
   analyzedWith: "claude" | "mock";
+  /** Which flow produced this debrief. Defaults to "freeform" at the DB level for older rows. */
+  guidanceMode: DebriefGuidanceMode;
+  recordingStartedAt: string | null;
+  recordingEndedAt: string | null;
   createdAt: string;
 }
 
@@ -208,7 +229,8 @@ export type TrainingCategory =
   | "COMMUNICATIONS"
   | "PROCEDURES"
   | "AIRSPEED_CONTROL"
-  | "NAVIGATION";
+  | "NAVIGATION"
+  | "RISK_MANAGEMENT";
 
 export type TrainingSkill =
   | "STABILIZED_APPROACH"
@@ -223,7 +245,13 @@ export type TrainingSkill =
   | "CHECKLIST_DISCIPLINE"
   | "TOWER_READBACKS"
   | "AIRSPEED_CONTROL"
-  | "NAVIGATION";
+  | "NAVIGATION"
+  // Added for the structured/guided debrief's flight-task catalog.
+  | "NORMAL_TAKEOFF"
+  | "GROUND_REF_MANEUVERS"
+  | "RADIO_COMMUNICATIONS"
+  | "SITUATIONAL_AWARENESS"
+  | "RISK_MANAGEMENT";
 
 export type TrainingSignalStatus = "NEEDS_WORK" | "IMPROVING";
 
@@ -251,5 +279,123 @@ export interface TrainingSignal {
   source: TrainingSignalSource;
   /** The original sentence this was classified from, preserved verbatim -- never overwritten. */
   statement: string;
+  createdAt: string;
+}
+
+// --- Structured, CFI-led debrief (guided/light modes) ----------------------
+// Assessments and cards are created BEFORE a Debrief row exists (the debrief
+// itself is still created once, at "End Debrief -> AI Processing", same as
+// today) -- see db/schema.sql for the full rationale.
+
+export type DebriefGuidanceMode = "guided" | "light" | "freeform";
+
+export type FlightTaskSource = "instructor_selected" | "syllabus" | "ai_suggested" | "carried_over";
+
+/** Which maneuvers/tasks were flown this flight, selected by the CFI at "Flight Complete". */
+export interface FlightTask {
+  id: string;
+  flightId: string;
+  taskCode: TrainingSkill;
+  /** Denormalized display label at selection time, so relabeling the catalog later never rewrites history. */
+  label: string;
+  source: FlightTaskSource;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export type AssessmentRole = "student" | "instructor";
+export type AssessmentStatus = "in_progress" | "submitted";
+
+/** One row per (flight, role) -- UNIQUE at the DB level, so "CFI can't see student's ratings until their own is submitted" is a plain query condition. */
+export interface DebriefAssessment {
+  id: string;
+  flightId: string;
+  role: AssessmentRole;
+  assessorUserId: string;
+  status: AssessmentStatus;
+  submittedAt: string | null;
+  overallReflection: string | null;
+  createdAt: string;
+}
+
+export interface DebriefAssessmentRating {
+  id: string;
+  assessmentId: string;
+  flightTaskId: string;
+  performanceLevel: import("@/lib/performance-levels").PerformanceLevelCode;
+  note: string | null;
+  createdAt: string;
+}
+
+export type CardCategory =
+  | "OBJECTIVE"
+  | "STRENGTHS"
+  | "IMPROVEMENT"
+  | "KEY_TASK"
+  | "RISK_ADM"
+  | "REFLECTION"
+  | "NEXT_FLIGHT"
+  | "DISCREPANCY"
+  | "CUSTOM";
+
+/** Reusable card template. organizationId null = system-global default; non-null = a school's override of the same `code` (Phase 3). */
+export interface CardDefinition {
+  id: string;
+  organizationId: string | null;
+  code: string;
+  category: CardCategory;
+  title: string;
+  primaryPrompt: string;
+  followUpPrompts: string[];
+  appliesToTaskCode: TrainingSkill | null;
+  defaultPriority: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export type DebriefCardSource =
+  | "standard"
+  | "assessment_discrepancy"
+  | "ai_generated"
+  | "previous_flight_issue"
+  | "instructor_selected"
+  | "school_curriculum";
+
+export type DiscrepancyStatus = "none" | "minor" | "significant";
+export type DebriefCardStatus = "pending" | "active" | "completed" | "skipped";
+
+/** A generated card instance for one flight's guided session. */
+export interface DebriefCard {
+  id: string;
+  flightId: string;
+  cardDefinitionId: string | null;
+  flightTaskId: string | null;
+  source: DebriefCardSource;
+  category: CardCategory;
+  title: string;
+  primaryPrompt: string;
+  followUpPrompts: string[];
+  acsArea: string | null;
+  acsAreaUrl: string | null;
+  studentRating: import("@/lib/performance-levels").PerformanceLevelCode | null;
+  instructorRating: import("@/lib/performance-levels").PerformanceLevelCode | null;
+  discrepancyStatus: DiscrepancyStatus;
+  sortOrder: number;
+  status: DebriefCardStatus;
+  flaggedForFollowUp: boolean;
+  recordingStartSeconds: number | null;
+  recordingEndSeconds: number | null;
+  createdAt: string;
+}
+
+/** One transcript segment, flight-scoped rather than hard-tied to a card (a card's boundary can shift if the CFI goes Back). Null debriefCardId = freeform-mode session. */
+export interface TranscriptSegment {
+  id: string;
+  flightId: string;
+  debriefCardId: string | null;
+  startSeconds: number;
+  endSeconds: number;
+  text: string;
+  speakerLabel: string | null;
   createdAt: string;
 }

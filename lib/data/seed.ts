@@ -24,6 +24,7 @@ export const ORG_FALCON: Organization = {
   id: "org-falcon",
   name: "Falcon Aviation",
   kind: "school",
+  defaultGuidanceMode: "guided",
   createdAt: new Date().toISOString(),
 };
 
@@ -354,6 +355,9 @@ export function buildSeed(): SeedBundle {
       audioDurationSeconds,
       structuredResult: result,
       analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
       createdAt: flight.createdAt,
     };
     return { flight, debrief, result };
@@ -427,6 +431,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 90,
     structuredResult: debriefX1Result,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: flightX1.createdAt,
   };
 
@@ -442,6 +449,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 92,
     structuredResult: debriefX2Result,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: flightX2.createdAt,
   };
 
@@ -457,6 +467,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 94,
     structuredResult: debriefX3Result,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: flightX3.createdAt,
   };
 
@@ -472,6 +485,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 96,
     structuredResult: debriefAResult,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: flightA.createdAt,
   };
 
@@ -487,6 +503,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 104,
     structuredResult: debriefBResult,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: flightB.createdAt,
   };
 
@@ -502,6 +521,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 88,
     structuredResult: debriefSarahResult,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: sarahFlight.createdAt,
   };
 

@@ -21,12 +21,18 @@ export async function analyzeDebrief(input: AnalyzeDebriefInput): Promise<Analyz
       structured.studyReferences = suggestStudyReferences(
         [...structured.needsWork, ...structured.actionItems].join(" "),
       );
+      structured.assessmentDifferences = input.assessmentDifferences ?? [];
       return { structured, analyzedWith: "claude" };
     } catch (err) {
       console.error("[AI] Claude analysis failed, falling back to mock analyzer:", err);
-      return { structured: analyzeMock(input), analyzedWith: "mock" };
+      return { structured: withAssessmentDifferences(analyzeMock(input), input), analyzedWith: "mock" };
     }
   }
   console.log("[AI] using local mock analyzer — set ANTHROPIC_API_KEY to use Claude");
-  return { structured: analyzeMock(input), analyzedWith: "mock" };
+  return { structured: withAssessmentDifferences(analyzeMock(input), input), analyzedWith: "mock" };
+}
+
+function withAssessmentDifferences(structured: StructuredDebriefResult, input: AnalyzeDebriefInput): StructuredDebriefResult {
+  structured.assessmentDifferences = input.assessmentDifferences ?? [];
+  return structured;
 }

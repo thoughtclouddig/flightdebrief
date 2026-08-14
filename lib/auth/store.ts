@@ -109,7 +109,13 @@ export async function setMembershipCertificateType(memberId: string, certificate
 export async function getOrganization(id: string): Promise<Organization | null> {
   const { rows } = await getDb().query("SELECT * FROM organizations WHERE id = $1", [id]);
   if (!rows[0]) return null;
-  return { id: rows[0].id, name: rows[0].name, kind: rows[0].kind, createdAt: new Date(rows[0].created_at).toISOString() };
+  return {
+    id: rows[0].id,
+    name: rows[0].name,
+    kind: rows[0].kind,
+    defaultGuidanceMode: rows[0].default_guidance_mode,
+    createdAt: new Date(rows[0].created_at).toISOString(),
+  };
 }
 
 const DEFAULT_ORG_ID = "org-falcon";

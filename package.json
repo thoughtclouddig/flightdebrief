@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",
+    "test": "vitest run",
     "test:e2e:auth": "node e2e/auth-journey.mjs"
   },
   "dependencies": {
@@ -37,6 +38,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

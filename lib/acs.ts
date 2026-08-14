@@ -32,6 +32,12 @@ const PRIVATE_ACS_AREAS: Partial<Record<TrainingSkill, AcsArea>> = {
   STALLS: { name: "Slow Flight and Stalls", url: PRIVATE_ACS_PDF_URL },
   EMERGENCY_PROCEDURES: { name: "Emergency Operations", url: PRIVATE_ACS_PDF_URL },
   NAVIGATION: { name: "Navigation", url: PRIVATE_ACS_PDF_URL },
+  NORMAL_TAKEOFF: { name: "Takeoffs, Landings, and Go-Arounds", url: PRIVATE_ACS_PDF_URL },
+  GROUND_REF_MANEUVERS: { name: "Ground Reference Maneuvers", url: PRIVATE_ACS_PDF_URL },
+  // RADIO_COMMUNICATIONS, SITUATIONAL_AWARENESS, and RISK_MANAGEMENT are left
+  // unmapped, same as CHECKLIST_DISCIPLINE/TOWER_READBACKS/AIRSPEED_CONTROL
+  // above -- risk management and situational awareness are Special Emphasis
+  // Areas the ACS weaves through every task, not a single standalone Area.
 };
 
 export function acsAreaForSkill(skill: TrainingSkill, certificateType: CertificateType | null): AcsArea | null {

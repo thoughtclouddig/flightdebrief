@@ -12,6 +12,13 @@ CREATE TABLE IF NOT EXISTS organizations (
   kind text NOT NULL DEFAULT 'individual' CHECK (kind IN ('individual','independent_cfi','school')),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+-- One default debrief guidance mode per org for now (Phase 1 decision -- see
+-- the debrief-redesign plan). "guided" is the new structured flow;
+-- "freeform" opts an org out entirely, preserving today's behavior. Added via
+-- ALTER (not the CREATE TABLE above) so it also applies to already-existing
+-- organizations rows, same pattern as the debriefs.guidance_mode column below.
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS default_guidance_mode text NOT NULL DEFAULT 'guided'
+  CHECK (default_guidance_mode IN ('guided','light','freeform'));
 
 CREATE TABLE IF NOT EXISTS users (
   id text PRIMARY KEY,
@@ -169,6 +176,215 @@ CREATE TABLE IF NOT EXISTS training_signals (
 );
 CREATE INDEX IF NOT EXISTS training_signals_student_idx ON training_signals (student_id);
 CREATE INDEX IF NOT EXISTS training_signals_org_idx ON training_signals (organization_id);
+
+-- Carries a "before next flight" item's task forward so it can pre-populate
+-- the next flight's flight_tasks. Nullable -- most items aren't task-specific.
+ALTER TABLE training_items ADD COLUMN IF NOT EXISTS related_task_code text;
+
+-- --- Structured, CFI-led debrief (guided/light modes) -----------------------
+-- Everything below is created BEFORE a debriefs row exists (assessments and
+-- cards happen pre-recording), so it keys off flight_id, not debrief_id.
+-- debriefs.flight_id stays UNIQUE -- one immutable debrief per flight, same
+-- as before; these tables hold the structured inputs that feed it.
+
+ALTER TABLE debriefs ADD COLUMN IF NOT EXISTS guidance_mode text NOT NULL DEFAULT 'freeform'
+  CHECK (guidance_mode IN ('guided','light','freeform'));
+ALTER TABLE debriefs ADD COLUMN IF NOT EXISTS recording_started_at timestamptz;
+ALTER TABLE debriefs ADD COLUMN IF NOT EXISTS recording_ended_at timestamptz;
+
+-- Which maneuvers/tasks were actually flown this flight, selected by the CFI
+-- at "Flight Complete" before either assessment starts. task_code is a
+-- TrainingSkill-shaped code enforced in TypeScript only (same convention as
+-- training_signals.skill) -- label is denormalized so relabeling the catalog
+-- later never rewrites history.
+CREATE TABLE IF NOT EXISTS flight_tasks (
+  id text PRIMARY KEY,
+  flight_id text NOT NULL REFERENCES flights(id) ON DELETE CASCADE,
+  task_code text NOT NULL,
+  label text NOT NULL,
+  source text NOT NULL DEFAULT 'instructor_selected'
+    CHECK (source IN ('instructor_selected','syllabus','ai_suggested','carried_over')),
+  sort_order integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS flight_tasks_flight_idx ON flight_tasks (flight_id);
+CREATE UNIQUE INDEX IF NOT EXISTS flight_tasks_flight_task_idx ON flight_tasks (flight_id, task_code);
+
+-- One row per (flight, role) -- UNIQUE enforces exactly one student and one
+-- instructor assessment per flight, which is what lets "CFI can't see
+-- student's ratings until their own is submitted" be a plain query condition
+-- (WHERE role='student' AND EXISTS (instructor assessment with status='submitted'))
+-- rather than bespoke access-control logic.
+CREATE TABLE IF NOT EXISTS debrief_assessments (
+  id text PRIMARY KEY,
+  flight_id text NOT NULL REFERENCES flights(id) ON DELETE CASCADE,
+  role text NOT NULL CHECK (role IN ('student','instructor')),
+  assessor_user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status text NOT NULL DEFAULT 'in_progress' CHECK (status IN ('in_progress','submitted')),
+  submitted_at timestamptz,
+  overall_reflection text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (flight_id, role)
+);
+CREATE INDEX IF NOT EXISTS debrief_assessments_flight_idx ON debrief_assessments (flight_id);
+
+-- Performance level is one of lib/performance-levels.ts's stable
+-- PerformanceLevelCode values (LEARNING/NEEDS_COACHING/INDEPENDENT) --
+-- the FAA FITS-equivalent mapping and any future display-label change live
+-- entirely in code, never in this column, so relabeling touches zero rows.
+CREATE TABLE IF NOT EXISTS debrief_assessment_ratings (
+  id text PRIMARY KEY,
+  assessment_id text NOT NULL REFERENCES debrief_assessments(id) ON DELETE CASCADE,
+  flight_task_id text NOT NULL REFERENCES flight_tasks(id) ON DELETE CASCADE,
+  performance_level text NOT NULL CHECK (performance_level IN ('LEARNING','NEEDS_COACHING','INDEPENDENT')),
+  note text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (assessment_id, flight_task_id)
+);
+CREATE INDEX IF NOT EXISTS debrief_assessment_ratings_assessment_idx ON debrief_assessment_ratings (assessment_id);
+
+-- Reusable card templates. organization_id NULL = system-global default;
+-- non-null = a school's override/addition for the same `code` -- this is
+-- what makes future school customization (Phase 3) purely additive, no
+-- schema change needed later.
+CREATE TABLE IF NOT EXISTS card_definitions (
+  id text PRIMARY KEY,
+  organization_id text REFERENCES organizations(id) ON DELETE CASCADE,
+  code text NOT NULL,
+  category text NOT NULL CHECK (category IN
+    ('OBJECTIVE','STRENGTHS','IMPROVEMENT','KEY_TASK','RISK_ADM','REFLECTION','NEXT_FLIGHT','DISCREPANCY','CUSTOM')),
+  title text NOT NULL,
+  primary_prompt text NOT NULL,
+  follow_up_prompts text[] NOT NULL DEFAULT '{}',
+  applies_to_task_code text,
+  default_priority integer NOT NULL DEFAULT 100,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (organization_id, code)
+);
+
+-- The generated card instances for one flight's guided session. Snapshots
+-- ratings/discrepancy/ACS at generation time so the Compare/Guided screens
+-- don't recompute them repeatedly; debrief_assessment_ratings stays the
+-- source of truth for any later recomputation or longitudinal query.
+CREATE TABLE IF NOT EXISTS debrief_cards (
+  id text PRIMARY KEY,
+  flight_id text NOT NULL REFERENCES flights(id) ON DELETE CASCADE,
+  card_definition_id text REFERENCES card_definitions(id) ON DELETE SET NULL,
+  flight_task_id text REFERENCES flight_tasks(id) ON DELETE SET NULL,
+  source text NOT NULL CHECK (source IN
+    ('standard','assessment_discrepancy','ai_generated','previous_flight_issue','instructor_selected','school_curriculum')),
+  category text NOT NULL,
+  title text NOT NULL,
+  primary_prompt text NOT NULL,
+  follow_up_prompts text[] NOT NULL DEFAULT '{}',
+  acs_area text,
+  acs_area_url text,
+  student_rating text CHECK (student_rating IN ('LEARNING','NEEDS_COACHING','INDEPENDENT')),
+  instructor_rating text CHECK (instructor_rating IN ('LEARNING','NEEDS_COACHING','INDEPENDENT')),
+  discrepancy_status text NOT NULL DEFAULT 'none' CHECK (discrepancy_status IN ('none','minor','significant')),
+  sort_order integer NOT NULL,
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','active','completed','skipped')),
+  flagged_for_follow_up boolean NOT NULL DEFAULT false,
+  recording_start_seconds numeric,
+  recording_end_seconds numeric,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS debrief_cards_flight_idx ON debrief_cards (flight_id);
+
+-- Flight-scoped, not hard-tied to a single card: a card's boundary can shift
+-- if the CFI goes Back and re-covers ground, so segments stay a raw,
+-- re-attributable record. debrief_card_id is null for Freeform-mode
+-- sessions (no cards exist at all in that mode).
+CREATE TABLE IF NOT EXISTS debrief_transcript_segments (
+  id text PRIMARY KEY,
+  flight_id text NOT NULL REFERENCES flights(id) ON DELETE CASCADE,
+  debrief_card_id text REFERENCES debrief_cards(id) ON DELETE SET NULL,
+  start_seconds numeric NOT NULL,
+  end_seconds numeric NOT NULL,
+  text text NOT NULL,
+  speaker_label text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS debrief_transcript_segments_flight_idx ON debrief_transcript_segments (flight_id);
+
+-- --- Flight tracking / notifications (Phase 2 -- tables only for now, no ----
+-- poller/real provider yet, so nothing later needs a schema change) --------
+
+CREATE TABLE IF NOT EXISTS flight_tracking_events (
+  id text PRIMARY KEY,
+  flight_id text REFERENCES flights(id) ON DELETE CASCADE,
+  organization_id text REFERENCES organizations(id) ON DELETE CASCADE,
+  aircraft_id text REFERENCES aircraft(id) ON DELETE CASCADE,
+  provider text NOT NULL,
+  provider_flight_id text,
+  event_type text NOT NULL CHECK (event_type IN
+    ('airborne_detected','landing_detected','ground_confirmed','touch_and_go_detected','flight_complete','reminder_sent')),
+  detected_at timestamptz NOT NULL,
+  raw_signal jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS flight_tracking_events_aircraft_idx ON flight_tracking_events (aircraft_id, detected_at);
+CREATE INDEX IF NOT EXISTS flight_tracking_events_flight_idx ON flight_tracking_events (flight_id);
+
+CREATE TABLE IF NOT EXISTS flight_tracking_config (
+  id text PRIMARY KEY,
+  organization_id text NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  aircraft_id text REFERENCES aircraft(id) ON DELETE CASCADE,
+  ground_speed_threshold_kt numeric NOT NULL DEFAULT 5,
+  min_time_on_ground_seconds integer NOT NULL DEFAULT 180,
+  airport_proximity_radius_nm numeric NOT NULL DEFAULT 1.0,
+  reminder_delay_minutes integer NOT NULL DEFAULT 15,
+  auto_reminders_enabled boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (organization_id, aircraft_id)
+);
+
+CREATE TABLE IF NOT EXISTS notification_preferences (
+  id text PRIMARY KEY,
+  user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  channel text NOT NULL CHECK (channel IN ('push','email')),
+  debrief_reminders_enabled boolean NOT NULL DEFAULT true,
+  reminder_delay_minutes integer,
+  push_subscription jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, channel)
+);
+
+CREATE TABLE IF NOT EXISTS notification_events (
+  id text PRIMARY KEY,
+  user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  flight_id text REFERENCES flights(id) ON DELETE CASCADE,
+  type text NOT NULL CHECK (type IN ('debrief_reminder','assessment_reminder')),
+  channel text NOT NULL CHECK (channel IN ('push','email')),
+  status text NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','sent','failed','dismissed','clicked')),
+  scheduled_for timestamptz NOT NULL,
+  sent_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS notification_events_user_idx ON notification_events (user_id);
+CREATE INDEX IF NOT EXISTS notification_events_flight_idx ON notification_events (flight_id);
+
+-- Standard card set (item 9 of the debrief spec), global defaults
+-- (organization_id NULL). Schools can later add organization_id-scoped rows
+-- with the same `code` to override title/prompts without a schema change.
+INSERT INTO card_definitions (id, organization_id, code, category, title, primary_prompt, follow_up_prompts, default_priority) VALUES
+  ('card-def-objective', NULL, 'objective', 'OBJECTIVE', 'Flight Objective',
+    'What were we working on today?', '{}', 0),
+  ('card-def-student-reflection-best', NULL, 'student_reflection_best', 'STRENGTHS', 'Student Reflection',
+    'What do you think went best today?', '{"What felt better than your previous flight?"}', 10),
+  ('card-def-improvement', NULL, 'areas_for_improvement', 'IMPROVEMENT', 'Areas for Improvement',
+    'Where did you need the most help?', '{}', 20),
+  ('card-def-key-task', NULL, 'key_training_task', 'KEY_TASK', 'Key Training Task',
+    'What went well, and what still needs work?', '{}', 30),
+  ('card-def-risk-adm', NULL, 'risk_management', 'RISK_ADM', 'Risk Management / ADM',
+    'Was there a decision today that''s worth talking about?',
+    '{"Discuss judgment, situational awareness, weather, traffic, workload, fuel, or aircraft limitations."}', 5),
+  ('card-def-student-reflection-next', NULL, 'student_reflection_next', 'REFLECTION', 'Student Reflection',
+    'What would you do differently next time?', '{}', 40),
+  ('card-def-next-flight', NULL, 'next_flight', 'NEXT_FLIGHT', 'Next Flight',
+    'What should we focus on next flight?', '{}', 1)
+ON CONFLICT (id) DO NOTHING;
 
 -- The default organization every signup joins (see lib/auth/store.ts). This is
 -- real identity data, not demo content; demo users/flights are seeded

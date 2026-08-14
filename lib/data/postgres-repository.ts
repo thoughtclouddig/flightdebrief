@@ -2,8 +2,15 @@ import { randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import type {
   Aircraft,
+  AssessmentRole,
+  CardDefinition,
   Debrief,
+  DebriefAssessment,
+  DebriefAssessmentRating,
+  DebriefCard,
   Flight,
+  FlightTask,
+  FlightTaskSource,
   FlightWithRelations,
   Instructor,
   Organization,
@@ -13,14 +20,17 @@ import type {
   StudentInstructor,
   TrainingItem,
   TrainingSignal,
+  TranscriptSegment,
   User,
 } from "@/lib/types";
+import type { PerformanceLevelCode } from "@/lib/performance-levels";
 import { buildSeed, DEMO_USER_ID } from "./seed";
 import type {
   CreateDebriefInput,
   CreateFlightInput,
   ListFlightsFilter,
   ListReservationsFilter,
+  ListTrainingItemsFilter,
   ListTrainingSignalsFilter,
   Repository,
 } from "./types";
@@ -242,8 +252,8 @@ export class PostgresRepository implements Repository {
   async createDebrief(input: CreateDebriefInput): Promise<Debrief> {
     const db = await this.db();
     const { rows } = await db.query(
-      `INSERT INTO debriefs (id, flight_id, transcript, audio_duration_seconds, structured_result, analyzed_with)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      `INSERT INTO debriefs (id, flight_id, transcript, audio_duration_seconds, structured_result, analyzed_with, guidance_mode, recording_started_at, recording_ended_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
       [
         randomUUID(),
         input.flightId,
@@ -251,6 +261,9 @@ export class PostgresRepository implements Repository {
         input.audioDurationSeconds,
         JSON.stringify(input.structuredResult),
         input.analyzedWith,
+        input.guidanceMode ?? "freeform",
+        input.recordingStartedAt ?? null,
+        input.recordingEndedAt ?? null,
       ],
     );
     return mapDebrief(rows[0]);
@@ -258,8 +271,24 @@ export class PostgresRepository implements Repository {
 
   // --- Training items ---
 
-  async listTrainingItems(): Promise<TrainingItem[]> {
+  async listTrainingItems(filter?: ListTrainingItemsFilter): Promise<TrainingItem[]> {
     const db = await this.db();
+    if (filter?.studentId) {
+      const { rows } = await db.query(
+        `SELECT ti.* FROM training_items ti
+         JOIN flights f ON f.id = ti.flight_id
+         WHERE f.student_id = $1 ${filter.flightId ? "AND ti.flight_id = $2" : ""}
+         ORDER BY ti.created_at`,
+        filter.flightId ? [filter.studentId, filter.flightId] : [filter.studentId],
+      );
+      return rows.map(mapTrainingItem);
+    }
+    if (filter?.flightId) {
+      const { rows } = await db.query("SELECT * FROM training_items WHERE flight_id = $1 ORDER BY created_at", [
+        filter.flightId,
+      ]);
+      return rows.map(mapTrainingItem);
+    }
     const { rows } = await db.query("SELECT * FROM training_items ORDER BY created_at");
     return rows.map(mapTrainingItem);
   }
@@ -291,6 +320,214 @@ export class PostgresRepository implements Repository {
       "UPDATE training_items SET done = $2, completed_at = CASE WHEN $2 THEN now() ELSE NULL END WHERE id = $1",
       [id, done],
     );
+  }
+
+  // --- Structured, CFI-led debrief: flight tasks ---
+
+  async listFlightTasks(flightId: string): Promise<FlightTask[]> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM flight_tasks WHERE flight_id = $1 ORDER BY sort_order", [
+      flightId,
+    ]);
+    return rows.map(mapFlightTask);
+  }
+
+  async setFlightTasks(
+    flightId: string,
+    tasks: { taskCode: string; label: string; source: FlightTaskSource }[],
+  ): Promise<FlightTask[]> {
+    const db = await this.db();
+    await db.query("DELETE FROM flight_tasks WHERE flight_id = $1", [flightId]);
+    if (tasks.length === 0) return [];
+    const values = tasks.map((t, i) => [randomUUID(), flightId, t.taskCode, t.label, t.source, i]);
+    const { rows } = await db.query(
+      `INSERT INTO flight_tasks (id, flight_id, task_code, label, source, sort_order)
+       VALUES ${buildValuesPlaceholders(values.length, 6)} RETURNING *`,
+      values.flat(),
+    );
+    return rows.map(mapFlightTask);
+  }
+
+  // --- Structured, CFI-led debrief: independent assessments ---
+
+  async getOrCreateAssessment(flightId: string, role: AssessmentRole, assessorUserId: string): Promise<DebriefAssessment> {
+    const db = await this.db();
+    const existing = await db.query("SELECT * FROM debrief_assessments WHERE flight_id = $1 AND role = $2", [
+      flightId,
+      role,
+    ]);
+    if (existing.rows[0]) return mapDebriefAssessment(existing.rows[0]);
+    const { rows } = await db.query(
+      `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (flight_id, role) DO NOTHING
+       RETURNING *`,
+      [randomUUID(), flightId, role, assessorUserId],
+    );
+    if (rows[0]) return mapDebriefAssessment(rows[0]);
+    // Lost the race to a concurrent create -- fetch what's there now.
+    const { rows: afterConflict } = await db.query(
+      "SELECT * FROM debrief_assessments WHERE flight_id = $1 AND role = $2",
+      [flightId, role],
+    );
+    return mapDebriefAssessment(afterConflict[0]);
+  }
+
+  async getAssessment(flightId: string, role: AssessmentRole): Promise<DebriefAssessment | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM debrief_assessments WHERE flight_id = $1 AND role = $2", [
+      flightId,
+      role,
+    ]);
+    return rows[0] ? mapDebriefAssessment(rows[0]) : null;
+  }
+
+  async upsertAssessmentRating(
+    assessmentId: string,
+    flightTaskId: string,
+    level: PerformanceLevelCode,
+    note?: string | null,
+  ): Promise<void> {
+    const db = await this.db();
+    await db.query(
+      `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level, note)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (assessment_id, flight_task_id) DO UPDATE SET performance_level = $4, note = $5`,
+      [randomUUID(), assessmentId, flightTaskId, level, note ?? null],
+    );
+  }
+
+  async listAssessmentRatings(assessmentId: string): Promise<DebriefAssessmentRating[]> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM debrief_assessment_ratings WHERE assessment_id = $1", [
+      assessmentId,
+    ]);
+    return rows.map(mapDebriefAssessmentRating);
+  }
+
+  async submitAssessment(assessmentId: string, overallReflection?: string | null): Promise<void> {
+    const db = await this.db();
+    await db.query(
+      "UPDATE debrief_assessments SET status = 'submitted', submitted_at = now(), overall_reflection = COALESCE($2, overall_reflection) WHERE id = $1",
+      [assessmentId, overallReflection ?? null],
+    );
+  }
+
+  // --- Structured, CFI-led debrief: question cards ---
+
+  async listCardDefinitions(organizationId?: string): Promise<CardDefinition[]> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM card_definitions WHERE organization_id IS NULL AND active ORDER BY default_priority");
+    const globals = rows.map(mapCardDefinition);
+    if (!organizationId) return globals;
+    const { rows: orgRows } = await db.query(
+      "SELECT * FROM card_definitions WHERE organization_id = $1 AND active ORDER BY default_priority",
+      [organizationId],
+    );
+    const overrides = orgRows.map(mapCardDefinition);
+    const overrideCodes = new Set(overrides.map((c) => c.code));
+    return [...overrides, ...globals.filter((c) => !overrideCodes.has(c.code))];
+  }
+
+  async listCards(flightId: string): Promise<DebriefCard[]> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM debrief_cards WHERE flight_id = $1 ORDER BY sort_order", [
+      flightId,
+    ]);
+    return rows.map(mapDebriefCard);
+  }
+
+  async createCards(cards: Omit<DebriefCard, "id" | "createdAt">[]): Promise<DebriefCard[]> {
+    if (cards.length === 0) return [];
+    const db = await this.db();
+    const values = cards.map((c) => [
+      randomUUID(),
+      c.flightId,
+      c.cardDefinitionId,
+      c.flightTaskId,
+      c.source,
+      c.category,
+      c.title,
+      c.primaryPrompt,
+      c.followUpPrompts,
+      c.acsArea,
+      c.acsAreaUrl,
+      c.studentRating,
+      c.instructorRating,
+      c.discrepancyStatus,
+      c.sortOrder,
+      c.status,
+      c.flaggedForFollowUp,
+      c.recordingStartSeconds,
+      c.recordingEndSeconds,
+    ]);
+    const { rows } = await db.query(
+      `INSERT INTO debrief_cards (
+         id, flight_id, card_definition_id, flight_task_id, source, category, title, primary_prompt,
+         follow_up_prompts, acs_area, acs_area_url, student_rating, instructor_rating, discrepancy_status,
+         sort_order, status, flagged_for_follow_up, recording_start_seconds, recording_end_seconds
+       ) VALUES ${buildValuesPlaceholders(values.length, 19)} RETURNING *`,
+      values.flat(),
+    );
+    return rows.map(mapDebriefCard);
+  }
+
+  async updateCardStatus(cardId: string, status: DebriefCard["status"]): Promise<void> {
+    const db = await this.db();
+    await db.query("UPDATE debrief_cards SET status = $2 WHERE id = $1", [cardId, status]);
+  }
+
+  async updateCardTiming(cardId: string, startSeconds: number, endSeconds: number): Promise<void> {
+    const db = await this.db();
+    await db.query("UPDATE debrief_cards SET recording_start_seconds = $2, recording_end_seconds = $3 WHERE id = $1", [
+      cardId,
+      startSeconds,
+      endSeconds,
+    ]);
+  }
+
+  async setCardFlaggedForFollowUp(cardId: string, flagged: boolean): Promise<void> {
+    const db = await this.db();
+    await db.query("UPDATE debrief_cards SET flagged_for_follow_up = $2 WHERE id = $1", [cardId, flagged]);
+  }
+
+  async reorderCards(orderedCardIds: string[]): Promise<void> {
+    if (orderedCardIds.length === 0) return;
+    const db = await this.db();
+    await Promise.all(orderedCardIds.map((id, i) => db.query("UPDATE debrief_cards SET sort_order = $2 WHERE id = $1", [id, i])));
+  }
+
+  // --- Structured, CFI-led debrief: transcript segments ---
+
+  async createTranscriptSegments(
+    segments: Omit<TranscriptSegment, "id" | "createdAt">[],
+  ): Promise<TranscriptSegment[]> {
+    if (segments.length === 0) return [];
+    const db = await this.db();
+    const values = segments.map((s) => [
+      randomUUID(),
+      s.flightId,
+      s.debriefCardId,
+      s.startSeconds,
+      s.endSeconds,
+      s.text,
+      s.speakerLabel,
+    ]);
+    const { rows } = await db.query(
+      `INSERT INTO debrief_transcript_segments (id, flight_id, debrief_card_id, start_seconds, end_seconds, text, speaker_label)
+       VALUES ${buildValuesPlaceholders(values.length, 7)} RETURNING *`,
+      values.flat(),
+    );
+    return rows.map(mapTranscriptSegment);
+  }
+
+  async listTranscriptSegments(flightId: string): Promise<TranscriptSegment[]> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      "SELECT * FROM debrief_transcript_segments WHERE flight_id = $1 ORDER BY start_seconds",
+      [flightId],
+    );
+    return rows.map(mapTranscriptSegment);
   }
 
   // --- Identity / organizations ---
@@ -677,6 +914,7 @@ function mapOrganization(row: Row): Organization {
     id: row.id as string,
     name: row.name as string,
     kind: row.kind as Organization["kind"],
+    defaultGuidanceMode: row.default_guidance_mode as Organization["defaultGuidanceMode"],
     createdAt: iso(row.created_at),
   };
 }
@@ -760,6 +998,99 @@ function mapDebrief(row: Row): Debrief {
     audioDurationSeconds: row.audio_duration_seconds as number,
     structuredResult: row.structured_result as Debrief["structuredResult"],
     analyzedWith: row.analyzed_with as Debrief["analyzedWith"],
+    guidanceMode: (row.guidance_mode as Debrief["guidanceMode"]) ?? "freeform",
+    recordingStartedAt: row.recording_started_at ? iso(row.recording_started_at) : null,
+    recordingEndedAt: row.recording_ended_at ? iso(row.recording_ended_at) : null,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapFlightTask(row: Row): FlightTask {
+  return {
+    id: row.id as string,
+    flightId: row.flight_id as string,
+    taskCode: row.task_code as FlightTask["taskCode"],
+    label: row.label as string,
+    source: row.source as FlightTask["source"],
+    sortOrder: row.sort_order as number,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapDebriefAssessment(row: Row): DebriefAssessment {
+  return {
+    id: row.id as string,
+    flightId: row.flight_id as string,
+    role: row.role as DebriefAssessment["role"],
+    assessorUserId: row.assessor_user_id as string,
+    status: row.status as DebriefAssessment["status"],
+    submittedAt: row.submitted_at ? iso(row.submitted_at) : null,
+    overallReflection: (row.overall_reflection as string | null) ?? null,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapDebriefAssessmentRating(row: Row): DebriefAssessmentRating {
+  return {
+    id: row.id as string,
+    assessmentId: row.assessment_id as string,
+    flightTaskId: row.flight_task_id as string,
+    performanceLevel: row.performance_level as DebriefAssessmentRating["performanceLevel"],
+    note: (row.note as string | null) ?? null,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapCardDefinition(row: Row): CardDefinition {
+  return {
+    id: row.id as string,
+    organizationId: (row.organization_id as string | null) ?? null,
+    code: row.code as string,
+    category: row.category as CardDefinition["category"],
+    title: row.title as string,
+    primaryPrompt: row.primary_prompt as string,
+    followUpPrompts: (row.follow_up_prompts as string[] | null) ?? [],
+    appliesToTaskCode: (row.applies_to_task_code as CardDefinition["appliesToTaskCode"]) ?? null,
+    defaultPriority: row.default_priority as number,
+    active: row.active as boolean,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapDebriefCard(row: Row): DebriefCard {
+  return {
+    id: row.id as string,
+    flightId: row.flight_id as string,
+    cardDefinitionId: (row.card_definition_id as string | null) ?? null,
+    flightTaskId: (row.flight_task_id as string | null) ?? null,
+    source: row.source as DebriefCard["source"],
+    category: row.category as DebriefCard["category"],
+    title: row.title as string,
+    primaryPrompt: row.primary_prompt as string,
+    followUpPrompts: (row.follow_up_prompts as string[] | null) ?? [],
+    acsArea: (row.acs_area as string | null) ?? null,
+    acsAreaUrl: (row.acs_area_url as string | null) ?? null,
+    studentRating: (row.student_rating as DebriefCard["studentRating"]) ?? null,
+    instructorRating: (row.instructor_rating as DebriefCard["instructorRating"]) ?? null,
+    discrepancyStatus: row.discrepancy_status as DebriefCard["discrepancyStatus"],
+    sortOrder: row.sort_order as number,
+    status: row.status as DebriefCard["status"],
+    flaggedForFollowUp: row.flagged_for_follow_up as boolean,
+    recordingStartSeconds: row.recording_start_seconds !== null ? Number(row.recording_start_seconds) : null,
+    recordingEndSeconds: row.recording_end_seconds !== null ? Number(row.recording_end_seconds) : null,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapTranscriptSegment(row: Row): TranscriptSegment {
+  return {
+    id: row.id as string,
+    flightId: row.flight_id as string,
+    debriefCardId: (row.debrief_card_id as string | null) ?? null,
+    startSeconds: Number(row.start_seconds),
+    endSeconds: Number(row.end_seconds),
+    text: row.text as string,
+    speakerLabel: (row.speaker_label as string | null) ?? null,
     createdAt: iso(row.created_at),
   };
 }

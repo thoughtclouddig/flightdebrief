@@ -20,6 +20,9 @@ const AFH_CH18_URL = "https://www.faa.gov/sites/faa.gov/files/regulations_polici
 const PHAK_CH5_URL = "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-5-aerodynamics-flight";
 const PHAK_CH16_URL = "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-16-navigation";
 const AIM_CH4_URL = "https://www.faa.gov/air_traffic/publications/atpubs/aim_html/chap_4.html"; // Air Traffic Control
+const AFH_CH6_URL = "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/07_afh_ch6.pdf"; // Takeoffs and Departure Climbs
+const AFH_CH7_URL = "https://www.faa.gov/sites/faa.gov/files/regulations_policies/handbooks_manuals/aviation/airplane_handbook/08_afh_ch7.pdf"; // Ground Reference Maneuvers
+const PHAK_CH2_URL = "https://www.faa.gov/regulationspolicies/handbooksmanuals/aviation/phak/chapter-2-aeronautical-decision-making";
 
 /**
  * Curated topic -> FAA reference-material lookup, doubling as the taxonomy
@@ -141,6 +144,47 @@ const TOPIC_LIBRARY: {
     category: "NAVIGATION",
     skill: "NAVIGATION",
   },
+  // --- Added for the structured/guided debrief's flight-task catalog -------
+  {
+    topic: "Normal takeoff",
+    keywords: ["takeoff", "take off", "departure climb", "rotation"],
+    source: "Airplane Flying Handbook, Ch. 6 — Takeoffs and Departure Climbs",
+    url: AFH_CH6_URL,
+    category: "MANEUVERS",
+    skill: "NORMAL_TAKEOFF",
+  },
+  {
+    topic: "Ground reference maneuvers",
+    keywords: ["ground reference", "s-turn", "s-turns", "turns around a point", "rectangular course"],
+    source: "Airplane Flying Handbook, Ch. 7 — Ground Reference Maneuvers",
+    url: AFH_CH7_URL,
+    category: "MANEUVERS",
+    skill: "GROUND_REF_MANEUVERS",
+  },
+  {
+    topic: "Radio communications",
+    keywords: ["radio communication", "radio call", "frequency change", "read back", "readback"],
+    source: "Aeronautical Information Manual (AIM), Ch. 4 — Air Traffic Control",
+    url: AIM_CH4_URL,
+    category: "COMMUNICATIONS",
+    skill: "RADIO_COMMUNICATIONS",
+  },
+  {
+    topic: "Situational awareness",
+    keywords: ["situational awareness", "lost track", "distracted", "task saturat"],
+    source: "Pilot's Handbook of Aeronautical Knowledge, Ch. 2 — Aeronautical Decision-Making",
+    url: PHAK_CH2_URL,
+    category: "RISK_MANAGEMENT",
+    skill: "SITUATIONAL_AWARENESS",
+  },
+  {
+    topic: "Risk management",
+    keywords: ["risk management", "decision making", "adm", "diverted due to", "went around because"],
+    source: "Pilot's Handbook of Aeronautical Knowledge, Ch. 2 — Aeronautical Decision-Making",
+    url: PHAK_CH2_URL,
+    category: "RISK_MANAGEMENT",
+    skill: "RISK_MANAGEMENT",
+  },
 ];
 
 export function detectTopics(text: string): string[] {
@@ -175,6 +219,11 @@ export function matchSkills(text: string): { category: TrainingCategory; skill: 
     results.push({ category: m.category, skill: m.skill });
   }
   return results;
+}
+
+/** Every catalogued skill/label pair, in TOPIC_LIBRARY order -- backs the CFI's "Flight Complete" task picker. */
+export function allTrainingSkills(): { skill: TrainingSkill; label: string }[] {
+  return TOPIC_LIBRARY.map((t) => ({ skill: t.skill, label: t.topic }));
 }
 
 /** Human-readable label for a normalized skill code, e.g. "STABILIZED_APPROACH" -> "Landings". */

@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { createClient, LiveTranscriptionEvents, type ListenLiveClient } from "@deepgram/sdk";
-import type { FinishedTranscription, TranscriptionState, UseTranscription } from "./types";
+import type { FinishedTranscription, TranscriptionState, TranscriptWord, UseTranscription } from "./types";
 
 /**
  * Live browser mic -> Deepgram streaming STT. Uses Deepgram's documented
@@ -28,6 +28,7 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
   const rafRef = useRef<number | null>(null);
   const startedAt = useRef<number>(0);
   const finalChunksRef = useRef<string[]>([]);
+  const wordsRef = useRef<TranscriptWord[]>([]);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const teardown = useCallback(() => {
@@ -41,6 +42,7 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
 
   const start = useCallback(async () => {
     finalChunksRef.current = [];
+    wordsRef.current = [];
     startedAt.current = Date.now();
     setState((s) => ({ ...s, status: "connecting", transcript: "", interimTranscript: "", error: null }));
 
@@ -69,6 +71,7 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
         smart_format: true,
         interim_results: true,
         punctuate: true,
+        diarize: true,
       });
       connectionRef.current = connection;
 
@@ -83,10 +86,21 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
       });
 
       connection.on(LiveTranscriptionEvents.Transcript, (data) => {
-        const text: string = data.channel?.alternatives?.[0]?.transcript ?? "";
+        const alternative = data.channel?.alternatives?.[0];
+        const text: string = alternative?.transcript ?? "";
         if (!text) return;
         if (data.is_final) {
           finalChunksRef.current.push(text);
+          // Deepgram's streaming word timestamps are already offsets (seconds) from
+          // the start of the audio stream -- the same clock as `elapsedSeconds`.
+          for (const w of alternative?.words ?? []) {
+            wordsRef.current.push({
+              word: w.punctuated_word ?? w.word,
+              start: w.start,
+              end: w.end,
+              speaker: typeof w.speaker === "number" ? w.speaker : null,
+            });
+          }
           setState((s) => ({ ...s, transcript: finalChunksRef.current.join(" "), interimTranscript: "" }));
         } else {
           setState((s) => ({ ...s, interimTranscript: text }));
@@ -110,9 +124,10 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
   const stop = useCallback((): FinishedTranscription => {
     const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt.current) / 1000));
     const transcript = finalChunksRef.current.join(" ");
+    const words = wordsRef.current;
     teardown();
     setState((s) => ({ ...s, status: "stopped", amplitude: 0, interimTranscript: "", transcript }));
-    return { transcript, durationSeconds };
+    return { transcript, durationSeconds, words };
   }, [teardown]);
 
   return { ...state, start, stop };
