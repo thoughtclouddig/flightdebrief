@@ -47,7 +47,7 @@ export function FlightCard({
         className="flex w-14 shrink-0 flex-col items-center justify-center py-2.5 tabular-nums"
         style={
           tone === "open"
-            ? { background: "var(--amber)", color: "white" }
+            ? { background: "var(--brand)", color: "white" }
             : { background: "var(--good)", color: "white" }
         }
       >
