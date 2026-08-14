@@ -31,10 +31,11 @@ import type {
  * The identity tables (users/organizations/organization_members) are shared
  * with lib/auth/store.ts; the schema lives in db/schema.sql.
  *
- * On first use it seeds the demo dataset (lib/data/seed.ts) into any empty
- * domain tables so a fresh database starts with the same data the in-memory
- * mock used to fabricate. Seeding is idempotent (ON CONFLICT DO NOTHING with
- * stable seeded ids) and never overwrites user-created rows.
+ * When SEED_DEMO_DATA is set (and never in a production deployment), it seeds
+ * the demo dataset (lib/data/seed.ts) into any empty domain tables on first
+ * use. Seeding is idempotent (ON CONFLICT DO NOTHING with stable seeded ids)
+ * and never overwrites user-created rows. Without the flag a fresh database
+ * starts empty except for real identity data.
  */
 export class PostgresRepository implements Repository {
   private seeded: Promise<void> | null = null;
@@ -48,6 +49,7 @@ export class PostgresRepository implements Repository {
   }
 
   private async seedIfEmpty(): Promise<void> {
+    if (!shouldSeedDemoData()) return;
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
@@ -252,16 +254,22 @@ export class PostgresRepository implements Repository {
   async createTrainingItems(items: Omit<TrainingItem, "id" | "createdAt">[]): Promise<TrainingItem[]> {
     if (items.length === 0) return [];
     const db = await this.db();
-    const created: TrainingItem[] = [];
-    for (const item of items) {
-      const { rows } = await db.query(
-        `INSERT INTO training_items (id, flight_id, debrief_id, category, description, done, completed_at, visibility)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-        [randomUUID(), item.flightId, item.debriefId, item.category, item.description, item.done, item.completedAt, item.visibility],
-      );
-      created.push(mapTrainingItem(rows[0]));
-    }
-    return created;
+    const values = items.map((item) => [
+      randomUUID(),
+      item.flightId,
+      item.debriefId,
+      item.category,
+      item.description,
+      item.done,
+      item.completedAt,
+      item.visibility,
+    ]);
+    const { rows } = await db.query(
+      `INSERT INTO training_items (id, flight_id, debrief_id, category, description, done, completed_at, visibility)
+       VALUES ${buildValuesPlaceholders(values.length, 8)} RETURNING *`,
+      values.flat(),
+    );
+    return rows.map(mapTrainingItem);
   }
 
   async setTrainingItemDone(id: string, done: boolean): Promise<void> {
@@ -448,32 +456,29 @@ export class PostgresRepository implements Repository {
   async createTrainingSignals(items: Omit<TrainingSignal, "id" | "createdAt">[]): Promise<TrainingSignal[]> {
     if (items.length === 0) return [];
     const db = await this.db();
-    const created: TrainingSignal[] = [];
-    for (const item of items) {
-      const { rows } = await db.query(
-        `INSERT INTO training_signals (
-           id, organization_id, student_id, instructor_id, aircraft_id, flight_id, debrief_id,
-           flight_date, category, skill, status, source, statement
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
-        [
-          randomUUID(),
-          item.organizationId,
-          item.studentId,
-          item.instructorId,
-          item.aircraftId,
-          item.flightId,
-          item.debriefId,
-          item.flightDate,
-          item.category,
-          item.skill,
-          item.status,
-          item.source,
-          item.statement,
-        ],
-      );
-      created.push(mapTrainingSignal(rows[0]));
-    }
-    return created;
+    const values = items.map((item) => [
+      randomUUID(),
+      item.organizationId,
+      item.studentId,
+      item.instructorId,
+      item.aircraftId,
+      item.flightId,
+      item.debriefId,
+      item.flightDate,
+      item.category,
+      item.skill,
+      item.status,
+      item.source,
+      item.statement,
+    ]);
+    const { rows } = await db.query(
+      `INSERT INTO training_signals (
+         id, organization_id, student_id, instructor_id, aircraft_id, flight_id, debrief_id,
+         flight_date, category, skill, status, source, statement
+       ) VALUES ${buildValuesPlaceholders(values.length, 13)} RETURNING *`,
+      values.flat(),
+    );
+    return rows.map(mapTrainingSignal);
   }
 
   async listTrainingSignals(filter?: ListTrainingSignalsFilter): Promise<TrainingSignal[]> {
@@ -498,10 +503,55 @@ export class PostgresRepository implements Repository {
   }
 }
 
+/**
+ * Demo seeding is strictly opt-in: it requires SEED_DEMO_DATA to be set to a
+ * truthy value ("1"/"true"/"yes") and never runs inside a Replit deployment,
+ * so a fresh production database starts empty except for real identity data.
+ */
+export function shouldSeedDemoData(): boolean {
+  if (process.env.REPLIT_DEPLOYMENT) return false;
+  const flag = (process.env.SEED_DEMO_DATA ?? "").trim().toLowerCase();
+  return flag === "1" || flag === "true" || flag === "yes";
+}
+
+// --- SQL helpers ---------------------------------------------------------------
+
+/** Builds "($1,$2,...),($n+1,...)" placeholder groups for a multi-row INSERT. */
+function buildValuesPlaceholders(rowCount: number, columnCount: number): string {
+  const groups: string[] = [];
+  for (let row = 0; row < rowCount; row++) {
+    const offset = row * columnCount;
+    const params = Array.from({ length: columnCount }, (_, col) => `$${offset + col + 1}`);
+    groups.push(`(${params.join(",")})`);
+  }
+  return groups.join(",");
+}
+
 // --- Seeding ----------------------------------------------------------------
 
 async function seedDomainTables(client: PoolClient): Promise<void> {
   const seed = buildSeed();
+  // Identity rows first (org, users, memberships) so the domain rows' foreign
+  // keys resolve even on a database that was initialized without demo data.
+  for (const o of seed.organizations) {
+    await client.query(
+      "INSERT INTO organizations (id, name, kind) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
+      [o.id, o.name, o.kind],
+    );
+  }
+  for (const u of seed.users) {
+    await client.query(
+      "INSERT INTO users (id, name, email) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
+      [u.id, u.name, u.email],
+    );
+  }
+  for (const m of seed.organizationMembers) {
+    await client.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, certificate_type)
+       VALUES ($1,$2,$3,$4,$5) ON CONFLICT (id) DO NOTHING`,
+      [m.id, m.organizationId, m.userId, m.role, m.certificateType ?? null],
+    );
+  }
   for (const i of seed.instructors) {
     await client.query(
       "INSERT INTO instructors (id, name, organization_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",

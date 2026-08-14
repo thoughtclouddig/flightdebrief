@@ -170,28 +170,12 @@ CREATE TABLE IF NOT EXISTS training_signals (
 CREATE INDEX IF NOT EXISTS training_signals_student_idx ON training_signals (student_id);
 CREATE INDEX IF NOT EXISTS training_signals_org_idx ON training_signals (organization_id);
 
--- Seed rows mirroring lib/data/seed.ts (same ids).
+-- The default organization every signup joins (see lib/auth/store.ts). This is
+-- real identity data, not demo content; demo users/flights are seeded
+-- separately and only when SEED_DEMO_DATA is set (lib/data/postgres-repository.ts).
 INSERT INTO organizations (id, name, kind) VALUES ('org-falcon','Falcon Aviation','school') ON CONFLICT (id) DO NOTHING;
-INSERT INTO users (id, name, email) VALUES
-  ('user-andy','Ron Johnson','andy@example.com'),
-  ('user-danny','Danny Franks','danny@falconaviation.example'),
-  ('user-maria','Maria Chen','maria@falconaviation.example'),
-  ('user-sarah','Sarah Miller','sarah@example.com'),
-  ('user-jordan','Jordan Reyes','jordan@falconaviation.example')
-ON CONFLICT (id) DO NOTHING;
-INSERT INTO organization_members (id, organization_id, user_id, role, certificate_type) VALUES
-  ('member-andy','org-falcon','user-andy','student','PRIVATE'),
-  ('member-danny','org-falcon','user-danny','instructor',NULL),
-  ('member-maria','org-falcon','user-maria','instructor',NULL),
-  ('member-sarah','org-falcon','user-sarah','student','PRIVATE'),
-  ('member-jordan','org-falcon','user-jordan','admin',NULL)
-ON CONFLICT (id) DO NOTHING;
-
--- The real app owner's admin login (distinct from the 'user-andy' demo/seed
--- student above, which is placeholder data, not a real account). Provisioned
--- here rather than relying on the "first real login becomes admin" bootstrap
--- in resolveUserOnLogin() so it's deterministic regardless of who signs in
--- first once the app is public.
+-- The real app owner's admin login -- real identity data, not demo
+-- content, same category as the org-falcon insert above.
 INSERT INTO users (id, name, email) VALUES
   ('user-owner','Andy Renk','andyrenk@gmail.com')
 ON CONFLICT (id) DO NOTHING;
