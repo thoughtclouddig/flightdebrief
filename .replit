@@ -49,3 +49,8 @@ outputType = "webview"
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 180000
+
+[userenv]
+
+[userenv.shared]
+INVITE_EMAIL_FROM = "FlightDebrief <debrief@getafterflight.com>"
