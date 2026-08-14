@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { Loader2, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import { Label } from "@/components/ui/label";
 
 const ERROR_MESSAGES: Record<string, string> = {
   "not-invited":
-    "That email isn't linked to a FlightBrief profile yet. Ask your school's admin or CFI to invite you, then request a new sign-in link with the invited email.",
+    "That email isn't linked to an AfterFlight profile yet. Ask your school's admin or CFI to invite you, then request a new sign-in link with the invited email.",
   expired: "That sign-in link is invalid or has expired. Request a new one below.",
   "auth-failed": "Sign-in failed. Please try again.",
 };
@@ -51,11 +52,24 @@ function LoginContent() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="text-center">
-        <h1 className="font-display text-2xl font-extrabold uppercase tracking-wide text-foreground">
-          FlightBrief
-        </h1>
-        <p className="mt-1 text-sm text-foreground-soft">Sign in to your account</p>
+      <div className="flex flex-col items-center text-center">
+        <Image
+          src="/brand/afterflight-lockup-dark.svg"
+          alt="AfterFlight"
+          width={186}
+          height={30}
+          className="dark:hidden"
+          priority
+        />
+        <Image
+          src="/brand/afterflight-lockup-light.svg"
+          alt="AfterFlight"
+          width={186}
+          height={30}
+          className="hidden dark:block"
+          priority
+        />
+        <p className="mt-2 text-sm text-foreground-soft">Sign in to your account</p>
       </div>
 
       {error && !sent ? (
@@ -106,7 +120,7 @@ function LoginContent() {
         link with the invited email.
       </p>
       <Link href="/" className="text-center text-xs text-foreground-faint hover:underline">
-        &larr; Back to flightbrief.com
+        &larr; Back to afterflight.com
       </Link>
     </div>
   );

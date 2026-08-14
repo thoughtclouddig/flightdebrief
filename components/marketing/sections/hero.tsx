@@ -37,23 +37,23 @@ import { DEMO_FLIGHT } from "@/lib/marketing/demo-data";
  */
 export function Hero() {
   return (
-    <section className="relative flex h-[100svh] min-h-[560px] items-end overflow-hidden bg-[#0a0f1a]">
+    <section className="relative flex h-[100svh] min-h-[560px] items-end overflow-hidden bg-[#101727]">
       <div className="absolute inset-0 z-0 opacity-[0.14]">
         <AnimatedTrack track={DEMO_FLIGHT.track ?? []} cover className="h-full w-full" />
       </div>
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#04070c] via-[#04070c]/60 to-[#04070c]/20" />
+      <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/60 to-[#0c1220]/20" />
 
       <div className="relative z-30 mx-auto w-full max-w-6xl px-6 pb-20 pt-32 sm:pb-28">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">Flight training, remembered</p>
         <h1 className="font-display mt-4 max-w-2xl text-balance text-[clamp(2.75rem,9vw,4.75rem)] font-extrabold uppercase leading-[0.98] text-white">
-          Never lose a lesson.
+          Get better every flight.
         </h1>
         <p className="mt-6 max-w-md text-pretty text-lg leading-relaxed text-white/85">
-          Record the debrief you&rsquo;re already having. FlightBrief turns it into the plan for your next flight.
+          Record the debrief you&rsquo;re already having. AfterFlight turns it into the plan for your next flight.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href="#how-it-works" className="rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#0a0f1a] hover:bg-white/90">
+          <Link href="#how-it-works" className="rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark">
             See How It Works
           </Link>
           <Link

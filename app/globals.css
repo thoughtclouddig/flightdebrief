@@ -3,19 +3,19 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
-  /* Paper */
-  --background: #f1f4f6;
+  /* Paper -- Hangar Gray */
+  --background: #f4f5f6;
   --surface: #ffffff;
-  --surface-sunken: #e7ebee;
-  --foreground: #101826;
+  --surface-sunken: #e9ebed;
+  --foreground: #101727;
   --foreground-soft: #56636f;
   --foreground-faint: #8c97a2;
-  --hairline: #c7d0d6;
+  --hairline: #c7ccd1;
 
-  /* Instrument nav-blue accent -- deliberately not Tailwind/SaaS blue-600 */
-  --brand: #1d6fa5;
-  --brand-dark: #0e3b54;
-  --brand-light: #ddeaf2;
+  /* AfterFlight Orange -- "orange signals action" */
+  --brand: #f07621;
+  --brand-dark: #b8540f;
+  --brand-light: #fce0c8;
 
   /* Runway-light amber -- status/emphasis, kept separate from the accent */
   --amber: #b87621;
@@ -45,23 +45,23 @@
   --color-good: var(--good);
   --color-good-ink: var(--good-ink);
   --color-good-soft: var(--good-soft);
-  --font-sans: var(--font-public-sans);
-  --font-display: var(--font-big-shoulders);
+  --font-sans: var(--font-archivo);
+  --font-display: var(--font-archivo);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #0a0f1a;
-    --surface: #121a29;
-    --surface-sunken: #0e1522;
-    --foreground: #e9eef3;
-    --foreground-soft: #9aa8b6;
-    --foreground-faint: #5e6c7a;
-    --hairline: #223142;
+    --background: #101727;
+    --surface: #171f33;
+    --surface-sunken: #0c1220;
+    --foreground: #eef0f3;
+    --foreground-soft: #9aa3b0;
+    --foreground-faint: #5f6774;
+    --hairline: #2a3247;
 
-    --brand: #5aa8d6;
-    --brand-dark: #123449;
-    --brand-light: #bfe0f2;
+    --brand: #f07621;
+    --brand-dark: #c2660f;
+    --brand-light: #fbc79a;
 
     --amber: #e3a344;
     --amber-ink: #f6d9a8;
@@ -75,17 +75,17 @@
 
 /* Explicit override via the theme toggle, independent of OS preference */
 :root[data-theme="dark"] {
-  --background: #0a0f1a;
-  --surface: #121a29;
-  --surface-sunken: #0e1522;
-  --foreground: #e9eef3;
-  --foreground-soft: #9aa8b6;
-  --foreground-faint: #5e6c7a;
-  --hairline: #223142;
+  --background: #101727;
+  --surface: #171f33;
+  --surface-sunken: #0c1220;
+  --foreground: #eef0f3;
+  --foreground-soft: #9aa3b0;
+  --foreground-faint: #5f6774;
+  --hairline: #2a3247;
 
-  --brand: #5aa8d6;
-  --brand-dark: #123449;
-  --brand-light: #bfe0f2;
+  --brand: #f07621;
+  --brand-dark: #c2660f;
+  --brand-light: #fbc79a;
 
   --amber: #e3a344;
   --amber-ink: #f6d9a8;
@@ -106,15 +106,19 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
+/* "Archivo Expanded" per the brand sheet is Archivo's own wdth axis pushed to
+   its max (125) -- one variable family, not a second font import. */
 h1 {
   font-family: var(--font-display), sans-serif;
   font-weight: 800;
+  font-stretch: 125%;
   text-transform: uppercase;
   letter-spacing: 0.01em;
 }
 
 .font-display {
   font-family: var(--font-display), sans-serif;
+  font-stretch: 125%;
 }
 
 .tabular-nums {

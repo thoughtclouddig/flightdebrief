@@ -28,7 +28,7 @@ export function isValidTtsVoice(id: string): boolean {
   return TTS_VOICES.some((v) => v.id === id);
 }
 
-const STORAGE_KEY = "flightbrief-tts-voice";
+const STORAGE_KEY = "afterflight-tts-voice";
 
 export function readStoredVoice(): string {
   if (typeof window === "undefined") return DEFAULT_TTS_VOICE;

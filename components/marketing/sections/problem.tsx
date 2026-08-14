@@ -25,7 +25,7 @@ export function Problem() {
       </Reveal>
 
       <Reveal delay={300}>
-        <p className="font-display mt-6 text-2xl font-extrabold uppercase text-brand">FlightBrief remembers.</p>
+        <p className="font-display mt-6 text-2xl font-extrabold uppercase text-brand">AfterFlight remembers.</p>
       </Reveal>
 
       <div className="mx-auto mt-14 flex max-w-lg flex-wrap justify-center gap-2">

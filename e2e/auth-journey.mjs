@@ -231,7 +231,7 @@ try {
   check("no session cookie for rejected login", !rando.jar.has("fb_session"));
   const loginPage = await rando.get(`${APP}/login?error=not-invited`);
   const loginHtml = await loginPage.text();
-  check("login page shows the not-invited message", loginHtml.includes("isn&#x27;t linked to a FlightBrief profile") || loginHtml.includes("isn't linked to a FlightBrief profile"));
+  check("login page shows the not-invited message", loginHtml.includes("isn&#x27;t linked to an AfterFlight profile") || loginHtml.includes("isn't linked to an AfterFlight profile"));
   const { rows: randoRows } = await testDb.query("SELECT 1 FROM users WHERE auth_user_id = $1 OR lower(email) = lower($1)", [RANDO]);
   check("no user row created for rejected login", randoRows.length === 0);
 

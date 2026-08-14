@@ -4,7 +4,7 @@ import type { OrgRole } from "@/lib/types";
 const connectors = new ReplitConnectors();
 
 /** Sender must be a Resend-verified domain address, or the shared test sender. */
-const FROM = process.env.INVITE_EMAIL_FROM ?? "FlightDebrief <onboarding@resend.dev>";
+const FROM = process.env.INVITE_EMAIL_FROM ?? "AfterFlight <onboarding@resend.dev>";
 
 /**
  * Sends via the Resend HTTP API. Prefers RESEND_API_KEY when set (portable
@@ -57,11 +57,11 @@ export async function sendInviteEmail(input: {
   }
   const roleLabel = input.role === "instructor" ? "an instructor (CFI)" : input.role === "admin" ? "an admin" : "a student";
   const loginUrl = new URL("/login", origin).toString();
-  const subject = `You're invited to ${input.organizationName} on FlightDebrief`;
+  const subject = `You're invited to ${input.organizationName} on AfterFlight`;
   const text = [
     `Hi ${input.name},`,
     ``,
-    `You've been added to ${input.organizationName} on FlightDebrief as ${roleLabel}.`,
+    `You've been added to ${input.organizationName} on AfterFlight as ${roleLabel}.`,
     ``,
     `To get started, enter this email address (${input.to}) on the sign-in page and we'll send you a one-time sign-in link:`,
     loginUrl,
@@ -69,15 +69,15 @@ export async function sendInviteEmail(input: {
     `No password or account setup needed -- just make sure you use this same email so your invitation is recognized.`,
   ].join("\n");
   const html = `
-    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1a1a1a">
+    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#101727">
       <h2 style="margin:0 0 16px">You're invited to ${escapeHtml(input.organizationName)}</h2>
       <p>Hi ${escapeHtml(input.name)},</p>
-      <p>You've been added to <strong>${escapeHtml(input.organizationName)}</strong> on FlightDebrief as ${roleLabel}.</p>
+      <p>You've been added to <strong>${escapeHtml(input.organizationName)}</strong> on AfterFlight as ${roleLabel}.</p>
       <p>To get started, enter this email address (<strong>${escapeHtml(input.to)}</strong>) on the sign-in page and we'll send you a one-time sign-in link:</p>
       <p style="margin:24px 0">
-        <a href="${escapeHtml(loginUrl)}" style="background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Log in to FlightDebrief</a>
+        <a href="${escapeHtml(loginUrl)}" style="background:#f07621;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Log in to AfterFlight</a>
       </p>
-      <p style="color:#666;font-size:14px">No password or account setup needed — just make sure you use this same email so your invitation is recognized.</p>
+      <p style="color:#56636f;font-size:14px">No password or account setup needed — just make sure you use this same email so your invitation is recognized.</p>
     </div>`;
 
   try {
@@ -100,20 +100,20 @@ export async function sendInviteEmail(input: {
  * failure, never throws).
  */
 export async function sendMagicLinkEmail(input: { to: string; url: string }): Promise<boolean> {
-  const subject = "Your FlightDebrief sign-in link";
+  const subject = "Your AfterFlight sign-in link";
   const text = [
-    `Click to sign in to FlightDebrief:`,
+    `Click to sign in to AfterFlight:`,
     input.url,
     ``,
     `This link expires in 15 minutes. If you didn't request it, you can ignore this email.`,
   ].join("\n");
   const html = `
-    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1a1a1a">
-      <h2 style="margin:0 0 16px">Sign in to FlightDebrief</h2>
+    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#101727">
+      <h2 style="margin:0 0 16px">Sign in to AfterFlight</h2>
       <p style="margin:24px 0">
-        <a href="${escapeHtml(input.url)}" style="background:#1a1a1a;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Sign in</a>
+        <a href="${escapeHtml(input.url)}" style="background:#f07621;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Sign in</a>
       </p>
-      <p style="color:#666;font-size:14px">This link expires in 15 minutes. If you didn't request it, you can ignore this email.</p>
+      <p style="color:#56636f;font-size:14px">This link expires in 15 minutes. If you didn't request it, you can ignore this email.</p>
     </div>`;
 
   try {

@@ -3,7 +3,7 @@
 import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const STORAGE_KEY = "flightbrief-theme";
+const STORAGE_KEY = "afterflight-theme";
 
 function toggleTheme() {
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";

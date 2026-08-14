@@ -40,7 +40,7 @@ export function HowItWorks() {
 
       <Step
         title="Fly"
-        body="Fly the lesson like you always do. FlightBrief already knows the student, instructor, aircraft, and route."
+        body="Fly the lesson like you always do. AfterFlight already knows the student, instructor, aircraft, and route."
         visual={
           <div className="flex w-full flex-col gap-3">
             <FlightMap track={DEMO_FLIGHT.track} />
@@ -77,7 +77,7 @@ export function HowItWorks() {
 
       <Step
         title="Remember"
-        body="FlightBrief organizes what matters, including anything actually said by the instructor — never invented."
+        body="AfterFlight organizes what matters, including anything actually said by the instructor — never invented."
         visual={
           <div className="w-full rounded-lg border border-hairline bg-surface p-5">
             <dl className="flex flex-col gap-4 text-sm">
@@ -104,7 +104,7 @@ export function HowItWorks() {
 
       <Step
         title="Come back ready"
-        body="Today's debrief becomes tomorrow's FlightBrief — the plan is already there before you get to the airport."
+        body="Today's debrief becomes tomorrow's AfterFlight brief — the plan is already there before you get to the airport."
         visual={<NextLessonFocusCard title="Next Flight Brief" items={DEMO_NEXT_LESSON_FOCUS} className="w-full" />}
       />
     </section>

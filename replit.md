@@ -1,4 +1,4 @@
-# FlightBrief
+# AfterFlight
 
 Next.js 16 (App Router, React 19) flight-training debrief app for students, CFIs, and flight-school admins.
 
