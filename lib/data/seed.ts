@@ -27,8 +27,11 @@ export const ORG_FALCON: Organization = {
   createdAt: new Date().toISOString(),
 };
 
-export const USER_ANDY: User = { id: "user-andy", name: "Ron Johnson", email: "andy@example.com", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_DANNY: User = { id: "user-danny", name: "Danny Franks", email: "danny@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
+// Real, receivable addresses (Gmail "+" aliasing -- same inbox, distinct
+// identities) so the demo student/CFI logins actually work end-to-end with
+// magic-link auth, not just placeholder emails no one can receive.
+export const USER_ANDY: User = { id: "user-andy", name: "Ron Johnson", email: "andyrenk+student@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_DANNY: User = { id: "user-danny", name: "Danny Franks", email: "andyrenk+cfi@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_MARIA: User = { id: "user-maria", name: "Maria Chen", email: "maria@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_SARAH: User = { id: "user-sarah", name: "Sarah Miller", email: "sarah@example.com", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_JORDAN: User = { id: "user-jordan", name: "Jordan Reyes", email: "jordan@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
