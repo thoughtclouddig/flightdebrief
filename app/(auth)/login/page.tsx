@@ -28,14 +28,24 @@ function LoginContent() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
+    // Read the live DOM value rather than trusting only React state: some
+    // browsers' autofill (seen in the Replit webview) fills the input
+    // visually without firing the event React's onChange listens for,
+    // leaving `email` state stale even though the field looks filled in.
+    const formEmail = new FormData(e.currentTarget as HTMLFormElement).get("email");
+    const value = typeof formEmail === "string" && formEmail.trim() ? formEmail : email;
+    if (!value.trim()) {
+      setFormError("Enter your email address.");
+      return;
+    }
+    if (value !== email) setEmail(value);
     setSending(true);
     setFormError(null);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: value }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -99,6 +109,7 @@ function LoginContent() {
             <Label htmlFor="login-email">Email</Label>
             <Input
               id="login-email"
+              name="email"
               type="email"
               autoComplete="email"
               className="mt-1.5"
@@ -108,7 +119,7 @@ function LoginContent() {
             />
           </div>
           {formError ? <p className="text-sm text-red-600 dark:text-red-400">{formError}</p> : null}
-          <Button type="submit" size="lg" disabled={sending || !email.trim()}>
+          <Button type="submit" size="lg" disabled={sending}>
             {sending ? <Loader2 className="size-4 animate-spin" /> : null}
             Email me a sign-in link
           </Button>
