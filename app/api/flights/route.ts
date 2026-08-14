@@ -21,9 +21,15 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as CreateFlightBody;
 
-  if (!body.tailNumber || !body.departureAirport || !body.arrivalAirport || !body.flightDate || !body.durationMinutes) {
+  // Airport codes are allowed to come back empty -- FR24 doesn't always resolve
+  // an ICAO code (e.g. private strips, data gaps), and that shouldn't block
+  // logging a real flight. tailNumber/flightDate/durationMinutes are the only
+  // fields the rest of the app actually depends on being present.
+  if (!body.tailNumber || !body.flightDate || !body.durationMinutes) {
     return NextResponse.json({ error: "Missing required flight fields" }, { status: 400 });
   }
+  const departureAirport = body.departureAirport?.trim() || "UNKNOWN";
+  const arrivalAirport = body.arrivalAirport?.trim() || "UNKNOWN";
 
   const repo = getRepository();
 
@@ -31,7 +37,7 @@ export async function POST(request: Request) {
     const aircraft = await repo.getOrCreateAircraft({
       tailNumber: body.tailNumber,
       type: body.aircraftType ?? "Unknown",
-      homeAirport: body.departureAirport,
+      homeAirport: departureAirport,
       organizationId: viewer.organization.id,
     });
 
@@ -52,8 +58,8 @@ export async function POST(request: Request) {
       aircraftId: aircraft.id,
       organizationId: viewer.organization.id,
       studentId: viewer.user.id,
-      departureAirport: body.departureAirport.toUpperCase(),
-      arrivalAirport: body.arrivalAirport.toUpperCase(),
+      departureAirport: departureAirport.toUpperCase(),
+      arrivalAirport: arrivalAirport.toUpperCase(),
       flightDate: body.flightDate,
       durationMinutes: body.durationMinutes,
       instructorId: instructor?.id ?? null,
