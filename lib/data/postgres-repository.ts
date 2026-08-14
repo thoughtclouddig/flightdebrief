@@ -252,16 +252,22 @@ export class PostgresRepository implements Repository {
   async createTrainingItems(items: Omit<TrainingItem, "id" | "createdAt">[]): Promise<TrainingItem[]> {
     if (items.length === 0) return [];
     const db = await this.db();
-    const created: TrainingItem[] = [];
-    for (const item of items) {
-      const { rows } = await db.query(
-        `INSERT INTO training_items (id, flight_id, debrief_id, category, description, done, completed_at, visibility)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-        [randomUUID(), item.flightId, item.debriefId, item.category, item.description, item.done, item.completedAt, item.visibility],
-      );
-      created.push(mapTrainingItem(rows[0]));
-    }
-    return created;
+    const values = items.map((item) => [
+      randomUUID(),
+      item.flightId,
+      item.debriefId,
+      item.category,
+      item.description,
+      item.done,
+      item.completedAt,
+      item.visibility,
+    ]);
+    const { rows } = await db.query(
+      `INSERT INTO training_items (id, flight_id, debrief_id, category, description, done, completed_at, visibility)
+       VALUES ${buildValuesPlaceholders(values.length, 8)} RETURNING *`,
+      values.flat(),
+    );
+    return rows.map(mapTrainingItem);
   }
 
   async setTrainingItemDone(id: string, done: boolean): Promise<void> {
@@ -448,32 +454,29 @@ export class PostgresRepository implements Repository {
   async createTrainingSignals(items: Omit<TrainingSignal, "id" | "createdAt">[]): Promise<TrainingSignal[]> {
     if (items.length === 0) return [];
     const db = await this.db();
-    const created: TrainingSignal[] = [];
-    for (const item of items) {
-      const { rows } = await db.query(
-        `INSERT INTO training_signals (
-           id, organization_id, student_id, instructor_id, aircraft_id, flight_id, debrief_id,
-           flight_date, category, skill, status, source, statement
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
-        [
-          randomUUID(),
-          item.organizationId,
-          item.studentId,
-          item.instructorId,
-          item.aircraftId,
-          item.flightId,
-          item.debriefId,
-          item.flightDate,
-          item.category,
-          item.skill,
-          item.status,
-          item.source,
-          item.statement,
-        ],
-      );
-      created.push(mapTrainingSignal(rows[0]));
-    }
-    return created;
+    const values = items.map((item) => [
+      randomUUID(),
+      item.organizationId,
+      item.studentId,
+      item.instructorId,
+      item.aircraftId,
+      item.flightId,
+      item.debriefId,
+      item.flightDate,
+      item.category,
+      item.skill,
+      item.status,
+      item.source,
+      item.statement,
+    ]);
+    const { rows } = await db.query(
+      `INSERT INTO training_signals (
+         id, organization_id, student_id, instructor_id, aircraft_id, flight_id, debrief_id,
+         flight_date, category, skill, status, source, statement
+       ) VALUES ${buildValuesPlaceholders(values.length, 13)} RETURNING *`,
+      values.flat(),
+    );
+    return rows.map(mapTrainingSignal);
   }
 
   async listTrainingSignals(filter?: ListTrainingSignalsFilter): Promise<TrainingSignal[]> {
@@ -496,6 +499,19 @@ export class PostgresRepository implements Repository {
     );
     return rows.map(mapTrainingSignal);
   }
+}
+
+// --- SQL helpers ---------------------------------------------------------------
+
+/** Builds "($1,$2,...),($n+1,...)" placeholder groups for a multi-row INSERT. */
+function buildValuesPlaceholders(rowCount: number, columnCount: number): string {
+  const groups: string[] = [];
+  for (let row = 0; row < rowCount; row++) {
+    const offset = row * columnCount;
+    const params = Array.from({ length: columnCount }, (_, col) => `$${offset + col + 1}`);
+    groups.push(`(${params.join(",")})`);
+  }
+  return groups.join(",");
 }
 
 // --- Seeding ----------------------------------------------------------------
