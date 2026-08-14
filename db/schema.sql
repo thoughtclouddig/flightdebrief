@@ -173,7 +173,7 @@ CREATE INDEX IF NOT EXISTS training_signals_org_idx ON training_signals (organiz
 -- Seed rows mirroring lib/data/seed.ts (same ids).
 INSERT INTO organizations (id, name, kind) VALUES ('org-falcon','Falcon Aviation','school') ON CONFLICT (id) DO NOTHING;
 INSERT INTO users (id, name, email) VALUES
-  ('user-andy','Andy Renk','andy@example.com'),
+  ('user-andy','Ron Johnson','andy@example.com'),
   ('user-danny','Danny Franks','danny@falconaviation.example'),
   ('user-maria','Maria Chen','maria@falconaviation.example'),
   ('user-sarah','Sarah Miller','sarah@example.com'),
