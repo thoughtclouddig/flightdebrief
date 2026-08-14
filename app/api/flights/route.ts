@@ -27,38 +27,43 @@ export async function POST(request: Request) {
 
   const repo = getRepository();
 
-  const aircraft = await repo.getOrCreateAircraft({
-    tailNumber: body.tailNumber,
-    type: body.aircraftType ?? "Unknown",
-    homeAirport: body.departureAirport,
-    organizationId: viewer.organization.id,
-  });
+  try {
+    const aircraft = await repo.getOrCreateAircraft({
+      tailNumber: body.tailNumber,
+      type: body.aircraftType ?? "Unknown",
+      homeAirport: body.departureAirport,
+      organizationId: viewer.organization.id,
+    });
 
-  const instructor = body.instructorName?.trim()
-    ? await repo.getOrCreateInstructor(body.instructorName.trim(), viewer.organization.id)
-    : null;
+    const instructor = body.instructorName?.trim()
+      ? await repo.getOrCreateInstructor(body.instructorName.trim(), viewer.organization.id)
+      : null;
 
-  let track = null;
-  if (body.providerFlightId) {
-    try {
-      track = await getFlightDataProvider().getFlightTrack(body.providerFlightId);
-    } catch (err) {
-      console.error("[Flights] failed to fetch track for", body.providerFlightId, err);
+    let track = null;
+    if (body.providerFlightId) {
+      try {
+        track = await getFlightDataProvider().getFlightTrack(body.providerFlightId);
+      } catch (err) {
+        console.error("[Flights] failed to fetch track for", body.providerFlightId, err);
+      }
     }
+
+    const flight = await repo.createFlight({
+      aircraftId: aircraft.id,
+      organizationId: viewer.organization.id,
+      studentId: viewer.user.id,
+      departureAirport: body.departureAirport.toUpperCase(),
+      arrivalAirport: body.arrivalAirport.toUpperCase(),
+      flightDate: body.flightDate,
+      durationMinutes: body.durationMinutes,
+      instructorId: instructor?.id ?? null,
+      fr24FlightId: body.providerFlightId ?? null,
+      track,
+    });
+
+    return NextResponse.json({ flight });
+  } catch (err) {
+    console.error("[Flights] failed to create flight:", err);
+    return NextResponse.json({ error: "Failed to create flight. Please try again." }, { status: 502 });
   }
-
-  const flight = await repo.createFlight({
-    aircraftId: aircraft.id,
-    organizationId: viewer.organization.id,
-    studentId: viewer.user.id,
-    departureAirport: body.departureAirport.toUpperCase(),
-    arrivalAirport: body.arrivalAirport.toUpperCase(),
-    flightDate: body.flightDate,
-    durationMinutes: body.durationMinutes,
-    instructorId: instructor?.id ?? null,
-    fr24FlightId: body.providerFlightId ?? null,
-    track,
-  });
-
-  return NextResponse.json({ flight });
 }

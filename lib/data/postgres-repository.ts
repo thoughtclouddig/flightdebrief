@@ -112,7 +112,7 @@ export class PostgresRepository implements Repository {
     const { rows } = await db.query(
       `INSERT INTO aircraft (id, tail_number, type, make, model, home_airport, organization_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (id) DO NOTHING
+       ON CONFLICT ((upper(tail_number))) DO NOTHING
        RETURNING *`,
       [
         randomUUID(),
@@ -124,7 +124,11 @@ export class PostgresRepository implements Repository {
         input.organizationId ?? null,
       ],
     );
-    return mapAircraft(rows[0]);
+    if (rows[0]) return mapAircraft(rows[0]);
+    // Lost the race to a concurrent insert with the same tail number -- the
+    // conflicting row now exists, fetch it instead of returning undefined.
+    const { rows: afterConflict } = await db.query("SELECT * FROM aircraft WHERE upper(tail_number) = $1", [tail]);
+    return mapAircraft(afterConflict[0]);
   }
 
   async getOrCreateInstructor(name: string, organizationId?: string | null): Promise<Instructor> {

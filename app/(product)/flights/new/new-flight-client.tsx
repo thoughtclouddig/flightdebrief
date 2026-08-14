@@ -191,9 +191,11 @@ function ConfirmCandidateForm({
 }) {
   const [instructorName, setInstructorName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function confirm() {
     setSaving(true);
+    setError(null);
     try {
       const res = await fetch("/api/flights", {
         method: "POST",
@@ -209,8 +211,14 @@ function ConfirmCandidateForm({
           providerFlightId: candidate.providerFlightId,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.flight) {
+        setError(data.error ?? "Failed to add this flight. Please try again.");
+        return;
+      }
       onCreated(data.flight.id);
+    } catch {
+      setError("Failed to add this flight -- check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -231,6 +239,7 @@ function ConfirmCandidateForm({
           <Label htmlFor="instructor">Instructor (optional)</Label>
           <InstructorSelect id="instructor" value={instructorName} onChange={setInstructorName} instructorNames={instructorNames} />
         </div>
+        {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
         <div className="flex gap-2">
           <Button variant="outline" onClick={onBack} className="flex-1">
             Back
@@ -257,6 +266,7 @@ function ManualForm({ instructorNames }: { instructorNames: string[] }) {
     instructorName: "",
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -265,15 +275,22 @@ function ManualForm({ instructorNames }: { instructorNames: string[] }) {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     try {
       const res = await fetch("/api/flights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, instructorName: form.instructorName || undefined }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.flight) {
+        setError(data.error ?? "Failed to add this flight. Please try again.");
+        setSaving(false);
+        return;
+      }
       router.push(`/flights/${data.flight.id}`);
-    } finally {
+    } catch {
+      setError("Failed to add this flight -- check your connection and try again.");
       setSaving(false);
     }
   }
@@ -318,6 +335,7 @@ function ManualForm({ instructorNames }: { instructorNames: string[] }) {
               </Field>
             </div>
           </div>
+          {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
           <Button type="submit" disabled={saving} className="w-full">
             {saving ? <Loader2 className="size-4 animate-spin" /> : null}
             Add flight
