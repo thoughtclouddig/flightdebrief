@@ -186,3 +186,15 @@ INSERT INTO organization_members (id, organization_id, user_id, role, certificat
   ('member-sarah','org-falcon','user-sarah','student','PRIVATE'),
   ('member-jordan','org-falcon','user-jordan','admin',NULL)
 ON CONFLICT (id) DO NOTHING;
+
+-- The real app owner's admin login (distinct from the 'user-andy' demo/seed
+-- student above, which is placeholder data, not a real account). Provisioned
+-- here rather than relying on the "first real login becomes admin" bootstrap
+-- in resolveUserOnLogin() so it's deterministic regardless of who signs in
+-- first once the app is public.
+INSERT INTO users (id, name, email) VALUES
+  ('user-owner','Andy Renk','andyrenk@gmail.com')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO organization_members (id, organization_id, user_id, role) VALUES
+  ('member-owner','org-falcon','user-owner','admin')
+ON CONFLICT (id) DO NOTHING;
