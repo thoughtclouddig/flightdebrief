@@ -576,6 +576,15 @@ export class PostgresRepository implements Repository {
     return rows[0] ? mapOrganization(rows[0]) : null;
   }
 
+  async createOrganization(input: { id?: string; name: string; kind: Organization["kind"] }): Promise<Organization> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      "INSERT INTO organizations (id, name, kind) VALUES ($1, $2, $3) RETURNING *",
+      [input.id ?? `org-${randomUUID()}`, input.name, input.kind],
+    );
+    return mapOrganization(rows[0]);
+  }
+
   async listOrganizations(): Promise<Organization[]> {
     const db = await this.db();
     const { rows } = await db.query("SELECT * FROM organizations ORDER BY name");

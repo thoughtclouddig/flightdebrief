@@ -1,51 +1,34 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Loader2, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const ERROR_MESSAGES: Record<string, string> = {
-  "not-invited":
-    "That email isn't linked to an AfterFlight profile yet. Ask your school's admin or CFI to invite you, then request a new sign-in link with the invited email.",
-  expired: "That sign-in link is invalid or has expired. Request a new one below.",
-  "auth-failed": "Sign-in failed. Please try again.",
-};
-
-function LoginContent() {
-  const searchParams = useSearchParams();
-  const errorCode = searchParams.get("error");
-  const error = errorCode ? (ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES["auth-failed"]) : null;
-
+export default function SignupPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [orgName, setOrgName] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    // Read the live DOM value rather than trusting only React state: some
-    // browsers' autofill (seen in the Replit webview) fills the input
-    // visually without firing the event React's onChange listens for,
-    // leaving `email` state stale even though the field looks filled in.
-    const formEmail = new FormData(e.currentTarget as HTMLFormElement).get("email");
-    const value = typeof formEmail === "string" && formEmail.trim() ? formEmail : email;
-    if (!value.trim()) {
-      setFormError("Enter your email address.");
+    if (!name.trim() || !email.trim()) {
+      setFormError("Enter your name and email address.");
       return;
     }
-    if (value !== email) setEmail(value);
     setSending(true);
     setFormError(null);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: value }),
+        body: JSON.stringify({ name, email, orgName: orgName || undefined }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -79,21 +62,16 @@ function LoginContent() {
           className="hidden dark:block"
           priority
         />
-        <p className="mt-2 text-sm text-foreground-soft">Sign in to your account</p>
+        <p className="mt-2 text-sm text-foreground-soft">Start your own AfterFlight, as an independent CFI</p>
       </div>
-
-      {error && !sent ? (
-        <p className="rounded-lg bg-red-500/10 px-4 py-3 text-center text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
-      ) : null}
 
       {sent ? (
         <div className="flex flex-col items-center gap-3 rounded-lg bg-emerald-500/10 px-4 py-6 text-center">
           <MailCheck className="size-8 text-emerald-600 dark:text-emerald-400" />
           <p className="text-sm text-foreground">
-            Check your email — if <span className="font-medium">{email.trim().toLowerCase()}</span> has an
-            account, a sign-in link is on its way. The link expires in 15 minutes.
+            Check your email — if <span className="font-medium">{email.trim().toLowerCase()}</span> doesn&apos;t
+            already have an account, a confirmation link is on its way. Click it to finish setting up your
+            organization. The link expires in 15 minutes.
           </p>
           <button
             type="button"
@@ -106,9 +84,20 @@ function LoginContent() {
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4">
           <div>
-            <Label htmlFor="login-email">Email</Label>
+            <Label htmlFor="signup-name">Your name</Label>
             <Input
-              id="login-email"
+              id="signup-name"
+              name="name"
+              autoComplete="name"
+              className="mt-1.5"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="signup-email">Email</Label>
+            <Input
+              id="signup-email"
               name="email"
               type="email"
               autoComplete="email"
@@ -118,19 +107,29 @@ function LoginContent() {
               placeholder="you@example.com"
             />
           </div>
+          <div>
+            <Label htmlFor="signup-org-name">Organization name (optional)</Label>
+            <Input
+              id="signup-org-name"
+              name="orgName"
+              className="mt-1.5"
+              value={orgName}
+              onChange={(e) => setOrgName(e.target.value)}
+              placeholder={name ? `${name}'s Flight Training` : "Your Name's Flight Training"}
+            />
+          </div>
           {formError ? <p className="text-sm text-red-600 dark:text-red-400">{formError}</p> : null}
           <Button type="submit" size="lg" disabled={sending}>
             {sending ? <Loader2 className="size-4 animate-spin" /> : null}
-            Email me a sign-in link
+            Email me a confirmation link
           </Button>
         </form>
       )}
 
       <p className="text-center text-xs text-foreground-faint">
-        Need an account? Ask your school&apos;s admin or CFI for an invite, then request a sign-in
-        link with the invited email. Independent CFI?{" "}
-        <Link href="/signup" className="text-brand hover:underline">
-          Start your own AfterFlight
+        Already have an account?{" "}
+        <Link href="/login" className="text-brand hover:underline">
+          Sign in
         </Link>
         .
       </p>
@@ -138,13 +137,5 @@ function LoginContent() {
         &larr; Back to afterflight.com
       </Link>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginContent />
-    </Suspense>
   );
 }

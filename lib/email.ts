@@ -130,6 +130,41 @@ export async function sendMagicLinkEmail(input: { to: string; url: string }): Pr
   }
 }
 
+/** Emails a self-serve signup confirmation link -- same conventions as sendMagicLinkEmail. */
+export async function sendSignupLinkEmail(input: { to: string; url: string; name: string }): Promise<boolean> {
+  const subject = "Confirm your AfterFlight account";
+  const text = [
+    `Hi ${input.name},`,
+    ``,
+    `Click to confirm your AfterFlight account and set up your organization:`,
+    input.url,
+    ``,
+    `This link expires in 15 minutes. If you didn't request it, you can ignore this email.`,
+  ].join("\n");
+  const html = `
+    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#101727">
+      <h2 style="margin:0 0 16px">Confirm your AfterFlight account</h2>
+      <p>Hi ${escapeHtml(input.name)},</p>
+      <p style="margin:24px 0">
+        <a href="${escapeHtml(input.url)}" style="background:#f07621;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Confirm and continue</a>
+      </p>
+      <p style="color:#56636f;font-size:14px">This link expires in 15 minutes. If you didn't request it, you can ignore this email.</p>
+    </div>`;
+
+  try {
+    const response = await sendViaResend({ from: FROM, to: [input.to], subject, text, html });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      console.error(`[email] signup link to ${input.to} failed: ${response.status} ${detail}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`[email] signup link to ${input.to} failed:`, err);
+    return false;
+  }
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }

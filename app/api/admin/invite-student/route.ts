@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   }
 
   const repo = getRepository();
-  const auth = await authorize("admin");
+  const auth = await authorize(["instructor", "admin"]);
   if (auth.response) return auth.response;
   const viewer = auth.viewer;
 
@@ -37,10 +37,13 @@ export async function POST(request: Request) {
     );
   }
 
-  if (body.primaryInstructorId) {
+  // A CFI inviting their own student is naturally that student's primary CFI
+  // -- an admin invite still requires the explicit select.
+  const primaryInstructorId = body.primaryInstructorId ?? (viewer.role === "instructor" ? viewer.user.id : undefined);
+  if (primaryInstructorId) {
     await repo.linkStudentInstructor({
       studentId: user.id,
-      instructorId: body.primaryInstructorId,
+      instructorId: primaryInstructorId,
       organizationId: viewer.organization.id,
       isPrimary: true,
     });

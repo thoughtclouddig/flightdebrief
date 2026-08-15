@@ -12,6 +12,7 @@ import type {
   FlightWithRelations,
   Instructor,
   Organization,
+  OrganizationKind,
   OrganizationMember,
   OrgRole,
   Reservation,
@@ -158,6 +159,7 @@ export interface Repository {
   createUser(input: { name: string; email: string; authUserId?: string | null }): Promise<User>;
   setUserAuthId(userId: string, authUserId: string): Promise<void>;
   getOrganization(id: string): Promise<Organization | null>;
+  createOrganization(input: { id?: string; name: string; kind: OrganizationKind }): Promise<Organization>;
   listOrganizations(): Promise<Organization[]>;
   listOrganizationsForUser(userId: string): Promise<Organization[]>;
   listMembers(organizationId: string, role?: OrgRole): Promise<OrganizationMember[]>;
