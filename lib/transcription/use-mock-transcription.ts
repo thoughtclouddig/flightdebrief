@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import type { FinishedTranscription, TranscriptionState, UseTranscription } from "./types";
+import type { FinishedTranscription, TranscriptionState, TranscriptWord, UseTranscription } from "./types";
 
 const DEFAULT_MOCK_TRANSCRIPT =
   "We started with some pattern work. My first landing was pretty rough. I was carrying too much speed and floated. The next two were better. We also practiced a go-around. Radio calls were much better today, but I missed one instruction from tower and had to ask for a repeat.";
@@ -25,6 +25,8 @@ export function useMockTranscription(scriptedTranscript?: string): UseTranscript
   const timers = useRef<ReturnType<typeof setInterval>[]>([]);
   const startedAt = useRef<number>(0);
   const finalTranscriptRef = useRef("");
+  const wordsRef = useRef<TranscriptWord[]>([]);
+  const WORD_INTERVAL_SECONDS = 0.18;
 
   const clearTimers = () => {
     timers.current.forEach(clearInterval);
@@ -34,6 +36,7 @@ export function useMockTranscription(scriptedTranscript?: string): UseTranscript
   const start = useCallback(async () => {
     clearTimers();
     finalTranscriptRef.current = "";
+    wordsRef.current = [];
     startedAt.current = Date.now();
     setState((s) => ({ ...s, status: "connecting", transcript: "", interimTranscript: "", error: null }));
 
@@ -50,6 +53,12 @@ export function useMockTranscription(scriptedTranscript?: string): UseTranscript
         return;
       }
       buffer = buffer ? `${buffer} ${words[i]}` : words[i];
+      wordsRef.current.push({
+        word: words[i],
+        start: i * WORD_INTERVAL_SECONDS,
+        end: (i + 1) * WORD_INTERVAL_SECONDS,
+        speaker: null,
+      });
       i++;
       finalTranscriptRef.current = buffer;
       setState((s) => ({ ...s, transcript: buffer, interimTranscript: "" }));
@@ -77,7 +86,7 @@ export function useMockTranscription(scriptedTranscript?: string): UseTranscript
       transcript: finalTranscript,
       interimTranscript: "",
     }));
-    return { transcript: finalTranscript, durationSeconds };
+    return { transcript: finalTranscript, durationSeconds, words: wordsRef.current };
   }, [script]);
 
   return { ...state, start, stop };

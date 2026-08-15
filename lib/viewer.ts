@@ -1,4 +1,5 @@
-import { getSession } from "@/lib/auth/session";
+import { cookies } from "next/headers";
+import { ACTIVE_MEMBERSHIP_COOKIE, getSession } from "@/lib/auth/session";
 import * as store from "@/lib/auth/store";
 import type { Organization, OrgRole, User } from "@/lib/types";
 
@@ -29,7 +30,13 @@ export async function getViewer(): Promise<Viewer> {
   }
 
   const memberships = await store.listMembershipsForUser(user.id);
-  const activeMembership = memberships.find((m) => m.status === "active");
+  // Prefer whichever membership the switcher last selected (validated against
+  // this user's own list, never trusted blindly), falling back to the first
+  // active one -- the only behavior single-membership accounts ever see.
+  const preferredId = (await cookies()).get(ACTIVE_MEMBERSHIP_COOKIE)?.value;
+  const activeMembership =
+    memberships.find((m) => m.id === preferredId && m.status === "active") ??
+    memberships.find((m) => m.status === "active");
   if (!activeMembership) {
     throw new Error("Signed in, but not an active member of any organization.");
   }
@@ -40,4 +47,28 @@ export async function getViewer(): Promise<Viewer> {
   }
 
   return { user, organization, role: activeMembership.role };
+}
+
+export interface MembershipOption {
+  membershipId: string;
+  organizationId: string;
+  organizationName: string;
+  role: OrgRole;
+}
+
+/**
+ * Every active membership a user holds, enriched with org names -- feeds the
+ * nav's "Organizations" switcher (components/user-menu.tsx). Serves both a
+ * CFI at multiple schools and a solo independent CFI holding admin+instructor
+ * rows in the same org (see lib/auth/store.ts's resolveSignupOnLogin).
+ */
+export async function listMembershipOptions(userId: string): Promise<MembershipOption[]> {
+  const memberships = (await store.listMembershipsForUser(userId)).filter((m) => m.status === "active");
+  const options = await Promise.all(
+    memberships.map(async (m) => {
+      const org = await store.getOrganization(m.organizationId);
+      return org ? { membershipId: m.id, organizationId: org.id, organizationName: org.name, role: m.role } : null;
+    }),
+  );
+  return options.filter((o): o is MembershipOption => o !== null);
 }

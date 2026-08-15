@@ -17,19 +17,34 @@ export function analyzeMock(input: AnalyzeDebriefInput): StructuredDebriefResult
   const wentWell = sentences.filter((s) => matches(s, POSITIVE_CUES) && !matches(s, NEGATIVE_CUES));
   const needsWork = sentences.filter((s) => matches(s, NEGATIVE_CUES));
   const instructorGuidance = extractInstructorGuidance(sentences, instructorName);
+  const instructorAssistance = extractInstructorAssistance(sentences, instructorName);
+  const riskManagementNotes = sentences.filter((s) => matches(s, RISK_CUES));
   const actionItems = buildActionItems(needsWork, whatWeDid, input.previousActionItems);
   const nextLessonFocus = buildNextLessonFocus(whatWeDid, needsWork);
   const studyReferences = suggestStudyReferences([...needsWork, ...actionItems].join(" "));
+  const flightSummary = buildFlightSummary(input.flightMeta, whatWeDid);
 
   return {
+    flightSummary,
     whatWeDid,
     wentWell: dedupe(wentWell).slice(0, 6),
     needsWork: dedupe(needsWork).slice(0, 6),
     instructorGuidance,
+    instructorAssistance: dedupe(instructorAssistance).slice(0, 4),
+    riskManagementNotes: dedupe(riskManagementNotes).slice(0, 4),
     actionItems: dedupe(actionItems).slice(0, 6),
     nextLessonFocus: dedupe(nextLessonFocus).slice(0, 4),
     studyReferences,
+    // Always overwritten by lib/ai/index.ts from debrief_assessment_ratings --
+    // this is just to satisfy the return type when called directly (e.g. tests).
+    assessmentDifferences: [],
   };
+}
+
+function buildFlightSummary(flightMeta: AnalyzeDebriefInput["flightMeta"], topics: string[]): string {
+  const topicList = topics.filter((t) => t !== "General flight training");
+  const focus = topicList.length ? topicList.slice(0, 2).join(" and ").toLowerCase() : "general training";
+  return `${flightMeta.departureAirport} to ${flightMeta.arrivalAirport}, focused on ${focus}.`;
 }
 
 function splitSentences(text: string): string[] {
@@ -77,6 +92,38 @@ const NEGATIVE_CUES = [
   "behind",
   "squirrelly",
 ];
+
+const RISK_CUES = [
+  "risk",
+  "decision",
+  "weather",
+  "traffic",
+  "diverted",
+  "diversion",
+  "fuel",
+  "workload",
+  "situational awareness",
+  "distracted",
+  "went around because",
+];
+
+const ASSISTANCE_CUES = [
+  "took the controls",
+  "took over",
+  "had to take over",
+  "demonstrated",
+  "helped me",
+  "corrected me",
+  "reminded me",
+  "prompted me",
+  "walked me through",
+];
+
+/** Factual "instructor stepped in" notes -- distinct from extractInstructorGuidance's verbatim quotes. */
+function extractInstructorAssistance(sentences: string[], instructorName: string) {
+  const namePattern = new RegExp(`\\b(${escapeRegExp(instructorName)}|instructor)\\b`, "i");
+  return sentences.filter((s) => namePattern.test(s) && matches(s, ASSISTANCE_CUES));
+}
 
 function extractInstructorGuidance(sentences: string[], instructorName: string) {
   const namePattern = new RegExp(

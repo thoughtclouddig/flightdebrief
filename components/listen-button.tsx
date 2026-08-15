@@ -53,7 +53,7 @@ export function ListenButton({ baseSrc, label = "Listen" }: { baseSrc: string; l
         {status === "loading" ? "Loading…" : status === "playing" ? "Pause" : label}
       </Button>
       {status === "error" ? (
-        <p className="text-xs text-red-500">Couldn&rsquo;t generate audio -- try again.</p>
+        <p className="text-xs text-danger">Couldn&rsquo;t generate audio -- try again.</p>
       ) : null}
     </div>
   );

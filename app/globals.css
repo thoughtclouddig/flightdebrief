@@ -26,6 +26,11 @@
   --good: #2f7a4e;
   --good-ink: #1d4e31;
   --good-soft: #dceee2;
+
+  /* Muted brick red -- needs attention, distinct from --brand's orange so it never competes with CTAs */
+  --danger: #c0362b;
+  --danger-ink: #7a2019;
+  --danger-soft: #f8dcd8;
 }
 
 @theme inline {
@@ -45,6 +50,9 @@
   --color-good: var(--good);
   --color-good-ink: var(--good-ink);
   --color-good-soft: var(--good-soft);
+  --color-danger: var(--danger);
+  --color-danger-ink: var(--danger-ink);
+  --color-danger-soft: var(--danger-soft);
   --font-sans: var(--font-archivo);
   --font-display: var(--font-archivo);
 }
@@ -70,6 +78,10 @@
     --good: #57ad7a;
     --good-ink: #bee8ce;
     --good-soft: #10291b;
+
+    --danger: #e0665a;
+    --danger-ink: #f8d3ce;
+    --danger-soft: #3a1613;
   }
 }
 
@@ -94,6 +106,10 @@
   --good: #57ad7a;
   --good-ink: #bee8ce;
   --good-soft: #10291b;
+
+  --danger: #e0665a;
+  --danger-ink: #f8d3ce;
+  --danger-soft: #3a1613;
 }
 
 * {

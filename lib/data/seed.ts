@@ -24,6 +24,7 @@ export const ORG_FALCON: Organization = {
   id: "org-falcon",
   name: "Falcon Aviation",
   kind: "school",
+  defaultGuidanceMode: "guided",
   createdAt: new Date().toISOString(),
 };
 
@@ -35,6 +36,12 @@ export const USER_DANNY: User = { id: "user-danny", name: "Danny Franks", email:
 export const USER_MARIA: User = { id: "user-maria", name: "Maria Chen", email: "maria@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_SARAH: User = { id: "user-sarah", name: "Sarah Miller", email: "sarah@example.com", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_JORDAN: User = { id: "user-jordan", name: "Jordan Reyes", email: "jordan@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
+
+// Additional students spanning different training phases, for testing/demo
+// variety -- early pattern work, post-solo cross-country, and checkride prep.
+export const USER_MARCUS: User = { id: "user-marcus", name: "Marcus Webb", email: "marcus@example.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_PRIYA: User = { id: "user-priya", name: "Priya Anand", email: "priya@example.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_TOM: User = { id: "user-tom", name: "Tom Reilly", email: "tom@example.com", authUserId: null, createdAt: new Date().toISOString() };
 
 /** The default viewer when the app first loads (see lib/viewer.ts). */
 export const DEMO_USER_ID = USER_ANDY.id;
@@ -59,6 +66,32 @@ const SARAH_AIRCRAFT: Aircraft = {
   make: "Cessna",
   model: "172",
   homeAirport: "KCHD",
+  organizationId: ORG_FALCON.id,
+  status: "active",
+  externalProvider: null,
+  externalId: null,
+};
+
+const MARCUS_AIRCRAFT: Aircraft = {
+  id: "aircraft-c152-n4521q",
+  tailNumber: "N4521Q",
+  type: "Cessna 152",
+  make: "Cessna",
+  model: "152",
+  homeAirport: "KFFZ",
+  organizationId: ORG_FALCON.id,
+  status: "active",
+  externalProvider: null,
+  externalId: null,
+};
+
+const TOM_AIRCRAFT: Aircraft = {
+  id: "aircraft-da40-n456ct",
+  tailNumber: "N456CT",
+  type: "Diamond DA40 NG",
+  make: "Diamond",
+  model: "DA40 NG",
+  homeAirport: "KFFZ",
   organizationId: ORG_FALCON.id,
   status: "active",
   externalProvider: null,
@@ -94,6 +127,24 @@ export const SEED_PENDING_TRANSCRIPT =
 
 const SARAH_FLIGHT_TRANSCRIPT =
   "We worked slow flight and power-off stalls today. Danny had me slow down earlier before configuring for the stall. Checklist discipline was better this time. My steep turns still need work on holding altitude.";
+
+// --- Marcus Webb: early student, first few hours in the pattern -------------
+const MARCUS_FLIGHT_1_TRANSCRIPT =
+  "First real lesson in the pattern today. My landings were pretty rough -- I was carrying too much speed on final and floated almost every time. Maria had me work on getting configured earlier in the pattern. Radio calls were rough too, I missed an instruction from tower and had to ask for a repeat. Traffic pattern altitude was inconsistent.";
+const MARCUS_FLIGHT_2_TRANSCRIPT =
+  "Back in the pattern again. Landings were better -- still floating a little on final but not as much as last time. Maria wants me to keep working on getting configured earlier and trimming for my approach speed. Radio calls were much better today, only needed one repeat. Traffic pattern altitude was more consistent this time.";
+
+// --- Priya Anand: post-solo, working into cross-country -------------------
+const PRIYA_FLIGHT_1_TRANSCRIPT =
+  "First cross country dual today, KCHD to Casa Grande and back. Danny had me work pilotage the whole way out, checking my position against landmarks instead of just following the GPS. I got a little behind on my navigation log on the way out and missed a checkpoint. Coming back was better. We also practiced a diversion when Danny simulated deteriorating weather -- I need to work on picking a diversion airport faster.";
+const PRIYA_FLIGHT_2_TRANSCRIPT =
+  "Second cross country lesson, this one to Coolidge. Navigation log was much better this time, stayed on top of my checkpoints. The diversion drill went well too -- picked an airport and got a heading within a reasonable time. Danny wants me to keep working on fuel planning, I was a little optimistic on my time estimate for the return leg.";
+
+// --- Tom Reilly: advanced student, checkride prep --------------------------
+const TOM_FLIGHT_1_TRANSCRIPT =
+  "Checkride prep session, worked the full private pilot maneuvers list. Steep turns were solid, held altitude within standards on both directions. Slow flight was good. Power-off stalls were fine but my power-on stall recovery was a little abrupt -- Danny wants smoother pitch input. We also did a short-field landing and I came in a bit long, need to nail my aim point better. Emergency procedures and checklist flow were sharp.";
+const TOM_FLIGHT_2_TRANSCRIPT =
+  "Another checkride prep flight. Steep turns and slow flight still solid. Power-on stall recovery was much smoother this time, good pitch control. Short-field landing was right on the aim point today. Danny said I'm about ready for the checkride -- just wants one more flight focused on emergency procedures under time pressure to build speed on the checklist flow.";
 
 // Three additional historical flights, further back than the preserved flight-1/2/3,
 // used only to give the school-level Training Insights admin section (recurring
@@ -259,6 +310,86 @@ export function buildSeed(): SeedBundle {
     createdAt: new Date(sarahFlightDate).toISOString(),
   };
 
+  /** Builds a Flight + its analyzed Debrief for one of the additional student personas. */
+  function studentDebrief(
+    flightId: string,
+    debriefId: string,
+    student: User,
+    aircraft: Aircraft,
+    instructor: Instructor,
+    daysAgo: number,
+    durationMinutes: number,
+    seed: number,
+    transcript: string,
+    audioDurationSeconds: number,
+    previousActionItems: string[],
+  ): { flight: Flight; debrief: Debrief; result: ReturnType<typeof analyzeMock> } {
+    const flightDate = isoDate(daysAgo);
+    const flight: Flight = {
+      id: flightId,
+      userId: student.id,
+      organizationId: ORG_FALCON.id,
+      aircraftId: aircraft.id,
+      departureAirport: aircraft.homeAirport,
+      arrivalAirport: aircraft.homeAirport,
+      flightDate,
+      durationMinutes,
+      instructorId: instructor.id,
+      reservationId: null,
+      fr24FlightId: null,
+      externalProvider: null,
+      externalId: null,
+      debriefStatus: "complete",
+      track: generatePatternTrack(aircraft.homeAirport, { startTime: new Date(flightDate), durationMinutes, seed }),
+      createdAt: new Date(flightDate).toISOString(),
+    };
+    const result = analyzeMock({
+      transcript,
+      flightMeta: flightMetaFor(aircraft, instructor, flight),
+      previousActionItems,
+    });
+    const debrief: Debrief = {
+      id: debriefId,
+      flightId: flight.id,
+      transcript,
+      audioDurationSeconds,
+      structuredResult: result,
+      analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
+      createdAt: flight.createdAt,
+    };
+    return { flight, debrief, result };
+  }
+
+  const marcus1 = studentDebrief(
+    "flight-marcus-1", "debrief-marcus-1", USER_MARCUS, MARCUS_AIRCRAFT, SEED_INSTRUCTOR_MARIA,
+    10, 62, 20, MARCUS_FLIGHT_1_TRANSCRIPT, 82, [],
+  );
+  const marcus2 = studentDebrief(
+    "flight-marcus-2", "debrief-marcus-2", USER_MARCUS, MARCUS_AIRCRAFT, SEED_INSTRUCTOR_MARIA,
+    3, 65, 21, MARCUS_FLIGHT_2_TRANSCRIPT, 84, marcus1.result.actionItems,
+  );
+
+  const priya1 = studentDebrief(
+    "flight-priya-1", "debrief-priya-1", USER_PRIYA, SARAH_AIRCRAFT, SEED_INSTRUCTOR,
+    12, 118, 22, PRIYA_FLIGHT_1_TRANSCRIPT, 110, [],
+  );
+  const priya2 = studentDebrief(
+    "flight-priya-2", "debrief-priya-2", USER_PRIYA, SARAH_AIRCRAFT, SEED_INSTRUCTOR,
+    4, 124, 23, PRIYA_FLIGHT_2_TRANSCRIPT, 112, priya1.result.actionItems,
+  );
+
+  const tom1 = studentDebrief(
+    "flight-tom-1", "debrief-tom-1", USER_TOM, TOM_AIRCRAFT, SEED_INSTRUCTOR,
+    9, 96, 24, TOM_FLIGHT_1_TRANSCRIPT, 118, [],
+  );
+  const tom2 = studentDebrief(
+    "flight-tom-2", "debrief-tom-2", USER_TOM, TOM_AIRCRAFT, SEED_INSTRUCTOR,
+    2, 98, 25, TOM_FLIGHT_2_TRANSCRIPT, 120, tom1.result.actionItems,
+  );
+
   const flightX1Date = isoDate(35);
   const flightX2Date = isoDate(28);
   const flightX3Date = isoDate(21);
@@ -300,6 +431,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 90,
     structuredResult: debriefX1Result,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: flightX1.createdAt,
   };
 
@@ -315,6 +449,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 92,
     structuredResult: debriefX2Result,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: flightX2.createdAt,
   };
 
@@ -330,6 +467,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 94,
     structuredResult: debriefX3Result,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: flightX3.createdAt,
   };
 
@@ -345,6 +485,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 96,
     structuredResult: debriefAResult,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: flightA.createdAt,
   };
 
@@ -360,6 +503,9 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 104,
     structuredResult: debriefBResult,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: flightB.createdAt,
   };
 
@@ -375,8 +521,13 @@ export function buildSeed(): SeedBundle {
     audioDurationSeconds: 88,
     structuredResult: debriefSarahResult,
     analyzedWith: "mock",
+    guidanceMode: "freeform",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
     createdAt: sarahFlight.createdAt,
   };
+
+  const newStudentDebriefs = [marcus1, marcus2, priya1, priya2, tom1, tom2];
 
   const trainingItems: TrainingItem[] = [
     ...toTrainingItems(flightX1.id, debriefX1.id, debriefX1Result, flightX1.createdAt),
@@ -385,6 +536,7 @@ export function buildSeed(): SeedBundle {
     ...toTrainingItems(flightA.id, debriefA.id, debriefAResult, flightA.createdAt),
     ...toTrainingItems(flightB.id, debriefB.id, debriefBResult, flightB.createdAt),
     ...toTrainingItems(sarahFlight.id, debriefSarah.id, debriefSarahResult, sarahFlight.createdAt),
+    ...newStudentDebriefs.flatMap((d) => toTrainingItems(d.flight.id, d.debrief.id, d.result, d.flight.createdAt)),
   ];
 
   const trainingSignals: TrainingSignal[] = [
@@ -394,6 +546,7 @@ export function buildSeed(): SeedBundle {
     ...toTrainingSignals(flightA, debriefA.id, debriefAResult),
     ...toTrainingSignals(flightB, debriefB.id, debriefBResult),
     ...toTrainingSignals(sarahFlight, debriefSarah.id, debriefSarahResult),
+    ...newStudentDebriefs.flatMap((d) => toTrainingSignals(d.flight, d.debrief.id, d.result)),
   ];
 
   const organizationMembers: OrganizationMember[] = [
@@ -402,24 +555,36 @@ export function buildSeed(): SeedBundle {
     member("member-maria", USER_MARIA.id, "instructor"),
     member("member-sarah", USER_SARAH.id, "student"),
     member("member-jordan", USER_JORDAN.id, "admin"),
+    member("member-marcus", USER_MARCUS.id, "student"),
+    member("member-priya", USER_PRIYA.id, "student"),
+    member("member-tom", USER_TOM.id, "student"),
   ];
 
   const studentInstructors: StudentInstructor[] = [
     link("link-andy-danny", USER_ANDY.id, USER_DANNY.id, true),
     link("link-andy-maria", USER_ANDY.id, USER_MARIA.id, false),
     link("link-sarah-danny", USER_SARAH.id, USER_DANNY.id, true),
+    link("link-marcus-maria", USER_MARCUS.id, USER_MARIA.id, true),
+    link("link-priya-danny", USER_PRIYA.id, USER_DANNY.id, true),
+    link("link-tom-danny", USER_TOM.id, USER_DANNY.id, true),
   ];
 
   return {
     organizations: [ORG_FALCON],
-    users: [USER_ANDY, USER_DANNY, USER_MARIA, USER_SARAH, USER_JORDAN],
+    users: [USER_ANDY, USER_DANNY, USER_MARIA, USER_SARAH, USER_JORDAN, USER_MARCUS, USER_PRIYA, USER_TOM],
     organizationMembers,
     studentInstructors,
-    aircraft: [SEED_AIRCRAFT, SARAH_AIRCRAFT],
+    aircraft: [SEED_AIRCRAFT, SARAH_AIRCRAFT, MARCUS_AIRCRAFT, TOM_AIRCRAFT],
     instructors: [SEED_INSTRUCTOR, SEED_INSTRUCTOR_MARIA],
     reservations: [reservationAndy, reservationSarah],
-    flights: [flightC, flightB, flightA, flightX3, flightX2, flightX1, sarahFlight],
-    debriefs: [debriefA, debriefB, debriefX1, debriefX2, debriefX3, debriefSarah],
+    flights: [
+      flightC, flightB, flightA, flightX3, flightX2, flightX1, sarahFlight,
+      ...newStudentDebriefs.map((d) => d.flight),
+    ],
+    debriefs: [
+      debriefA, debriefB, debriefX1, debriefX2, debriefX3, debriefSarah,
+      ...newStudentDebriefs.map((d) => d.debrief),
+    ],
     trainingItems,
     trainingSignals,
   };

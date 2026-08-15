@@ -9,6 +9,9 @@ import { cookies } from "next/headers";
 export const SESSION_COOKIE = "fb_session";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
+/** Which of the signed-in user's organization_members rows is "active" -- see lib/viewer.ts's getViewer() and app/api/auth/switch-membership/route.ts. */
+export const ACTIVE_MEMBERSHIP_COOKIE = "fb_active_membership";
+
 export interface SessionClaims {
   /** Replit user id (OIDC `sub`) -- maps to users.auth_user_id. */
   sub: string;
@@ -68,6 +71,43 @@ export async function verifyMagicLinkJwt(token: string): Promise<string | null> 
     const { payload } = await jwtVerify(token, getSecret());
     if (payload.purpose !== "magic-link" || typeof payload.sub !== "string" || !payload.sub) return null;
     return payload.sub;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Signup-link tokens: same shape as magic-link tokens but carry a name and
+ * optional org name so self-serve independent-CFI signup (lib/auth/store.ts's
+ * resolveSignupOnLogin) has what it needs once the link is clicked -- a
+ * distinct `purpose` keeps this from ever being replayed as a plain sign-in.
+ */
+export const SIGNUP_LINK_MAX_AGE_SECONDS = 60 * 15; // 15 minutes
+
+export interface SignupLinkClaims {
+  email: string;
+  name: string;
+  orgName: string | null;
+}
+
+export async function createSignupLinkJwt(input: SignupLinkClaims): Promise<string> {
+  return new SignJWT({ purpose: "signup-link", name: input.name, orgName: input.orgName })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(input.email.trim().toLowerCase())
+    .setIssuedAt()
+    .setExpirationTime(Math.floor(Date.now() / 1000) + SIGNUP_LINK_MAX_AGE_SECONDS)
+    .sign(getSecret());
+}
+
+export async function verifySignupLinkJwt(token: string): Promise<SignupLinkClaims | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (payload.purpose !== "signup-link" || typeof payload.sub !== "string" || !payload.sub) return null;
+    return {
+      email: payload.sub,
+      name: typeof payload.name === "string" ? payload.name : "",
+      orgName: typeof payload.orgName === "string" ? payload.orgName : null,
+    };
   } catch {
     return null;
   }

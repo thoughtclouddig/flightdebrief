@@ -17,8 +17,8 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Your training flights</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <h1 className="text-2xl font-semibold text-foreground">Flights</h1>
+          <p className="mt-1 text-sm text-foreground-soft">
             Fly, debrief out loud, and AfterFlight remembers where you left off.
           </p>
         </div>
@@ -36,7 +36,7 @@ export default async function DashboardPage() {
       </div>
 
       {flights.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-500 dark:border-white/15 dark:text-slate-400">
+        <div className="rounded-2xl border border-dashed border-hairline p-10 text-center text-foreground-soft">
           No flights yet. Add your first training flight to get started.
         </div>
       ) : (

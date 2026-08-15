@@ -53,8 +53,8 @@ export default async function StudentHomePage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Welcome back,</p>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{viewer.user.name.split(" ")[0]}</h1>
+        <p className="text-sm text-foreground-soft">Welcome back,</p>
+        <h1 className="text-2xl font-semibold text-foreground">{viewer.user.name.split(" ")[0]}</h1>
       </div>
 
       {brief.upcomingReservation ? (
@@ -67,20 +67,20 @@ export default async function StudentHomePage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">
+              <p className="font-medium text-foreground">
                 {formatDateTime(brief.upcomingReservation.scheduledStart)}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-foreground-soft">
                 Instructor: {brief.lastInstructor?.name ?? "TBD"}
               </p>
             </div>
 
             {brief.keepWorkingOn.length > 0 ? (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Focus from last lesson</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Focus from last lesson</p>
                 <ul className="mt-1.5 flex flex-col gap-1">
                   {brief.keepWorkingOn.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground-soft">
                       <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
                       {item}
                     </li>
@@ -91,10 +91,10 @@ export default async function StudentHomePage() {
 
             {brief.beforeFlightItems.length > 0 ? (
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Before you fly</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Before you fly</p>
                 <ul className="mt-1.5 flex flex-col gap-1">
                   {brief.beforeFlightItems.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground-soft">
                       <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
                       {item}
                     </li>
@@ -120,10 +120,10 @@ export default async function StudentHomePage() {
           </CardHeader>
           <CardContent className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">
+              <p className="font-medium text-foreground">
                 {brief.lastFlight.departureAirport} → {brief.lastFlight.arrivalAirport}
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-foreground-soft">
                 {new Date(brief.lastFlight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -142,14 +142,14 @@ export default async function StudentHomePage() {
       ) : null}
 
       <Link href="/progress" className="block">
-        <Card className="transition-colors hover:bg-slate-50 dark:hover:bg-white/5">
+        <Card className="transition-colors hover:bg-surface-sunken">
           <CardContent className="flex flex-col gap-1 py-4">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
               <ClipboardList className="size-3.5" />
               Action items
             </p>
-            <p className="text-2xl font-semibold text-slate-900 dark:text-white">{openActionItems.length}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">open · view progress →</p>
+            <p className="text-2xl font-semibold text-foreground">{openActionItems.length}</p>
+            <p className="text-xs text-foreground-soft">open · view progress →</p>
           </CardContent>
         </Card>
       </Link>
@@ -160,7 +160,7 @@ export default async function StudentHomePage() {
             <CardTitle className="flex items-center gap-2">
               <CheckSquare className="size-4 text-brand" />
               Current Training Focus
-              <span className="ml-auto flex items-center gap-1 text-xs font-normal text-slate-400">
+              <span className="ml-auto flex items-center gap-1 text-xs font-normal text-foreground-faint">
                 <Sparkles className="size-3.5" />
                 {brief.focusAreas.length} for next lesson
               </span>
@@ -206,12 +206,12 @@ export default async function StudentHomePage() {
               <Link
                 key={flight.id}
                 href={`/flights/${flight.id}/debrief/results`}
-                className="flex items-center justify-between rounded-lg px-2 py-1.5 -mx-2 hover:bg-slate-50 dark:hover:bg-white/5"
+                className="flex items-center justify-between rounded-lg px-2 py-1.5 -mx-2 hover:bg-surface-sunken"
               >
-                <span className="text-sm text-slate-700 dark:text-slate-200">
+                <span className="text-sm text-foreground-soft">
                   {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </span>
-                <span className="text-sm text-slate-400">{flight.aircraft.tailNumber}</span>
+                <span className="text-sm text-foreground-faint">{flight.aircraft.tailNumber}</span>
               </Link>
             ))}
             <Link href="/history" className="text-sm font-medium text-brand hover:underline">
@@ -222,18 +222,18 @@ export default async function StudentHomePage() {
       ) : null}
 
       <Card className="border-dashed">
-        <CardContent className="flex items-center gap-3 py-5 text-slate-400">
+        <CardContent className="flex items-center gap-3 py-5 text-foreground-faint">
           <Radio className="size-5 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Assigned practice</p>
+            <p className="text-sm font-medium text-foreground-soft">Assigned practice</p>
             <p className="text-xs">No practice assigned yet -- radio training is coming soon.</p>
           </div>
         </CardContent>
       </Card>
 
       {!brief.lastFlight && !brief.upcomingReservation ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-500 dark:border-white/15 dark:text-slate-400">
-          <BookOpen className="size-8 text-slate-300" />
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-hairline p-10 text-center text-foreground-soft">
+          <BookOpen className="size-8 text-foreground-faint" />
           No flights yet. Add your first training flight to get started.
           <Link href="/flights/new" className={buttonVariants({ size: "sm" })}>
             Add a flight

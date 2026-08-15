@@ -26,9 +26,9 @@ export default async function NextLessonPage() {
   if (!lastDebriefed) {
     return (
       <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center">
-        <PlaneTakeoff className="size-10 text-slate-300" />
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Ready to Fly?</h1>
-        <p className="text-slate-500 dark:text-slate-400">
+        <PlaneTakeoff className="size-10 text-foreground-faint" />
+        <h1 className="text-2xl font-semibold text-foreground">Ready to Fly?</h1>
+        <p className="text-foreground-soft">
           Debrief your first flight and your next-lesson brief will show up here.
         </p>
         <Link href="/dashboard" className={buttonVariants()}>
@@ -50,7 +50,7 @@ export default async function NextLessonPage() {
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <div className="flex flex-col items-center gap-3 text-center">
-        <h1 className="text-3xl font-semibold text-slate-900 dark:text-white">Ready to Fly?</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Ready to Fly?</h1>
         {ttsEnabled ? <ListenButton baseSrc="/api/next-lesson/audio" label="Listen to your brief" /> : null}
       </div>
 
@@ -59,7 +59,7 @@ export default async function NextLessonPage() {
           <CardTitle>Last Lesson</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-foreground-soft">
             {new Date(lastDebriefed.flightDate + "T12:00:00").toLocaleDateString("en-US", {
               month: "long",
               day: "numeric",
@@ -69,8 +69,8 @@ export default async function NextLessonPage() {
 
           {whatWeDid.length > 0 ? (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">You worked on</p>
-              <p className="mt-1 text-slate-800 dark:text-slate-100">{whatWeDid.join(", ")}.</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">You worked on</p>
+              <p className="mt-1 text-foreground">{whatWeDid.join(", ")}.</p>
             </div>
           ) : null}
         </CardContent>
@@ -96,7 +96,7 @@ export default async function NextLessonPage() {
             <ul className="flex flex-col gap-3">
               {studyReferences.map((ref, i) => (
                 <li key={i} className="flex flex-col gap-0.5">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{ref.topic}</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">{ref.topic}</span>
                   {ref.url ? (
                     <a
                       href={ref.url}
@@ -108,7 +108,7 @@ export default async function NextLessonPage() {
                       <ExternalLink className="size-3 shrink-0" />
                     </a>
                   ) : (
-                    <span className="text-slate-700 dark:text-slate-200">{ref.source}</span>
+                    <span className="text-foreground-soft">{ref.source}</span>
                   )}
                 </li>
               ))}

@@ -13,6 +13,11 @@ import type { FlightCandidate } from "@/lib/flight-data";
 
 type Mode = "search" | "manual";
 
+/** HH:MM in UTC -- matches how FR24's own app labels times, so candidates are directly comparable. */
+function formatClockUtc(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" });
+}
+
 function InstructorSelect({
   id,
   value,
@@ -157,8 +162,13 @@ function SearchFlow({ instructorNames }: { instructorNames: string[] }) {
                         day: "numeric",
                         year: "numeric",
                       })}
-                      {c.durationMinutes ? ` · ${formatDurationShort(c.durationMinutes)}` : ""}
                       {c.aircraftType ? ` · ${c.aircraftType}` : ""}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      {formatClockUtc(c.scheduledDeparture)}
+                      {c.scheduledArrival ? ` → ${formatClockUtc(c.scheduledArrival)}` : ""}
+                      {" UTC"}
+                      {c.durationMinutes ? ` · ${formatDurationShort(c.durationMinutes)} flight time` : c.scheduledArrival ? "" : " · duration unknown"}
                     </p>
                   </div>
                   <Button size="sm" variant="secondary" onClick={() => setSelecting(c)}>

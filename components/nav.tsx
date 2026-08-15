@@ -14,6 +14,7 @@ import {
   LayoutList,
   Lightbulb,
   PlaneTakeoff,
+  Plus,
   Settings,
   TrendingUp,
   UserCog,
@@ -22,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
-import type { Viewer } from "@/lib/viewer";
+import type { MembershipOption, Viewer } from "@/lib/viewer";
 
 const STUDENT_ITEMS = [
   { href: "/home", label: "Home", icon: Compass },
@@ -56,7 +57,7 @@ function itemsForRole(role: Viewer["role"]) {
   return STUDENT_ITEMS;
 }
 
-function homeHrefForRole(role: Viewer["role"]) {
+export function homeHrefForRole(role: Viewer["role"]) {
   if (role === "instructor") return "/cfi/today";
   if (role === "admin") return "/admin/overview";
   return "/home";
@@ -134,7 +135,7 @@ function NavOverflowMenu({
   );
 }
 
-export function Nav({ viewer }: { viewer: Viewer }) {
+export function Nav({ viewer, memberships }: { viewer: Viewer; memberships: MembershipOption[] }) {
   const pathname = usePathname();
   const items = itemsForRole(viewer.role);
   const homeHref = homeHrefForRole(viewer.role);
@@ -170,7 +171,7 @@ export function Nav({ viewer }: { viewer: Viewer }) {
           </nav>
           <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
-            <UserMenu viewer={viewer} />
+            <UserMenu viewer={viewer} memberships={memberships} />
           </div>
         </div>
       </header>
@@ -179,7 +180,7 @@ export function Nav({ viewer }: { viewer: Viewer }) {
         <Wordmark href={homeHref} compact />
         <div className="flex items-center gap-2">
           <ThemeToggle compact />
-          <UserMenu viewer={viewer} compact />
+          <UserMenu viewer={viewer} memberships={memberships} compact />
         </div>
       </header>
 
@@ -193,7 +194,7 @@ export function Nav({ viewer }: { viewer: Viewer }) {
               href={item.href}
               className={cn(
                 "flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium",
-                active ? "text-brand-dark dark:text-brand-light" : "text-foreground-faint",
+                active ? "text-brand" : "text-foreground-faint",
               )}
             >
               <Icon className="size-5" strokeWidth={active ? 2.5 : 2} />
@@ -201,6 +202,16 @@ export function Nav({ viewer }: { viewer: Viewer }) {
             </Link>
           );
         })}
+
+        {viewer.role === "student" ? (
+          <Link
+            href="/flights/new"
+            aria-label="Add a flight"
+            className="absolute left-1/2 top-0 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-brand text-white shadow-lg shadow-brand/30 transition-transform active:scale-95"
+          >
+            <Plus className="size-6" strokeWidth={2.5} />
+          </Link>
+        ) : null}
       </nav>
     </>
   );

@@ -3,17 +3,60 @@
 import { useState } from "react";
 import { ChevronDown, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Viewer } from "@/lib/viewer";
+import { homeHrefForRole } from "@/components/nav";
+import type { MembershipOption, Viewer } from "@/lib/viewer";
 
-export function UserMenu({ viewer, compact = false }: { viewer: Viewer; compact?: boolean }) {
+const ROLE_LABELS: Record<Viewer["role"], string> = {
+  student: "Student",
+  instructor: "Instructor",
+  admin: "Admin",
+};
+
+/** Full navigation, not router.push -- every server component down the tree needs a fresh getViewer() read of the switched-membership cookie. */
+function navigateTo(href: string) {
+  window.location.href = href;
+}
+
+export function UserMenu({
+  viewer,
+  memberships,
+  compact = false,
+}: {
+  viewer: Viewer;
+  memberships: MembershipOption[];
+  compact?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [switching, setSwitching] = useState<string | null>(null);
 
   function signOut() {
     setSigningOut(true);
     // Full navigation (not router.push) -- /api/auth/logout clears the
     // session cookie and signs out of Replit Auth, then redirects home.
     window.location.href = "/api/auth/logout";
+  }
+
+  async function switchTo(option: MembershipOption) {
+    setSwitching(option.membershipId);
+    let ok = false;
+    try {
+      const res = await fetch("/api/auth/switch-membership", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ membershipId: option.membershipId }),
+      });
+      ok = res.ok;
+    } catch {
+      ok = false;
+    }
+    if (ok) {
+      // Full navigation -- every server component down the tree needs a
+      // fresh getViewer() read of the new cookie, not a client-side route.
+      navigateTo(homeHrefForRole(option.role));
+    } else {
+      setSwitching(null);
+    }
   }
 
   return (
@@ -37,6 +80,37 @@ export function UserMenu({ viewer, compact = false }: { viewer: Viewer; compact?
               <p className="truncate text-sm font-medium text-foreground">{viewer.user.name}</p>
               <p className="truncate text-xs capitalize text-foreground-faint">{viewer.role}</p>
             </div>
+
+            {memberships.length > 1 ? (
+              <div className="border-t border-hairline py-1">
+                <p className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-foreground-faint">
+                  Organizations
+                </p>
+                {memberships.map((m) => {
+                  const isCurrent = m.organizationId === viewer.organization.id && m.role === viewer.role;
+                  return (
+                    <button
+                      key={m.membershipId}
+                      onClick={() => (isCurrent ? undefined : switchTo(m))}
+                      disabled={switching === m.membershipId}
+                      className={cn(
+                        "flex w-full flex-col items-start px-3 py-2 text-left text-sm hover:bg-surface-sunken disabled:opacity-60",
+                        isCurrent ? "bg-brand/5" : "text-foreground-soft",
+                      )}
+                    >
+                      <span className={cn("truncate", isCurrent && "font-medium text-foreground")}>
+                        {m.organizationName}
+                      </span>
+                      <span className="text-xs text-foreground-faint">
+                        {ROLE_LABELS[m.role]}
+                        {isCurrent ? " · current" : ""}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
             <button
               onClick={signOut}
               disabled={signingOut}

@@ -1,10 +1,18 @@
 import type {
   Aircraft,
+  AssessmentRole,
+  CardDefinition,
   Debrief,
+  DebriefAssessment,
+  DebriefAssessmentRating,
+  DebriefCard,
   Flight,
+  FlightTask,
+  FlightTaskSource,
   FlightWithRelations,
   Instructor,
   Organization,
+  OrganizationKind,
   OrganizationMember,
   OrgRole,
   Reservation,
@@ -13,8 +21,10 @@ import type {
   TrainingItem,
   TrainingSignal,
   TrainingSkill,
+  TranscriptSegment,
   User,
 } from "@/lib/types";
+import type { PerformanceLevelCode } from "@/lib/performance-levels";
 
 export interface CreateFlightInput {
   aircraftId: string;
@@ -39,6 +49,10 @@ export interface CreateDebriefInput {
   audioDurationSeconds: number;
   structuredResult: Debrief["structuredResult"];
   analyzedWith: Debrief["analyzedWith"];
+  /** Defaults to "freeform" (matches the DB column default) when omitted. */
+  guidanceMode?: Debrief["guidanceMode"];
+  recordingStartedAt?: string | null;
+  recordingEndedAt?: string | null;
 }
 
 export interface ListFlightsFilter {
@@ -60,6 +74,11 @@ export interface ListTrainingSignalsFilter {
   aircraftId?: string;
   skill?: TrainingSkill;
   category?: TrainingCategory;
+}
+
+export interface ListTrainingItemsFilter {
+  flightId?: string;
+  studentId?: string;
 }
 
 /**
@@ -90,11 +109,47 @@ export interface Repository {
   getDebriefByFlight(flightId: string): Promise<Debrief | null>;
   createDebrief(input: CreateDebriefInput): Promise<Debrief>;
 
-  listTrainingItems(): Promise<TrainingItem[]>;
+  listTrainingItems(filter?: ListTrainingItemsFilter): Promise<TrainingItem[]>;
   createTrainingItems(
     items: Omit<TrainingItem, "id" | "createdAt">[],
   ): Promise<TrainingItem[]>;
   setTrainingItemDone(id: string, done: boolean): Promise<void>;
+
+  // --- Structured, CFI-led debrief: flight tasks ---
+  listFlightTasks(flightId: string): Promise<FlightTask[]>;
+  /** Replaces the flight's full task list -- the CFI's "Flight Complete" task picker is a single save, not incremental edits. */
+  setFlightTasks(
+    flightId: string,
+    tasks: { taskCode: TrainingSkill; label: string; source: FlightTaskSource }[],
+  ): Promise<FlightTask[]>;
+
+  // --- Structured, CFI-led debrief: independent assessments ---
+  getOrCreateAssessment(flightId: string, role: AssessmentRole, assessorUserId: string): Promise<DebriefAssessment>;
+  getAssessment(flightId: string, role: AssessmentRole): Promise<DebriefAssessment | null>;
+  upsertAssessmentRating(
+    assessmentId: string,
+    flightTaskId: string,
+    level: PerformanceLevelCode,
+    note?: string | null,
+  ): Promise<void>;
+  listAssessmentRatings(assessmentId: string): Promise<DebriefAssessmentRating[]>;
+  submitAssessment(assessmentId: string, overallReflection?: string | null): Promise<void>;
+
+  // --- Structured, CFI-led debrief: question cards ---
+  /** Merges org-scoped overrides over the global (organizationId null) defaults by `code`. */
+  listCardDefinitions(organizationId?: string): Promise<CardDefinition[]>;
+  listCards(flightId: string): Promise<DebriefCard[]>;
+  createCards(cards: Omit<DebriefCard, "id" | "createdAt">[]): Promise<DebriefCard[]>;
+  updateCardStatus(cardId: string, status: DebriefCard["status"]): Promise<void>;
+  updateCardTiming(cardId: string, startSeconds: number, endSeconds: number): Promise<void>;
+  setCardFlaggedForFollowUp(cardId: string, flagged: boolean): Promise<void>;
+  reorderCards(orderedCardIds: string[]): Promise<void>;
+
+  // --- Structured, CFI-led debrief: transcript segments ---
+  createTranscriptSegments(
+    segments: Omit<TranscriptSegment, "id" | "createdAt">[],
+  ): Promise<TranscriptSegment[]>;
+  listTranscriptSegments(flightId: string): Promise<TranscriptSegment[]>;
 
   // --- Identity / organizations ---
   getUser(id: string): Promise<User | null>;
@@ -104,6 +159,7 @@ export interface Repository {
   createUser(input: { name: string; email: string; authUserId?: string | null }): Promise<User>;
   setUserAuthId(userId: string, authUserId: string): Promise<void>;
   getOrganization(id: string): Promise<Organization | null>;
+  createOrganization(input: { id?: string; name: string; kind: OrganizationKind }): Promise<Organization>;
   listOrganizations(): Promise<Organization[]>;
   listOrganizationsForUser(userId: string): Promise<Organization[]>;
   listMembers(organizationId: string, role?: OrgRole): Promise<OrganizationMember[]>;

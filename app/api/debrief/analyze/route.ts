@@ -3,11 +3,21 @@ import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { analyzeDebrief } from "@/lib/ai";
 import { getRepository } from "@/lib/data";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
+import { buildTranscriptSegments, type CardBoundary } from "@/lib/debrief-cards/segments";
+import { computeAssessmentDifferences } from "@/lib/debrief-cards/differences";
+import type { DebriefGuidanceMode } from "@/lib/types";
+import type { TranscriptWord } from "@/lib/transcription/types";
 
 interface AnalyzeBody {
   flightId: string;
   transcript: string;
   audioDurationSeconds: number;
+  /** Guided/Light mode only -- omitted defaults to "freeform" (today's behavior, unchanged). */
+  guidanceMode?: DebriefGuidanceMode;
+  recordingStartedAt?: string | null;
+  recordingEndedAt?: string | null;
+  words?: TranscriptWord[];
+  cardBoundaries?: CardBoundary[];
 }
 
 export async function POST(request: Request) {
@@ -18,6 +28,7 @@ export async function POST(request: Request) {
   if (!body.flightId || !body.transcript?.trim()) {
     return NextResponse.json({ error: "Missing flightId or transcript" }, { status: 400 });
   }
+  const guidanceMode = body.guidanceMode ?? "freeform";
 
   const repo = getRepository();
   const flight = await repo.getFlight(body.flightId);
@@ -26,6 +37,8 @@ export async function POST(request: Request) {
   }
 
   const previousActionItems = await getPreviousActionItems(flight.userId, flight.flightDate, flight.id);
+  const assessmentDifferences =
+    guidanceMode === "freeform" ? [] : await getAssessmentDifferences(flight.id);
 
   const { structured, analyzedWith } = await analyzeDebrief({
     transcript: body.transcript,
@@ -39,6 +52,7 @@ export async function POST(request: Request) {
       instructorName: flight.instructor?.name ?? null,
     },
     previousActionItems,
+    assessmentDifferences,
   });
 
   const debrief = await repo.createDebrief({
@@ -47,7 +61,24 @@ export async function POST(request: Request) {
     audioDurationSeconds: body.audioDurationSeconds ?? 0,
     structuredResult: structured,
     analyzedWith,
+    guidanceMode,
+    recordingStartedAt: body.recordingStartedAt ?? null,
+    recordingEndedAt: body.recordingEndedAt ?? null,
   });
+
+  if (guidanceMode !== "freeform" && body.words?.length && body.cardBoundaries?.length) {
+    const segments = buildTranscriptSegments(body.words, body.cardBoundaries);
+    await repo.createTranscriptSegments(
+      segments.map((s) => ({
+        flightId: flight.id,
+        debriefCardId: s.debriefCardId,
+        startSeconds: s.startSeconds,
+        endSeconds: s.endSeconds,
+        text: s.text,
+        speakerLabel: s.speakerLabel,
+      })),
+    );
+  }
 
   await repo.setFlightDebriefStatus(flight.id, "complete");
 
@@ -106,4 +137,33 @@ async function getPreviousActionItems(studentId: string, currentFlightDate: stri
         (item.category === "before_next_flight" || item.category === "keep_working_on"),
     )
     .map((item) => item.description);
+}
+
+/** Guided/Light mode only -- reads the two submitted independent assessments and computes disagreements deterministically (never asked of Claude). */
+async function getAssessmentDifferences(flightId: string) {
+  const repo = getRepository();
+  const [flightTasks, studentAssessment, instructorAssessment] = await Promise.all([
+    repo.listFlightTasks(flightId),
+    repo.getAssessment(flightId, "student"),
+    repo.getAssessment(flightId, "instructor"),
+  ]);
+  if (!studentAssessment || !instructorAssessment) return [];
+
+  const [studentRatingRows, instructorRatingRows] = await Promise.all([
+    repo.listAssessmentRatings(studentAssessment.id),
+    repo.listAssessmentRatings(instructorAssessment.id),
+  ]);
+
+  const taskLabels = new Map(flightTasks.map((t) => [t.taskCode, t.label]));
+  const taskIdToCode = new Map(flightTasks.map((t) => [t.id, t.taskCode]));
+  const toCodeMap = (rows: typeof studentRatingRows) => {
+    const map = new Map<string, (typeof rows)[number]["performanceLevel"]>();
+    for (const row of rows) {
+      const code = taskIdToCode.get(row.flightTaskId);
+      if (code) map.set(code, row.performanceLevel);
+    }
+    return map;
+  };
+
+  return computeAssessmentDifferences(taskLabels, toCodeMap(studentRatingRows), toCodeMap(instructorRatingRows));
 }

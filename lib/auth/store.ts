@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
-import type { Organization, OrganizationMember, OrgRole, User } from "@/lib/types";
+import type { Organization, OrganizationKind, OrganizationMember, OrgRole, User } from "@/lib/types";
 import type { SessionClaims } from "@/lib/auth/session";
 
 /**
@@ -109,7 +109,27 @@ export async function setMembershipCertificateType(memberId: string, certificate
 export async function getOrganization(id: string): Promise<Organization | null> {
   const { rows } = await getDb().query("SELECT * FROM organizations WHERE id = $1", [id]);
   if (!rows[0]) return null;
-  return { id: rows[0].id, name: rows[0].name, kind: rows[0].kind, createdAt: new Date(rows[0].created_at).toISOString() };
+  return {
+    id: rows[0].id,
+    name: rows[0].name,
+    kind: rows[0].kind,
+    defaultGuidanceMode: rows[0].default_guidance_mode,
+    createdAt: new Date(rows[0].created_at).toISOString(),
+  };
+}
+
+export async function createOrganization(input: { id?: string; name: string; kind: OrganizationKind }): Promise<Organization> {
+  const { rows } = await getDb().query(
+    "INSERT INTO organizations (id, name, kind) VALUES ($1, $2, $3) RETURNING *",
+    [input.id ?? `org-${randomUUID()}`, input.name, input.kind],
+  );
+  return {
+    id: rows[0].id,
+    name: rows[0].name,
+    kind: rows[0].kind,
+    defaultGuidanceMode: rows[0].default_guidance_mode,
+    createdAt: new Date(rows[0].created_at).toISOString(),
+  };
 }
 
 const DEFAULT_ORG_ID = "org-falcon";
@@ -164,6 +184,73 @@ export async function resolveUserOnLogin(claims: SessionClaims): Promise<User | 
     );
     await db.query("COMMIT");
     return toUser(inserted.rows[0]);
+  } catch (err) {
+    await db.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    db.release();
+  }
+}
+
+/**
+ * Called from the auth callback after a verified "signup-link" click (see
+ * lib/auth/session.ts) -- self-serve independent-CFI signup. Unlike
+ * resolveUserOnLogin's one-time GLOBAL admin bootstrap, this creates a fresh
+ * organization every time it's reached, gated only by "the emailed link was
+ * actually clicked" (no junk orgs from unverified/bot emails), not by
+ * "first ever login." Idempotent: clicking the same link twice, or already
+ * having an account under this email (e.g. invited to a school in the
+ * meantime), never creates a duplicate org -- it just links/returns.
+ *
+ * The new org gets TWO membership rows for this user (admin + instructor) --
+ * organization_members' UNIQUE(organization_id, user_id, role) already
+ * permits this, and it's what lets a solo independent CFI reach both the
+ * CFI workflow and admin/org-settings pages via the membership switcher.
+ *
+ * Returns the new organization's id only when a fresh org was actually
+ * created this call, so the caller can follow up with
+ * repo.getOrCreateInstructor() (a domain-repository concern, kept out of
+ * this file -- same convention app/api/admin/invite-cfi/route.ts already
+ * uses after lib/auth/invite.ts's inviteUser).
+ */
+export async function resolveSignupOnLogin(
+  email: string,
+  name: string,
+  orgName: string | null,
+): Promise<{ user: User; newOrganizationId: string | null }> {
+  const normalized = email.trim().toLowerCase();
+
+  const linked = await getUserByAuthId(normalized);
+  if (linked) return { user: linked, newOrganizationId: null };
+
+  const byEmail = await getUserByEmail(normalized);
+  if (byEmail) {
+    if (!byEmail.authUserId) {
+      await getDb().query("UPDATE users SET auth_user_id = $1 WHERE id = $2", [normalized, byEmail.id]);
+      return { user: { ...byEmail, authUserId: normalized }, newOrganizationId: null };
+    }
+    return { user: byEmail, newOrganizationId: null };
+  }
+
+  const trimmedName = name.trim() || "Owner";
+  const organizationName = (orgName ?? "").trim() || `${trimmedName}'s Flight Training`;
+  const orgId = `org-${randomUUID()}`;
+  const userId = `user-${randomUUID()}`;
+
+  const db = await getDb().connect();
+  try {
+    await db.query("BEGIN");
+    await db.query("INSERT INTO organizations (id, name, kind) VALUES ($1, $2, 'independent_cfi')", [orgId, organizationName]);
+    const inserted = await db.query<UserRow>(
+      "INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ($1, $2, $3, $4, true) RETURNING *",
+      [userId, trimmedName, normalized, normalized],
+    );
+    await db.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role) VALUES ($1, $2, $3, 'admin'), ($4, $2, $3, 'instructor')`,
+      [`member-${randomUUID()}`, orgId, userId, `member-${randomUUID()}`],
+    );
+    await db.query("COMMIT");
+    return { user: toUser(inserted.rows[0]), newOrganizationId: orgId };
   } catch (err) {
     await db.query("ROLLBACK").catch(() => {});
     throw err;

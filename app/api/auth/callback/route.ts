@@ -1,30 +1,58 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requestOrigin } from "@/lib/auth/origin";
-import { createSessionJwt, verifyMagicLinkJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
-import { resolveUserOnLogin } from "@/lib/auth/store";
+import {
+  createSessionJwt,
+  verifyMagicLinkJwt,
+  verifySignupLinkJwt,
+  SESSION_COOKIE,
+  SESSION_MAX_AGE_SECONDS,
+} from "@/lib/auth/session";
+import { resolveUserOnLogin, resolveSignupOnLogin } from "@/lib/auth/store";
+import { getRepository } from "@/lib/data";
 import { appOrigin } from "@/lib/email";
+import type { User } from "@/lib/types";
 
 /**
- * Email magic-link sign-in, step 2: verify the emailed token and establish
- * the app session. The normalized email is the stable identity anchor
- * (users.auth_user_id) -- resolveUserOnLogin keeps the owner-bootstrap /
- * invite-linking / invite-only logic unchanged.
+ * Email link sign-in, step 2 -- handles both purposes minted in step 1:
+ * a plain magic-link (resolveUserOnLogin keeps the owner-bootstrap /
+ * invite-linking / invite-only logic unchanged) or a self-serve signup-link
+ * (resolveSignupOnLogin, /api/auth/signup). The normalized email is the
+ * stable identity anchor (users.auth_user_id) either way.
  */
 export async function GET(request: NextRequest) {
   // Prefer the server-configured origin; forwarded headers are attacker-
   // influenceable and must not decide where we redirect after auth.
   const origin = appOrigin() ?? requestOrigin(request);
   const token = request.nextUrl.searchParams.get("token");
+  if (!token) {
+    return NextResponse.redirect(`${origin}/login?error=expired`);
+  }
 
-  const email = token ? await verifyMagicLinkJwt(token) : null;
-  if (!email) {
+  const magicLinkEmail = await verifyMagicLinkJwt(token);
+  const signupClaims = magicLinkEmail ? null : await verifySignupLinkJwt(token);
+  if (!magicLinkEmail && !signupClaims) {
     return NextResponse.redirect(`${origin}/login?error=expired`);
   }
 
   try {
-    const user = await resolveUserOnLogin({ sub: email, email, name: null });
-    if (!user) {
-      return NextResponse.redirect(`${origin}/login?error=not-invited`);
+    let user: User | null;
+    let email: string;
+
+    if (magicLinkEmail) {
+      email = magicLinkEmail;
+      user = await resolveUserOnLogin({ sub: email, email, name: null });
+      if (!user) {
+        return NextResponse.redirect(`${origin}/login?error=not-invited`);
+      }
+    } else {
+      email = signupClaims!.email;
+      const result = await resolveSignupOnLogin(email, signupClaims!.name, signupClaims!.orgName);
+      user = result.user;
+      if (result.newOrganizationId) {
+        // Keeps the lightweight `instructors` table (used by Flight.instructorId)
+        // in sync, same convention app/api/admin/invite-cfi/route.ts already uses.
+        await getRepository().getOrCreateInstructor(user.name, result.newOrganizationId);
+      }
     }
 
     const jwt = await createSessionJwt({ sub: email, email, name: user.name });
@@ -39,7 +67,7 @@ export async function GET(request: NextRequest) {
     });
     return response;
   } catch (err) {
-    console.error("Magic-link callback failed:", err);
+    console.error("Auth callback failed:", err);
     return NextResponse.redirect(`${origin}/login?error=auth-failed`);
   }
 }
