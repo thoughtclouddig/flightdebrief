@@ -180,7 +180,7 @@ export function GuidedDebriefRecorder({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-center gap-2 text-sm font-medium text-brand">
-        <span className={phase === "recording" ? "size-2 animate-pulse rounded-full bg-red-500" : "size-2 rounded-full bg-slate-300"} />
+        <span className={phase === "recording" ? "size-2 animate-pulse rounded-full bg-danger" : "size-2 rounded-full bg-hairline"} />
         Recording
         <span className="tabular-nums text-foreground-soft">
           {Math.floor(transcription.elapsedSeconds / 60)}:{(transcription.elapsedSeconds % 60).toString().padStart(2, "0")}
@@ -238,7 +238,7 @@ export function GuidedDebriefRecorder({
         </p>
       ) : null}
 
-      {error ? <p className="text-center text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? <p className="text-center text-sm text-danger">{error}</p> : null}
     </div>
   );
 }

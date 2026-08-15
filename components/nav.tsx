@@ -14,6 +14,7 @@ import {
   LayoutList,
   Lightbulb,
   PlaneTakeoff,
+  Plus,
   Settings,
   TrendingUp,
   UserCog,
@@ -201,6 +202,16 @@ export function Nav({ viewer, memberships }: { viewer: Viewer; memberships: Memb
             </Link>
           );
         })}
+
+        {viewer.role === "student" ? (
+          <Link
+            href="/flights/new"
+            aria-label="Add a flight"
+            className="absolute left-1/2 top-0 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-brand text-white shadow-lg shadow-brand/30 transition-transform active:scale-95"
+          >
+            <Plus className="size-6" strokeWidth={2.5} />
+          </Link>
+        ) : null}
       </nav>
     </>
   );

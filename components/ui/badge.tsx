@@ -11,6 +11,7 @@ const badgeVariants = cva(
         brand: "bg-brand/10 text-brand-dark dark:bg-brand/20 dark:text-brand-light",
         success: "bg-good/15 text-good-ink dark:bg-good/20 dark:text-good-ink",
         warning: "bg-amber/15 text-amber-ink dark:bg-amber/20 dark:text-amber-ink",
+        danger: "bg-danger/15 text-danger-ink dark:bg-danger/20 dark:text-danger-ink",
         outline: "border border-slate-300 text-slate-600 dark:border-white/20 dark:text-slate-300",
       },
     },
