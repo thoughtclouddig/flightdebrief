@@ -17,6 +17,7 @@ import type {
   OrganizationMember,
   OrgRole,
   Reservation,
+  SkillObservation,
   StudentInstructor,
   TrainingItem,
   TrainingSignal,
@@ -760,6 +761,22 @@ export class PostgresRepository implements Repository {
     );
     return rows.map(mapTrainingSignal);
   }
+
+  async listInstructorSkillObservations(studentId: string): Promise<SkillObservation[]> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `SELECT f.id AS flight_id, f.flight_date, f.aircraft_id, ft.task_code, ft.label AS task_label,
+              r.performance_level, r.note, da.submitted_at
+       FROM debrief_assessment_ratings r
+       JOIN debrief_assessments da ON da.id = r.assessment_id
+       JOIN flight_tasks ft ON ft.id = r.flight_task_id
+       JOIN flights f ON f.id = ft.flight_id
+       WHERE da.role = 'instructor' AND da.status = 'submitted' AND f.student_id = $1
+       ORDER BY f.flight_date ASC, da.submitted_at ASC`,
+      [studentId],
+    );
+    return rows.map(mapSkillObservation);
+  }
 }
 
 /**
@@ -1047,6 +1064,19 @@ function mapDebriefAssessmentRating(row: Row): DebriefAssessmentRating {
     performanceLevel: row.performance_level as DebriefAssessmentRating["performanceLevel"],
     note: (row.note as string | null) ?? null,
     createdAt: iso(row.created_at),
+  };
+}
+
+function mapSkillObservation(row: Row): SkillObservation {
+  return {
+    flightId: row.flight_id as string,
+    flightDate: row.flight_date as string,
+    aircraftId: row.aircraft_id as string,
+    taskCode: row.task_code as SkillObservation["taskCode"],
+    taskLabel: row.task_label as string,
+    performanceLevel: row.performance_level as SkillObservation["performanceLevel"],
+    note: (row.note as string | null) ?? null,
+    submittedAt: iso(row.submitted_at),
   };
 }
 

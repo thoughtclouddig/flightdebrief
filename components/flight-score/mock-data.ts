@@ -9,7 +9,7 @@ import type { FlightScoreData } from "./types";
  */
 export const mockFlightScoreOnTrack: FlightScoreData = {
   score: 82,
-  label: "Good Flight",
+  label: "Progressing",
   tone: "good",
   categories: [
     { label: "Aircraft Control", score: 85, tone: "good" },
@@ -21,7 +21,7 @@ export const mockFlightScoreOnTrack: FlightScoreData = {
 };
 
 export const mockFlightScoreDeveloping: FlightScoreData = {
-  score: 58,
+  score: 62,
   label: "Developing",
   tone: "amber",
   categories: [
@@ -35,7 +35,7 @@ export const mockFlightScoreDeveloping: FlightScoreData = {
 
 export const mockFlightScoreNeedsAttention: FlightScoreData = {
   score: 34,
-  label: "Needs Attention",
+  label: "Needs Focus",
   tone: "danger",
   categories: [
     { label: "Aircraft Control", score: 40, tone: "danger" },

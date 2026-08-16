@@ -1,70 +1,94 @@
+import Image from "next/image";
 import Link from "next/link";
-import { AnimatedTrack } from "@/components/marketing/animated-track";
-import { DEMO_FLIGHT } from "@/lib/marketing/demo-data";
+import { CheckCircle2 } from "lucide-react";
+import { DebriefSummaryMockupCard } from "@/components/marketing/product-mockups";
+import { HeroScoreCard } from "@/components/marketing/hero-score-card";
 
-/**
- * No hero photo/video for now. The Higgsfield generation (see git history --
- * cinematic_studio_video_v2, 16:9, ~10s, genre "intimate", mode "pro",
- * sound "off") and the nano_banana_pro poster both failed: the workspace
- * ran out of credits. The poster that *did* generate had headsets on both
- * people, which wouldn't happen standing on the ramp post-flight, and read
- * as visibly AI-generated -- pulled rather than shipped with a fix pending.
- *
- * This uses the site's own flight-track motif (see components/marketing/
- * animated-track.tsx, reused from the "How It Works" and "Flight Data"
- * sections) as the hero visual instead -- no photo needed, and it reinforces
- * the same "your flight becomes the plan" idea rather than illustrating it
- * once and never again.
- *
- * To bring photography back once credits are available, regenerate with:
- * "Candid documentary photograph, not a posed studio shot, at a general
- * aviation airport in the American Southwest immediately after a flight
- * training lesson. A modern single-engine Diamond DA40-style training
- * aircraft parked on the ramp, engine off, no headsets anywhere in the frame
- * -- neither person is wearing a headset or holding one, nothing hanging
- * around their necks. A student pilot and a flight instructor, both
- * bare-headed except maybe a plain ballcap, stand beside the aircraft
- * mid-conversation in normal casual clothes, weight shifted naturally,
- * mid-gesture, imperfect candid body language like a real snapshot, not a
- * symmetrical hero pose. Golden-hour sunlight, long shadows, realistic GA
- * hangars and small aircraft softly visible in the background, subtle heat
- * haze, slight film grain, natural skin texture with visible imperfections,
- * shot on a real camera with a 50mm lens look, slightly off-center
- * composition. Avoid: airbrushed or glossy CGI look, plastic skin,
- * symmetrical composition, stock-photo posing, looking at camera, headsets,
- * luxury jet, airline, military aviation, text, logos, futuristic interface,
- * exaggerated lens flare."
- */
+const BENEFITS = ["Capture every lesson", "Track real progress", "Improve faster"];
+
 export function Hero() {
   return (
-    <section className="relative flex h-[100svh] min-h-[560px] items-end overflow-hidden bg-[#101727]">
-      <div className="absolute inset-0 z-0 opacity-[0.14]">
-        <AnimatedTrack track={DEMO_FLIGHT.track ?? []} cover className="h-full w-full" />
+    <section className="relative overflow-hidden bg-white pb-20 pt-24 sm:pb-28 sm:pt-28 lg:min-h-[680px] lg:pb-0">
+      {/* Desktop: image as a full-height right-aligned panel, fading into the white background on its left edge. */}
+      <div className="absolute inset-y-0 right-0 hidden w-[60%] lg:block">
+        <Image
+          src="/images/marketing/hero-debrief-tablet.webp"
+          alt="A student pilot and CFI reviewing a flight debrief together on a tablet beside the aircraft"
+          fill
+          priority
+          className="object-cover"
+          sizes="(min-width: 1024px) 1200px, 100vw"
+        />
+        <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-white/60 via-white/35 to-transparent" />
+        <HeroScoreCard className="absolute -bottom-10 right-4 w-[340px] xl:right-8" />
       </div>
-      <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/60 to-[#0c1220]/20" />
 
-      <div className="relative z-30 mx-auto w-full max-w-6xl px-6 pb-20 pt-32 sm:pb-28">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/70">Flight training, remembered</p>
-        <h1 className="font-display mt-4 max-w-2xl text-balance text-[clamp(2.75rem,9vw,4.75rem)] font-extrabold uppercase leading-[0.98] text-white">
-          Get better every flight.
-        </h1>
-        <p className="mt-6 max-w-md text-pretty text-lg leading-relaxed text-white/85">
-          Record the debrief you&rsquo;re already having. AfterFlight turns it into the plan for your next flight.
-        </p>
-
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link href="#how-it-works" className="rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark">
-            See How It Works
-          </Link>
-          <Link
-            href="#schools"
-            className="rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+      <div className="relative mx-auto max-w-[1320px] px-6">
+        <div className="relative z-10 max-w-xl lg:py-16">
+          <p className="text-base font-bold uppercase tracking-[0.16em] text-brand sm:text-lg">
+            Make every debrief count.
+          </p>
+          <h1
+            className="font-display mt-4 max-w-xl text-balance text-[clamp(2.75rem,6vw,4.25rem)] font-extrabold leading-[0.98] text-[#101727]"
+            style={{ textTransform: "none" }}
           >
-            For Flight Schools
-          </Link>
+            Get better <br />
+            every <span className="text-brand">flight.</span>
+          </h1>
+          <p className="mt-6 max-w-md text-pretty text-lg leading-relaxed text-[#68717D]">
+            AfterFlight turns every debrief into clear takeaways, next steps, and real
+            progress&mdash;so you fly better and finish your license with confidence.
+          </p>
+
+          <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+            {BENEFITS.map((benefit) => (
+              <li key={benefit} className="flex items-center gap-1.5 text-sm font-medium text-[#101727]">
+                <CheckCircle2 className="size-4 shrink-0 text-brand" />
+                {benefit}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-8 inline-flex flex-col items-stretch gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Link
+                href="/signup"
+                className="rounded-lg bg-brand px-8 py-4 text-center text-base font-semibold text-white hover:bg-brand-dark"
+              >
+                Start Free Trial
+              </Link>
+              <Link
+                href="#how-it-works"
+                className="rounded-lg border border-slate-200 px-8 py-4 text-center text-base font-semibold text-[#101727] hover:bg-[#f4f5f6]"
+              >
+                See How It Works
+              </Link>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+              {["No credit card", "7-day free trial", "Cancel anytime"].map((item) => (
+                <span key={item} className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-[#101727]">
+                  <CheckCircle2 className="size-3.5 shrink-0 text-brand" />
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <p className="mt-5 text-xs text-white/55">No forms. No extra notes. Just have your normal debrief.</p>
+        {/* Mobile/tablet: image as a normal rounded block below the text, since there's no room for a background panel. */}
+        <div className="relative mt-12 lg:hidden">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl">
+            <Image
+              src="/images/marketing/hero-debrief-tablet.webp"
+              alt="A student pilot and CFI reviewing a flight debrief together on a tablet beside the aircraft"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1023px) 100vw, 0px"
+            />
+          </div>
+          <DebriefSummaryMockupCard className="absolute -bottom-8 -right-4 w-[min(340px,85%)] sm:-right-8" />
+        </div>
       </div>
     </section>
   );

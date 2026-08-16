@@ -4,17 +4,18 @@ import { tryMarkMagicLinkSent } from "@/lib/auth/store";
 import { appOrigin, sendSignupLinkEmail } from "@/lib/email";
 
 /**
- * Self-serve independent-CFI signup, step 1: POST { name, email, orgName? }
- * mints a short-lived signed token and emails a confirmation link -- nothing
- * is created in the database until that link is clicked (see
- * lib/auth/store.ts's resolveSignupOnLogin), so an unverified/bot email
- * never produces a junk organization. Same cooldown table as /api/auth/login
- * on purpose -- it's the same anti-abuse intent, keyed by the same email.
+ * Self-serve signup (independent CFI or flight school), step 1:
+ * POST { name, email, orgName?, kind } mints a short-lived signed token and
+ * emails a confirmation link -- nothing is created in the database until
+ * that link is clicked (see lib/auth/store.ts's resolveSignupOnLogin), so an
+ * unverified/bot email never produces a junk organization. Same cooldown
+ * table as /api/auth/login on purpose -- it's the same anti-abuse intent,
+ * keyed by the same email.
  */
 const COOLDOWN_SECONDS = 60;
 
 export async function POST(request: NextRequest) {
-  let body: { name?: string; email?: string; orgName?: string } = {};
+  let body: { name?: string; email?: string; orgName?: string; kind?: string } = {};
   try {
     body = await request.json();
   } catch {
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const normalized = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const orgName = typeof body.orgName === "string" ? body.orgName.trim() : "";
+  const orgKind = body.kind === "school" ? "school" : body.kind === "individual" ? "individual" : "independent_cfi";
 
   if (!name || !normalized || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
     return NextResponse.json({ error: "Enter your name and a valid email address." }, { status: 400 });
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
       if (!origin) {
         console.error("[auth] cannot determine app origin; signup link not sent.");
       } else {
-        const token = await createSignupLinkJwt({ email: normalized, name, orgName: orgName || null });
+        const token = await createSignupLinkJwt({ email: normalized, name, orgName: orgName || null, orgKind });
         const url = new URL("/api/auth/callback", origin);
         url.searchParams.set("token", token);
         await sendSignupLinkEmail({ to: normalized, url: url.toString(), name });
