@@ -28,6 +28,45 @@ export const ORG_FALCON: Organization = {
   createdAt: new Date().toISOString(),
 };
 
+// Additional orgs demonstrating the other account tiers (School Pro is
+// already fully represented by ORG_FALCON above): an independent CFI running
+// their own small roster, a solo individual pilot with no school at all, and
+// two more lightweight school orgs used to demo multi-location oversight
+// (there's no "enterprise" org kind in the schema -- the closest real feature
+// is one admin holding memberships across several school orgs and switching
+// between them, see USER_JORDAN below).
+export const ORG_CFI_KEVIN: Organization = {
+  id: "org-cfi-kevin",
+  name: "Kevin Ortiz's Flight Training",
+  kind: "independent_cfi",
+  defaultGuidanceMode: "guided",
+  createdAt: new Date().toISOString(),
+};
+
+export const ORG_INDIVIDUAL_ALEX: Organization = {
+  id: "org-individual-alex",
+  name: "Alex Rivera's Flights",
+  kind: "individual",
+  defaultGuidanceMode: "freeform",
+  createdAt: new Date().toISOString(),
+};
+
+export const ORG_MESA: Organization = {
+  id: "org-mesa",
+  name: "Mesa Flight Academy",
+  kind: "school",
+  defaultGuidanceMode: "guided",
+  createdAt: new Date().toISOString(),
+};
+
+export const ORG_PRESCOTT: Organization = {
+  id: "org-prescott",
+  name: "Prescott Aviation",
+  kind: "school",
+  defaultGuidanceMode: "guided",
+  createdAt: new Date().toISOString(),
+};
+
 // Real, receivable addresses (Gmail "+" aliasing -- same inbox, distinct
 // identities) so the demo student/CFI logins actually work end-to-end with
 // magic-link auth, not just placeholder emails no one can receive.
@@ -35,13 +74,36 @@ export const USER_ANDY: User = { id: "user-andy", name: "Ron Johnson", email: "a
 export const USER_DANNY: User = { id: "user-danny", name: "Danny Franks", email: "andyrenk+cfi@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_MARIA: User = { id: "user-maria", name: "Maria Chen", email: "maria@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_SARAH: User = { id: "user-sarah", name: "Sarah Miller", email: "sarah@example.com", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_JORDAN: User = { id: "user-jordan", name: "Jordan Reyes", email: "jordan@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
+// Real, receivable address (like Andy/Danny above) -- Jordan is the one
+// admin who holds memberships across multiple school orgs (see the
+// organizationMembers list below), so logging in as Jordan and using the
+// membership switcher is the closest real demo of "enterprise-style"
+// multi-location oversight this codebase currently supports.
+export const USER_JORDAN: User = { id: "user-jordan", name: "Jordan Reyes", email: "andyrenk+admin@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
 
 // Additional students spanning different training phases, for testing/demo
 // variety -- early pattern work, post-solo cross-country, and checkride prep.
 export const USER_MARCUS: User = { id: "user-marcus", name: "Marcus Webb", email: "marcus@example.com", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_PRIYA: User = { id: "user-priya", name: "Priya Anand", email: "priya@example.com", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_TOM: User = { id: "user-tom", name: "Tom Reilly", email: "tom@example.com", authUserId: null, createdAt: new Date().toISOString() };
+
+// Independent CFI persona (real, receivable email like Andy/Danny) with a
+// small roster of their own, entirely separate from Falcon Aviation.
+export const USER_KEVIN: User = { id: "user-kevin", name: "Kevin Ortiz", email: "andyrenk+indycfi@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_EMMA: User = { id: "user-emma", name: "Emma Sato", email: "emma@example.com", authUserId: null, createdAt: new Date().toISOString() };
+
+// Individual (solo, no school) student persona -- real, receivable email.
+export const USER_ALEX: User = { id: "user-alex", name: "Alex Rivera", email: "andyrenk+indystudent@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
+
+// Mesa Flight Academy roster (one of the two extra "locations" for the
+// multi-org admin demo -- see USER_JORDAN above).
+export const USER_NINA: User = { id: "user-nina", name: "Nina Alvarez", email: "nina@mesaflight.example", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_CARLOS: User = { id: "user-carlos", name: "Carlos Mendez", email: "carlos@example.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_LEAH: User = { id: "user-leah", name: "Leah Kim", email: "leah@example.com", authUserId: null, createdAt: new Date().toISOString() };
+
+// Prescott Aviation roster (the third "location" for the multi-org admin demo).
+export const USER_OMAR: User = { id: "user-omar", name: "Omar Haddad", email: "omar@prescottaviation.example", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_ZOE: User = { id: "user-zoe", name: "Zoe Bennett", email: "zoe@example.com", authUserId: null, createdAt: new Date().toISOString() };
 
 /** The default viewer when the app first loads (see lib/viewer.ts). */
 export const DEMO_USER_ID = USER_ANDY.id;
@@ -98,6 +160,58 @@ const TOM_AIRCRAFT: Aircraft = {
   externalId: null,
 };
 
+const KEVIN_AIRCRAFT: Aircraft = {
+  id: "aircraft-c172-n812kv",
+  tailNumber: "N812KV",
+  type: "Cessna 172",
+  make: "Cessna",
+  model: "172",
+  homeAirport: "KDVT",
+  organizationId: ORG_CFI_KEVIN.id,
+  status: "active",
+  externalProvider: null,
+  externalId: null,
+};
+
+const ALEX_AIRCRAFT: Aircraft = {
+  id: "aircraft-c172-n905ar",
+  tailNumber: "N905AR",
+  type: "Cessna 172",
+  make: "Cessna",
+  model: "172",
+  homeAirport: "KCHD",
+  organizationId: ORG_INDIVIDUAL_ALEX.id,
+  status: "active",
+  externalProvider: null,
+  externalId: null,
+};
+
+const MESA_AIRCRAFT: Aircraft = {
+  id: "aircraft-da40-n214ms",
+  tailNumber: "N214MS",
+  type: "Diamond DA40 NG",
+  make: "Diamond",
+  model: "DA40 NG",
+  homeAirport: "KIWA",
+  organizationId: ORG_MESA.id,
+  status: "active",
+  externalProvider: null,
+  externalId: null,
+};
+
+const PRESCOTT_AIRCRAFT: Aircraft = {
+  id: "aircraft-c172-n338pr",
+  tailNumber: "N338PR",
+  type: "Cessna 172",
+  make: "Cessna",
+  model: "172",
+  homeAirport: "KPRC",
+  organizationId: ORG_PRESCOTT.id,
+  status: "active",
+  externalProvider: null,
+  externalId: null,
+};
+
 /**
  * Instructor is the lightweight lookup used for Flight.instructorId and for
  * matching literal names inside transcripts ("Danny had me..."). Its `name`
@@ -113,6 +227,21 @@ export const SEED_INSTRUCTOR: Instructor = {
 const SEED_INSTRUCTOR_MARIA: Instructor = {
   id: USER_MARIA.id,
   name: "Maria Chen",
+};
+
+const SEED_INSTRUCTOR_KEVIN: Instructor = {
+  id: USER_KEVIN.id,
+  name: "Kevin",
+};
+
+const SEED_INSTRUCTOR_NINA: Instructor = {
+  id: USER_NINA.id,
+  name: "Nina",
+};
+
+const SEED_INSTRUCTOR_OMAR: Instructor = {
+  id: USER_OMAR.id,
+  name: "Omar",
 };
 
 const FLIGHT_A_TRANSCRIPT =
@@ -145,6 +274,26 @@ const TOM_FLIGHT_1_TRANSCRIPT =
   "Checkride prep session, worked the full private pilot maneuvers list. Steep turns were solid, held altitude within standards on both directions. Slow flight was good. Power-off stalls were fine but my power-on stall recovery was a little abrupt -- Danny wants smoother pitch input. We also did a short-field landing and I came in a bit long, need to nail my aim point better. Emergency procedures and checklist flow were sharp.";
 const TOM_FLIGHT_2_TRANSCRIPT =
   "Another checkride prep flight. Steep turns and slow flight still solid. Power-on stall recovery was much smoother this time, good pitch control. Short-field landing was right on the aim point today. Danny said I'm about ready for the checkride -- just wants one more flight focused on emergency procedures under time pressure to build speed on the checklist flow.";
+
+// --- Emma Sato: Kevin's own student (independent CFI roster) --------------
+const EMMA_FLIGHT_TRANSCRIPT =
+  "First lesson working the pattern together. Kevin had me focus on getting the airplane trimmed for approach speed before turning final. Landings were a little flat on the first two, better by the end. Radio calls were solid. Kevin wants me to keep working on configuring earlier in the downwind.";
+
+// --- Alex Rivera: solo individual pilot, no CFI on the account -------------
+const ALEX_FLIGHT_1_TRANSCRIPT =
+  "Solo pattern practice today. My landings were mostly fine but I noticed I'm still carrying a bit of extra speed on short final. Going to work on trimming earlier and getting stabilized sooner. Radio calls went smoothly, no issues with tower today.";
+const ALEX_FLIGHT_2_TRANSCRIPT =
+  "Another solo session, worked steep turns and slow flight on my own out in the practice area. Altitude control on the steep turns was decent, lost about fifty feet on one of them. Slow flight recovery was clean. Want to keep building consistency on the steep turns before I fly with an instructor again for my flight review.";
+
+// --- Mesa Flight Academy: Carlos Mendez and Leah Kim, both with Nina -------
+const CARLOS_FLIGHT_TRANSCRIPT =
+  "Pattern work today. Nina had me work on getting configured earlier on downwind so I'm not rushed on base. Landings were a little firm but on centerline. Radio calls were good, only needed one repeat from tower.";
+const LEAH_FLIGHT_TRANSCRIPT =
+  "Cross-country planning lesson followed by a short local flight. Nina walked through my navigation log with me before we launched -- my fuel planning was a little optimistic. In the air, pilotage was solid and I stayed on course the whole way. Need to build in more of a fuel reserve next time.";
+
+// --- Prescott Aviation: Zoe Bennett, with Omar -----------------------------
+const ZOE_FLIGHT_TRANSCRIPT =
+  "Maneuvers flight -- steep turns, slow flight, and power-off stalls. Omar said my steep turns were solid on altitude but I rolled out a little late on both directions. Slow flight and stall recovery were clean. Omar wants me to work on anticipating the rollout point earlier next time.";
 
 // Three additional historical flights, further back than the preserved flight-1/2/3,
 // used only to give the school-level Training Insights admin section (recurring
@@ -194,7 +343,8 @@ export interface SeedBundle {
   organizationMembers: OrganizationMember[];
   studentInstructors: StudentInstructor[];
   aircraft: Aircraft[];
-  instructors: Instructor[];
+  /** Paired with organizationId since Instructor itself is intentionally org-agnostic (see its doc comment). */
+  instructors: { instructor: Instructor; organizationId: string }[];
   reservations: Reservation[];
   flights: Flight[];
   debriefs: Debrief[];
@@ -316,7 +466,7 @@ export function buildSeed(): SeedBundle {
     debriefId: string,
     student: User,
     aircraft: Aircraft,
-    instructor: Instructor,
+    instructor: Instructor | null,
     daysAgo: number,
     durationMinutes: number,
     seed: number,
@@ -328,13 +478,13 @@ export function buildSeed(): SeedBundle {
     const flight: Flight = {
       id: flightId,
       userId: student.id,
-      organizationId: ORG_FALCON.id,
+      organizationId: aircraft.organizationId,
       aircraftId: aircraft.id,
       departureAirport: aircraft.homeAirport,
       arrivalAirport: aircraft.homeAirport,
       flightDate,
       durationMinutes,
-      instructorId: instructor.id,
+      instructorId: instructor?.id ?? null,
       reservationId: null,
       fr24FlightId: null,
       externalProvider: null,
@@ -345,7 +495,9 @@ export function buildSeed(): SeedBundle {
     };
     const result = analyzeMock({
       transcript,
-      flightMeta: flightMetaFor(aircraft, instructor, flight),
+      flightMeta: instructor
+        ? flightMetaFor(aircraft, instructor, flight)
+        : { ...flightMetaFor(aircraft, { id: "self", name: "Self" }, flight), instructorName: "" },
       previousActionItems,
     });
     const debrief: Debrief = {
@@ -388,6 +540,33 @@ export function buildSeed(): SeedBundle {
   const tom2 = studentDebrief(
     "flight-tom-2", "debrief-tom-2", USER_TOM, TOM_AIRCRAFT, SEED_INSTRUCTOR,
     2, 98, 25, TOM_FLIGHT_2_TRANSCRIPT, 120, tom1.result.actionItems,
+  );
+
+  const emma1 = studentDebrief(
+    "flight-emma-1", "debrief-emma-1", USER_EMMA, KEVIN_AIRCRAFT, SEED_INSTRUCTOR_KEVIN,
+    5, 64, 30, EMMA_FLIGHT_TRANSCRIPT, 80, [],
+  );
+
+  const alex1 = studentDebrief(
+    "flight-alex-1", "debrief-alex-1", USER_ALEX, ALEX_AIRCRAFT, null,
+    11, 58, 31, ALEX_FLIGHT_1_TRANSCRIPT, 70, [],
+  );
+  const alex2 = studentDebrief(
+    "flight-alex-2", "debrief-alex-2", USER_ALEX, ALEX_AIRCRAFT, null,
+    4, 66, 32, ALEX_FLIGHT_2_TRANSCRIPT, 76, alex1.result.actionItems,
+  );
+
+  const carlos1 = studentDebrief(
+    "flight-carlos-1", "debrief-carlos-1", USER_CARLOS, MESA_AIRCRAFT, SEED_INSTRUCTOR_NINA,
+    6, 60, 33, CARLOS_FLIGHT_TRANSCRIPT, 78, [],
+  );
+  const leah1 = studentDebrief(
+    "flight-leah-1", "debrief-leah-1", USER_LEAH, MESA_AIRCRAFT, SEED_INSTRUCTOR_NINA,
+    8, 102, 34, LEAH_FLIGHT_TRANSCRIPT, 96, [],
+  );
+  const zoe1 = studentDebrief(
+    "flight-zoe-1", "debrief-zoe-1", USER_ZOE, PRESCOTT_AIRCRAFT, SEED_INSTRUCTOR_OMAR,
+    7, 68, 35, ZOE_FLIGHT_TRANSCRIPT, 82, [],
   );
 
   const flightX1Date = isoDate(35);
@@ -527,7 +706,10 @@ export function buildSeed(): SeedBundle {
     createdAt: sarahFlight.createdAt,
   };
 
-  const newStudentDebriefs = [marcus1, marcus2, priya1, priya2, tom1, tom2];
+  const newStudentDebriefs = [
+    marcus1, marcus2, priya1, priya2, tom1, tom2,
+    emma1, alex1, alex2, carlos1, leah1, zoe1,
+  ];
 
   const trainingItems: TrainingItem[] = [
     ...toTrainingItems(flightX1.id, debriefX1.id, debriefX1Result, flightX1.createdAt),
@@ -558,6 +740,31 @@ export function buildSeed(): SeedBundle {
     member("member-marcus", USER_MARCUS.id, "student"),
     member("member-priya", USER_PRIYA.id, "student"),
     member("member-tom", USER_TOM.id, "student"),
+
+    // Independent CFI: Kevin gets both admin + instructor rows (see
+    // lib/auth/store.ts's resolveSignupOnLogin -- this seed mirrors what a
+    // real independent_cfi signup produces), Emma is his one student.
+    member("member-kevin-admin", USER_KEVIN.id, "admin", ORG_CFI_KEVIN.id),
+    member("member-kevin-instructor", USER_KEVIN.id, "instructor", ORG_CFI_KEVIN.id),
+    member("member-emma", USER_EMMA.id, "student", ORG_CFI_KEVIN.id),
+
+    // Individual: Alex is a solo member of their own one-person org.
+    member("member-alex", USER_ALEX.id, "student", ORG_INDIVIDUAL_ALEX.id),
+
+    // Mesa Flight Academy: one instructor, two students, plus Jordan again
+    // as admin -- Jordan holding an admin membership at Falcon, Mesa, AND
+    // Prescott is what makes the membership switcher demo multi-location
+    // oversight (there's no dedicated "enterprise" org kind, see the
+    // ORG_MESA/ORG_PRESCOTT comment above).
+    member("member-nina", USER_NINA.id, "instructor", ORG_MESA.id),
+    member("member-carlos", USER_CARLOS.id, "student", ORG_MESA.id),
+    member("member-leah", USER_LEAH.id, "student", ORG_MESA.id),
+    member("member-jordan-mesa", USER_JORDAN.id, "admin", ORG_MESA.id),
+
+    // Prescott Aviation: one instructor, one student, Jordan as admin.
+    member("member-omar", USER_OMAR.id, "instructor", ORG_PRESCOTT.id),
+    member("member-zoe", USER_ZOE.id, "student", ORG_PRESCOTT.id),
+    member("member-jordan-prescott", USER_JORDAN.id, "admin", ORG_PRESCOTT.id),
   ];
 
   const studentInstructors: StudentInstructor[] = [
@@ -567,15 +774,31 @@ export function buildSeed(): SeedBundle {
     link("link-marcus-maria", USER_MARCUS.id, USER_MARIA.id, true),
     link("link-priya-danny", USER_PRIYA.id, USER_DANNY.id, true),
     link("link-tom-danny", USER_TOM.id, USER_DANNY.id, true),
+    link("link-emma-kevin", USER_EMMA.id, USER_KEVIN.id, true, ORG_CFI_KEVIN.id),
+    link("link-carlos-nina", USER_CARLOS.id, USER_NINA.id, true, ORG_MESA.id),
+    link("link-leah-nina", USER_LEAH.id, USER_NINA.id, true, ORG_MESA.id),
+    link("link-zoe-omar", USER_ZOE.id, USER_OMAR.id, true, ORG_PRESCOTT.id),
   ];
 
   return {
-    organizations: [ORG_FALCON],
-    users: [USER_ANDY, USER_DANNY, USER_MARIA, USER_SARAH, USER_JORDAN, USER_MARCUS, USER_PRIYA, USER_TOM],
+    organizations: [ORG_FALCON, ORG_CFI_KEVIN, ORG_INDIVIDUAL_ALEX, ORG_MESA, ORG_PRESCOTT],
+    users: [
+      USER_ANDY, USER_DANNY, USER_MARIA, USER_SARAH, USER_JORDAN, USER_MARCUS, USER_PRIYA, USER_TOM,
+      USER_KEVIN, USER_EMMA, USER_ALEX, USER_NINA, USER_CARLOS, USER_LEAH, USER_OMAR, USER_ZOE,
+    ],
     organizationMembers,
     studentInstructors,
-    aircraft: [SEED_AIRCRAFT, SARAH_AIRCRAFT, MARCUS_AIRCRAFT, TOM_AIRCRAFT],
-    instructors: [SEED_INSTRUCTOR, SEED_INSTRUCTOR_MARIA],
+    aircraft: [
+      SEED_AIRCRAFT, SARAH_AIRCRAFT, MARCUS_AIRCRAFT, TOM_AIRCRAFT,
+      KEVIN_AIRCRAFT, ALEX_AIRCRAFT, MESA_AIRCRAFT, PRESCOTT_AIRCRAFT,
+    ],
+    instructors: [
+      { instructor: SEED_INSTRUCTOR, organizationId: ORG_FALCON.id },
+      { instructor: SEED_INSTRUCTOR_MARIA, organizationId: ORG_FALCON.id },
+      { instructor: SEED_INSTRUCTOR_KEVIN, organizationId: ORG_CFI_KEVIN.id },
+      { instructor: SEED_INSTRUCTOR_NINA, organizationId: ORG_MESA.id },
+      { instructor: SEED_INSTRUCTOR_OMAR, organizationId: ORG_PRESCOTT.id },
+    ],
     reservations: [reservationAndy, reservationSarah],
     flights: [
       flightC, flightB, flightA, flightX3, flightX2, flightX1, sarahFlight,
@@ -590,10 +813,15 @@ export function buildSeed(): SeedBundle {
   };
 }
 
-function member(id: string, userId: string, role: OrganizationMember["role"]): OrganizationMember {
+function member(
+  id: string,
+  userId: string,
+  role: OrganizationMember["role"],
+  organizationId: string = ORG_FALCON.id,
+): OrganizationMember {
   return {
     id,
-    organizationId: ORG_FALCON.id,
+    organizationId,
     userId,
     role,
     status: "active",
@@ -602,12 +830,18 @@ function member(id: string, userId: string, role: OrganizationMember["role"]): O
   };
 }
 
-function link(id: string, studentId: string, instructorId: string, isPrimary: boolean): StudentInstructor {
+function link(
+  id: string,
+  studentId: string,
+  instructorId: string,
+  isPrimary: boolean,
+  organizationId: string = ORG_FALCON.id,
+): StudentInstructor {
   return {
     id,
     studentId,
     instructorId,
-    organizationId: ORG_FALCON.id,
+    organizationId,
     isPrimary,
     status: "active",
     createdAt: new Date().toISOString(),

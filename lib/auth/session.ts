@@ -126,3 +126,49 @@ export async function getSession(): Promise<SessionClaims | null> {
   if (!token) return null;
   return verifySessionJwt(token);
 }
+
+/**
+ * Shared-password gate in front of the whole marketing site (proxy.ts),
+ * entirely separate from real user auth above -- deliberately keyed off its
+ * own SITE_ACCESS_CODE secret (used both as the password visitors type and
+ * as the signing key here) rather than SESSION_SECRET, so it can be turned
+ * on/off independently and never fails a real login/session check if it's
+ * misconfigured. Unset SITE_ACCESS_CODE means the gate is simply off.
+ */
+export const SITE_GATE_COOKIE = "fb_site_gate";
+export const SITE_GATE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
+
+function getSiteAccessCode(): string | null {
+  const code = process.env.SITE_ACCESS_CODE;
+  return code && code.trim() ? code.trim() : null;
+}
+
+export function isSiteGateEnabled(): boolean {
+  return getSiteAccessCode() !== null;
+}
+
+export function checkSiteAccessCode(candidate: string): boolean {
+  const code = getSiteAccessCode();
+  return code !== null && candidate === code;
+}
+
+export async function createSiteGateJwt(): Promise<string | null> {
+  const code = getSiteAccessCode();
+  if (!code) return null;
+  return new SignJWT({ purpose: "site-gate" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(Math.floor(Date.now() / 1000) + SITE_GATE_MAX_AGE_SECONDS)
+    .sign(new TextEncoder().encode(code));
+}
+
+export async function verifySiteGateJwt(token: string): Promise<boolean> {
+  const code = getSiteAccessCode();
+  if (!code) return true; // gate disabled -- nothing to verify against
+  try {
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(code));
+    return payload.purpose === "site-gate";
+  } catch {
+    return false;
+  }
+}
