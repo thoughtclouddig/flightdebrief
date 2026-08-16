@@ -828,10 +828,10 @@ async function seedDomainTables(client: PoolClient): Promise<void> {
       [m.id, m.organizationId, m.userId, m.role, m.certificateType ?? null],
     );
   }
-  for (const i of seed.instructors) {
+  for (const { instructor: i, organizationId } of seed.instructors) {
     await client.query(
       "INSERT INTO instructors (id, name, organization_id) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
-      [i.id, i.name, "org-falcon"],
+      [i.id, i.name, organizationId],
     );
   }
   for (const a of seed.aircraft) {
