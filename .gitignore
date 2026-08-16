@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# agent worktree scratch (isolated agent runs, not project source)
+.claude/worktrees/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

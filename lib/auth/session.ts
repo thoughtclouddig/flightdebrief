@@ -77,21 +77,26 @@ export async function verifyMagicLinkJwt(token: string): Promise<string | null> 
 }
 
 /**
- * Signup-link tokens: same shape as magic-link tokens but carry a name and
- * optional org name so self-serve independent-CFI signup (lib/auth/store.ts's
- * resolveSignupOnLogin) has what it needs once the link is clicked -- a
- * distinct `purpose` keeps this from ever being replayed as a plain sign-in.
+ * Signup-link tokens: same shape as magic-link tokens but carry a name,
+ * optional org name, and which kind of org to create, so self-serve signup
+ * (lib/auth/store.ts's resolveSignupOnLogin) has what it needs once the link
+ * is clicked -- a distinct `purpose` keeps this from ever being replayed as
+ * a plain sign-in.
  */
 export const SIGNUP_LINK_MAX_AGE_SECONDS = 60 * 15; // 15 minutes
+
+/** Which self-serve signup flow this link was minted for -- see app/(auth)/signup/{cfi,school,student}. */
+export type SignupOrgKind = "independent_cfi" | "school" | "individual";
 
 export interface SignupLinkClaims {
   email: string;
   name: string;
   orgName: string | null;
+  orgKind: SignupOrgKind;
 }
 
 export async function createSignupLinkJwt(input: SignupLinkClaims): Promise<string> {
-  return new SignJWT({ purpose: "signup-link", name: input.name, orgName: input.orgName })
+  return new SignJWT({ purpose: "signup-link", name: input.name, orgName: input.orgName, orgKind: input.orgKind })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(input.email.trim().toLowerCase())
     .setIssuedAt()
@@ -107,6 +112,7 @@ export async function verifySignupLinkJwt(token: string): Promise<SignupLinkClai
       email: payload.sub,
       name: typeof payload.name === "string" ? payload.name : "",
       orgName: typeof payload.orgName === "string" ? payload.orgName : null,
+      orgKind: payload.orgKind === "school" || payload.orgKind === "individual" ? payload.orgKind : "independent_cfi",
     };
   } catch {
     return null;

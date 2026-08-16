@@ -194,29 +194,35 @@ export async function resolveUserOnLogin(claims: SessionClaims): Promise<User | 
 
 /**
  * Called from the auth callback after a verified "signup-link" click (see
- * lib/auth/session.ts) -- self-serve independent-CFI signup. Unlike
- * resolveUserOnLogin's one-time GLOBAL admin bootstrap, this creates a fresh
- * organization every time it's reached, gated only by "the emailed link was
- * actually clicked" (no junk orgs from unverified/bot emails), not by
- * "first ever login." Idempotent: clicking the same link twice, or already
- * having an account under this email (e.g. invited to a school in the
- * meantime), never creates a duplicate org -- it just links/returns.
+ * lib/auth/session.ts) -- self-serve independent-CFI or flight-school
+ * signup. Unlike resolveUserOnLogin's one-time GLOBAL admin bootstrap, this
+ * creates a fresh organization every time it's reached, gated only by "the
+ * emailed link was actually clicked" (no junk orgs from unverified/bot
+ * emails), not by "first ever login." Idempotent: clicking the same link
+ * twice, or already having an account under this email (e.g. invited to a
+ * school in the meantime), never creates a duplicate org -- it just
+ * links/returns.
  *
- * The new org gets TWO membership rows for this user (admin + instructor) --
- * organization_members' UNIQUE(organization_id, user_id, role) already
- * permits this, and it's what lets a solo independent CFI reach both the
- * CFI workflow and admin/org-settings pages via the membership switcher.
+ * `independent_cfi` gets TWO membership rows for this user (admin +
+ * instructor) -- organization_members' UNIQUE(organization_id, user_id,
+ * role) already permits this, and it's what lets a solo independent CFI
+ * reach both the CFI workflow and admin/org-settings pages via the
+ * membership switcher. `school` gets admin only -- a school signer isn't
+ * necessarily a CFI themselves; they invite their own CFIs/students from
+ * the admin panel afterward.
  *
  * Returns the new organization's id only when a fresh org was actually
  * created this call, so the caller can follow up with
- * repo.getOrCreateInstructor() (a domain-repository concern, kept out of
- * this file -- same convention app/api/admin/invite-cfi/route.ts already
- * uses after lib/auth/invite.ts's inviteUser).
+ * repo.getOrCreateInstructor() for the independent_cfi case (a
+ * domain-repository concern, kept out of this file -- same convention
+ * app/api/admin/invite-cfi/route.ts already uses after lib/auth/invite.ts's
+ * inviteUser).
  */
 export async function resolveSignupOnLogin(
   email: string,
   name: string,
   orgName: string | null,
+  orgKind: "independent_cfi" | "school" | "individual",
 ): Promise<{ user: User; newOrganizationId: string | null }> {
   const normalized = email.trim().toLowerCase();
 
@@ -233,22 +239,51 @@ export async function resolveSignupOnLogin(
   }
 
   const trimmedName = name.trim() || "Owner";
-  const organizationName = (orgName ?? "").trim() || `${trimmedName}'s Flight Training`;
+  const defaultOrgName =
+    orgKind === "school"
+      ? `${trimmedName}'s Flight School`
+      : orgKind === "individual"
+        ? `${trimmedName}'s Flights`
+        : `${trimmedName}'s Flight Training`;
+  const organizationName = (orgName ?? "").trim() || defaultOrgName;
   const orgId = `org-${randomUUID()}`;
   const userId = `user-${randomUUID()}`;
 
   const db = await getDb().connect();
   try {
     await db.query("BEGIN");
-    await db.query("INSERT INTO organizations (id, name, kind) VALUES ($1, $2, 'independent_cfi')", [orgId, organizationName]);
+    // A solo pilot has no CFI to provide an independent assessment, so "guided" mode's
+    // two-rater comparison doesn't apply -- override the DB's 'guided' default.
+    if (orgKind === "individual") {
+      await db.query("INSERT INTO organizations (id, name, kind, default_guidance_mode) VALUES ($1, $2, $3, 'freeform')", [
+        orgId,
+        organizationName,
+        orgKind,
+      ]);
+    } else {
+      await db.query("INSERT INTO organizations (id, name, kind) VALUES ($1, $2, $3)", [orgId, organizationName, orgKind]);
+    }
     const inserted = await db.query<UserRow>(
       "INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ($1, $2, $3, $4, true) RETURNING *",
       [userId, trimmedName, normalized, normalized],
     );
-    await db.query(
-      `INSERT INTO organization_members (id, organization_id, user_id, role) VALUES ($1, $2, $3, 'admin'), ($4, $2, $3, 'instructor')`,
-      [`member-${randomUUID()}`, orgId, userId, `member-${randomUUID()}`],
-    );
+    if (orgKind === "independent_cfi") {
+      await db.query(
+        `INSERT INTO organization_members (id, organization_id, user_id, role) VALUES ($1, $2, $3, 'admin'), ($4, $2, $3, 'instructor')`,
+        [`member-${randomUUID()}`, orgId, userId, `member-${randomUUID()}`],
+      );
+    } else if (orgKind === "individual") {
+      await db.query(`INSERT INTO organization_members (id, organization_id, user_id, role) VALUES ($1, $2, $3, 'student')`, [
+        `member-${randomUUID()}`,
+        orgId,
+        userId,
+      ]);
+    } else {
+      await db.query(
+        `INSERT INTO organization_members (id, organization_id, user_id, role) VALUES ($1, $2, $3, 'admin')`,
+        [`member-${randomUUID()}`, orgId, userId],
+      );
+    }
     await db.query("COMMIT");
     return { user: toUser(inserted.rows[0]), newOrganizationId: orgId };
   } catch (err) {

@@ -230,3 +230,23 @@ export function allTrainingSkills(): { skill: TrainingSkill; label: string }[] {
 export function skillLabel(skill: TrainingSkill): string {
   return TOPIC_LIBRARY.find((t) => t.skill === skill)?.topic ?? skill;
 }
+
+/** The TrainingCategory a given skill rolls up to -- backs FlightScore's per-category grouping (see lib/flight-score.ts). */
+export function categoryForSkill(skill: TrainingSkill): TrainingCategory {
+  return TOPIC_LIBRARY.find((t) => t.skill === skill)?.category ?? "PROCEDURES";
+}
+
+/** Human-readable label for a TrainingCategory code, e.g. "AIRSPEED_CONTROL" -> "Airspeed Control". */
+const CATEGORY_LABELS: Record<TrainingCategory, string> = {
+  LANDINGS: "Landings",
+  MANEUVERS: "Maneuvers",
+  COMMUNICATIONS: "Communications",
+  PROCEDURES: "Procedures",
+  AIRSPEED_CONTROL: "Airspeed Control",
+  NAVIGATION: "Navigation",
+  RISK_MANAGEMENT: "Risk Management & ADM",
+};
+
+export function categoryLabel(category: TrainingCategory): string {
+  return CATEGORY_LABELS[category];
+}

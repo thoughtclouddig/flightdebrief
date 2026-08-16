@@ -1,48 +1,29 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Loader2, MailCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Building2, GraduationCap, Headset, type LucideIcon } from "lucide-react";
 
-export default function SignupPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [orgName, setOrgName] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+const ROLES: { href: string; icon: LucideIcon; title: string; copy: string }[] = [
+  {
+    href: "/signup/student",
+    icon: GraduationCap,
+    title: "I'm a student pilot",
+    copy: "Fly solo, or join through your CFI or flight school's invite.",
+  },
+  {
+    href: "/signup/cfi",
+    icon: Headset,
+    title: "I'm an independent CFI",
+    copy: "Start your own AfterFlight and invite your students.",
+  },
+  {
+    href: "/signup/school",
+    icon: Building2,
+    title: "I'm a flight school",
+    copy: "Set up your school, then invite your CFIs and students.",
+  },
+];
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim() || !email.trim()) {
-      setFormError("Enter your name and email address.");
-      return;
-    }
-    setSending(true);
-    setFormError(null);
-    try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, orgName: orgName || undefined }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setFormError(data.error ?? "Something went wrong. Please try again.");
-        return;
-      }
-      setSent(true);
-    } catch {
-      setFormError("Something went wrong — check your connection and try again.");
-    } finally {
-      setSending(false);
-    }
-  }
-
+export default function SignupRolePickerPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center text-center">
@@ -62,69 +43,24 @@ export default function SignupPage() {
           className="hidden dark:block"
           priority
         />
-        <p className="mt-2 text-sm text-foreground-soft">Start your own AfterFlight, as an independent CFI</p>
+        <p className="mt-2 text-sm text-foreground-soft">Which best describes you?</p>
       </div>
 
-      {sent ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg bg-emerald-500/10 px-4 py-6 text-center">
-          <MailCheck className="size-8 text-emerald-600 dark:text-emerald-400" />
-          <p className="text-sm text-foreground">
-            Check your email — if <span className="font-medium">{email.trim().toLowerCase()}</span> doesn&apos;t
-            already have an account, a confirmation link is on its way. Click it to finish setting up your
-            organization. The link expires in 15 minutes.
-          </p>
-          <button
-            type="button"
-            className="text-xs text-foreground-faint hover:underline"
-            onClick={() => setSent(false)}
+      <div className="flex flex-col gap-3">
+        {ROLES.map((role) => (
+          <Link
+            key={role.href}
+            href={role.href}
+            className="flex items-start gap-3 rounded-lg border border-hairline p-4 text-left hover:bg-surface-sunken"
           >
-            Use a different email
-          </button>
-        </div>
-      ) : (
-        <form onSubmit={submit} className="flex flex-col gap-4">
-          <div>
-            <Label htmlFor="signup-name">Your name</Label>
-            <Input
-              id="signup-name"
-              name="name"
-              autoComplete="name"
-              className="mt-1.5"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="signup-email">Email</Label>
-            <Input
-              id="signup-email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              className="mt-1.5"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <Label htmlFor="signup-org-name">Organization name (optional)</Label>
-            <Input
-              id="signup-org-name"
-              name="orgName"
-              className="mt-1.5"
-              value={orgName}
-              onChange={(e) => setOrgName(e.target.value)}
-              placeholder={name ? `${name}'s Flight Training` : "Your Name's Flight Training"}
-            />
-          </div>
-          {formError ? <p className="text-sm text-red-600 dark:text-red-400">{formError}</p> : null}
-          <Button type="submit" size="lg" disabled={sending}>
-            {sending ? <Loader2 className="size-4 animate-spin" /> : null}
-            Email me a confirmation link
-          </Button>
-        </form>
-      )}
+            <role.icon className="mt-0.5 size-5 shrink-0 text-brand" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">{role.title}</p>
+              <p className="mt-0.5 text-xs text-foreground-soft">{role.copy}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
 
       <p className="text-center text-xs text-foreground-faint">
         Already have an account?{" "}

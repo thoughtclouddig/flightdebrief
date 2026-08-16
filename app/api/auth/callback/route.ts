@@ -46,11 +46,13 @@ export async function GET(request: NextRequest) {
       }
     } else {
       email = signupClaims!.email;
-      const result = await resolveSignupOnLogin(email, signupClaims!.name, signupClaims!.orgName);
+      const result = await resolveSignupOnLogin(email, signupClaims!.name, signupClaims!.orgName, signupClaims!.orgKind);
       user = result.user;
-      if (result.newOrganizationId) {
+      if (result.newOrganizationId && signupClaims!.orgKind === "independent_cfi") {
         // Keeps the lightweight `instructors` table (used by Flight.instructorId)
         // in sync, same convention app/api/admin/invite-cfi/route.ts already uses.
+        // School signers aren't necessarily CFIs themselves, so this is skipped
+        // for that kind -- they invite their own CFIs afterward.
         await getRepository().getOrCreateInstructor(user.name, result.newOrganizationId);
       }
     }

@@ -128,7 +128,7 @@ function LoginContent() {
 
       <p className="text-center text-xs text-foreground-faint">
         Need an account? Ask your school&apos;s admin or CFI for an invite, then request a sign-in
-        link with the invited email. Independent CFI?{" "}
+        link with the invited email. Independent CFI or flight school?{" "}
         <Link href="/signup" className="text-brand hover:underline">
           Start your own AfterFlight
         </Link>

@@ -16,6 +16,7 @@ import type {
   OrganizationMember,
   OrgRole,
   Reservation,
+  SkillObservation,
   StudentInstructor,
   TrainingCategory,
   TrainingItem,
@@ -186,4 +187,14 @@ export interface Repository {
   // --- Structured training signals (see lib/taxonomy.ts) ---
   createTrainingSignals(items: Omit<TrainingSignal, "id" | "createdAt">[]): Promise<TrainingSignal[]>;
   listTrainingSignals(filter?: ListTrainingSignalsFilter): Promise<TrainingSignal[]>;
+
+  /**
+   * Every CFI-reviewed skill observation for a student -- flight_tasks joined
+   * through debrief_assessments (role='instructor', status='submitted') and
+   * debrief_assessment_ratings. This is FlightScore's only input (see
+   * lib/flight-score.ts); freeform-mode flights and unsubmitted/student
+   * assessments never appear here. Ordered oldest -> newest so callers can
+   * take "most recent N per skill" without re-sorting.
+   */
+  listInstructorSkillObservations(studentId: string): Promise<SkillObservation[]>;
 }

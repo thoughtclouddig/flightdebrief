@@ -327,6 +327,35 @@ export interface DebriefAssessmentRating {
   createdAt: string;
 }
 
+/**
+ * One CFI-rated flight task, joined across flight_tasks + debrief_assessments
+ * + debrief_assessment_ratings -- the fundamental unit FlightScore is built
+ * from (see lib/flight-score.ts). Deliberately NOT a new persisted table:
+ * the existing structured-debrief tables already carry everything this
+ * needs, so this is a read-model produced by
+ * Repository.listInstructorSkillObservations, not a new schema concept.
+ *
+ * Only rows from a role==="instructor" assessment with status==="submitted"
+ * ever become a SkillObservation -- a CFI submitting their assessment *is*
+ * the "instructor reviewed" signal for v1 (see AssessmentRole/AssessmentStatus
+ * above). Student self-ratings and in-progress instructor drafts never
+ * appear here, by construction, which is what keeps FlightScore's inputs to
+ * "structured, instructor-supported data" only.
+ */
+export interface SkillObservation {
+  flightId: string;
+  /** Denormalized from the flight, same convention as TrainingSignal.flightDate. */
+  flightDate: string;
+  aircraftId: string;
+  taskCode: TrainingSkill;
+  /** Denormalized label at task-selection time -- see FlightTask.label. */
+  taskLabel: string;
+  performanceLevel: import("@/lib/performance-levels").PerformanceLevelCode;
+  note: string | null;
+  /** When the instructor's assessment was submitted -- the closest thing to a "reviewed at" timestamp today. */
+  submittedAt: string;
+}
+
 export type CardCategory =
   | "OBJECTIVE"
   | "STRENGTHS"
