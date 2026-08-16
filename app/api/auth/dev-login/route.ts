@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requestOrigin } from "@/lib/auth/origin";
 import { createSessionJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
 import { resolveUserOnLogin } from "@/lib/auth/store";
-import { appOrigin } from "@/lib/email";
 
 /**
  * Dev-only shortcut that mints a real session for an already-invited/seeded
@@ -13,13 +12,20 @@ import { appOrigin } from "@/lib/email";
  * shouldSeedDemoData), and only for emails resolveUserOnLogin already
  * recognizes -- it can't create new accounts, so it's not an auth bypass for
  * arbitrary emails, just a faster path through auth that already works.
+ *
+ * Deliberately uses requestOrigin() (this request's actual host), NOT
+ * lib/email.ts's appOrigin() -- that helper is pinned to APP_BASE_URL (the
+ * stable production domain, so emailed links never point somewhere that
+ * disappears) which would silently bounce this same-request redirect over to
+ * production even when testing from the dev workspace, landing on a session
+ * cookie set for the wrong domain.
  */
 export async function GET(request: NextRequest) {
   if (process.env.REPLIT_DEPLOYMENT) {
     return NextResponse.json({ error: "Not available." }, { status: 404 });
   }
 
-  const origin = appOrigin() ?? requestOrigin(request);
+  const origin = requestOrigin(request);
   const email = request.nextUrl.searchParams.get("email")?.trim().toLowerCase();
   if (!email) {
     return NextResponse.redirect(`${origin}/dev/login?error=missing-email`);
