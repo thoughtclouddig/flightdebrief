@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requestOrigin } from "@/lib/auth/origin";
 import { checkSiteAccessCode, createSiteGateJwt, SITE_GATE_COOKIE, SITE_GATE_MAX_AGE_SECONDS } from "@/lib/auth/session";
-import { appOrigin } from "@/lib/email";
 
 function safeNext(request: NextRequest): string {
   const next = request.nextUrl.searchParams.get("next") ?? "/";
@@ -10,7 +9,10 @@ function safeNext(request: NextRequest): string {
 }
 
 export async function POST(request: NextRequest) {
-  const origin = appOrigin() ?? requestOrigin(request);
+  // requestOrigin(), not lib/email.ts's appOrigin() -- this is a same-request
+  // redirect and must stay on whatever host served the request (dev workspace
+  // or production), not get bounced to the pinned production APP_BASE_URL.
+  const origin = requestOrigin(request);
   const form = await request.formData();
   const code = String(form.get("code") ?? "");
   const next = safeNext(request);
