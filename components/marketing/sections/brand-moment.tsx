@@ -25,31 +25,28 @@ export function BrandMoment() {
 
       <Reveal className="relative mx-auto max-w-3xl text-center">
         <p
-          className="text-xs font-bold uppercase tracking-[0.2em] text-[#56636f]"
+          className="text-xs font-bold uppercase tracking-[0.2em] text-brand"
           style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
         >
-          KSDL &rarr; KSEZ <span className="text-brand">&middot;</span> 1.4 Hobbs{" "}
-          <span className="text-brand">&middot;</span> Flight Complete
+          The Problem
         </p>
 
-        <p className="font-display mt-6 text-balance text-5xl font-bold leading-tight text-[#101727] sm:text-6xl lg:text-7xl">
-          The flight is over.
-          <br />
-          <span className="text-brand">The lesson isn&rsquo;t.</span>
+        <p className="font-display mt-6 text-balance text-5xl font-bold leading-[0.95] text-[#101727] sm:text-6xl lg:text-7xl">
+          The most valuable ten minutes <span className="text-brand">of a lesson disappear.</span>
         </p>
         <p
           className="mx-auto mt-8 max-w-md text-pretty text-lg text-[#4b545d]"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
-          AfterFlight turns the conversation after every flight into clear takeaways, next steps, and
-          measurable progress&mdash;while the lesson is still fresh.
+          You land. You talk it through. Your instructor tells you what worked, what didn&rsquo;t, and what to
+          fix next time. Then the details start to fade.
         </p>
 
         <a
           href="#how-it-works"
           className="mt-14 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white/70 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] backdrop-blur-sm transition-colors hover:border-brand/50 hover:bg-white"
         >
-          What happens next
+          See how we solve it
           <ArrowDown className="size-4 animate-bounce" />
         </a>
       </Reveal>

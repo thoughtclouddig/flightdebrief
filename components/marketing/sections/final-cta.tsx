@@ -12,7 +12,7 @@ export function FinalCta() {
       <div className="relative mx-auto max-w-2xl">
         <Reveal>
           <h2 className="font-display text-balance text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">
-            Ready to get better
+            Ready to <span className="text-brand">get better</span>
             <br />
             every flight?
           </h2>

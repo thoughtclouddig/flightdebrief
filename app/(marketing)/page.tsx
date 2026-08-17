@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/marketing/sections/hero";
 import { LearningLoop } from "@/components/marketing/sections/learning-loop";
 import { BrandMoment } from "@/components/marketing/sections/brand-moment";
+import { Proof } from "@/components/marketing/sections/proof";
 import { BrandDeviceLoop } from "@/components/marketing/brand-device-loop";
 import { EverythingThatMatters } from "@/components/marketing/sections/everything-that-matters";
 import { FeedbackToPlan } from "@/components/marketing/sections/feedback-to-plan";
@@ -25,6 +26,7 @@ export default function MarketingHomePage() {
       <BrandDeviceLoop />
       <BrandMoment />
       <LearningLoop />
+      <Proof />
       <EverythingThatMatters />
       <FeedbackToPlan />
       <FlightScoreSection />
