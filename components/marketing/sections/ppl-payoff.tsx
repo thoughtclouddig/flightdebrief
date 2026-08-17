@@ -48,6 +48,20 @@ export function PplPayoff() {
             ))}
           </div>
         </div>
+
+        <div className="mx-auto mt-16 max-w-lg text-center">
+          <div className="mx-auto h-px w-10 bg-brand/40" aria-hidden="true" />
+          <p className="font-display mt-6 text-balance text-xl italic leading-snug text-[#101727] sm:text-2xl">
+            <span className="text-brand" aria-hidden="true">
+              &ldquo;
+            </span>
+            Learn to think quickly. Be accurate from the beginning.
+            <span className="text-brand" aria-hidden="true">
+              &rdquo;
+            </span>
+          </p>
+          <p className="mt-3 text-sm font-semibold text-[#4b545d]">Bob Hoover</p>
+        </div>
       </Reveal>
     </section>
   );

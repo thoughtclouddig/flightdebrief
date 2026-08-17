@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Waveform } from "@/components/waveform";
 import { QuestionCardStack } from "@/components/debrief/question-card-stack";
 import { CardControls } from "@/components/debrief/card-controls";
+import { RecordingConsent } from "@/components/debrief/recording-consent";
 import { useTranscription } from "@/lib/transcription";
 import type { CardBoundary } from "@/lib/debrief-cards/segments";
 import type { DebriefCard, DebriefGuidanceMode } from "@/lib/types";
@@ -25,7 +26,7 @@ export function GuidedDebriefRecorder({
   const router = useRouter();
   const transcription = useTranscription();
 
-  const [phase, setPhase] = useState<"ready" | "recording" | "analyzing">("ready");
+  const [phase, setPhase] = useState<"consent" | "ready" | "recording" | "analyzing">("consent");
   const [cards, setCards] = useState<LocalCard[]>(initialCards.map((c) => ({ ...c, localStatus: "pending" })));
   const [activeIndex, setActiveIndex] = useState(0);
   const [boundaries, setBoundaries] = useState<CardBoundary[]>([]);
@@ -154,6 +155,10 @@ export function GuidedDebriefRecorder({
 
   if (cards.length === 0) {
     return <p className="text-center text-sm text-foreground-soft">No debrief cards yet -- both assessments need to be submitted first.</p>;
+  }
+
+  if (phase === "consent") {
+    return <RecordingConsent flightId={flightId} onGranted={() => setPhase("ready")} />;
   }
 
   if (phase === "ready") {

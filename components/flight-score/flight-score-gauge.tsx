@@ -36,6 +36,8 @@ interface BaseProps {
   className?: string;
   /** Compact contexts (e.g. a small card mockup) need the label in sentence case, single line -- the default uppercase/wide-tracking treatment wraps ugly below ~150px. */
   labelUppercase?: boolean;
+  /** Small secondary line under the label, e.g. "Last 8 flights" -- omitted entirely when not given. */
+  caption?: string;
 }
 
 type AvailableProps = FlightScoreData & BaseProps & { unavailable?: false; building?: false };
@@ -148,7 +150,7 @@ export function FlightScoreGauge(props: FlightScoreGaugeProps) {
     );
   }
 
-  const { score, tone, label } = props;
+  const { score, tone, label, caption } = props;
   const displayScore = clampScore(score);
   const filledScore = animated ? (inView ? displayScore : 0) : displayScore;
   const offset = strokeOffsetFor(filledScore, circumference);
@@ -196,17 +198,14 @@ export function FlightScoreGauge(props: FlightScoreGaugeProps) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
         <span
-          className="font-display font-bold tabular-nums text-foreground"
-          style={{ fontSize: numberSize, letterSpacing: "-0.02em", lineHeight: 1 }}
-        >
-          {Math.round(displayScore)}
-        </span>
-        <span
-          className={cn("mt-1.5 whitespace-nowrap font-semibold text-foreground-soft", labelUppercase && "uppercase")}
+          className={cn("whitespace-nowrap font-semibold text-foreground-soft", labelUppercase && "uppercase")}
           style={{ fontSize: labelSize, letterSpacing: labelUppercase ? "0.14em" : "normal" }}
         >
           {label}
         </span>
+        {caption ? (
+          <span className="mt-2 whitespace-nowrap text-lg font-medium text-foreground-soft">{caption}</span>
+        ) : null}
       </div>
     </div>
   );

@@ -2,24 +2,27 @@ import Link from "next/link";
 import Image from "next/image";
 import { Building2, GraduationCap, Headset, type LucideIcon } from "lucide-react";
 
-const ROLES: { href: string; icon: LucideIcon; title: string; copy: string }[] = [
+const ROLES: { href: string; icon: LucideIcon; badge: string; title: string; copy: string }[] = [
   {
     href: "/signup/student",
     icon: GraduationCap,
+    badge: "First 3 Flights Free",
     title: "I'm a student pilot",
     copy: "Fly solo, or join through your CFI or flight school's invite.",
   },
   {
     href: "/signup/cfi",
     icon: Headset,
+    badge: "Free",
     title: "I'm an independent CFI",
-    copy: "Start your own AfterFlight and invite your students.",
+    copy: "Invite your students and start debriefing. AfterFlight is free for CFIs.",
   },
   {
     href: "/signup/school",
     icon: Building2,
+    badge: "First 25 Debriefs Free",
     title: "I'm a flight school",
-    copy: "Set up your school, then invite your CFIs and students.",
+    copy: "Set up your school, invite your CFIs and students, and put AfterFlight to work in real lessons.",
   },
 ];
 
@@ -55,7 +58,10 @@ export default function SignupRolePickerPage() {
           >
             <role.icon className="mt-0.5 size-5 shrink-0 text-brand" />
             <div>
-              <p className="text-sm font-semibold text-foreground">{role.title}</p>
+              <span className="inline-flex w-fit items-center rounded-md border border-brand/30 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand">
+                {role.badge}
+              </span>
+              <p className="mt-1 text-sm font-semibold text-foreground">{role.title}</p>
               <p className="mt-0.5 text-xs text-foreground-soft">{role.copy}</p>
             </div>
           </Link>

@@ -105,6 +105,24 @@ export function FeedbackToPlan() {
             </div>
           </div>
         </Reveal>
+
+        <Reveal delay={250} className="mx-auto mt-16 max-w-lg text-center">
+          <div className="mx-auto h-px w-10 bg-brand/40" aria-hidden="true" />
+          <p className="font-display mt-6 text-balance text-xl italic leading-snug text-[#101727] sm:text-2xl">
+            <span className="text-brand" aria-hidden="true">
+              &ldquo;
+            </span>
+            The postflight debrief is how you make sure you&rsquo;re learning something new from every hour at
+            the controls.
+            <span className="text-brand" aria-hidden="true">
+              &rdquo;
+            </span>
+          </p>
+          <p className="mt-3 text-sm font-semibold text-[#4b545d]">
+            Ian Wilder <span className="font-normal text-[#4b545d]/70">&mdash; AOPA Flight Training</span>
+          </p>
+          <p className="mt-1 text-xs text-[#4b545d]/60">Source: AOPA Flight Training</p>
+        </Reveal>
       </div>
     </section>
   );

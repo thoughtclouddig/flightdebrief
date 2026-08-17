@@ -39,7 +39,7 @@ const AUDIENCES = [
 
 export function WhoItsFor() {
   return (
-    <section className="bg-white px-6 py-28 sm:py-36">
+    <section className="bg-white px-6 pb-28 pt-14 sm:pb-36 sm:pt-16">
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="text-center">
           <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">Who&rsquo;s It For</p>

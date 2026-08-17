@@ -66,7 +66,7 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
   const recentCompleted = completed.slice(0, 4);
   const recentFlightIds = new Set(recentCompleted.map((f) => f.id));
   const signals = await repo.listTrainingSignals({ studentId });
-  const recentSignals = signals.filter((s) => recentFlightIds.has(s.flightId));
+  const recentSignals = signals.filter((s) => recentFlightIds.has(s.flightId) && !s.dismissed);
   const recurringThemes = computeRecurringThemes(recentSignals, recentCompleted.length);
 
   const now = Date.now();
@@ -91,7 +91,7 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
 
 /**
  * Conservative by design: a theme only surfaces once the same skill shows
- * NEEDS_WORK in at least 2 of the considered flights. With fewer than 2
+ * NEEDS_COACHING in at least 2 of the considered flights. With fewer than 2
  * flights total there's nothing to call "recurring" yet. Reads normalized
  * TrainingSignal rows (classified once at debrief time, see lib/taxonomy.ts)
  * instead of re-parsing free text on every render.
@@ -100,7 +100,7 @@ function computeRecurringThemes(signals: TrainingSignal[], consideredFlights: nu
   if (consideredFlights < 2) return [];
   const flightsBySkill = new Map<string, Set<string>>();
   for (const signal of signals) {
-    if (signal.status !== "NEEDS_WORK") continue;
+    if (signal.status !== "NEEDS_COACHING") continue;
     if (!flightsBySkill.has(signal.skill)) flightsBySkill.set(signal.skill, new Set());
     flightsBySkill.get(signal.skill)!.add(signal.flightId);
   }

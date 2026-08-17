@@ -12,38 +12,55 @@ export function Pricing() {
     <section id="pricing" className="bg-[#f4f5f6] px-6 py-28 sm:py-36" onMouseEnter={() => trackEvent("view_pricing")}>
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">Simple Pricing. Big Value.</p>
+          <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">
+            Built for Every Part of Flight Training.
+          </p>
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
-            Choose the plan that fits you.
+            Get better every flight.
           </h2>
+          <p className="mx-auto mt-3 max-w-xl text-balance text-[#68717D]">
+            Start as a pilot or CFI. Bring AfterFlight to your entire school when you&rsquo;re ready.
+          </p>
         </Reveal>
 
-        <div className="mt-14 grid gap-6 lg:grid-cols-3">
+        <div className="mt-14 grid gap-8 lg:grid-cols-3">
           {PRICING_TIERS.map((tier, i) => (
             <Reveal key={tier.id} delay={i * 100}>
               <div
                 className={cn(
-                  "flex h-full flex-col rounded-2xl border bg-white p-8",
-                  tier.featured ? "border-brand shadow-lg shadow-brand/10" : "border-slate-200",
+                  "relative flex h-full flex-col rounded-3xl border bg-white p-10 transition-shadow",
+                  tier.featured
+                    ? "border-brand shadow-[0_2px_4px_rgba(16,23,39,0.04),0_32px_64px_-24px_rgba(240,118,33,0.28)] lg:-translate-y-3"
+                    : "border-slate-200 shadow-[0_2px_4px_rgba(16,23,39,0.03),0_16px_40px_-20px_rgba(16,23,39,0.14)]",
                 )}
               >
                 {tier.featured ? (
-                  <span className="mb-4 inline-block w-fit rounded-full bg-brand px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+                  <span className="absolute left-1/2 top-0 inline-block w-fit -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-brand/30">
                     {tier.featuredLabel}
                   </span>
                 ) : null}
-                <p className="font-display text-lg font-bold uppercase tracking-wide text-[#101727]">{tier.name}</p>
-                <p className="mt-1 text-sm text-[#68717D]">{tier.audience}</p>
-                <p className="mt-5">
-                  <span className="font-display text-4xl font-bold text-[#101727]">{tier.price}</span>
-                  {tier.priceSuffix ? <span className="text-sm text-[#68717D]/70">{tier.priceSuffix}</span> : null}
+                <p className={cn("font-display text-lg font-bold uppercase tracking-wide text-[#101727]", tier.featured && "mt-2")}>
+                  {tier.name}
                 </p>
-                {tier.priceNote ? <p className="mt-1 text-sm font-medium text-brand">{tier.priceNote}</p> : null}
+                <p className="text-balance mt-1.5 text-base text-[#68717D]">{tier.audience}</p>
+                <p className="mt-6">
+                  <span className="font-display text-6xl font-extrabold tracking-tight text-[#101727]">{tier.price}</span>
+                  {tier.priceSuffix ? <span className="text-base text-[#68717D]/70">{tier.priceSuffix}</span> : null}
+                </p>
+                {tier.priceNote ? <p className="mt-1.5 text-sm font-semibold text-brand">{tier.priceNote}</p> : null}
+                {tier.valueAnchor ? <p className="mt-2 text-sm font-semibold text-brand">{tier.valueAnchor}</p> : null}
+                {tier.id === "pilot" ? (
+                  <p className="mt-1.5 text-xs text-[#68717D]">
+                    Three flights, no clock ticking &mdash; see the full loop before you subscribe.
+                  </p>
+                ) : null}
 
-                <ul className="mt-6 flex flex-1 flex-col gap-3">
+                <ul className="mt-8 flex flex-1 flex-col gap-4 border-t border-[#e4e7ea] pt-8">
                   {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5 text-base text-[#68717D]">
-                      <Check className="mt-0.5 size-5 shrink-0 text-brand" />
+                    <li key={feature} className="flex items-start gap-3 text-base text-[#4b545d]">
+                      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-brand/10">
+                        <Check className="size-3.5 text-brand" strokeWidth={3} />
+                      </span>
                       {feature}
                     </li>
                   ))}
@@ -53,27 +70,31 @@ export function Pricing() {
                   href={tier.signupHref}
                   onClick={() => trackEvent(tier.analyticsEvent)}
                   className={cn(
-                    "mt-8 rounded-lg px-6 py-3 text-center text-sm font-semibold",
+                    "mt-9 rounded-xl px-6 py-3.5 text-center text-base font-bold transition-transform hover:scale-[1.02]",
                     tier.featured
-                      ? "bg-brand text-white hover:bg-brand-dark"
-                      : "border border-slate-200 text-[#101727] hover:bg-[#f4f5f6]",
+                      ? "bg-brand text-white shadow-lg shadow-brand/25 hover:bg-brand-dark"
+                      : "border border-slate-300 text-[#101727] hover:border-[#101727]",
                   )}
                 >
                   {tier.cta}
                 </Link>
 
                 {tier.upsell ? (
-                  <p className="mt-4 text-pretty text-center text-xs text-[#68717D]">
-                    {tier.upsell.text}{" "}
-                    <a href={tier.upsell.href} className="font-semibold text-brand hover:underline">
+                  <div className="mt-5 text-pretty text-center">
+                    <p className="text-sm text-[#68717D]">{tier.upsell.text}</p>
+                    <a
+                      href={tier.upsell.href}
+                      className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-brand hover:underline"
+                    >
                       {tier.upsell.linkLabel} &rarr;
                     </a>
-                  </p>
+                  </div>
                 ) : null}
               </div>
             </Reveal>
           ))}
         </div>
+
 
         <Reveal delay={300}>
           <div
@@ -82,36 +103,39 @@ export function Pricing() {
           >
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#171f33_0%,_#0c1220_75%)]" />
 
-            <div className="relative grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+            <div className="relative grid gap-10 lg:grid-cols-[1fr_1.15fr] lg:items-center lg:gap-16">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{ENTERPRISE_PRICING.eyebrow}</p>
                 <h3 className="font-display mt-3 text-balance text-3xl font-bold text-white sm:text-4xl">
-                  {ENTERPRISE_PRICING.headline}
+                  {ENTERPRISE_PRICING.sectionHeadlineLine1}
+                  <br />
+                  {ENTERPRISE_PRICING.sectionHeadlineLine2}
                 </h3>
-                <p className="mt-4 max-w-md text-pretty text-white/70">{ENTERPRISE_PRICING.copy}</p>
-                <p className="mt-6 font-display text-xl font-bold text-white">{ENTERPRISE_PRICING.priceLabel}</p>
+                <p className="mt-4 max-w-md text-pretty text-white/70">{ENTERPRISE_PRICING.sectionCopy}</p>
+                <p className="mt-6 font-display text-xl font-bold text-white">{ENTERPRISE_PRICING.sectionPriceLabel}</p>
 
                 <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
                   <Link
                     href={ENTERPRISE_PRICING.ctaHref}
                     onClick={() => trackEvent("select_enterprise")}
-                    className="inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-white hover:bg-brand-dark"
+                    className="inline-flex items-center gap-2.5 rounded-lg bg-brand px-8 py-4 text-base font-bold text-white hover:bg-brand-dark"
                   >
                     {ENTERPRISE_PRICING.cta}
-                    <ArrowRight className="size-4" />
+                    <ArrowRight className="size-5" />
                   </Link>
                 </div>
-                <p className="mt-5 max-w-md text-pretty text-xs text-white/50">{ENTERPRISE_PRICING.supportingLine}</p>
+                <p className="mt-5 max-w-md text-pretty text-sm text-white/60">{ENTERPRISE_PRICING.sectionSupportingLine}</p>
               </div>
 
-              <ul className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
-                {ENTERPRISE_PRICING.capabilities.map((capability) => (
-                  <li key={capability} className="flex items-start gap-2.5 text-base text-white/80">
-                    <Check className="mt-0.5 size-5 shrink-0 text-brand" />
-                    {capability}
-                  </li>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {ENTERPRISE_PRICING.capabilityTiles.map((tile) => (
+                  <div key={tile.title} className="rounded-xl border border-white/10 bg-white/[0.04] p-5">
+                    <span className="block h-0.5 w-6 bg-brand" aria-hidden="true" />
+                    <p className="mt-3 text-sm font-bold uppercase tracking-wide text-white">{tile.title}</p>
+                    <p className="mt-1.5 text-pretty text-[13px] leading-relaxed text-white/55">{tile.description}</p>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
         </Reveal>

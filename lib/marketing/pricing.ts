@@ -5,6 +5,8 @@ export interface PricingTier {
   price: string;
   priceSuffix: string;
   priceNote?: string;
+  /** Small orange value-anchor line shown just beneath the price. */
+  valueAnchor?: string;
   featured?: boolean;
   featuredLabel?: string;
   features: string[];
@@ -20,19 +22,20 @@ export const PRICING_TIERS: PricingTier[] = [
   {
     id: "pilot",
     name: "Pilot",
-    audience: "For individual pilots and students.",
+    audience: "For student pilots and individual pilots.",
     price: "$9.99",
     priceSuffix: "/mo",
     priceNote: "or $99/year — save 17%",
+    valueAnchor: "Less than the cost of 2 minutes of flight time.",
     features: [
       "Unlimited debriefs",
-      "FlightScore progress tracking",
-      "ACS-connected feedback",
+      "See your progress over time",
+      "ACS-aligned feedback",
       "Custom checklists & goals",
       "Works on all devices",
-      "7-day free trial",
+      "First 3 flights free",
     ],
-    cta: "Start Free Trial",
+    cta: "Get Your First 3 Flights Free",
     signupHref: "/signup/student",
     analyticsEvent: "select_pilot",
   },
@@ -42,11 +45,13 @@ export const PRICING_TIERS: PricingTier[] = [
     audience: "For individual flight instructors.",
     price: "Free",
     priceSuffix: "",
+    valueAnchor: "CFIs never pay to debrief their students.",
     featured: true,
-    featuredLabel: "Free for CFIs",
+    featuredLabel: "Always Free for CFIs",
     features: [
       "Guided debriefs with every student",
       "ACS-aligned feedback tools",
+      "See student progress between lessons",
       "Works with any flight school",
       "No credit card required",
     ],
@@ -57,23 +62,24 @@ export const PRICING_TIERS: PricingTier[] = [
   {
     id: "flight-school-pro",
     name: "Flight School Pro",
-    audience: "For independent flight schools and individual training locations.",
+    audience: "For independent flight schools and training organizations.",
     price: "$99",
     priceSuffix: "/month/location",
+    valueAnchor: "Your school's first 25 debriefs are free.",
     features: [
-      "School dashboard",
-      "Student & CFI management",
-      "Training progress visibility",
-      "ACS skill trends",
-      "Debrief adoption & activity",
-      "Location-level reporting",
+      "See every student's training progress",
+      "Identify recurring training gaps",
+      "See debrief adoption across CFIs",
+      "Spot students who may be falling behind",
+      "Track ACS proficiency across the school",
+      "Manage students & instructors in one place",
     ],
-    cta: "Start Free Trial",
+    cta: "Start Your 25 Free Debriefs",
     signupHref: "/signup/school",
     analyticsEvent: "select_school_pro",
     upsell: {
       text: "Multiple locations, campuses, or training programs?",
-      linkLabel: "Enterprise",
+      linkLabel: "Explore AfterFlight Enterprise",
       href: "/enterprise",
     },
   },
@@ -95,6 +101,27 @@ export const ENTERPRISE_PRICING = {
   pricingDetails: ["Multi-location deployment", "Bulk student licensing", "Integration planning", "Custom onboarding", "Enterprise support"],
   cta: "Talk to Sales",
   ctaHref: "/enterprise",
+  /**
+   * Distinct copy for the compact Enterprise panel inside the pricing
+   * section only (components/marketing/sections/pricing.tsx) -- kept
+   * separate from the fields above so the standalone /enterprise landing
+   * page (app/(marketing)/enterprise/page.tsx) is unaffected.
+   */
+  sectionHeadlineLine1: "One training standard.",
+  sectionHeadlineLine2: "Across your entire organization.",
+  sectionCopy:
+    "For universities, multi-location academies, and national flight training organizations that need consistent debriefs, measurable progress, and training visibility across every student, instructor, and location.",
+  sectionPriceLabel: "Enterprise plans built around your program.",
+  sectionSupportingLine:
+    "Multi-campus university? National academy? Large Part 141 program? Let's build AfterFlight around your training operation.",
+  capabilityTiles: [
+    { title: "Standardized Debriefs", description: "One consistent process across every instructor and location." },
+    { title: "Training Oversight", description: "See proficiency and training trends across the organization." },
+    { title: "Campus Insights", description: "Compare progress and recurring training gaps by location." },
+    { title: "Student Continuity", description: "Training history follows students across instructors and locations." },
+    { title: "ACS Analytics", description: "Identify proficiency trends and systemic training gaps." },
+    { title: "Integrations", description: "Connect AfterFlight with existing scheduling and training systems." },
+  ],
   supportingLine:
     "Need AfterFlight across multiple locations, campuses, or training programs? Let's build the right plan for your organization.",
 };

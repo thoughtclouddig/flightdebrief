@@ -12,7 +12,7 @@ export interface TrainingSignalDraft {
 /**
  * Turns a debrief's narrative summary into normalized, aggregatable
  * TrainingSignal rows -- one per (skill, status) found in `needsWork`
- * (-> NEEDS_WORK) or `wentWell` (-> IMPROVING). The original sentence is
+ * (-> NEEDS_COACHING) or `wentWell` (-> IMPROVING). The original sentence is
  * preserved verbatim as `statement`. Deliberately simple keyword matching
  * (reusing lib/topics.ts's taxonomy) rather than an LLM call: the point is
  * consistent, reproducible classification a school can trust in aggregate,
@@ -26,7 +26,7 @@ export function classifyTrainingSignals(structured: StructuredDebrief): Training
 
   for (const statement of structured.needsWork) {
     for (const { category, skill } of matchSkills(statement)) {
-      drafts.push({ category, skill, status: "NEEDS_WORK", source: "STUDENT_AND_INSTRUCTOR", statement });
+      drafts.push({ category, skill, status: "NEEDS_COACHING", source: "STUDENT_AND_INSTRUCTOR", statement });
     }
   }
 

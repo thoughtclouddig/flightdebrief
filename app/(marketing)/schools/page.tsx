@@ -53,6 +53,9 @@ export default function SchoolsPage() {
                 Give instructors a consistent way to close every lesson while giving your school a clearer view of
                 student progress.
               </p>
+              <p className="mt-4 max-w-md text-pretty text-base font-semibold text-[#101727]">
+                Don&rsquo;t watch a demo. Fly it. Try AfterFlight with your school free for your first 25 debriefs.
+              </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <CtaLink href="/signup/school">Get School Pro</CtaLink>
@@ -170,6 +173,7 @@ export default function SchoolsPage() {
               $99
               <span className="ml-2 tracking-normal text-xl font-medium text-[#68717D]">/month/location</span>
             </p>
+            <p className="mt-2 text-base font-semibold text-brand">Your school&rsquo;s first 25 debriefs are free.</p>
             <p className="mt-4 text-lg text-[#68717D]">
               For independent flight schools and individual training locations.
             </p>

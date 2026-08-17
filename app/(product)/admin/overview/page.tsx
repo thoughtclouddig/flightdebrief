@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdminStat } from "@/components/admin-stat";
@@ -7,6 +7,7 @@ import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { formatDurationShort } from "@/lib/utils";
 import { mostCommonIssues, needsReviewQueue } from "@/lib/training-insights";
+import { computeSchoolFreeDebriefs } from "@/lib/entitlements";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export default async function AdminOverviewPage() {
   });
   const debriefedCount = flights.filter((f) => f.debriefStatus === "complete").length;
   const debriefedPct = flights.length > 0 ? Math.round((debriefedCount / flights.length) * 100) : 0;
+  const freeDebriefs = computeSchoolFreeDebriefs(flights);
 
   const recent = [...flights].sort((a, b) => b.flightDate.localeCompare(a.flightDate)).slice(0, 10);
   const rows = await Promise.all(
@@ -56,6 +58,24 @@ export default async function AdminOverviewPage() {
         <AdminStat label="Flights This Month" value={flightsThisMonth.length} />
         <AdminStat label="Debriefs Completed" value={`${debriefedPct}%`} />
       </div>
+
+      {viewer.organization.kind === "school" ? (
+        <Card>
+          <CardContent className="flex items-center gap-3 py-4">
+            <Ticket className="mt-0.5 size-5 shrink-0 text-brand" />
+            <div>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {freeDebriefs.used} of {freeDebriefs.cap} free debriefs used
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {freeDebriefs.exhausted
+                  ? "Your school's free debriefs are used up."
+                  : `${freeDebriefs.remaining} free debrief${freeDebriefs.remaining === 1 ? "" : "s"} remaining.`}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardContent className="flex items-center justify-between gap-4 py-4">

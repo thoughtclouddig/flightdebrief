@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { Reveal } from "@/components/marketing/reveal";
-import { cn } from "@/lib/utils";
 
 const FRAMES = [
   {
@@ -59,12 +58,7 @@ export function LearningLoop() {
                   sizes="(min-width: 640px) 644px, 100vw"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent" />
-                <p
-                  className={cn(
-                    "font-display absolute bottom-4 left-5 text-4xl font-extrabold uppercase tracking-wide sm:text-5xl",
-                    frame.eyebrow === "Debrief" ? "text-brand" : "text-white",
-                  )}
-                >
+                <p className="font-display absolute bottom-4 left-5 text-4xl font-extrabold uppercase tracking-wide text-white sm:text-5xl">
                   {frame.eyebrow}
                 </p>
               </div>

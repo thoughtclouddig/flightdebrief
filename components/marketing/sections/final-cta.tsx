@@ -11,14 +11,23 @@ export function FinalCta() {
 
       <div className="relative mx-auto max-w-2xl">
         <Reveal>
-          <h2 className="font-display text-balance text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">
+          <p className="font-display text-balance text-lg italic leading-snug text-white/70 sm:text-xl">
+            &ldquo;After four decades of flying, I still [debrief] after every flight.&rdquo;
+          </p>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
+            William E. Dubois <span className="font-normal normal-case text-white/35">&mdash; Pilot, Instructor &amp; FAA Safety Team Representative</span>
+          </p>
+        </Reveal>
+
+        <Reveal delay={80}>
+          <h2 className="font-display mt-12 text-balance text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">
             Ready to <span className="text-brand">get better</span>
             <br />
             every flight?
           </h2>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-white/75">
             <li>No credit card required</li>
-            <li>7-day free trial</li>
+            <li>Free to start</li>
             <li>Cancel anytime</li>
           </ul>
         </Reveal>
@@ -26,10 +35,10 @@ export function FinalCta() {
         <Reveal delay={150} className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/signup"
-            onClick={() => trackEvent("start_free_trial")}
+            onClick={() => trackEvent("start_free")}
             className="rounded-lg bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-dark"
           >
-            Start Your Free Trial
+            Start Free
           </Link>
         </Reveal>
 
