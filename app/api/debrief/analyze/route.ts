@@ -114,6 +114,7 @@ export async function POST(request: Request) {
       flightId: flight.id,
       debriefId: debrief.id,
       flightDate: flight.flightDate,
+      dismissed: false,
     })),
   );
 

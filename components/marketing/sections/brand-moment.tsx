@@ -7,7 +7,7 @@ export function BrandMoment() {
     <section className="relative flex min-h-[860px] items-center overflow-hidden bg-white px-6 py-24">
       <div className="absolute inset-0">
         <Image
-          src="/images/marketing/wing-view-sunset.webp"
+          src="/images/marketing/ten-minutes-back.webp"
           alt=""
           fill
           className="object-cover"
@@ -18,7 +18,7 @@ export function BrandMoment() {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.97) 22%, rgba(255,255,255,0.95) 48%, rgba(255,255,255,0.78) 58%, rgba(255,255,255,0.22) 100%)",
+              "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.97) 22%, rgba(255,255,255,0.95) 48%, rgba(255,255,255,0.6) 62%, rgba(255,255,255,0.08) 100%)",
           }}
         />
       </div>

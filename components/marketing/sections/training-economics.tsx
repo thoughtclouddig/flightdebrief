@@ -12,11 +12,11 @@ export function TrainingEconomics() {
     <>
     <section className="bg-white px-6 py-28 sm:py-36">
       <div className="mx-auto max-w-[1320px]">
-        <div className="grid grid-cols-1 gap-x-16 gap-y-14 lg:grid-cols-12">
-          <Reveal className="lg:col-span-5">
+        <div className="grid grid-cols-1 items-center gap-x-16 gap-y-14 lg:grid-cols-2">
+          <Reveal>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Make Every Training Hour Count</p>
             <h2 className="font-display mt-3 text-balance text-3xl font-bold leading-tight text-[#101727] sm:text-4xl">
-              Flight training is expensive. Don&rsquo;t waste the lesson.
+              Flight training is expensive. <span className="text-brand">Don&rsquo;t waste the lesson.</span>
             </h2>
             <p className="mt-5 text-pretty text-lg text-[#68717D]">
               A 1.5-hour training flight can cost hundreds of dollars. If you forget what your
@@ -29,7 +29,7 @@ export function TrainingEconomics() {
             </p>
           </Reveal>
 
-          <Reveal delay={100} className="lg:col-span-7 lg:pt-8">
+          <Reveal delay={100}>
             <div className="flex flex-col divide-y divide-black/[0.08]">
               {BENEFITS.map((b) => (
                 <div key={b.title} className="flex items-start gap-5 py-8">

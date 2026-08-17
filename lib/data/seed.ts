@@ -901,6 +901,7 @@ function toTrainingSignals(
     flightId: flight.id,
     debriefId,
     flightDate: flight.flightDate,
+    dismissed: false,
     createdAt,
   }));
 }

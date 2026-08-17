@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { BookOpen, ClipboardCheck, ExternalLink, PlaneTakeoff, Target } from "lucide-react";
+import { BookOpen, ExternalLink, PlaneTakeoff, Repeat, Target, ClipboardCheck } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AcsBadge } from "@/components/acs-badge";
 import { ChecklistCard } from "@/components/checklist-card";
 import { ListenButton } from "@/components/listen-button";
 import { NextLessonFocusCard } from "@/components/next-lesson-focus-card";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
+import { computeNextLessonBrief } from "@/lib/training-memory";
 import { formatDurationShort } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -14,16 +16,14 @@ export const dynamic = "force-dynamic";
 export default async function NextLessonPage() {
   const repo = getRepository();
   const viewer = await getViewer();
-  const [flights, trainingItems] = await Promise.all([
-    repo.listFlights({ studentId: viewer.user.id }),
-    repo.listTrainingItems(),
+  const [brief, memberships] = await Promise.all([
+    computeNextLessonBrief(repo, viewer.user.id),
+    repo.listMembershipsForUser(viewer.user.id),
   ]);
+  const certificateType =
+    memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
 
-  const lastDebriefed = flights
-    .filter((f) => f.debriefStatus === "complete")
-    .sort((a, b) => b.flightDate.localeCompare(a.flightDate))[0];
-
-  if (!lastDebriefed) {
+  if (!brief.lastFlight) {
     return (
       <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center">
         <PlaneTakeoff className="size-10 text-foreground-faint" />
@@ -38,13 +38,8 @@ export default async function NextLessonPage() {
     );
   }
 
-  const debrief = await repo.getDebriefByFlight(lastDebriefed.id);
-  const itemsForFlight = trainingItems.filter((t) => t.flightId === lastDebriefed.id && !t.done);
-  const keepWorkingOn = itemsForFlight.filter((t) => t.category === "keep_working_on");
-  const beforeToday = itemsForFlight.filter((t) => t.category === "before_next_flight");
-  const focus = debrief?.structuredResult.nextLessonFocus ?? [];
-  const whatWeDid = debrief?.structuredResult.whatWeDid ?? [];
-  const studyReferences = debrief?.structuredResult.studyReferences ?? [];
+  const whatWeDid = brief.lastDebrief?.structuredResult.whatWeDid ?? [];
+  const studyReferences = brief.lastDebrief?.structuredResult.studyReferences ?? [];
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
 
   return (
@@ -60,11 +55,11 @@ export default async function NextLessonPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p className="text-sm text-foreground-soft">
-            {new Date(lastDebriefed.flightDate + "T12:00:00").toLocaleDateString("en-US", {
+            {new Date(brief.lastFlight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
               month: "long",
               day: "numeric",
             })}{" "}
-            · {lastDebriefed.aircraft.tailNumber} · {formatDurationShort(lastDebriefed.durationMinutes)}
+            · {brief.lastFlight.aircraft.tailNumber} · {formatDurationShort(brief.lastFlight.durationMinutes)}
           </p>
 
           {whatWeDid.length > 0 ? (
@@ -76,12 +71,35 @@ export default async function NextLessonPage() {
         </CardContent>
       </Card>
 
-      {keepWorkingOn.length > 0 ? (
-        <ChecklistCard icon={Target} title="Keep working on" items={keepWorkingOn.map((i) => i.description)} />
+      {/* Historical context beyond the immediately previous flight -- a skill only shows up here once it's recurred, per computeNextLessonBrief's 4-flight window. */}
+      {brief.recurringThemes.length > 0 ? (
+        <Card className="border-amber/40 bg-amber-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Repeat className="size-4 text-amber" />
+              Worth Extra Focus
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {brief.recurringThemes.map((theme, i) => (
+              <div key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="text-sm text-foreground-soft">
+                  <span className="font-semibold text-foreground">{theme.theme}</span> has come up in{" "}
+                  {theme.count} of your last {theme.consideredFlights} debriefs.
+                </p>
+                <AcsBadge skill={theme.skill} certificateType={certificateType} />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       ) : null}
 
-      {beforeToday.length > 0 ? (
-        <ChecklistCard icon={ClipboardCheck} title="Before today's flight" items={beforeToday.map((i) => i.description)} />
+      {brief.keepWorkingOn.length > 0 ? (
+        <ChecklistCard icon={Target} title="Keep working on" items={brief.keepWorkingOn} />
+      ) : null}
+
+      {brief.beforeFlightItems.length > 0 ? (
+        <ChecklistCard icon={ClipboardCheck} title="Before today's flight" items={brief.beforeFlightItems} />
       ) : null}
 
       {studyReferences.length > 0 ? (
@@ -117,7 +135,7 @@ export default async function NextLessonPage() {
         </Card>
       ) : null}
 
-      {focus.length > 0 ? <NextLessonFocusCard items={focus} /> : null}
+      {brief.focusAreas.length > 0 ? <NextLessonFocusCard items={brief.focusAreas} /> : null}
 
       <Link href="/flights/new" className={buttonVariants({ size: "lg" })}>
         Start Today&rsquo;s Flight

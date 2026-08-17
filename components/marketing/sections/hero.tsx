@@ -55,7 +55,7 @@ export function Hero() {
                 href="/signup"
                 className="rounded-lg bg-brand px-8 py-4 text-center text-base font-semibold text-white hover:bg-brand-dark"
               >
-                Start Free Trial
+                Start Free
               </Link>
               <Link
                 href="#how-it-works"
@@ -66,7 +66,7 @@ export function Hero() {
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-              {["No credit card", "7-day free trial", "Cancel anytime"].map((item) => (
+              {["No credit card", "Free to start", "Cancel anytime"].map((item) => (
                 <span key={item} className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-[#101727]">
                   <CheckCircle2 className="size-3.5 shrink-0 text-brand" />
                   {item}

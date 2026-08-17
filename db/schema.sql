@@ -177,6 +177,24 @@ CREATE TABLE IF NOT EXISTS training_signals (
 CREATE INDEX IF NOT EXISTS training_signals_student_idx ON training_signals (student_id);
 CREATE INDEX IF NOT EXISTS training_signals_org_idx ON training_signals (organization_id);
 
+-- V1: the app's own vocabulary is Introduced/Developing/Needs Coaching/
+-- Improving/Demonstrated, derived at read time (see lib/skill-progress.ts)
+-- from the *sequence* of these two raw per-flight signals -- a single
+-- transcript can only reliably support "this came up as a strength" vs "this
+-- needs more work," not a 5-way judgment. NEEDS_WORK is renamed to
+-- NEEDS_COACHING to match the V1 vocabulary directly; existing rows are
+-- migrated in place below rather than left stale.
+ALTER TABLE training_signals DROP CONSTRAINT IF EXISTS training_signals_status_check;
+UPDATE training_signals SET status = 'NEEDS_COACHING' WHERE status = 'NEEDS_WORK';
+ALTER TABLE training_signals ADD CONSTRAINT training_signals_status_check
+  CHECK (status IN ('NEEDS_COACHING','IMPROVING'));
+
+-- CFI authority over AI-inferred signals (V1 change 14): a CFI can dismiss a
+-- signal they disagree with; dismissed rows are excluded from progression
+-- and recurring-theme aggregation going forward but never deleted, so the
+-- original AI inference stays auditable.
+ALTER TABLE training_signals ADD COLUMN IF NOT EXISTS dismissed boolean NOT NULL DEFAULT false;
+
 -- Carries a "before next flight" item's task forward so it can pre-populate
 -- the next flight's flight_tasks. Nullable -- most items aren't task-specific.
 ALTER TABLE training_items ADD COLUMN IF NOT EXISTS related_task_code text;
@@ -307,6 +325,58 @@ CREATE TABLE IF NOT EXISTS debrief_transcript_segments (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS debrief_transcript_segments_flight_idx ON debrief_transcript_segments (flight_id);
+
+-- --- Recording consent (V1 change 12) ---------------------------------------
+-- Keyed to flight_id, not debrief_id: consent must be captured *before*
+-- recording starts, which is before a debriefs row exists (that's only
+-- created once analysis completes). One row per participant present for the
+-- debrief. Copy shown to the user lives in code (components/debrief/
+-- recording-consent.tsx), not this table, so jurisdiction-specific wording
+-- can change later without a migration.
+CREATE TABLE IF NOT EXISTS consent_records (
+  id text PRIMARY KEY,
+  flight_id text NOT NULL REFERENCES flights(id) ON DELETE CASCADE,
+  participant_user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  participant_role text NOT NULL CHECK (participant_role IN ('student','instructor')),
+  status text NOT NULL CHECK (status IN ('granted','declined')),
+  recorded_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS consent_records_flight_idx ON consent_records (flight_id);
+
+-- --- Revenue share (V1 change 10) -- data relationships only, no payout -----
+-- engine and no billing integration in this pass. `subscriptions` is a stub
+-- (there is no Stripe/billing system yet); it exists so qualification logic
+-- has something real to key off instead of being unwritable.
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id text PRIMARY KEY,
+  user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  plan text NOT NULL CHECK (plan IN ('pilot','cfi','school')),
+  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active','inactive')),
+  current_period_start timestamptz NOT NULL DEFAULT now(),
+  current_period_end timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS subscriptions_user_idx ON subscriptions (user_id);
+
+-- One row per (student, period) qualification computed by
+-- lib/data/postgres-repository.ts's computeRevenueShareQualification --
+-- never written from a UI, never surfaced prominently, explicitly not tied
+-- to FlightScore/proficiency/ratings (only to whether a genuine qualifying
+-- debrief occurred). Enterprise accounts are excluded at the call site (they
+-- have no individual revenue-share logic), not by a flag on this table.
+CREATE TABLE IF NOT EXISTS revenue_share_qualifications (
+  id text PRIMARY KEY,
+  subscribing_student_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  qualifying_cfi_id text REFERENCES instructors(id) ON DELETE SET NULL,
+  qualifying_school_org_id text REFERENCES organizations(id) ON DELETE SET NULL,
+  period_start timestamptz NOT NULL,
+  period_end timestamptz NOT NULL,
+  cfi_share_pct numeric NOT NULL DEFAULT 15,
+  school_share_pct numeric NOT NULL DEFAULT 15,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS revenue_share_qualifications_student_idx ON revenue_share_qualifications (subscribing_student_id);
 
 -- --- Flight tracking / notifications (Phase 2 -- tables only for now, no ----
 -- poller/real provider yet, so nothing later needs a schema change) --------

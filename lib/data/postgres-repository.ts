@@ -4,6 +4,7 @@ import type {
   Aircraft,
   AssessmentRole,
   CardDefinition,
+  ConsentRecord,
   Debrief,
   DebriefAssessment,
   DebriefAssessmentRating,
@@ -19,6 +20,7 @@ import type {
   Reservation,
   SkillObservation,
   StudentInstructor,
+  Subscription,
   TrainingItem,
   TrainingSignal,
   TranscriptSegment,
@@ -730,15 +732,21 @@ export class PostgresRepository implements Repository {
       item.status,
       item.source,
       item.statement,
+      item.dismissed,
     ]);
     const { rows } = await db.query(
       `INSERT INTO training_signals (
          id, organization_id, student_id, instructor_id, aircraft_id, flight_id, debrief_id,
-         flight_date, category, skill, status, source, statement
-       ) VALUES ${buildValuesPlaceholders(values.length, 13)} RETURNING *`,
+         flight_date, category, skill, status, source, statement, dismissed
+       ) VALUES ${buildValuesPlaceholders(values.length, 14)} RETURNING *`,
       values.flat(),
     );
     return rows.map(mapTrainingSignal);
+  }
+
+  async setTrainingSignalDismissed(id: string, dismissed: boolean): Promise<void> {
+    const db = await this.db();
+    await db.query("UPDATE training_signals SET dismissed = $2 WHERE id = $1", [id, dismissed]);
   }
 
   async listTrainingSignals(filter?: ListTrainingSignalsFilter): Promise<TrainingSignal[]> {
@@ -760,6 +768,69 @@ export class PostgresRepository implements Repository {
       params,
     );
     return rows.map(mapTrainingSignal);
+  }
+
+  // --- Recording consent (V1 change 12) ---
+
+  async createConsentRecord(input: {
+    flightId: string;
+    participantUserId: string;
+    participantRole: "student" | "instructor";
+    status: "granted" | "declined";
+  }): Promise<ConsentRecord> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `INSERT INTO consent_records (id, flight_id, participant_user_id, participant_role, status)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [randomUUID(), input.flightId, input.participantUserId, input.participantRole, input.status],
+    );
+    return mapConsentRecord(rows[0]);
+  }
+
+  async listConsentRecords(flightId: string): Promise<ConsentRecord[]> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM consent_records WHERE flight_id = $1 ORDER BY created_at ASC", [
+      flightId,
+    ]);
+    return rows.map(mapConsentRecord);
+  }
+
+  // --- Revenue share (V1 change 10) -- data relationships only ---
+
+  async getSubscription(userId: string): Promise<Subscription | null> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      "SELECT * FROM subscriptions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1",
+      [userId],
+    );
+    return rows[0] ? mapSubscription(rows[0]) : null;
+  }
+
+  async computeRevenueShareQualification(
+    studentId: string,
+    periodStart: string,
+    periodEnd: string,
+  ): Promise<{ qualifyingCfiId: string | null; qualifyingSchoolOrgId: string | null }> {
+    const db = await this.db();
+    // A qualifying debrief: a real, completed debrief for this student within
+    // the period. instructor_id/organization_id come straight off that
+    // flight -- no proficiency, rating, or FlightScore input anywhere here.
+    const { rows } = await db.query(
+      `SELECT f.instructor_id, f.organization_id, o.kind AS organization_kind
+       FROM flights f
+       JOIN debriefs d ON d.flight_id = f.id
+       LEFT JOIN organizations o ON o.id = f.organization_id
+       WHERE f.student_id = $1 AND f.flight_date >= $2 AND f.flight_date <= $3
+       ORDER BY f.flight_date DESC
+       LIMIT 1`,
+      [studentId, periodStart, periodEnd],
+    );
+    const row = rows[0];
+    if (!row) return { qualifyingCfiId: null, qualifyingSchoolOrgId: null };
+    return {
+      qualifyingCfiId: (row.instructor_id as string | null) ?? null,
+      qualifyingSchoolOrgId: row.organization_kind === "school" ? (row.organization_id as string | null) : null,
+    };
   }
 
   async listInstructorSkillObservations(studentId: string): Promise<SkillObservation[]> {
@@ -1163,6 +1234,31 @@ function mapTrainingSignal(row: Row): TrainingSignal {
     status: row.status as TrainingSignal["status"],
     source: row.source as TrainingSignal["source"],
     statement: row.statement as string,
+    dismissed: Boolean(row.dismissed),
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapConsentRecord(row: Row): ConsentRecord {
+  return {
+    id: row.id as string,
+    flightId: row.flight_id as string,
+    participantUserId: row.participant_user_id as string,
+    participantRole: row.participant_role as ConsentRecord["participantRole"],
+    status: row.status as ConsentRecord["status"],
+    recordedAt: iso(row.recorded_at),
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapSubscription(row: Row): Subscription {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    plan: row.plan as Subscription["plan"],
+    status: row.status as Subscription["status"],
+    currentPeriodStart: iso(row.current_period_start),
+    currentPeriodEnd: row.current_period_end ? iso(row.current_period_end) : null,
     createdAt: iso(row.created_at),
   };
 }

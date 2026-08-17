@@ -253,7 +253,15 @@ export type TrainingSkill =
   | "SITUATIONAL_AWARENESS"
   | "RISK_MANAGEMENT";
 
-export type TrainingSignalStatus = "NEEDS_WORK" | "IMPROVING";
+export type TrainingSignalStatus = "NEEDS_COACHING" | "IMPROVING";
+
+/**
+ * The V1 skill lifecycle vocabulary, derived at read time (see
+ * lib/skill-progress.ts) from a skill's *sequence* of TrainingSignalStatus
+ * values across flights -- never stored, since a single flight's signal can
+ * only support the two raw statuses above, not a 5-way judgment.
+ */
+export type SkillProgressionStatus = "Introduced" | "Developing" | "Needs Coaching" | "Improving" | "Demonstrated";
 
 /**
  * Who the observation can be attributed to. Honestly conservative: a single
@@ -279,6 +287,51 @@ export interface TrainingSignal {
   source: TrainingSignalSource;
   /** The original sentence this was classified from, preserved verbatim -- never overwritten. */
   statement: string;
+  /** CFI-authority override (V1 change 14): excluded from progression/recurring-theme aggregation once true. Never deleted. */
+  dismissed: boolean;
+  createdAt: string;
+}
+
+// --- Recording consent (V1 change 12) --------------------------------------
+
+export type ConsentRole = "student" | "instructor";
+export type ConsentStatus = "granted" | "declined";
+
+export interface ConsentRecord {
+  id: string;
+  flightId: string;
+  participantUserId: string;
+  participantRole: ConsentRole;
+  status: ConsentStatus;
+  recordedAt: string;
+  createdAt: string;
+}
+
+// --- Revenue share (V1 change 10) -- data relationships only, no payout ----
+// engine and no billing integration. See db/schema.sql for the full rationale.
+
+export type SubscriptionPlan = "pilot" | "cfi" | "school";
+export type SubscriptionStatus = "active" | "inactive";
+
+export interface Subscription {
+  id: string;
+  userId: string;
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  currentPeriodStart: string;
+  currentPeriodEnd: string | null;
+  createdAt: string;
+}
+
+export interface RevenueShareQualification {
+  id: string;
+  subscribingStudentId: string;
+  qualifyingCfiId: string | null;
+  qualifyingSchoolOrgId: string | null;
+  periodStart: string;
+  periodEnd: string;
+  cfiSharePct: number;
+  schoolSharePct: number;
   createdAt: string;
 }
 

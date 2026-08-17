@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2, Mic, Square } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { RecordingConsent } from "@/components/debrief/recording-consent";
 import { Waveform } from "@/components/waveform";
 import { useTranscription } from "@/lib/transcription";
 import { cn } from "@/lib/utils";
@@ -11,8 +12,12 @@ import { cn } from "@/lib/utils";
 export function DebriefRecorder({ flightId }: { flightId: string }) {
   const router = useRouter();
   const transcription = useTranscription();
-  const [phase, setPhase] = useState<"ready" | "recording" | "analyzing">("ready");
+  const [phase, setPhase] = useState<"consent" | "ready" | "recording" | "analyzing">("consent");
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  if (phase === "consent") {
+    return <RecordingConsent flightId={flightId} onGranted={() => setPhase("ready")} />;
+  }
 
   async function handleStart() {
     setPhase("recording");

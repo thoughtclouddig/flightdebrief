@@ -16,21 +16,38 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
 import { ComparisonTable, type ComparisonRow } from "@/components/debrief/comparison-table";
+import { SkillProgressList } from "@/components/skill-progress-list";
 import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { getRepository } from "@/lib/data";
 import { getAuthorizedFlight } from "@/lib/auth/access";
+import { computeSkillProgression } from "@/lib/skill-progress";
 import { cn } from "@/lib/utils";
 
 export default async function DebriefResultsPage(props: PageProps<"/flights/[id]/debrief/results">) {
   const { id } = await props.params;
   const authorized = await getAuthorizedFlight(id);
   if (!authorized) notFound();
-  const { flight } = authorized;
-  const debrief = await getRepository().getDebriefByFlight(id);
+  const { flight, viewer } = authorized;
+  const repo = getRepository();
+  const debrief = await repo.getDebriefByFlight(id);
   if (!debrief) notFound();
 
   const { structuredResult: result } = debrief;
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
+
+  const [allStudentSignals, memberships] = await Promise.all([
+    repo.listTrainingSignals({ studentId: flight.userId }),
+    repo.listMembershipsForUser(flight.userId),
+  ]);
+  const certificateType =
+    memberships.find((m) => m.organizationId === flight.organizationId)?.certificateType ?? null;
+  const flightSkills = new Set(
+    allStudentSignals.filter((s) => s.flightId === flight.id).map((s) => s.skill),
+  );
+  const flightSkillProgressions = computeSkillProgression(allStudentSignals.filter((s) => !s.dismissed)).filter((p) =>
+    flightSkills.has(p.skill),
+  );
+  const canDismiss = viewer.role === "instructor" || viewer.role === "admin";
 
   const differenceRows: ComparisonRow[] = result.assessmentDifferences.map((d) => ({
     taskLabel: d.taskLabel,
@@ -172,6 +189,21 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
             </ol>
           </CardContent>
         </Card>
+
+        {flightSkillProgressions.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Training Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SkillProgressList
+                progressions={flightSkillProgressions}
+                certificateType={certificateType}
+                dismissible={canDismiss}
+              />
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
 
       <div className="flex gap-2">

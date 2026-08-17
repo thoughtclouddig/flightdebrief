@@ -2,6 +2,9 @@ import type {
   Aircraft,
   AssessmentRole,
   CardDefinition,
+  ConsentRecord,
+  ConsentRole,
+  ConsentStatus,
   Debrief,
   DebriefAssessment,
   DebriefAssessmentRating,
@@ -18,6 +21,7 @@ import type {
   Reservation,
   SkillObservation,
   StudentInstructor,
+  Subscription,
   TrainingCategory,
   TrainingItem,
   TrainingSignal,
@@ -187,6 +191,32 @@ export interface Repository {
   // --- Structured training signals (see lib/taxonomy.ts) ---
   createTrainingSignals(items: Omit<TrainingSignal, "id" | "createdAt">[]): Promise<TrainingSignal[]>;
   listTrainingSignals(filter?: ListTrainingSignalsFilter): Promise<TrainingSignal[]>;
+  /** CFI authority (V1 change 14): excludes the signal from progression/aggregation without deleting it. */
+  setTrainingSignalDismissed(id: string, dismissed: boolean): Promise<void>;
+
+  // --- Recording consent (V1 change 12) ---
+  createConsentRecord(input: {
+    flightId: string;
+    participantUserId: string;
+    participantRole: ConsentRole;
+    status: ConsentStatus;
+  }): Promise<ConsentRecord>;
+  listConsentRecords(flightId: string): Promise<ConsentRecord[]>;
+
+  // --- Revenue share (V1 change 10) -- data relationships only, no payout engine ---
+  /** Stub reader; there is no billing integration in this pass. Returns null when the user has no subscription row. */
+  getSubscription(userId: string): Promise<Subscription | null>;
+  /**
+   * Reads qualifying debrief activity between a subscribing student and their
+   * CFI/school within [periodStart, periodEnd] and returns the ids that would
+   * qualify for revenue share -- never persists, never touches proficiency or
+   * FlightScore. Enterprise orgs are excluded by the caller, not this method.
+   */
+  computeRevenueShareQualification(
+    studentId: string,
+    periodStart: string,
+    periodEnd: string,
+  ): Promise<{ qualifyingCfiId: string | null; qualifyingSchoolOrgId: string | null }>;
 
   /**
    * Every CFI-reviewed skill observation for a student -- flight_tasks joined

@@ -7,7 +7,7 @@
  * change when a real provider (GA4/PostHog/Plausible/etc.) is chosen later.
  */
 export type MarketingEvent =
-  | "start_free_trial"
+  | "start_free"
   | "watch_overview_video"
   | "view_pricing"
   | "select_pilot"

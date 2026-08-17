@@ -17,9 +17,9 @@ export interface SkillIssueCount {
   studentCount: number;
 }
 
-/** Per skill, how many distinct students currently show that skill as NEEDS_WORK (their most recent signal for it). */
+/** Per skill, how many distinct students currently show that skill as NEEDS_COACHING (their most recent signal for it). */
 export async function mostCommonIssues(repo: Repository, organizationId: string): Promise<SkillIssueCount[]> {
-  const signals = await repo.listTrainingSignals({ organizationId });
+  const signals = (await repo.listTrainingSignals({ organizationId })).filter((s) => !s.dismissed);
   const latestByStudentSkill = new Map<string, TrainingSignal>();
   for (const signal of signals) {
     const key = `${signal.studentId}|${signal.skill}`;
@@ -28,7 +28,7 @@ export async function mostCommonIssues(repo: Repository, organizationId: string)
   }
   const studentsBySkill = new Map<TrainingSkill, Set<string>>();
   for (const signal of latestByStudentSkill.values()) {
-    if (signal.status !== "NEEDS_WORK") continue;
+    if (signal.status !== "NEEDS_COACHING") continue;
     if (!studentsBySkill.has(signal.skill)) studentsBySkill.set(signal.skill, new Set());
     studentsBySkill.get(signal.skill)!.add(signal.studentId);
   }
@@ -45,16 +45,17 @@ export interface RecurringStudentIssue {
   consideredFlights: number;
 }
 
-/** Students with the same skill NEEDS_WORK in `threshold`+ of their last 4 debriefs. */
+/** Students with the same skill NEEDS_COACHING in `threshold`+ of their last 4 debriefs. */
 export async function recurringStudentIssues(
   repo: Repository,
   organizationId: string,
   threshold = 3,
 ): Promise<RecurringStudentIssue[]> {
-  const [signals, studentMembers] = await Promise.all([
+  const [allSignals, studentMembers] = await Promise.all([
     repo.listTrainingSignals({ organizationId }),
     repo.listMembers(organizationId, "student"),
   ]);
+  const signals = allSignals.filter((s) => !s.dismissed);
 
   const results: RecurringStudentIssue[] = [];
   for (const member of studentMembers) {
@@ -71,7 +72,7 @@ export async function recurringStudentIssues(
 
     const flightsBySkill = new Map<TrainingSkill, Set<string>>();
     for (const s of studentSignals) {
-      if (s.status !== "NEEDS_WORK" || !recentFlightIds.has(s.flightId)) continue;
+      if (s.status !== "NEEDS_COACHING" || !recentFlightIds.has(s.flightId)) continue;
       if (!flightsBySkill.has(s.skill)) flightsBySkill.set(s.skill, new Set());
       flightsBySkill.get(s.skill)!.add(s.flightId);
     }
@@ -164,7 +165,7 @@ export interface CoverageItem {
 export async function trainingCoverage(repo: Repository, organizationId: string, days = 60): Promise<CoverageItem[]> {
   const signals = await repo.listTrainingSignals({ organizationId });
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-  const recent = signals.filter((s) => new Date(s.flightDate).getTime() >= cutoff);
+  const recent = signals.filter((s) => !s.dismissed && new Date(s.flightDate).getTime() >= cutoff);
 
   const counts = new Map<TrainingSkill, { category: TrainingCategory; occurrences: number }>();
   for (const s of recent) {
