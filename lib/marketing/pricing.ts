@@ -26,7 +26,7 @@ export const PRICING_TIERS: PricingTier[] = [
     price: "$9.99",
     priceSuffix: "/mo",
     priceNote: "or $99/year — save 17%",
-    valueAnchor: "Less than the cost of 2 minutes of flight time.",
+    valueAnchor: "Less than the cost of 2 minutes of flight time.",
     features: [
       "Unlimited debriefs",
       "See your progress over time",
@@ -65,7 +65,7 @@ export const PRICING_TIERS: PricingTier[] = [
     audience: "For independent flight schools and training organizations.",
     price: "$99",
     priceSuffix: "/month/location",
-    valueAnchor: "Your school's first 25 debriefs are free.",
+    valueAnchor: "Your school's first 25 debriefs are free.",
     features: [
       "See every student's training progress",
       "Identify recurring training gaps",
@@ -110,14 +110,14 @@ export const ENTERPRISE_PRICING = {
   sectionHeadlineLine1: "One training standard.",
   sectionHeadlineLine2: "Across your entire organization.",
   sectionCopy:
-    "For universities, multi-location academies, and national flight training organizations that need consistent debriefs, measurable progress, and training visibility across every student, instructor, and location.",
+    "For universities, multi-location academies, and national flight training organizations that need consistent debriefs, measurable progress, and training visibility across every student, instructor, and location.",
   sectionPriceLabel: "Enterprise plans built around your program.",
   sectionSupportingLine:
     "Multi-campus university? National academy? Large Part 141 program? Let's build AfterFlight around your training operation.",
   capabilityTiles: [
     { title: "Standardized Debriefs", description: "One consistent process across every instructor and location." },
     { title: "Training Oversight", description: "See proficiency and training trends across the organization." },
-    { title: "Campus Insights", description: "Compare progress and recurring training gaps by location." },
+    { title: "Campus Insights", description: "Compare progress and recurring training gaps by location." },
     { title: "Student Continuity", description: "Training history follows students across instructors and locations." },
     { title: "ACS Analytics", description: "Identify proficiency trends and systemic training gaps." },
     { title: "Integrations", description: "Connect AfterFlight with existing scheduling and training systems." },

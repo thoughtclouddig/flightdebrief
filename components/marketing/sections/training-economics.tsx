@@ -21,7 +21,7 @@ export function TrainingEconomics() {
             <p className="mt-5 text-pretty text-lg text-[#68717D]">
               A 1.5-hour training flight can cost hundreds of dollars. If you forget what your
               instructor said, repeat the same mistake, or show up unprepared for the next lesson,
-              that costs more than time.
+              that costs more than time.
             </p>
             <p className="mt-4 text-pretty text-lg text-[#68717D]">
               <strong className="text-[#101727]">AfterFlight helps you capture the lesson while it&rsquo;s fresh</strong>,

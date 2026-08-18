@@ -5,14 +5,14 @@ const FRAMES = [
   {
     eyebrow: "Fly",
     headline: "Fly the lesson.",
-    copy: "Focus on flying. AfterFlight picks up when the engine shuts down.",
+    copy: "Focus on flying. AfterFlight picks up when the engine shuts down.",
     src: "/images/marketing/pilot-lifestyle-smile.webp",
     alt: "A confident student pilot smiling at the controls during a scenic flight",
   },
   {
     eyebrow: "Debrief",
     headline: "Make every debrief count.",
-    copy: "Capture what happened, what went well, and what needs work before the details fade.",
+    copy: "Capture what happened, what went well, and what needs work before the details fade.",
     src: "/images/marketing/debrief-lounge-screen.webp",
     alt: "A student pilot and CFI talking through a flight debrief together",
   },
@@ -26,7 +26,7 @@ const FRAMES = [
   {
     eyebrow: "Improve",
     headline: "Come back better prepared.",
-    copy: "Turn what you learned into a clear plan for the next flight—and keep building from there.",
+    copy: "Turn what you learned into a clear plan for the next flight—and keep building from there.",
     src: "/images/marketing/wing-view-sunset.webp",
     alt: "View along the wing of a training aircraft over a river valley at sunset",
   },

@@ -41,9 +41,15 @@ export function PplPayoff() {
             {[...GALLERY, ...GALLERY].map((img, i) => (
               <div
                 key={`${img.src}-${i}`}
-                className="relative aspect-[4/3] w-[86vw] shrink-0 overflow-hidden rounded-2xl sm:w-[480px]"
+                className="relative aspect-[4/3] w-[86vw] shrink-0 overflow-hidden rounded-2xl sm:w-[60vw] md:w-[420px] lg:w-[480px]"
               >
-                <Image src={img.src} alt={img.alt} fill className="object-cover" sizes="(min-width: 640px) 480px, 86vw" />
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 480px, (min-width: 768px) 420px, (min-width: 640px) 60vw, 86vw"
+                />
               </div>
             ))}
           </div>

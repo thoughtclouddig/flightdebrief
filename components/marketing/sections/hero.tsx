@@ -50,7 +50,7 @@ export function Hero() {
           </ul>
 
           <div className="mt-8 inline-flex flex-col items-stretch gap-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Link
                 href="/signup"
                 className="rounded-lg bg-brand px-8 py-4 text-center text-base font-semibold text-white hover:bg-brand-dark"
@@ -59,7 +59,7 @@ export function Hero() {
               </Link>
               <Link
                 href="#how-it-works"
-                className="rounded-lg border border-slate-200 px-8 py-4 text-center text-base font-semibold text-[#101727] hover:bg-[#f4f5f6]"
+                className="whitespace-nowrap rounded-lg border border-slate-200 px-8 py-4 text-center text-base font-semibold text-[#101727] hover:bg-[#f4f5f6]"
               >
                 See How It Works
               </Link>
@@ -76,7 +76,9 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Mobile/tablet: image as a normal rounded block below the text, since there's no room for a background panel. */}
+        {/* Mobile/tablet: image as a normal rounded block below the text. The mockup card sits in normal flow
+            beneath the photo rather than overlapping it -- on a photo this narrow, the card (sized for a large
+            desktop panel) would otherwise cover nearly the entire image. */}
         <div className="relative mt-12 lg:hidden">
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl">
             <Image
@@ -87,7 +89,7 @@ export function Hero() {
               sizes="(max-width: 1023px) 100vw, 0px"
             />
           </div>
-          <DebriefSummaryMockupCard className="absolute -bottom-8 -right-4 w-[min(340px,85%)] sm:-right-8" />
+          <DebriefSummaryMockupCard className="relative z-10 mx-auto -mt-10 w-[min(320px,88%)] sm:-mt-12" />
         </div>
       </div>
     </section>

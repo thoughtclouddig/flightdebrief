@@ -115,7 +115,7 @@ export function BrandDeviceLoop() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#171f33_0%,_#0c1220_75%)]" />
 
       <div className="relative mx-auto max-w-4xl">
-        <div className="font-display flex flex-wrap items-baseline justify-center gap-x-2 gap-y-2 text-[clamp(1.75rem,5.5vw,3.25rem)] font-extrabold uppercase tracking-wide text-white lg:flex-nowrap">
+        <div className="font-display flex flex-wrap items-baseline justify-center gap-x-2 gap-y-3 text-[clamp(1.75rem,5.5vw,3.25rem)] font-extrabold uppercase leading-[1.25] tracking-wide text-white sm:gap-y-2 lg:flex-nowrap">
           <span className="shrink-0 whitespace-nowrap">Fly. Debrief.&nbsp;</span>
           <span
             className="relative inline-block shrink-0 overflow-hidden align-baseline"

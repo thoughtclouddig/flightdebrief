@@ -48,10 +48,10 @@ export function WhoItsFor() {
           </h2>
         </Reveal>
 
-        <div className="mx-auto mt-14 grid gap-12 sm:grid-cols-2 sm:gap-10 lg:grid-cols-4">
+        <div className="mx-auto mt-14 grid gap-12 sm:grid-cols-2 sm:gap-10 md:grid-cols-4 md:gap-6 lg:gap-10">
           {AUDIENCES.map((a, i) => (
             <div key={a.title} id={a.id}>
-              <Reveal delay={i * 100} className="flex flex-col items-start gap-4">
+              <Reveal delay={i * 100} className="flex flex-col items-center gap-4 text-center sm:items-start sm:text-left">
                 <a.icon className="size-8 text-brand" strokeWidth={1.5} />
                 <h3 className="font-display text-lg font-bold uppercase tracking-wide text-[#101727]">{a.title}</h3>
                 <p className="text-balance text-[#68717D]">{a.copy}</p>

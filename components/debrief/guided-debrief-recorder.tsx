@@ -201,14 +201,14 @@ export function GuidedDebriefRecorder({
             value={topicTitle}
             onChange={(e) => setTopicTitle(e.target.value)}
             placeholder="Topic title"
-            className="rounded-lg border border-hairline bg-transparent p-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+            className="min-h-11 rounded-lg border border-hairline bg-transparent px-3 py-2 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
           />
           <textarea
             value={topicPrompt}
             onChange={(e) => setTopicPrompt(e.target.value)}
             placeholder="What do you want to ask about?"
             rows={2}
-            className="rounded-lg border border-hairline bg-transparent p-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+            className="min-h-11 rounded-lg border border-hairline bg-transparent px-3 py-2 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
           />
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setAddingTopic(false)} className="flex-1">

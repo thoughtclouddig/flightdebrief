@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Menu, X } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/#how-it-works", label: "How It Works" },
@@ -9,10 +13,12 @@ const NAV_LINKS = [
 ];
 
 export function MarketingNav() {
+  const [open, setOpen] = useState(false);
+
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[1320px] items-center justify-between px-6">
-        <Link href="/" className="flex shrink-0 items-center">
+        <Link href="/" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
           <Image
             src="/brand/afterflight-lockup-dark.svg"
             alt="AfterFlight"
@@ -41,8 +47,48 @@ export function MarketingNav() {
           >
             Start Free
           </Link>
+          <button
+            type="button"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="-mr-1.5 flex size-11 shrink-0 items-center justify-center rounded-lg text-[#101727] hover:bg-[#f4f5f6] lg:hidden"
+          >
+            {open ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
         </div>
       </div>
+
+      {open ? (
+        <>
+          <button
+            aria-label="Close menu"
+            className="fixed inset-0 top-16 z-30 cursor-default bg-black/20 lg:hidden"
+            onClick={() => setOpen(false)}
+          />
+          <nav className="absolute inset-x-0 top-16 z-40 border-b border-slate-200 bg-white shadow-lg lg:hidden">
+            <div className="flex flex-col px-6 py-2">
+              {NAV_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="flex min-h-[52px] items-center border-b border-slate-100 text-base font-semibold text-[#101727] last:border-b-0"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="flex min-h-[52px] items-center text-base font-semibold text-[#101727] sm:hidden"
+              >
+                Log in
+              </Link>
+            </div>
+          </nav>
+        </>
+      ) : null}
     </header>
   );
 }

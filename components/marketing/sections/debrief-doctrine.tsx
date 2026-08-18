@@ -26,7 +26,7 @@ export function DebriefDoctrine() {
         <span className="font-display text-4xl leading-none text-brand/70" aria-hidden="true">
           &ldquo;
         </span>
-        <p className="font-display mt-2 text-balance text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl">
+        <p className="font-display mt-2 text-balance text-[clamp(1.5rem,1.25rem+1.3vw,2.25rem)] font-bold leading-tight text-white">
           A structured debrief is the single most effective way to accelerate learning and improve performance.
         </p>
         <p className="mt-6 text-sm font-semibold uppercase tracking-[0.14em] text-white/60">
