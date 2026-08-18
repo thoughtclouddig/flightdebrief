@@ -4,7 +4,7 @@ import { Reveal } from "@/components/marketing/reveal";
 
 export function BrandMoment() {
   return (
-    <section className="relative flex min-h-[860px] items-center overflow-hidden bg-white px-6 py-24">
+    <section className="relative flex min-h-[560px] items-center overflow-hidden bg-white px-6 py-20 sm:min-h-[680px] sm:py-24 lg:min-h-[860px]">
       <div className="absolute inset-0">
         <Image
           src="/images/marketing/ten-minutes-back.webp"
@@ -31,7 +31,7 @@ export function BrandMoment() {
           The Problem
         </p>
 
-        <p className="font-display mt-6 text-balance text-5xl font-bold leading-[0.95] text-[#101727] sm:text-6xl lg:text-7xl">
+        <p className="font-display mt-6 text-balance text-[clamp(3rem,2.25rem+3vw,4.5rem)] font-bold leading-[0.95] text-[#101727]">
           The most valuable ten minutes <span className="text-brand">of a lesson disappear.</span>
         </p>
         <p
@@ -39,7 +39,7 @@ export function BrandMoment() {
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
           You land. You talk it through. Your instructor tells you what worked, what didn&rsquo;t, and what to
-          fix next time. Then the details start to fade.
+          fix next time. Then the details start to&nbsp;fade.
         </p>
 
         <a

@@ -169,9 +169,9 @@ export default function SchoolsPage() {
         <div className="mx-auto max-w-[1320px]">
           <Reveal className="mx-auto max-w-2xl rounded-2xl border-2 border-brand bg-white p-10 text-center shadow-lg shadow-brand/10 sm:p-12">
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">School Pro Pricing</p>
-            <p className="font-display mt-4 text-7xl font-bold text-[#101727]">
+            <p className="font-display mt-4 text-[clamp(3rem,2.25rem+3vw,4.5rem)] font-bold text-[#101727]">
               $99
-              <span className="ml-2 tracking-normal text-xl font-medium text-[#68717D]">/month/location</span>
+              <span className="ml-2 text-base tracking-normal font-medium text-[#68717D] sm:text-xl">/month/location</span>
             </p>
             <p className="mt-2 text-base font-semibold text-brand">Your school&rsquo;s first 25 debriefs are free.</p>
             <p className="mt-4 text-lg text-[#68717D]">

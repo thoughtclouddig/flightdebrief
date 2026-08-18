@@ -23,7 +23,7 @@ export function Pricing() {
           </p>
         </Reveal>
 
-        <div className="mt-14 grid gap-8 lg:grid-cols-3">
+        <div className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {PRICING_TIERS.map((tier, i) => (
             <Reveal key={tier.id} delay={i * 100}>
               <div
@@ -44,7 +44,9 @@ export function Pricing() {
                 </p>
                 <p className="text-balance mt-1.5 text-base text-[#68717D]">{tier.audience}</p>
                 <p className="mt-6">
-                  <span className="font-display text-6xl font-extrabold tracking-tight text-[#101727]">{tier.price}</span>
+                  <span className="font-display text-[clamp(2.75rem,2rem+3vw,3.75rem)] font-extrabold tracking-tight text-[#101727]">
+                    {tier.price}
+                  </span>
                   {tier.priceSuffix ? <span className="text-base text-[#68717D]/70">{tier.priceSuffix}</span> : null}
                 </p>
                 {tier.priceNote ? <p className="mt-1.5 text-sm font-semibold text-brand">{tier.priceNote}</p> : null}

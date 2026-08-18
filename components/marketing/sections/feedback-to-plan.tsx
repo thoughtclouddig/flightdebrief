@@ -69,7 +69,7 @@ export function FeedbackToPlan() {
 
               <ThreadBlock icon={MessagesSquare} eyebrow="Your instructor said">
                 <p className="text-[15px] italic leading-relaxed text-[#101727]">
-                  &ldquo;Get the trim set before entry and use the horizon as your primary outside reference.&rdquo;
+                  &ldquo;Get the trim set before entry and use the horizon as your primary outside reference.&rdquo;
                 </p>
               </ThreadBlock>
 
@@ -85,7 +85,7 @@ export function FeedbackToPlan() {
               <ThreadBlock icon={BookOpen} eyebrow="Study this">
                 <p className="text-xs font-bold uppercase tracking-wide text-[#8c97a2]">FAA Airplane Flying Handbook</p>
                 <p className="font-display mt-1 text-base font-bold text-[#101727]">
-                  Performance Maneuvers &middot; Steep Turns
+                  Performance Maneuvers &middot; Steep Turns
                 </p>
                 <a href="#" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand hover:underline">
                   Open reference <ArrowRight className="size-3.5" />

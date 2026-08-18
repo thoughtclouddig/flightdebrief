@@ -40,17 +40,18 @@ export function Proof() {
           delay={200}
           className="font-display tabular-nums -mt-4 flex items-start justify-center leading-none text-brand sm:-mt-8"
         >
-          <span className="whitespace-nowrap text-[17rem] font-extrabold tracking-[-0.05em] sm:text-[27rem]">
+          <span className="whitespace-nowrap text-[clamp(9rem,7rem+18vw,27rem)] font-extrabold tracking-[-0.05em]">
             25
           </span>
-          <span className="mt-10 text-7xl font-extrabold sm:mt-20 sm:text-9xl">%</span>
+          <span className="mt-10 text-[clamp(3.5rem,2.5rem+6vw,8rem)] font-extrabold sm:mt-20">%</span>
         </RevealUp>
 
         <RevealUp
           delay={400}
           className="font-display -mt-6 text-balance font-bold leading-none text-[#101727] sm:-mt-10"
         >
-          <span className="text-8xl sm:text-9xl">Better</span> <span className="text-6xl sm:text-7xl">Performance</span>
+          <span className="text-[clamp(3.5rem,2rem+9vw,8rem)]">Better</span>{" "}
+          <span className="text-[clamp(2.25rem,1rem+5.5vw,4.5rem)]">Performance</span>
         </RevealUp>
 
         <RevealUp delay={600} className="mx-auto mt-10 border-t border-[#e4e7ea] pt-8">

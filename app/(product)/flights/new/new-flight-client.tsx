@@ -309,7 +309,7 @@ function ManualForm({ instructorNames }: { instructorNames: string[] }) {
     <form onSubmit={submit}>
       <Card>
         <CardContent className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Tail number">
               <Input value={form.tailNumber} onChange={(e) => set("tailNumber", e.target.value.toUpperCase())} required />
             </Field>
@@ -334,7 +334,7 @@ function ManualForm({ instructorNames }: { instructorNames: string[] }) {
                 required
               />
             </Field>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <Field label="Instructor (optional)">
                 <InstructorSelect
                   id="manual-instructor"

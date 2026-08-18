@@ -24,18 +24,28 @@ export function CardControls({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2">
-        <Button variant="outline" onClick={onBack} disabled={!canGoBack || disabled} className="flex-1">
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          onClick={onBack}
+          disabled={!canGoBack || disabled}
+          className="min-w-[104px] flex-1 basis-[calc(50%-0.25rem)] sm:basis-0"
+        >
           <ChevronLeft className="size-4" /> Back
         </Button>
-        <Button variant="outline" onClick={onSkip} disabled={disabled} className="flex-1">
+        <Button
+          variant="outline"
+          onClick={onSkip}
+          disabled={disabled}
+          className="min-w-[104px] flex-1 basis-[calc(50%-0.25rem)] sm:basis-0"
+        >
           <SkipForward className="size-4" /> Skip
         </Button>
         <Button
           variant={flagged ? "default" : "outline"}
           onClick={onToggleFlag}
           disabled={disabled}
-          className="flex-1"
+          className="min-w-[104px] flex-1 basis-full sm:basis-0"
         >
           <Flag className="size-4" /> {flagged ? "Flagged" : "Follow up"}
         </Button>
