@@ -84,11 +84,12 @@ export class FR24Provider implements FlightDataProvider {
   }
 
   async getFlightTrack(providerFlightId: string): Promise<TrackPosition[]> {
-    const data = await this.request<{ data: { fr24_id: string; tracks: FR24TrackPoint[] }[] }>(
+    // Unlike flight-summary, this endpoint returns a bare array, not { data: [...] }.
+    const data = await this.request<{ fr24_id: string; tracks: FR24TrackPoint[] }[]>(
       "/api/flight-tracks",
       { flight_id: providerFlightId },
     );
-    const tracks = data.data?.[0]?.tracks ?? [];
+    const tracks = data[0]?.tracks ?? [];
     return tracks.map((p) => ({
       lat: p.lat,
       lon: p.lon,
