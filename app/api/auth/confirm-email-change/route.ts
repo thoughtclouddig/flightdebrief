@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requestOrigin } from "@/lib/auth/origin";
 import { createSessionJwt, verifyEmailChangeJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
-import { getUserByEmail, updateUserEmail } from "@/lib/auth/store";
+import { getUserByEmail, listMembershipsForUser, updateUserEmail } from "@/lib/auth/store";
 import { getDb } from "@/lib/db";
 import { appOrigin } from "@/lib/email";
 
@@ -16,6 +16,15 @@ import { appOrigin } from "@/lib/email";
  * again; other already-open sessions for this user will simply need to
  * sign back in with the new email next time they load a page.
  */
+/** Each role has its own profile/settings route (not a shared page), so send them back to the one they actually use. */
+async function profilePathFor(userId: string): Promise<string> {
+  const memberships = await listMembershipsForUser(userId);
+  const active = memberships.find((m) => m.status === "active");
+  if (active?.role === "instructor") return "/cfi/profile";
+  if (active?.role === "admin") return "/admin/settings";
+  return "/profile";
+}
+
 export async function GET(request: NextRequest) {
   const origin = appOrigin() ?? requestOrigin(request);
   const token = request.nextUrl.searchParams.get("token");
@@ -25,24 +34,26 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const destination = await profilePathFor(claims.userId);
+
     // Re-check for a collision at confirm time too -- the window between
     // request and click is when a race against another account claiming the
     // same address would land.
     const existing = await getUserByEmail(claims.newEmail);
     if (existing && existing.id !== claims.userId) {
-      return NextResponse.redirect(`${origin}/profile?error=email-change-taken`);
+      return NextResponse.redirect(`${origin}${destination}?error=email-change-taken`);
     }
 
     const { rows } = await getDb().query("SELECT id, name FROM users WHERE id = $1", [claims.userId]);
     const user = rows[0];
     if (!user) {
-      return NextResponse.redirect(`${origin}/profile?error=email-change-expired`);
+      return NextResponse.redirect(`${origin}${destination}?error=email-change-expired`);
     }
 
     await updateUserEmail(claims.userId, claims.newEmail);
 
     const jwt = await createSessionJwt({ sub: claims.newEmail, email: claims.newEmail, name: user.name });
-    const response = NextResponse.redirect(`${origin}/profile?email-updated=1`);
+    const response = NextResponse.redirect(`${origin}${destination}?email-updated=1`);
     response.cookies.set(SESSION_COOKIE, jwt, {
       httpOnly: true,
       secure: true,
