@@ -13,7 +13,7 @@ const GROUPS = [
       { user: seed.USER_MARCUS, role: "Student" },
       { user: seed.USER_PRIYA, role: "Student" },
       { user: seed.USER_TOM, role: "Student" },
-      { user: seed.USER_JORDAN, role: "Admin — also a member of Mesa & Prescott below" },
+      { user: seed.USER_JORDAN, role: "Admin" },
     ],
   },
   {

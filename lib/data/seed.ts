@@ -31,10 +31,7 @@ export const ORG_FALCON: Organization = {
 // Additional orgs demonstrating the other account tiers (School Pro is
 // already fully represented by ORG_FALCON above): an independent CFI running
 // their own small roster, a solo individual pilot with no school at all, and
-// two more lightweight school orgs used to demo multi-location oversight
-// (there's no "enterprise" org kind in the schema -- the closest real feature
-// is one admin holding memberships across several school orgs and switching
-// between them, see USER_JORDAN below).
+// two more lightweight schools with their own CFI/student rosters.
 export const ORG_CFI_KEVIN: Organization = {
   id: "org-cfi-kevin",
   name: "Kevin Ortiz's Flight Training",
@@ -74,11 +71,8 @@ export const USER_ANDY: User = { id: "user-andy", name: "Andy", email: "andyrenk
 export const USER_DANNY: User = { id: "user-danny", name: "Danny Franks", email: "andyrenk+cfi@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_MARIA: User = { id: "user-maria", name: "Maria Chen", email: "maria@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
 export const USER_SARAH: User = { id: "user-sarah", name: "Sarah Miller", email: "sarah@example.com", authUserId: null, createdAt: new Date().toISOString() };
-// Real, receivable address (like Andy/Danny above) -- Jordan is the one
-// admin who holds memberships across multiple school orgs (see the
-// organizationMembers list below), so logging in as Jordan and using the
-// membership switcher is the closest real demo of "enterprise-style"
-// multi-location oversight this codebase currently supports.
+// Real, receivable address (like Andy/Danny above). Jordan is the Falcon
+// Aviation administrator and does not hold memberships at other schools.
 export const USER_JORDAN: User = { id: "user-jordan", name: "Jordan Reyes", email: "andyrenk+admin@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
 
 // Additional students spanning different training phases, for testing/demo
@@ -751,20 +745,14 @@ export function buildSeed(): SeedBundle {
     // Individual: Alex is a solo member of their own one-person org.
     member("member-alex", USER_ALEX.id, "student", ORG_INDIVIDUAL_ALEX.id),
 
-    // Mesa Flight Academy: one instructor, two students, plus Jordan again
-    // as admin -- Jordan holding an admin membership at Falcon, Mesa, AND
-    // Prescott is what makes the membership switcher demo multi-location
-    // oversight (there's no dedicated "enterprise" org kind, see the
-    // ORG_MESA/ORG_PRESCOTT comment above).
+    // Mesa Flight Academy: one instructor and two students.
     member("member-nina", USER_NINA.id, "instructor", ORG_MESA.id),
     member("member-carlos", USER_CARLOS.id, "student", ORG_MESA.id),
     member("member-leah", USER_LEAH.id, "student", ORG_MESA.id),
-    member("member-jordan-mesa", USER_JORDAN.id, "admin", ORG_MESA.id),
 
-    // Prescott Aviation: one instructor, one student, Jordan as admin.
+    // Prescott Aviation: one instructor and one student.
     member("member-omar", USER_OMAR.id, "instructor", ORG_PRESCOTT.id),
     member("member-zoe", USER_ZOE.id, "student", ORG_PRESCOTT.id),
-    member("member-jordan-prescott", USER_JORDAN.id, "admin", ORG_PRESCOTT.id),
   ];
 
   const studentInstructors: StudentInstructor[] = [
