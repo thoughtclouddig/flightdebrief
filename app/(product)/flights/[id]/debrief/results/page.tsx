@@ -12,6 +12,7 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
+import { AcsBadge } from "@/components/acs-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
@@ -22,6 +23,7 @@ import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/d
 import { getRepository } from "@/lib/data";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { computeSkillProgression } from "@/lib/skill-progress";
+import { matchSkills } from "@/lib/topics";
 import { cn } from "@/lib/utils";
 
 export default async function DebriefResultsPage(props: PageProps<"/flights/[id]/debrief/results">) {
@@ -144,7 +146,16 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
       {/* Next Steps -- what to carry into the next lesson. */}
       <GroupHeading tone="brand">Next Steps</GroupHeading>
       <div className="flex flex-col gap-4">
-        <Section icon={ClipboardList} title="Action Items" items={result.actionItems} empty="No action items." />
+        <Section
+          icon={ClipboardList}
+          title="Action Items"
+          items={result.actionItems}
+          empty="No action items."
+          renderBadge={(item) => {
+            const skill = matchSkills(item)[0]?.skill;
+            return skill ? <AcsBadge skill={skill} certificateType={certificateType} /> : null;
+          }}
+        />
 
         {result.studyReferences.length > 0 ? (
           <Card>
@@ -246,12 +257,15 @@ function Section({
   items,
   empty,
   tone,
+  renderBadge,
 }: {
   icon: typeof ListChecks;
   title: string;
   items: string[];
   empty: string;
   tone?: "good" | "amber";
+  /** Optional inline badge (e.g. an ACS deep link) rendered after each item's text. */
+  renderBadge?: (item: string) => React.ReactNode;
 }) {
   return (
     <Card>
@@ -274,7 +288,10 @@ function Section({
                     tone === "good" ? "bg-good" : tone === "amber" ? "bg-amber" : "bg-brand",
                   )}
                 />
-                {item}
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  {item}
+                  {renderBadge?.(item)}
+                </span>
               </li>
             ))}
           </ul>
