@@ -67,6 +67,19 @@ export async function createUser(input: { name: string; email: string; authUserI
   return toUser(rows[0]);
 }
 
+/**
+ * Changes both the sign-in identity (auth_user_id) and the display email --
+ * they're always the same value for magic-link auth (see resolveUserOnLogin),
+ * so updating one without the other would leave the user unable to sign in
+ * with either address. Caller must have already re-verified the new address
+ * via a clicked email-change link (see app/api/auth/confirm-email-change)
+ * and checked getUserByEmail(newEmail) is still free.
+ */
+export async function updateUserEmail(userId: string, newEmail: string): Promise<void> {
+  const normalized = newEmail.trim().toLowerCase();
+  await getDb().query("UPDATE users SET email = $1, auth_user_id = $1 WHERE id = $2", [normalized, userId]);
+}
+
 export async function listMembershipsForUser(userId: string): Promise<OrganizationMember[]> {
   const { rows } = await getDb().query(
     "SELECT * FROM organization_members WHERE user_id = $1 ORDER BY created_at",
@@ -119,10 +132,20 @@ export async function getOrganization(id: string): Promise<Organization | null> 
 }
 
 export async function createOrganization(input: { id?: string; name: string; kind: OrganizationKind }): Promise<Organization> {
-  const { rows } = await getDb().query(
-    "INSERT INTO organizations (id, name, kind) VALUES ($1, $2, $3) RETURNING *",
-    [input.id ?? `org-${randomUUID()}`, input.name, input.kind],
-  );
+  // A solo pilot has no CFI to provide an independent assessment, so "guided"
+  // mode's two-rater comparison doesn't apply -- override the DB's 'guided'
+  // default for personal orgs. Mirrors resolveSignupOnLogin's inline insert.
+  const { rows } =
+    input.kind === "individual"
+      ? await getDb().query(
+          "INSERT INTO organizations (id, name, kind, default_guidance_mode) VALUES ($1, $2, $3, 'freeform') RETURNING *",
+          [input.id ?? `org-${randomUUID()}`, input.name, input.kind],
+        )
+      : await getDb().query("INSERT INTO organizations (id, name, kind) VALUES ($1, $2, $3) RETURNING *", [
+          input.id ?? `org-${randomUUID()}`,
+          input.name,
+          input.kind,
+        ]);
   return {
     id: rows[0].id,
     name: rows[0].name,

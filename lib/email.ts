@@ -165,6 +165,39 @@ export async function sendSignupLinkEmail(input: { to: string; url: string; name
   }
 }
 
+/** Emails an email-change confirmation link -- same conventions as sendMagicLinkEmail. */
+export async function sendEmailChangeEmail(input: { to: string; url: string }): Promise<boolean> {
+  const subject = "Confirm your new AfterFlight email";
+  const text = [
+    `Confirm this address as your new AfterFlight sign-in email:`,
+    input.url,
+    ``,
+    `This link expires in 15 minutes. If you didn't request this, you can ignore this email -- your AfterFlight sign-in email won't change.`,
+  ].join("\n");
+  const html = `
+    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#101727">
+      <h2 style="margin:0 0 16px">Confirm your new email</h2>
+      <p>Confirm this address as your new AfterFlight sign-in email:</p>
+      <p style="margin:24px 0">
+        <a href="${escapeHtml(input.url)}" style="background:#f07621;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Confirm new email</a>
+      </p>
+      <p style="color:#56636f;font-size:14px">This link expires in 15 minutes. If you didn't request this, you can ignore this email -- your AfterFlight sign-in email won't change.</p>
+    </div>`;
+
+  try {
+    const response = await sendViaResend({ from: FROM, to: [input.to], subject, text, html });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      console.error(`[email] email-change link to ${input.to} failed: ${response.status} ${detail}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`[email] email-change link to ${input.to} failed:`, err);
+    return false;
+  }
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }

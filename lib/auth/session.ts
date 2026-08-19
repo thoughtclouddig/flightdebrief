@@ -119,6 +119,41 @@ export async function verifySignupLinkJwt(token: string): Promise<SignupLinkClai
   }
 }
 
+/**
+ * Email-change confirmation tokens: emailed to the NEW address so changing
+ * your sign-in email always re-proves you actually control that inbox --
+ * same shape/expiry as a magic link, but carries which user is changing
+ * (their auth_user_id is the OLD email, so the confirm route can't infer it
+ * from the token's subject the way a plain login can).
+ */
+export const EMAIL_CHANGE_MAX_AGE_SECONDS = 60 * 15; // 15 minutes
+
+export interface EmailChangeClaims {
+  userId: string;
+  newEmail: string;
+}
+
+export async function createEmailChangeJwt(input: EmailChangeClaims): Promise<string> {
+  return new SignJWT({ purpose: "email-change", userId: input.userId })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(input.newEmail.trim().toLowerCase())
+    .setIssuedAt()
+    .setExpirationTime(Math.floor(Date.now() / 1000) + EMAIL_CHANGE_MAX_AGE_SECONDS)
+    .sign(getSecret());
+}
+
+export async function verifyEmailChangeJwt(token: string): Promise<EmailChangeClaims | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (payload.purpose !== "email-change" || typeof payload.sub !== "string" || typeof payload.userId !== "string") {
+      return null;
+    }
+    return { userId: payload.userId, newEmail: payload.sub };
+  } catch {
+    return null;
+  }
+}
+
 /** Server-only: read the current session from the request cookies. */
 export async function getSession(): Promise<SessionClaims | null> {
   const cookieStore = await cookies();
