@@ -89,6 +89,85 @@ function MapLibreTrack({ track }: { track: TrackPosition[] }) {
         endEl.style.cssText =
           "width:14px;height:14px;border-radius:50%;background:#101727;border:2px solid white;box-shadow:0 1px 3px rgba(0,0,0,0.4)";
         new maplibregl.Marker({ element: endEl }).setLngLat(coords[coords.length - 1]).addTo(localMap);
+
+        // Invisible, wide-hit-area points (one per track sample) so hovering the
+        // line anywhere near a sample surfaces that sample's altitude/speed/time.
+        localMap.addSource("track-points", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: track.map((p, i) => ({
+              type: "Feature" as const,
+              properties: { altitudeFt: p.altitudeFt ?? null, groundSpeedKt: p.groundSpeedKt ?? null, timestamp: p.timestamp, index: i },
+              geometry: { type: "Point" as const, coordinates: [p.lon, p.lat] },
+            })),
+          },
+        });
+        localMap.addLayer({
+          id: "track-points-hit",
+          type: "circle",
+          source: "track-points",
+          paint: { "circle-radius": 10, "circle-opacity": 0, "circle-stroke-opacity": 0 },
+        });
+        localMap.addSource("track-hover", {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        localMap.addLayer({
+          id: "track-hover-point",
+          type: "circle",
+          source: "track-hover",
+          paint: {
+            "circle-radius": 5,
+            "circle-color": "#101727",
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#ffffff",
+          },
+        });
+
+        const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 12 });
+
+        localMap.on("mousemove", "track-points-hit", (e) => {
+          const feature = e.features?.[0];
+          if (!feature || feature.geometry.type !== "Point") return;
+          localMap.getCanvas().style.cursor = "pointer";
+
+          const coordinates = feature.geometry.coordinates.slice() as [number, number];
+          const { altitudeFt, groundSpeedKt, timestamp } = feature.properties as {
+            altitudeFt: number | null;
+            groundSpeedKt: number | null;
+            timestamp: string;
+          };
+
+          const time = new Date(timestamp).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "UTC",
+          });
+          const altText = altitudeFt != null ? `${altitudeFt.toLocaleString()} ft` : "Altitude unavailable";
+          const speedText = groundSpeedKt != null ? `${Math.round(groundSpeedKt)} kt` : "Speed unavailable";
+
+          (localMap.getSource("track-hover") as import("maplibre-gl").GeoJSONSource)?.setData({
+            type: "FeatureCollection",
+            features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates } }],
+          });
+
+          popup
+            .setLngLat(coordinates)
+            .setHTML(
+              `<div style="font:600 12px system-ui;color:#101727;line-height:1.5">${time} UTC<br/>${altText} &middot; ${speedText}</div>`,
+            )
+            .addTo(localMap);
+        });
+
+        localMap.on("mouseleave", "track-points-hit", () => {
+          localMap.getCanvas().style.cursor = "";
+          popup.remove();
+          (localMap.getSource("track-hover") as import("maplibre-gl").GeoJSONSource)?.setData({
+            type: "FeatureCollection",
+            features: [],
+          });
+        });
       });
     })();
 
