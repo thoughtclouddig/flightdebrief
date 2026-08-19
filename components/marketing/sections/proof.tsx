@@ -29,9 +29,8 @@ export function Proof() {
       <div className="mx-auto max-w-3xl text-center">
         <RevealUp>
           <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">The Proof</p>
-          <p className="font-display mt-6 text-4xl font-bold sm:text-5xl">
-            <span className="text-[#101727]">The</span> <span className="text-brand">proven power</span>
-            <br />
+          <p className="font-display mt-6 text-balance text-4xl font-bold sm:text-5xl">
+            <span className="text-[#101727]">The</span> <span className="text-brand">proven power</span>{" "}
             <span className="text-[#101727]">of structured debriefing.</span>
           </p>
         </RevealUp>
