@@ -4,9 +4,10 @@ import { CalendarDays, Clock, User } from "lucide-react";
 import { FlightMap } from "@/components/flight-map";
 import { DeleteFlightButton } from "@/components/delete-flight-button";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getAuthorizedFlight } from "@/lib/auth/access";
+import { getRepository } from "@/lib/data";
 import { formatDuration } from "@/lib/utils";
 
 export default async function FlightDetailPage(props: PageProps<"/flights/[id]">) {
@@ -14,6 +15,23 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
   const authorized = await getAuthorizedFlight(id);
   if (!authorized) notFound();
   const { flight, viewer } = authorized;
+
+  const repo = getRepository();
+  const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
+
+  // Guided/light modes require the CFI to pick this flight's tasks before
+  // anyone can start the debrief -- see app/(product)/flights/[id]/debrief/page.tsx.
+  // Reflect that here instead of showing a live-looking button that immediately
+  // bounces the student to a "not quite yet" screen.
+  let tasksPending = false;
+  if (flight.debriefStatus !== "complete") {
+    const org = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
+    const guidanceMode = org?.defaultGuidanceMode ?? "freeform";
+    if (guidanceMode !== "freeform") {
+      const tasks = await repo.listFlightTasks(flight.id);
+      tasksPending = tasks.length === 0;
+    }
+  }
 
   const dateLabel = new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
     weekday: "long",
@@ -55,6 +73,14 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
           <Link href={`/flights/${flight.id}/debrief/results`} className={buttonVariants({ size: "lg", className: "flex-1" })}>
             View Debrief
           </Link>
+        ) : tasksPending && isInstructorViewer ? (
+          <Link href={`/flights/${flight.id}/debrief/tasks`} className={buttonVariants({ size: "lg", className: "flex-1" })}>
+            Pick Today&rsquo;s Tasks
+          </Link>
+        ) : tasksPending ? (
+          <Button size="lg" className="flex-1" disabled>
+            Waiting on your CFI
+          </Button>
         ) : (
           <Link href={`/flights/${flight.id}/debrief`} className={buttonVariants({ size: "lg", className: "flex-1" })}>
             Start Debrief

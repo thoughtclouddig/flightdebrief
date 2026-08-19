@@ -87,9 +87,6 @@ export default async function ProfilePage() {
         </Card>
       ) : null}
 
-      <p className="text-center text-xs text-slate-400">
-        This prototype has no real login yet -- use the switcher in the top bar to view the app as a different role.
-      </p>
     </div>
   );
 }
