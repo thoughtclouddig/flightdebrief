@@ -2,15 +2,17 @@ import { NextResponse } from "next/server";
 import { authorize } from "@/lib/auth/guard";
 import { ACTIVE_MEMBERSHIP_COOKIE } from "@/lib/auth/session";
 import { listMembershipsForUser } from "@/lib/auth/store";
+import { isMembershipSwitcherEnabled } from "@/lib/auth/membership-switcher";
 
 /**
- * Sets which of the caller's own organization_members rows is "active" --
- * read back by lib/viewer.ts's getViewer(). Serves both a CFI switching
- * between multiple schools and a solo independent CFI switching between
- * their admin and instructor rows in the same org (see lib/auth/store.ts's
- * resolveSignupOnLogin, which creates both).
+ * Development-only test endpoint for selecting one of the caller's own
+ * memberships. It is deliberately unavailable in published deployments.
  */
 export async function POST(request: Request) {
+  if (!isMembershipSwitcherEnabled()) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const auth = await authorize();
   if (auth.response) return auth.response;
 

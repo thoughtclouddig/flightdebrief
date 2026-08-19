@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { ACTIVE_MEMBERSHIP_COOKIE, getSession } from "@/lib/auth/session";
 import * as store from "@/lib/auth/store";
 import type { Organization, OrgRole, User } from "@/lib/types";
+import { isMembershipSwitcherEnabled } from "@/lib/auth/membership-switcher";
 
 export interface Viewer {
   user: User;
@@ -30,10 +31,11 @@ export async function getViewer(): Promise<Viewer> {
   }
 
   const memberships = await store.listMembershipsForUser(user.id);
-  // Prefer whichever membership the switcher last selected (validated against
-  // this user's own list, never trusted blindly), falling back to the first
-  // active one -- the only behavior single-membership accounts ever see.
-  const preferredId = (await cookies()).get(ACTIVE_MEMBERSHIP_COOKIE)?.value;
+  // The membership selector is a development-only test aid. In production,
+  // always use the account's normal first active membership.
+  const preferredId = isMembershipSwitcherEnabled()
+    ? (await cookies()).get(ACTIVE_MEMBERSHIP_COOKIE)?.value
+    : undefined;
   const activeMembership =
     memberships.find((m) => m.id === preferredId && m.status === "active") ??
     memberships.find((m) => m.status === "active");
@@ -58,9 +60,7 @@ export interface MembershipOption {
 
 /**
  * Every active membership a user holds, enriched with org names -- feeds the
- * nav's "Organizations" switcher (components/user-menu.tsx). Serves both a
- * CFI at multiple schools and a solo independent CFI holding admin+instructor
- * rows in the same org (see lib/auth/store.ts's resolveSignupOnLogin).
+ * development-only membership switcher (components/user-menu.tsx).
  */
 export async function listMembershipOptions(userId: string): Promise<MembershipOption[]> {
   const memberships = (await store.listMembershipsForUser(userId)).filter((m) => m.status === "active");

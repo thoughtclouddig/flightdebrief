@@ -1,1 +1,2 @@
-- [Replit Auth in this Next.js app](replit-auth-nextjs.md) — auth is a hand-rolled OIDC PKCE flow + JWT cookie; identity truth is Replit Postgres, mirrored into lib/data repository with shared ids.
+- [Auth and identity conventions](replit-auth-nextjs.md) — email magic links use normalized email as the identity anchor; Postgres remains the app-level source of truth.
+- [Membership switcher release policy](membership-switcher-release-policy.md) — keep role/org switching development-only until the user explicitly approves it for real users.

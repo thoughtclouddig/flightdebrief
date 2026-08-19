@@ -2,11 +2,12 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { Nav } from "@/components/nav";
 import { getViewer, listMembershipOptions } from "@/lib/viewer";
+import { isMembershipSwitcherEnabled } from "@/lib/auth/membership-switcher";
 
 export default async function ProductLayout({ children }: { children: ReactNode }) {
   const viewer = await getViewer();
   if (!viewer.user.profileCompleted) redirect("/onboarding");
-  const memberships = await listMembershipOptions(viewer.user.id);
+  const memberships = isMembershipSwitcherEnabled() ? await listMembershipOptions(viewer.user.id) : [];
   return (
     <>
       <Nav viewer={viewer} memberships={memberships} />
