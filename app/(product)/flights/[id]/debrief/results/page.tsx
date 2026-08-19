@@ -16,6 +16,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
 import { ComparisonTable, type ComparisonRow } from "@/components/debrief/comparison-table";
+import { FlightMap } from "@/components/flight-map";
 import { SkillProgressList } from "@/components/skill-progress-list";
 import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { getRepository } from "@/lib/data";
@@ -73,6 +74,15 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
       </div>
 
       {result.flightSummary ? <p className="text-lg text-foreground-soft">{result.flightSummary}</p> : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Flight Path</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FlightMap track={flight.track} />
+        </CardContent>
+      </Card>
 
       {ttsEnabled ? <ListenButton baseSrc={`/api/flights/${flight.id}/debrief/audio`} label="Listen to your debrief" /> : null}
 
