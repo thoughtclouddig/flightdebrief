@@ -19,6 +19,11 @@ function normalize(text: string): string {
     .trim();
 }
 
+/** All whitespace removed -- a fallback comparison for when live transcription drops the space between two words at a chunk boundary (e.g. "clearedfor takeoff"), which would otherwise fail an exact substring match despite every word being correct. */
+function collapse(text: string): string {
+  return normalize(text).replace(/\s+/g, "");
+}
+
 /**
  * Deterministic, keyword-based scoring -- not an AI judgment call. A real
  * ATC readback either contains the required elements or it doesn't (AIM
@@ -32,9 +37,15 @@ function normalize(text: string): string {
 export function scoreRadioTranscript(scenario: RadioScenario, transcript: string): RadioScenarioScore {
   const normalizedTranscript = normalize(transcript);
 
+  const collapsedTranscript = collapse(transcript);
+
   const elements: RadioElementScore[] = scenario.requiredElements.map((description, i) => {
     const alternatives = scenario.scoringPhrases[i] ?? [];
-    const matched = alternatives.length === 0 || alternatives.some((alt) => normalizedTranscript.includes(normalize(alt)));
+    const matched =
+      alternatives.length === 0 ||
+      alternatives.some(
+        (alt) => normalizedTranscript.includes(normalize(alt)) || collapsedTranscript.includes(collapse(alt)),
+      );
     return { description, matched };
   });
 
