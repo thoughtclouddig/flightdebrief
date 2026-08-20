@@ -17,6 +17,7 @@ import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { suggestStudyReferences } from "@/lib/topics";
+import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { formatDurationShort } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -37,11 +38,13 @@ export default async function StudentHomePage() {
   const viewer = await getViewer();
   const studentId = viewer.user.id;
 
-  const [flights, trainingItems, brief] = await Promise.all([
+  const [flights, trainingItems, brief, radioPractice] = await Promise.all([
     repo.listFlights({ studentId }),
     repo.listTrainingItems(),
     computeNextLessonBrief(repo, studentId),
+    repo.listRadioPracticeAssignments(studentId),
   ]);
+  const pendingRadioPractice = radioPractice.filter((a) => a.status === "assigned");
 
   const debriefedFlights = flights.filter((f) => f.debriefStatus === "complete");
   const recentDebriefs = debriefedFlights.slice(0, 3);
@@ -221,15 +224,33 @@ export default async function StudentHomePage() {
         </Card>
       ) : null}
 
-      <Card className="border-dashed">
-        <CardContent className="flex items-center gap-3 py-5 text-foreground-faint">
-          <Radio className="size-5 shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-foreground-soft">Assigned practice</p>
-            <p className="text-xs">No practice assigned yet -- radio training is coming soon.</p>
-          </div>
-        </CardContent>
-      </Card>
+      {pendingRadioPractice.length > 0 ? (
+        <Link href={`/practice/${pendingRadioPractice[0]!.id}`} className="block">
+          <Card className="border-brand/30 transition-colors hover:bg-surface-sunken">
+            <CardContent className="flex items-center gap-3 py-5">
+              <Radio className="size-5 shrink-0 text-brand" />
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {RADIO_PRACTICE_SCENARIOS.find((s) => s.id === pendingRadioPractice[0]!.scenarioId)?.title ?? "Assigned practice"}
+                </p>
+                <p className="text-xs text-foreground-soft">
+                  {pendingRadioPractice.length > 1 ? `${pendingRadioPractice.length} assigned -- start this one →` : "Assigned practice -- tap to start →"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      ) : (
+        <Card className="border-dashed">
+          <CardContent className="flex items-center gap-3 py-5 text-foreground-faint">
+            <Radio className="size-5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-foreground-soft">Assigned practice</p>
+              <p className="text-xs">No radio-communications practice assigned yet.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {!brief.lastFlight && !brief.upcomingReservation ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-hairline p-10 text-center text-foreground-soft">

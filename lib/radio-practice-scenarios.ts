@@ -1,9 +1,8 @@
 import type { TrainingSkill } from "@/lib/types";
 
 /**
- * First curated bank for the (not yet built) radio-communications practice
- * feature -- see app/(product)/home/page.tsx's "Assigned practice" card,
- * currently a static "coming soon" placeholder.
+ * First curated bank for the radio-communications practice feature -- see
+ * app/(product)/home/page.tsx's "Assigned practice" card.
  *
  * Content policy: every scenario's phraseology structure and required
  * readback elements are grounded in a cited FAA Aeronautical Information
@@ -22,7 +21,8 @@ import type { TrainingSkill } from "@/lib/types";
  * checklist of required elements (AIM 4-4-10, "Adherence to Clearance"),
  * not something that benefits from novel/varied phrasing -- same
  * "deterministic over AI-judged" philosophy already used by
- * lib/taxonomy.ts's classifyTrainingSignals.
+ * lib/taxonomy.ts's classifyTrainingSignals. See lib/radio-practice-scoring.ts
+ * for how scoringPhrases below is turned into a pass/fail per element.
  */
 
 export type RadioScenarioPhase =
@@ -59,10 +59,19 @@ export interface RadioScenario {
   title: string;
   /** Brief situational context shown to the student before the ATC call plays. */
   setup: string;
-  /** What's heard on frequency -- spoken aloud via TTS once this feature is wired up. */
+  /** What's heard on frequency -- spoken aloud via TTS. */
   atcCall: string;
-  /** Required readback elements, in plain language -- the basis for deterministic scoring. */
+  /** Required readback elements, in plain language -- shown to the student as what's being scored. */
   requiredElements: string[];
+  /**
+   * Acceptable phrasing alternatives for each entry in `requiredElements`,
+   * same length/order -- e.g. requiredElements[0]'s scoringPhrases[0] might
+   * be ["runway two seven", "runway 27"]. Any one alternative matching the
+   * transcript satisfies that element. An empty outer array means this
+   * scenario has no spoken readback to score (e.g. a visual-signal
+   * recognition scenario) -- it's marked complete without judgment.
+   */
+  scoringPhrases: string[][];
   /** One example of a fully correct readback -- not the only acceptable phrasing, but a clear reference. */
   modelReadback: string;
   /** AIM paragraph this scenario's phraseology/requirement is grounded in. */
@@ -80,6 +89,11 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     atcCall:
       "Metro Airport information Kilo. One four five three Zulu. Wind two seven zero at eight. Visibility one zero. Ceiling four thousand five hundred broken. Temperature two two, dew point one two. Altimeter three zero one zero. Landing and departing Runway two seven. Advise on initial contact you have information Kilo.",
     requiredElements: ["Current ATIS letter (Kilo)", "Active runway (two seven)", "Altimeter setting (three zero one zero)"],
+    scoringPhrases: [
+      ["kilo"],
+      ["two seven", "runway two seven", "27"],
+      ["three zero one zero", "three oh one oh", "30.10", "3010"],
+    ],
     modelReadback:
       "Ground, Cessna one two three Alpha Bravo, at the ramp with information Kilo, ready to taxi for takeoff, VFR to the northwest.",
     source: "AIM 4-1-13, Automatic Terminal Information Service (ATIS)",
@@ -92,6 +106,11 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "Engine's started, you have the ATIS, and you're ready to request taxi.",
     atcCall: "Cessna three Alpha Bravo, Metro Ground, taxi to Runway two seven via Alpha, hold short of Runway one eight.",
     requiredElements: ["Your callsign", "Taxi route/runway assignment (two seven via Alpha)", "Hold-short instruction (Runway one eight)"],
+    scoringPhrases: [
+      ["alpha bravo", "three alpha bravo"],
+      ["two seven", "via alpha", "runway two seven"],
+      ["hold short", "one eight", "runway one eight"],
+    ],
     modelReadback: "Taxi to Runway two seven via Alpha, hold short of Runway one eight, three Alpha Bravo.",
     source: "AIM 4-2-3, Contact Procedures",
   },
@@ -105,6 +124,12 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "You're taxiing and Ground issues a route with a runway crossing to hold short of first.",
     atcCall: "Cessna three Alpha Bravo, taxi to Runway two seven via Charlie, hold short of Runway one eight.",
     requiredElements: ["Your callsign", "Assigned runway (two seven)", "Taxi route (via Charlie)", "Hold-short runway (one eight), verbatim"],
+    scoringPhrases: [
+      ["alpha bravo"],
+      ["two seven", "runway two seven"],
+      ["charlie", "via charlie"],
+      ["hold short", "one eight"],
+    ],
     modelReadback: "Taxi to Runway two seven via Charlie, hold short of Runway one eight, three Alpha Bravo.",
     source: "AIM 4-3-18, Taxiing; readback requirement per 4-4-10, Adherence to Clearance",
   },
@@ -116,6 +141,7 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "The airport diagram is unfamiliar and you're not confident of the route Ground just gave.",
     atcCall: "Cessna three Alpha Bravo, roger, turn right on Bravo, then follow the Skyhawk ahead of you to Runway two seven.",
     requiredElements: ["Your callsign", "Each turn/instruction as given, in order"],
+    scoringPhrases: [["alpha bravo"], ["bravo", "skyhawk", "two seven"]],
     modelReadback: "Right on Bravo, follow the Skyhawk to Runway two seven, three Alpha Bravo.",
     source: "AIM 4-3-18, Taxiing",
   },
@@ -129,6 +155,7 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "You're holding short of Runway 27, ready for departure, but the tower isn't ready to release you yet.",
     atcCall: "Cessna three Alpha Bravo, Runway two seven, line up and wait.",
     requiredElements: ["Your callsign", "Assigned runway (two seven)", "\"Line up and wait\", verbatim"],
+    scoringPhrases: [["alpha bravo"], ["two seven", "runway two seven"], ["line up and wait"]],
     modelReadback: "Line up and wait, Runway two seven, three Alpha Bravo.",
     source: "AIM 4-3-2, Airports with an Operating Control Tower",
   },
@@ -140,6 +167,7 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "You're lined up on Runway 27 and the tower clears you for departure.",
     atcCall: "Cessna three Alpha Bravo, Runway two seven, cleared for takeoff.",
     requiredElements: ["Your callsign", "Assigned runway (two seven)", "\"Cleared for takeoff\", verbatim"],
+    scoringPhrases: [["alpha bravo"], ["two seven", "runway two seven"], ["cleared for takeoff"]],
     modelReadback: "Cleared for takeoff, Runway two seven, three Alpha Bravo.",
     source: "AIM 4-3-2, Airports with an Operating Control Tower",
   },
@@ -153,6 +181,7 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "You're climbing out and the tower hands you off to departure.",
     atcCall: "Cessna three Alpha Bravo, contact Metro Departure, one two four point niner five.",
     requiredElements: ["Your callsign", "New frequency, read back digit-by-digit (one two four point niner five)"],
+    scoringPhrases: [["alpha bravo"], ["one two four point niner five", "one two four point nine five", "124.95"]],
     modelReadback: "One two four point niner five, three Alpha Bravo.",
     source: "AIM 4-2-3, Contact Procedures",
   },
@@ -173,6 +202,14 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
       "Destination",
       "Request (\"request flight following\")",
     ],
+    scoringPhrases: [
+      ["metro approach", "approach"],
+      ["alpha bravo"],
+      ["west of metro", "ten miles west", "miles west"],
+      ["four thousand five hundred", "4500"],
+      ["podunk"],
+      ["flight following"],
+    ],
     modelReadback:
       "Metro Approach, Cessna three Alpha Bravo, a Skyhawk, ten miles west of Metro at four thousand five hundred, request flight following to Podunk.",
     source: "AIM 4-1-15, Radar Traffic Information Service",
@@ -188,6 +225,7 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
       "Your callsign",
       "\"Traffic in sight\" if you actually see it, OR \"Negative contact\" if you do not -- never claim traffic in sight you have not actually spotted",
     ],
+    scoringPhrases: [["alpha bravo"], ["traffic in sight", "negative contact", "looking"]],
     modelReadback: "Negative contact, three Alpha Bravo. (Or: Traffic in sight, three Alpha Bravo -- only if actually seen.)",
     source: "AIM 4-1-15, Radar Traffic Information Service; Pilot/Controller Glossary, \"Traffic in Sight\" / \"Negative Contact\"",
   },
@@ -201,6 +239,12 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "You're departing Podunk, a non-towered airport, and announcing your intentions on the CTAF.",
     atcCall: "(No ATC -- this is a self-announce on the common traffic advisory frequency, not a call to acknowledge.)",
     requiredElements: ["Airport name, twice (start and end)", "Your callsign", "Position/intention", "Runway"],
+    scoringPhrases: [
+      ["podunk"],
+      ["alpha bravo"],
+      ["departing", "remaining in the pattern"],
+      ["two seven", "runway two seven"],
+    ],
     modelReadback: "Podunk traffic, Cessna three Alpha Bravo, departing Runway two seven, remaining in the pattern, Podunk.",
     source: "AIM 4-1-9, Traffic Advisory Practices at Airports Without Operating Control Towers",
   },
@@ -212,6 +256,12 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "You're entering the traffic pattern at Podunk to land.",
     atcCall: "(No ATC -- self-announce on CTAF.)",
     requiredElements: ["Airport name, twice", "Your callsign", "Pattern leg and runway", "Intention (full stop / touch and go)"],
+    scoringPhrases: [
+      ["podunk"],
+      ["alpha bravo"],
+      ["downwind", "two seven"],
+      ["full stop", "touch and go", "touch-and-go"],
+    ],
     modelReadback: "Podunk traffic, Cessna three Alpha Bravo, entering left downwind Runway two seven, full stop, Podunk.",
     source: "AIM 4-1-9, Traffic Advisory Practices at Airports Without Operating Control Towers",
   },
@@ -225,6 +275,7 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "You're on downwind at a towered airport and the tower needs to sequence you behind other traffic.",
     atcCall: "Cessna three Alpha Bravo, extend downwind, I'll call your base.",
     requiredElements: ["Your callsign", "Acknowledge the instruction (extend downwind)"],
+    scoringPhrases: [["alpha bravo"], ["extending downwind", "extend downwind"]],
     modelReadback: "Extending downwind, three Alpha Bravo.",
     source: "AIM 4-3-2, Airports with an Operating Control Tower",
   },
@@ -236,6 +287,7 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "Short final, and the tower calls for a go-around because the runway isn't clear.",
     atcCall: "Cessna three Alpha Bravo, go around, traffic on the runway.",
     requiredElements: ["Your callsign", "Acknowledge \"going around\""],
+    scoringPhrases: [["alpha bravo"], ["going around", "go around"]],
     modelReadback: "Going around, three Alpha Bravo.",
     source: "AIM 4-3-5, Unexpected Maneuvers in the Airport Traffic Pattern",
   },
@@ -249,6 +301,7 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "You're on final at a towered airport.",
     atcCall: "Cessna three Alpha Bravo, Runway two seven, cleared to land.",
     requiredElements: ["Your callsign", "Assigned runway (two seven)", "\"Cleared to land\", verbatim"],
+    scoringPhrases: [["alpha bravo"], ["two seven", "runway two seven"], ["cleared to land"]],
     modelReadback: "Cleared to land, Runway two seven, three Alpha Bravo.",
     source: "AIM 4-3-2, Airports with an Operating Control Tower",
   },
@@ -260,6 +313,7 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "You're turning final to land at Podunk.",
     atcCall: "(No ATC -- self-announce on CTAF.)",
     requiredElements: ["Airport name, twice", "Your callsign", "\"Final\" and runway", "Intention"],
+    scoringPhrases: [["podunk"], ["alpha bravo"], ["final"], ["full stop", "touch and go"]],
     modelReadback: "Podunk traffic, Cessna three Alpha Bravo, final Runway two seven, full stop, Podunk.",
     source: "AIM 4-1-9, Traffic Advisory Practices at Airports Without Operating Control Towers",
   },
@@ -273,6 +327,7 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     setup: "You've landed and cleared the runway; the tower hands you to ground control.",
     atcCall: "Cessna three Alpha Bravo, taxi to parking, contact Ground point six.",
     requiredElements: ["Your callsign", "New frequency (point six -- shorthand for the tower frequency's matching Ground frequency)"],
+    scoringPhrases: [["alpha bravo"], ["point six", "ground point six"]],
     modelReadback: "Ground point six, three Alpha Bravo.",
     source: "AIM 4-3-20, Exiting the Runway After Landing",
   },
@@ -283,15 +338,21 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     phase: "lost_comm",
     skill: "EMERGENCY_PROCEDURES",
     title: "Two-way radio failure -- VFR",
-    setup: "Your radio has stopped transmitting or receiving. You're VFR and need to decide what to do next.",
-    atcCall: "(There is no ATC call to react to -- this is about what YOU do, not what you say.)",
+    setup:
+      "Your radio has stopped transmitting or receiving. You're VFR. Say out loud, as if briefing your CFI, what you'd actually do.",
+    atcCall: "(There is no ATC call to react to -- this is about what YOU do, not what you say on frequency.)",
     requiredElements: [
       "Continue the flight under VFR and land as soon as practicable",
       "Squawk 7600 on the transponder",
-      "Try other means to reestablish contact (another frequency, a cell phone, another aircraft relay) before assuming you must divert",
+      "Try other means to reestablish contact before assuming you must divert",
+    ],
+    scoringPhrases: [
+      ["continue vfr", "land as soon as practicable", "continue the flight"],
+      ["seven six zero zero", "7600", "squawk seven six zero zero"],
+      ["another frequency", "cell phone", "try to reestablish", "relay"],
     ],
     modelReadback:
-      "(No radio call is possible in true lost-comm -- the required response is the action taken: continue VFR, squawk 7600, and land as soon as practicable.)",
+      "I'd continue under VFR and land as soon as practicable, squawk seven six zero zero, and try another frequency or a cell phone before assuming I have to divert.",
     source: "AIM 6-4-1, Two-way Radio Communications Failure, referencing 14 CFR 91.185(b)",
   },
   {
@@ -299,14 +360,16 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     phase: "lost_comm",
     skill: "EMERGENCY_PROCEDURES",
     title: "Arriving lost-comm at a towered airport -- light gun signals",
-    setup: "You're arriving at a towered airport with no radio and need to recognize what the tower's light gun signal means.",
-    atcCall: "(The tower is signaling you with a light gun, not a radio call.)",
+    setup:
+      "You're arriving at a towered airport with no radio. This one's a knowledge check, not a readback -- review the signal meanings below, then mark it done.",
+    atcCall: "(The tower signals you with a light gun -- there's nothing to record a readback for.)",
     requiredElements: [
       "Steady green (in flight) = cleared to land",
       "Flashing red (in flight) = airport unsafe, do not land",
       "Steady red (in flight) = give way to other aircraft, continue circling",
       "Rock your wings or flash your landing light to acknowledge a signal was received",
     ],
+    scoringPhrases: [],
     modelReadback: "(No radio call -- acknowledge by rocking wings or flashing your landing light, and comply with the signal given.)",
     source: "AIM 4-3-13, Traffic Control Light Signals",
   },
@@ -327,6 +390,14 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
       "Intentions",
       "Souls on board and fuel remaining, if time allows",
     ],
+    scoringPhrases: [
+      ["mayday"],
+      ["alpha bravo"],
+      ["engine", "rough"],
+      ["four thousand five hundred", "south of metro"],
+      ["request", "nearest airport", "vectors"],
+      ["souls on board", "fuel remaining"],
+    ],
     modelReadback:
       "Mayday, Mayday, Mayday, Cessna three Alpha Bravo, rough-running engine, ten miles south of Metro Airport at four thousand five hundred, request vectors for the nearest airport, two souls on board, one hour of fuel remaining.",
     source: "AIM 6-3-1, Distress and Urgency Communications; 6-1-2, Emergency Condition -- Request Assistance Immediately",
@@ -344,6 +415,13 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
       "Last known position and heading",
       "Altitude",
       "Fuel remaining",
+    ],
+    scoringPhrases: [
+      ["alpha bravo"],
+      ["uncertain", "lost"],
+      ["cedar lake", "heading north"],
+      ["four thousand five hundred"],
+      ["fuel remaining", "minutes of fuel"],
     ],
     modelReadback:
       "Metro Approach, Cessna three Alpha Bravo, I'm uncertain of my position, last known position was over Cedar Lake heading north, four thousand five hundred, forty-five minutes of fuel remaining, request assistance.",

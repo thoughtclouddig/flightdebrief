@@ -9,6 +9,7 @@ import {
   PlaneTakeoff,
   Target,
 } from "lucide-react";
+import { AssignRadioPracticeCard } from "@/components/assign-radio-practice-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -176,6 +177,10 @@ export async function StudentTrainingDetail({
           />
         </CardContent>
       </Card>
+
+      {viewer.role === "instructor" || viewer.role === "admin" ? (
+        <AssignRadioPracticeCard studentId={student.id} />
+      ) : null}
 
       <Card>
         <CardHeader>

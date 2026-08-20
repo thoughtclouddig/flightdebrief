@@ -17,6 +17,7 @@ import type {
   Organization,
   OrganizationMember,
   OrgRole,
+  RadioPracticeAssignment,
   Reservation,
   SkillObservation,
   StudentInstructor,
@@ -323,6 +324,52 @@ export class PostgresRepository implements Repository {
       "UPDATE training_items SET done = $2, completed_at = CASE WHEN $2 THEN now() ELSE NULL END WHERE id = $1",
       [id, done],
     );
+  }
+
+  // --- Radio-communications practice ---
+
+  async createRadioPracticeAssignment(input: {
+    organizationId: string;
+    studentId: string;
+    assignedBy: string | null;
+    scenarioId: string;
+  }): Promise<RadioPracticeAssignment> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `INSERT INTO radio_practice_assignments (id, organization_id, student_id, assigned_by, scenario_id)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [randomUUID(), input.organizationId, input.studentId, input.assignedBy, input.scenarioId],
+    );
+    return mapRadioPracticeAssignment(rows[0]);
+  }
+
+  async listRadioPracticeAssignments(studentId: string): Promise<RadioPracticeAssignment[]> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      "SELECT * FROM radio_practice_assignments WHERE student_id = $1 ORDER BY created_at DESC",
+      [studentId],
+    );
+    return rows.map(mapRadioPracticeAssignment);
+  }
+
+  async getRadioPracticeAssignment(id: string): Promise<RadioPracticeAssignment | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM radio_practice_assignments WHERE id = $1", [id]);
+    return rows[0] ? mapRadioPracticeAssignment(rows[0]) : null;
+  }
+
+  async completeRadioPracticeAssignment(
+    id: string,
+    result: { transcript: string; correct: boolean; matchedElements: { description: string; matched: boolean }[] },
+  ): Promise<RadioPracticeAssignment> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `UPDATE radio_practice_assignments
+       SET status = 'completed', transcript = $2, correct = $3, matched_elements = $4, completed_at = now()
+       WHERE id = $1 RETURNING *`,
+      [id, result.transcript, result.correct, JSON.stringify(result.matchedElements)],
+    );
+    return mapRadioPracticeAssignment(rows[0]);
   }
 
   // --- Structured, CFI-led debrief: flight tasks ---
@@ -1110,6 +1157,22 @@ function mapFlightTask(row: Row): FlightTask {
     label: row.label as string,
     source: row.source as FlightTask["source"],
     sortOrder: row.sort_order as number,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapRadioPracticeAssignment(row: Row): RadioPracticeAssignment {
+  return {
+    id: row.id as string,
+    organizationId: row.organization_id as string,
+    studentId: row.student_id as string,
+    assignedBy: (row.assigned_by as string | null) ?? null,
+    scenarioId: row.scenario_id as string,
+    status: row.status as RadioPracticeAssignment["status"],
+    transcript: (row.transcript as string | null) ?? null,
+    correct: (row.correct as boolean | null) ?? null,
+    matchedElements: (row.matched_elements as RadioPracticeAssignment["matchedElements"]) ?? null,
+    completedAt: row.completed_at ? iso(row.completed_at) : null,
     createdAt: iso(row.created_at),
   };
 }

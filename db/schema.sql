@@ -448,6 +448,30 @@ CREATE TABLE IF NOT EXISTS notification_events (
 CREATE INDEX IF NOT EXISTS notification_events_user_idx ON notification_events (user_id);
 CREATE INDEX IF NOT EXISTS notification_events_flight_idx ON notification_events (flight_id);
 
+-- A CFI-assigned (or self-assigned, for a solo student) radio-communications
+-- practice drill -- see lib/radio-practice-scenarios.ts for the scenario
+-- content itself, which lives in code (not this table) since it's a fixed,
+-- versioned content bank, not per-organization data. scenario_id references
+-- RadioScenario.id there, enforced in TypeScript only -- same convention as
+-- flight_tasks.task_code above. matched_elements is a boolean-per-element
+-- array (see lib/radio-practice-scoring.ts's RadioElementScore), stored so
+-- the student/CFI can see exactly which required elements were missed
+-- without re-scoring the transcript on every read.
+CREATE TABLE IF NOT EXISTS radio_practice_assignments (
+  id text PRIMARY KEY,
+  organization_id text NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  student_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  assigned_by text REFERENCES users(id) ON DELETE SET NULL,
+  scenario_id text NOT NULL,
+  status text NOT NULL DEFAULT 'assigned' CHECK (status IN ('assigned','completed')),
+  transcript text,
+  correct boolean,
+  matched_elements jsonb,
+  completed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS radio_practice_assignments_student_idx ON radio_practice_assignments (student_id, status);
+
 -- Standard card set (item 9 of the debrief spec), global defaults
 -- (organization_id NULL). Schools can later add organization_id-scoped rows
 -- with the same `code` to override title/prompts without a schema change.

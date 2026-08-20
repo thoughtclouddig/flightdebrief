@@ -356,6 +356,24 @@ export interface FlightTask {
   createdAt: string;
 }
 
+/** One CFI-assigned (or self-assigned) radio-communications practice drill -- see lib/radio-practice-scenarios.ts for the scenario content itself. */
+export interface RadioPracticeAssignment {
+  id: string;
+  organizationId: string;
+  studentId: string;
+  /** Null for a solo student's self-assigned practice. */
+  assignedBy: string | null;
+  /** References RadioScenario.id (lib/radio-practice-scenarios.ts), enforced in TypeScript only. */
+  scenarioId: string;
+  status: "assigned" | "completed";
+  transcript: string | null;
+  correct: boolean | null;
+  /** Per-required-element pass/fail -- see lib/radio-practice-scoring.ts's RadioElementScore. */
+  matchedElements: { description: string; matched: boolean }[] | null;
+  completedAt: string | null;
+  createdAt: string;
+}
+
 export type AssessmentRole = "student" | "instructor";
 export type AssessmentStatus = "in_progress" | "submitted";
 

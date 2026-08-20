@@ -18,6 +18,7 @@ import type {
   OrganizationKind,
   OrganizationMember,
   OrgRole,
+  RadioPracticeAssignment,
   Reservation,
   SkillObservation,
   StudentInstructor,
@@ -127,6 +128,20 @@ export interface Repository {
     flightId: string,
     tasks: { taskCode: TrainingSkill; label: string; source: FlightTaskSource }[],
   ): Promise<FlightTask[]>;
+
+  // --- Radio-communications practice ---
+  createRadioPracticeAssignment(input: {
+    organizationId: string;
+    studentId: string;
+    assignedBy: string | null;
+    scenarioId: string;
+  }): Promise<RadioPracticeAssignment>;
+  listRadioPracticeAssignments(studentId: string): Promise<RadioPracticeAssignment[]>;
+  getRadioPracticeAssignment(id: string): Promise<RadioPracticeAssignment | null>;
+  completeRadioPracticeAssignment(
+    id: string,
+    result: { transcript: string; correct: boolean; matchedElements: { description: string; matched: boolean }[] },
+  ): Promise<RadioPracticeAssignment>;
 
   // --- Structured, CFI-led debrief: independent assessments ---
   getOrCreateAssessment(flightId: string, role: AssessmentRole, assessorUserId: string): Promise<DebriefAssessment>;
