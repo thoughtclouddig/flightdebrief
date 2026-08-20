@@ -348,7 +348,8 @@ export type FlightTaskSource = "instructor_selected" | "syllabus" | "ai_suggeste
 export interface FlightTask {
   id: string;
   flightId: string;
-  taskCode: TrainingSkill;
+  /** A catalog TrainingSkill, or a "CUSTOM:<id>" code for a CFI-authored one-off task not in the fixed catalog -- see TaskPickerForm. Enforced in TypeScript only, same convention as training_signals.skill. */
+  taskCode: TrainingSkill | (string & {});
   /** Denormalized display label at selection time, so relabeling the catalog later never rewrites history. */
   label: string;
   source: FlightTaskSource;
@@ -420,7 +421,8 @@ export interface SkillObservation {
   /** Denormalized from the flight, same convention as TrainingSignal.flightDate. */
   flightDate: string;
   aircraftId: string;
-  taskCode: TrainingSkill;
+  /** See FlightTask.taskCode -- may be a custom code, not always a catalog TrainingSkill. */
+  taskCode: TrainingSkill | (string & {});
   /** Denormalized label at task-selection time -- see FlightTask.label. */
   taskLabel: string;
   performanceLevel: import("@/lib/performance-levels").PerformanceLevelCode;

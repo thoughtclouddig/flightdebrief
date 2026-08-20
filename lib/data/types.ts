@@ -126,7 +126,7 @@ export interface Repository {
   /** Replaces the flight's full task list -- the CFI's "Flight Complete" task picker is a single save, not incremental edits. */
   setFlightTasks(
     flightId: string,
-    tasks: { taskCode: TrainingSkill; label: string; source: FlightTaskSource }[],
+    tasks: { taskCode: string; label: string; source: FlightTaskSource }[],
   ): Promise<FlightTask[]>;
 
   // --- Radio-communications practice ---
