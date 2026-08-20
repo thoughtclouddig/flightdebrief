@@ -38,13 +38,17 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
     return NextResponse.json({ error: "No debrief for this flight." }, { status: 404 });
   }
 
+  const student = await repo.getUser(flight.userId);
+
   const script = buildDebriefNarration({
+    studentFirstName: student?.name.split(" ")[0] ?? "there",
     whatWeDid: debrief.structuredResult.whatWeDid,
     wentWell: debrief.structuredResult.wentWell,
     needsWork: debrief.structuredResult.needsWork,
     instructorGuidance: debrief.structuredResult.instructorGuidance,
     actionItems: debrief.structuredResult.actionItems,
     studyReferences: debrief.structuredResult.studyReferences,
+    nextLessonFocus: debrief.structuredResult.nextLessonFocus,
   });
 
   const audio = await synthesizeSpeech(toPilotSpeak(script), apiKey, voice);

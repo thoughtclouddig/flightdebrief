@@ -8,16 +8,18 @@ import type { InstructorGuidance, StudyReference } from "@/lib/types";
  * the on-screen bullet lists -- same rationale as lib/next-lesson-narration.ts.
  */
 export interface DebriefNarrationInput {
+  studentFirstName: string;
   whatWeDid: string[];
   wentWell: string[];
   needsWork: string[];
   instructorGuidance: InstructorGuidance[];
   actionItems: string[];
   studyReferences: StudyReference[];
+  nextLessonFocus: string[];
 }
 
 export function buildDebriefNarration(input: DebriefNarrationInput): string {
-  const lines: string[] = ["Welcome to your debrief."];
+  const lines: string[] = [`Hey ${input.studentFirstName}, here's your debrief -- let's walk through today's flight together.`];
 
   if (input.whatWeDid.length > 0) {
     lines.push(`Today you worked on ${speakList(input.whatWeDid)}.`);
@@ -43,7 +45,13 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
     lines.push("Take a look at the study resources below to dig deeper into today's topics.");
   }
 
-  lines.push("Nice work today -- every flight like this one is building real skill. Keep it up, and fly safe.");
+  // Dynamic, specific close (what's actually next) rather than generic
+  // praise -- ends on efficacy and a concrete next step, not just cheering.
+  lines.push(
+    input.nextLessonFocus.length > 0
+      ? `That's real progress from where you started. Keep chipping away at ${speakList(input.nextLessonFocus)}, and you'll feel the difference next flight.`
+      : "That's real progress from where you started. Keep it up, and you'll feel the difference next flight.",
+  );
 
   return lines.join(" ");
 }

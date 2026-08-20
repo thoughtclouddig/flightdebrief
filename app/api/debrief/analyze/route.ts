@@ -123,7 +123,7 @@ export async function POST(request: Request) {
     })),
   );
 
-  prewarmDebriefAudio(flight.id, structured);
+  void prewarmDebriefAudio(flight.id, flight.userId, structured);
 
   return NextResponse.json({ debrief });
 }
@@ -138,26 +138,30 @@ export async function POST(request: Request) {
  * throws -- a failed pre-warm just means the first click falls back to
  * generating on demand, same as before this existed.
  */
-function prewarmDebriefAudio(flightId: string, structured: StructuredDebrief): void {
+async function prewarmDebriefAudio(flightId: string, studentId: string, structured: StructuredDebrief): Promise<void> {
   const apiKey = process.env.DEEPGRAM_API_KEY;
   if (!apiKey) return;
 
-  const script = toPilotSpeak(
-    buildDebriefNarration({
-      whatWeDid: structured.whatWeDid,
-      wentWell: structured.wentWell,
-      needsWork: structured.needsWork,
-      instructorGuidance: structured.instructorGuidance,
-      actionItems: structured.actionItems,
-      studyReferences: structured.studyReferences,
-    }),
-  );
+  try {
+    const student = await getRepository().getUser(studentId);
+    const script = toPilotSpeak(
+      buildDebriefNarration({
+        studentFirstName: student?.name.split(" ")[0] ?? "there",
+        whatWeDid: structured.whatWeDid,
+        wentWell: structured.wentWell,
+        needsWork: structured.needsWork,
+        instructorGuidance: structured.instructorGuidance,
+        actionItems: structured.actionItems,
+        studyReferences: structured.studyReferences,
+        nextLessonFocus: structured.nextLessonFocus,
+      }),
+    );
 
-  synthesizeSpeech(script, apiKey, DEFAULT_TTS_VOICE)
-    .then((audio) => {
-      if (audio) setCachedAudio(`debrief:${flightId}:${DEFAULT_TTS_VOICE}`, audio);
-    })
-    .catch((err) => console.error("[debrief-audio] pre-warm failed:", err));
+    const audio = await synthesizeSpeech(script, apiKey, DEFAULT_TTS_VOICE);
+    if (audio) setCachedAudio(`debrief:${flightId}:${DEFAULT_TTS_VOICE}`, audio);
+  } catch (err) {
+    console.error("[debrief-audio] pre-warm failed:", err);
+  }
 }
 
 async function getPreviousActionItems(studentId: string, currentFlightDate: string, currentFlightId: string) {
