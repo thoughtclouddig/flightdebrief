@@ -102,34 +102,40 @@ export default async function ProgressPage() {
         </Card>
       )}
 
-      {keepWorkingOn.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="size-4 text-brand" />
-              Keep working on
-            </CardTitle>
-            <p className="text-xs text-foreground-faint">
-              Ongoing skills flagged across your debriefs. These clear on their own once a later flight shows you&rsquo;ve
-              got it -- or check one off yourself if you feel ready.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <TrainingItemChecklist items={keepWorkingOn} />
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {beforeFlight.length > 0 ? (
+      {keepWorkingOn.length > 0 || beforeFlight.length > 0 ? (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ClipboardList className="size-4 text-brand" />
-              Outstanding before your next flight
+              Action Items
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <TrainingItemChecklist items={beforeFlight} />
+          <CardContent className="flex flex-col gap-4">
+            {keepWorkingOn.length > 0 ? (
+              <div>
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
+                  <AlertCircle className="size-3.5" />
+                  Ongoing ({keepWorkingOn.length})
+                </p>
+                <p className="mt-1 text-xs text-foreground-faint">
+                  Skills flagged across your debriefs. These clear on their own once a later flight shows you&rsquo;ve got
+                  it -- or check one off yourself if you feel ready.
+                </p>
+                <div className="mt-2">
+                  <TrainingItemChecklist items={keepWorkingOn} />
+                </div>
+              </div>
+            ) : null}
+            {beforeFlight.length > 0 ? (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">
+                  Before your next flight ({beforeFlight.length})
+                </p>
+                <div className="mt-2">
+                  <TrainingItemChecklist items={beforeFlight} />
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}
