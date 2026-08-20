@@ -51,9 +51,13 @@ export async function GET(request: Request) {
     focus: debrief?.structuredResult.nextLessonFocus ?? [],
   });
 
-  const audio = await synthesizeSpeech(toPilotSpeak(script), apiKey, voice);
-  if (!audio) {
-    return NextResponse.json({ error: "Failed to generate audio." }, { status: 502 });
+  let audio;
+  try {
+    audio = await synthesizeSpeech(toPilotSpeak(script), apiKey, voice);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[next-lesson-audio] synthesis failed:", detail);
+    return NextResponse.json({ error: "Failed to generate audio.", detail }, { status: 502 });
   }
 
   setCachedAudio(cacheKey, audio);

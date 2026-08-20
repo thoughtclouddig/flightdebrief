@@ -158,9 +158,9 @@ async function prewarmDebriefAudio(flightId: string, studentId: string, structur
     );
 
     const audio = await synthesizeSpeech(script, apiKey, DEFAULT_TTS_VOICE);
-    if (audio) setCachedAudio(`debrief:${flightId}:${DEFAULT_TTS_VOICE}`, audio);
+    setCachedAudio(`debrief:${flightId}:${DEFAULT_TTS_VOICE}`, audio);
   } catch (err) {
-    console.error("[debrief-audio] pre-warm failed:", err);
+    console.error("[debrief-audio] pre-warm failed:", err instanceof Error ? err.message : err);
   }
 }
 

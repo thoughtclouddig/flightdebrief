@@ -11,17 +11,17 @@ import { DEFAULT_TTS_VOICE, isValidTtsVoice } from "@/lib/tts-voices";
  * it back anyway (unlike Deepgram's WebSocket streaming mode), so buffering
  * here costs nothing extra.
  */
-export async function synthesizeSpeech(text: string, apiKey: string, requestedVoice: string | null): Promise<Buffer | null> {
+/**
+ * Throws (rather than returning null) on any non-2xx response, carrying the
+ * real Deepgram status/body in the error message -- callers surface this in
+ * the API response body itself (see app/api/*\/audio/route.ts), not just a
+ * server log, since server logs have proven unreliable to retrieve in some
+ * environments (Replit's shell pane) while the browser Network tab's
+ * response body has not.
+ */
+export async function synthesizeSpeech(text: string, apiKey: string, requestedVoice: string | null): Promise<Buffer> {
   const voice = requestedVoice && isValidTtsVoice(requestedVoice) ? requestedVoice : DEFAULT_TTS_VOICE;
 
-  // Reverted from 0.92 back to the known-working 1 -- that change is the
-  // prime suspect for a "Couldn't generate audio" regression seen right
-  // after it shipped, and this endpoint's actual accepted speed range/format
-  // was never confirmed against a live response (only guessed from the
-  // Deepgram playground network tab, per lib/tts-voices.ts's note on that
-  // same limitation for voice slugs). Re-attempt slowing the read down only
-  // once a live [deepgram-tts] error log confirms what value/format this
-  // endpoint actually accepts.
   const response = await fetch(`https://api.deepgram.com/v2/speak?model=${voice}&speed=1`, {
     method: "POST",
     headers: {
@@ -33,8 +33,7 @@ export async function synthesizeSpeech(text: string, apiKey: string, requestedVo
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    console.error(`[deepgram-tts] synthesis failed (${response.status}) for voice=${voice}: ${detail}`);
-    return null;
+    throw new Error(`Deepgram TTS failed (${response.status}): ${detail || "no response body"}`);
   }
 
   return Buffer.from(await response.arrayBuffer());
