@@ -14,10 +14,15 @@ import { DEFAULT_TTS_VOICE, isValidTtsVoice } from "@/lib/tts-voices";
 export async function synthesizeSpeech(text: string, apiKey: string, requestedVoice: string | null): Promise<Buffer | null> {
   const voice = requestedVoice && isValidTtsVoice(requestedVoice) ? requestedVoice : DEFAULT_TTS_VOICE;
 
-  // Slightly under 1x -- full speed read as rushed/robotic for a debrief
-  // meant to be listened to relaxed (e.g. driving home). Re-tune if this
-  // over/undershoots once heard against a real voice sample.
-  const response = await fetch(`https://api.deepgram.com/v2/speak?model=${voice}&speed=0.92`, {
+  // Reverted from 0.92 back to the known-working 1 -- that change is the
+  // prime suspect for a "Couldn't generate audio" regression seen right
+  // after it shipped, and this endpoint's actual accepted speed range/format
+  // was never confirmed against a live response (only guessed from the
+  // Deepgram playground network tab, per lib/tts-voices.ts's note on that
+  // same limitation for voice slugs). Re-attempt slowing the read down only
+  // once a live [deepgram-tts] error log confirms what value/format this
+  // endpoint actually accepts.
+  const response = await fetch(`https://api.deepgram.com/v2/speak?model=${voice}&speed=1`, {
     method: "POST",
     headers: {
       Authorization: `Token ${apiKey}`,
