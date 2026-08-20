@@ -49,7 +49,7 @@ export function Hero() {
             ))}
           </ul>
 
-          <div className="mt-8 inline-flex flex-col items-stretch gap-3">
+          <div className="mt-8 flex flex-col items-stretch gap-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Link
                 href="/signup"
