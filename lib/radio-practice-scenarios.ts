@@ -30,10 +30,12 @@ export type RadioScenarioPhase =
   | "taxi"
   | "before_takeoff"
   | "departure"
+  | "en_route"
   | "pattern_nontowered"
   | "pattern_towered"
   | "landing"
   | "after_landing"
+  | "lost_comm"
   | "emergency";
 
 export const RADIO_SCENARIO_PHASE_LABEL: Record<RadioScenarioPhase, string> = {
@@ -41,10 +43,12 @@ export const RADIO_SCENARIO_PHASE_LABEL: Record<RadioScenarioPhase, string> = {
   taxi: "Taxi",
   before_takeoff: "Before Takeoff",
   departure: "Departure",
+  en_route: "En Route",
   pattern_nontowered: "Pattern (Non-Towered)",
   pattern_towered: "Pattern (Towered)",
   landing: "Landing",
   after_landing: "After Landing",
+  lost_comm: "Lost Comm / Radio Failure",
   emergency: "Emergency",
 };
 
@@ -153,6 +157,41 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     source: "AIM 4-2-3, Contact Procedures",
   },
 
+  // --- En route ------------------------------------------------------
+  {
+    id: "request-flight-following",
+    phase: "en_route",
+    skill: "RADIO_COMMUNICATIONS",
+    title: "Requesting VFR flight following",
+    setup: "You're clear of the Class D surface area, en route, and want traffic advisories for the rest of the flight.",
+    atcCall: "(You are initiating this request -- there is no ATC prompt to react to.)",
+    requiredElements: [
+      "Facility name",
+      "Your callsign, type aircraft",
+      "Position",
+      "Altitude",
+      "Destination",
+      "Request (\"request flight following\")",
+    ],
+    modelReadback:
+      "Metro Approach, Cessna three Alpha Bravo, a Skyhawk, ten miles west of Metro at four thousand five hundred, request flight following to Podunk.",
+    source: "AIM 4-1-15, Radar Traffic Information Service",
+  },
+  {
+    id: "acknowledge-traffic-advisory",
+    phase: "en_route",
+    skill: "SITUATIONAL_AWARENESS",
+    title: "Acknowledging a traffic advisory",
+    setup: "ATC calls traffic while you're receiving flight following. You need to look for it and respond correctly either way.",
+    atcCall: "Cessna three Alpha Bravo, traffic ten o'clock, three miles, westbound, altitude unknown.",
+    requiredElements: [
+      "Your callsign",
+      "\"Traffic in sight\" if you actually see it, OR \"Negative contact\" if you do not -- never claim traffic in sight you have not actually spotted",
+    ],
+    modelReadback: "Negative contact, three Alpha Bravo. (Or: Traffic in sight, three Alpha Bravo -- only if actually seen.)",
+    source: "AIM 4-1-15, Radar Traffic Information Service; Pilot/Controller Glossary, \"Traffic in Sight\" / \"Negative Contact\"",
+  },
+
   // --- Pattern (non-towered) ---------------------------------------------
   {
     id: "nontowered-departure-call",
@@ -236,6 +275,40 @@ export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
     requiredElements: ["Your callsign", "New frequency (point six -- shorthand for the tower frequency's matching Ground frequency)"],
     modelReadback: "Ground point six, three Alpha Bravo.",
     source: "AIM 4-3-20, Exiting the Runway After Landing",
+  },
+
+  // --- Lost comm / radio failure --------------------------------------
+  {
+    id: "lost-comm-vfr",
+    phase: "lost_comm",
+    skill: "EMERGENCY_PROCEDURES",
+    title: "Two-way radio failure -- VFR",
+    setup: "Your radio has stopped transmitting or receiving. You're VFR and need to decide what to do next.",
+    atcCall: "(There is no ATC call to react to -- this is about what YOU do, not what you say.)",
+    requiredElements: [
+      "Continue the flight under VFR and land as soon as practicable",
+      "Squawk 7600 on the transponder",
+      "Try other means to reestablish contact (another frequency, a cell phone, another aircraft relay) before assuming you must divert",
+    ],
+    modelReadback:
+      "(No radio call is possible in true lost-comm -- the required response is the action taken: continue VFR, squawk 7600, and land as soon as practicable.)",
+    source: "AIM 6-4-1, Two-way Radio Communications Failure, referencing 14 CFR 91.185(b)",
+  },
+  {
+    id: "lost-comm-towered-arrival",
+    phase: "lost_comm",
+    skill: "EMERGENCY_PROCEDURES",
+    title: "Arriving lost-comm at a towered airport -- light gun signals",
+    setup: "You're arriving at a towered airport with no radio and need to recognize what the tower's light gun signal means.",
+    atcCall: "(The tower is signaling you with a light gun, not a radio call.)",
+    requiredElements: [
+      "Steady green (in flight) = cleared to land",
+      "Flashing red (in flight) = airport unsafe, do not land",
+      "Steady red (in flight) = give way to other aircraft, continue circling",
+      "Rock your wings or flash your landing light to acknowledge a signal was received",
+    ],
+    modelReadback: "(No radio call -- acknowledge by rocking wings or flashing your landing light, and comply with the signal given.)",
+    source: "AIM 4-3-13, Traffic Control Light Signals",
   },
 
   // --- Emergency -----------------------------------------------------
