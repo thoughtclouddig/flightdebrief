@@ -15,43 +15,42 @@ export interface DebriefNarrationInput {
   instructorGuidance: InstructorGuidance[];
   actionItems: string[];
   studyReferences: StudyReference[];
-  nextLessonFocus: string[];
 }
 
 export function buildDebriefNarration(input: DebriefNarrationInput): string {
-  const lines: string[] = [`Hey ${input.studentFirstName}, here's your debrief -- let's walk through today's flight together.`];
+  const sections: string[] = [`Hey ${input.studentFirstName}, here's your debrief -- let's walk through today's flight together.`];
 
   if (input.whatWeDid.length > 0) {
-    lines.push(`Today you worked on ${speakList(input.whatWeDid)}.`);
+    sections.push(`Today you worked on ${speakList(input.whatWeDid)}.`);
   }
 
   if (input.wentWell.length > 0) {
-    lines.push(`What went well: ${speakList(input.wentWell)}.`);
+    sections.push(`What went well: ${speakList(input.wentWell)}.`);
   }
 
   if (input.needsWork.length > 0) {
-    lines.push(`What needs work: ${speakList(input.needsWork)}.`);
+    sections.push(`What needs work: ${speakList(input.needsWork)}.`);
   }
 
   for (const g of input.instructorGuidance) {
-    lines.push(`${g.instructorName} said: ${g.quote}`);
+    sections.push(`${g.instructorName} said: ${g.quote}`);
   }
 
   if (input.actionItems.length > 0) {
-    lines.push(`Before your next flight: ${speakList(input.actionItems)}.`);
+    sections.push(`Before your next flight: ${speakList(input.actionItems)}.`);
   }
 
   if (input.studyReferences.length > 0) {
-    lines.push("Take a look at the study resources below to dig deeper into today's topics.");
+    sections.push("Take a look at the study resources below to dig deeper into today's topics.");
   }
 
-  // Dynamic, specific close (what's actually next) rather than generic
-  // praise -- ends on efficacy and a concrete next step, not just cheering.
-  lines.push(
-    input.nextLessonFocus.length > 0
-      ? `That's real progress from where you started. Keep chipping away at ${speakList(input.nextLessonFocus)}, and you'll feel the difference next flight.`
-      : "That's real progress from where you started. Keep it up, and you'll feel the difference next flight.",
-  );
+  // Short and generic on purpose -- the specifics (needs work, action items)
+  // were already said above, so a close that repeated them again just
+  // restated the same content twice in a row.
+  sections.push("Nice work today. Keep chipping away, and fly safe.");
 
-  return lines.join(" ");
+  // Blank line between sections (not a single space) -- most TTS engines
+  // treat a paragraph break as a longer pause than a mid-sentence period,
+  // which is what was making topic changes read as rushed/run-on.
+  return sections.join("\n\n");
 }

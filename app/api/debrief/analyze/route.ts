@@ -153,7 +153,6 @@ async function prewarmDebriefAudio(flightId: string, studentId: string, structur
         instructorGuidance: structured.instructorGuidance,
         actionItems: structured.actionItems,
         studyReferences: structured.studyReferences,
-        nextLessonFocus: structured.nextLessonFocus,
       }),
     );
 

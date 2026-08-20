@@ -48,7 +48,6 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
     instructorGuidance: debrief.structuredResult.instructorGuidance,
     actionItems: debrief.structuredResult.actionItems,
     studyReferences: debrief.structuredResult.studyReferences,
-    nextLessonFocus: debrief.structuredResult.nextLessonFocus,
   });
 
   let audio;
