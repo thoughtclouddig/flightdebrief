@@ -19,6 +19,7 @@ interface SubmitResult {
   correct: boolean;
   matchedElements: { description: string; matched: boolean }[];
   modelReadback: string;
+  transcript: string;
 }
 
 export function RadioPracticeSession({
@@ -34,7 +35,12 @@ export function RadioPracticeSession({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(
     assignment.status === "completed" && assignment.matchedElements
-      ? { correct: assignment.correct ?? false, matchedElements: assignment.matchedElements, modelReadback: scenario.modelReadback }
+      ? {
+          correct: assignment.correct ?? false,
+          matchedElements: assignment.matchedElements,
+          modelReadback: scenario.modelReadback,
+          transcript: assignment.transcript ?? "",
+        }
       : null,
   );
 
@@ -92,7 +98,12 @@ export function RadioPracticeSession({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || "Failed to submit. Try again.");
-      setResult({ correct: data.assignment.correct, matchedElements: data.assignment.matchedElements, modelReadback: data.modelReadback });
+      setResult({
+        correct: data.assignment.correct,
+        matchedElements: data.assignment.matchedElements,
+        modelReadback: data.modelReadback,
+        transcript,
+      });
       setPhase("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit. Try again.");
@@ -173,6 +184,17 @@ export function RadioPracticeSession({
           </ul>
         </CardContent>
       </Card>
+
+      {result?.transcript ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>What You Said</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-foreground-soft">&ldquo;{result.transcript}&rdquo;</p>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {result ? (
         <Card className={cn(result.correct ? "border-good/40 bg-good/5" : "border-danger/30 bg-danger/5")}>
