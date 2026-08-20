@@ -187,10 +187,26 @@ function AssignmentRow({ assignment: a, onDeleted }: { assignment: RadioPractice
           {missed.map((el, i) => (
             <li key={i} className="flex items-start gap-1.5 text-xs text-danger">
               <span className="mt-1.5 size-1 shrink-0 rounded-full bg-danger" />
-              {el.description}
+              Missing: {el.description}
             </li>
           ))}
         </ul>
+      ) : null}
+      {missed.length > 0 && (a.transcript || scenario) ? (
+        <div className="ml-6 flex flex-col gap-1 rounded-lg bg-surface-sunken px-2.5 py-2 text-xs">
+          {a.transcript ? (
+            <p className="text-foreground-soft">
+              <span className="font-semibold text-foreground-faint">Student said:</span> &ldquo;{a.transcript}&rdquo;
+            </p>
+          ) : (
+            <p className="italic text-foreground-faint">No readback was recorded for this attempt.</p>
+          )}
+          {scenario ? (
+            <p className="text-foreground-soft">
+              <span className="font-semibold text-foreground-faint">Model readback:</span> {scenario.modelReadback}
+            </p>
+          ) : null}
+        </div>
       ) : null}
     </li>
   );
