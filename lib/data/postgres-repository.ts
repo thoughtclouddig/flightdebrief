@@ -6,6 +6,7 @@ import type {
   CardDefinition,
   ConsentRecord,
   Debrief,
+  PendingDebriefTranscript,
   DebriefAssessment,
   DebriefAssessmentRating,
   DebriefCard,
@@ -271,6 +272,49 @@ export class PostgresRepository implements Repository {
       ],
     );
     return mapDebrief(rows[0]);
+  }
+
+  async savePendingDebriefTranscript(
+    input: Omit<PendingDebriefTranscript, "createdAt">,
+  ): Promise<PendingDebriefTranscript> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `INSERT INTO pending_debrief_transcripts
+         (flight_id, transcript, audio_duration_seconds, guidance_mode, recording_started_at, recording_ended_at, words, card_boundaries)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (flight_id) DO UPDATE SET
+         transcript = EXCLUDED.transcript,
+         audio_duration_seconds = EXCLUDED.audio_duration_seconds,
+         guidance_mode = EXCLUDED.guidance_mode,
+         recording_started_at = EXCLUDED.recording_started_at,
+         recording_ended_at = EXCLUDED.recording_ended_at,
+         words = EXCLUDED.words,
+         card_boundaries = EXCLUDED.card_boundaries,
+         created_at = now()
+       RETURNING *`,
+      [
+        input.flightId,
+        input.transcript,
+        input.audioDurationSeconds,
+        input.guidanceMode,
+        input.recordingStartedAt,
+        input.recordingEndedAt,
+        input.words ? JSON.stringify(input.words) : null,
+        input.cardBoundaries ? JSON.stringify(input.cardBoundaries) : null,
+      ],
+    );
+    return mapPendingDebriefTranscript(rows[0]);
+  }
+
+  async getPendingDebriefTranscript(flightId: string): Promise<PendingDebriefTranscript | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM pending_debrief_transcripts WHERE flight_id = $1", [flightId]);
+    return rows[0] ? mapPendingDebriefTranscript(rows[0]) : null;
+  }
+
+  async deletePendingDebriefTranscript(flightId: string): Promise<void> {
+    const db = await this.db();
+    await db.query("DELETE FROM pending_debrief_transcripts WHERE flight_id = $1", [flightId]);
   }
 
   // --- Training items ---
@@ -1193,6 +1237,20 @@ function mapDebrief(row: Row): Debrief {
     guidanceMode: (row.guidance_mode as Debrief["guidanceMode"]) ?? "freeform",
     recordingStartedAt: row.recording_started_at ? iso(row.recording_started_at) : null,
     recordingEndedAt: row.recording_ended_at ? iso(row.recording_ended_at) : null,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapPendingDebriefTranscript(row: Row): PendingDebriefTranscript {
+  return {
+    flightId: row.flight_id as string,
+    transcript: row.transcript as string,
+    audioDurationSeconds: row.audio_duration_seconds as number,
+    guidanceMode: (row.guidance_mode as PendingDebriefTranscript["guidanceMode"]) ?? "freeform",
+    recordingStartedAt: row.recording_started_at ? iso(row.recording_started_at) : null,
+    recordingEndedAt: row.recording_ended_at ? iso(row.recording_ended_at) : null,
+    words: (row.words as PendingDebriefTranscript["words"]) ?? null,
+    cardBoundaries: (row.card_boundaries as PendingDebriefTranscript["cardBoundaries"]) ?? null,
     createdAt: iso(row.created_at),
   };
 }

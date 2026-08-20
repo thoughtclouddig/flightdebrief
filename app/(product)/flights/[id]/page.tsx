@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays, Clock, User } from "lucide-react";
 import { FlightMap } from "@/components/flight-map";
 import { DeleteFlightButton } from "@/components/delete-flight-button";
+import { ResumeDebriefButton } from "@/components/resume-debrief-button";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +25,7 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
   // Reflect that here instead of showing a live-looking button that immediately
   // bounces the student to a "not quite yet" screen.
   let tasksPending = false;
+  let hasPendingDebrief = false;
   if (flight.debriefStatus !== "complete") {
     const org = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
     const guidanceMode = org?.defaultGuidanceMode ?? "freeform";
@@ -31,6 +33,9 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
       const tasks = await repo.listFlightTasks(flight.id);
       tasksPending = tasks.length === 0;
     }
+    // A recording saved while billing-blocked (see app/api/debrief/analyze/route.ts) --
+    // offer to finish analyzing it instead of a fresh "Start Debrief" prompt.
+    hasPendingDebrief = (await repo.getPendingDebriefTranscript(flight.id)) !== null;
   }
 
   const dateLabel = new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
@@ -68,11 +73,24 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
         <FlightMap track={flight.track} />
       </div>
 
+      {hasPendingDebrief && flight.debriefStatus !== "complete" ? (
+        <Card className="border-brand/30 bg-brand/5 dark:bg-brand/10">
+          <CardContent className="py-4 text-sm text-foreground-soft">
+            You have a debrief recording ready to analyze -- pick up right where you left off, no need to
+            re-record.
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="flex flex-col gap-2 sm:flex-row">
         {flight.debriefStatus === "complete" ? (
           <Link href={`/flights/${flight.id}/debrief/results`} className={buttonVariants({ size: "lg", className: "flex-1" })}>
             View Debrief
           </Link>
+        ) : hasPendingDebrief ? (
+          <div className="flex-1">
+            <ResumeDebriefButton flightId={flight.id} />
+          </div>
         ) : tasksPending && isInstructorViewer ? (
           <Link href={`/flights/${flight.id}/debrief/tasks`} className={buttonVariants({ size: "lg", className: "flex-1" })}>
             Pick Today&rsquo;s Tasks

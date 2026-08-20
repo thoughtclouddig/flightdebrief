@@ -515,6 +515,25 @@ ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_plan text CHECK 
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_quantity integer NOT NULL DEFAULT 1;
 CREATE UNIQUE INDEX IF NOT EXISTS organizations_stripe_customer_idx ON organizations (stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;
 
+-- Holds a debrief recording that was submitted while billing-blocked (free
+-- tier exhausted, no active subscription) so it is never discarded -- the
+-- billing gate in app/api/debrief/analyze/route.ts checks *after* this row
+-- is saved, not before, so a student who hits the paywall mid-flow can
+-- subscribe and resume analysis without re-recording. One row per flight;
+-- a retry (re-recording, or resuming) overwrites it. Deleted once analysis
+-- actually succeeds and the real debriefs row exists.
+CREATE TABLE IF NOT EXISTS pending_debrief_transcripts (
+  flight_id text PRIMARY KEY REFERENCES flights(id) ON DELETE CASCADE,
+  transcript text NOT NULL,
+  audio_duration_seconds integer NOT NULL DEFAULT 0,
+  guidance_mode text NOT NULL DEFAULT 'freeform' CHECK (guidance_mode IN ('guided','light','freeform')),
+  recording_started_at timestamptz,
+  recording_ended_at timestamptz,
+  words jsonb,
+  card_boundaries jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- The default organization every signup joins (see lib/auth/store.ts). This is
 -- real identity data, not demo content; demo users/flights are seeded
 -- separately and only when SEED_DEMO_DATA is set (lib/data/postgres-repository.ts).

@@ -203,6 +203,19 @@ export interface Debrief {
   createdAt: string;
 }
 
+/** A recording saved while billing-blocked, waiting to be analyzed once the org can pay -- see db/schema.sql's pending_debrief_transcripts for the full rationale. */
+export interface PendingDebriefTranscript {
+  flightId: string;
+  transcript: string;
+  audioDurationSeconds: number;
+  guidanceMode: DebriefGuidanceMode;
+  recordingStartedAt: string | null;
+  recordingEndedAt: string | null;
+  words: import("@/lib/transcription/types").TranscriptWord[] | null;
+  cardBoundaries: import("@/lib/debrief-cards/segments").CardBoundary[] | null;
+  createdAt: string;
+}
+
 export type TrainingItemCategory = "keep_working_on" | "before_next_flight" | "todo";
 
 /** Who can see this item. Defaults to "shared" -- everything from a debrief is student-visible by default. */

@@ -6,6 +6,7 @@ import type {
   ConsentRole,
   ConsentStatus,
   Debrief,
+  PendingDebriefTranscript,
   DebriefAssessment,
   DebriefAssessmentRating,
   DebriefCard,
@@ -114,6 +115,11 @@ export interface Repository {
 
   getDebriefByFlight(flightId: string): Promise<Debrief | null>;
   createDebrief(input: CreateDebriefInput): Promise<Debrief>;
+
+  /** Upserts -- a re-recording or a resumed analysis attempt overwrites the previous pending row for this flight. */
+  savePendingDebriefTranscript(input: Omit<PendingDebriefTranscript, "createdAt">): Promise<PendingDebriefTranscript>;
+  getPendingDebriefTranscript(flightId: string): Promise<PendingDebriefTranscript | null>;
+  deletePendingDebriefTranscript(flightId: string): Promise<void>;
 
   listTrainingItems(filter?: ListTrainingItemsFilter): Promise<TrainingItem[]>;
   createTrainingItems(
