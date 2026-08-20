@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Search, PlaneTakeoff, Loader2 } from "lucide-react";
+import { Search, PlaneTakeoff, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,30 +23,106 @@ function InstructorSelect({
   value,
   onChange,
   instructorNames,
+  /** Only true for solo/individual-org students -- they have no admin to add an instructor for them. See app/api/student/invite-cfi. */
+  allowInviteCfi,
 }: {
   id: string;
   value: string;
   onChange: (value: string) => void;
   instructorNames: string[];
+  allowInviteCfi?: boolean;
 }) {
+  const router = useRouter();
+  const [inviting, setInviting] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  async function submitInvite() {
+    if (!name.trim() || !email.trim()) return;
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/student/invite-cfi", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNotice(data.error ?? "Invite failed. Please try again.");
+        return;
+      }
+      onChange(name.trim());
+      setInviting(false);
+      setName("");
+      setEmail("");
+      setNotice(data.emailSent ? `Invite sent to ${email}.` : `Added, but the invite email couldn't be sent -- share the login page with them directly.`);
+      router.refresh();
+    } catch {
+      setNotice("Invite failed -- check your connection and try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <select
-      id={id}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
-    >
-      <option value="">No instructor</option>
-      {instructorNames.map((name) => (
-        <option key={name} value={name}>
-          {name}
-        </option>
-      ))}
-    </select>
+    <div className="flex flex-col gap-2">
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
+      >
+        <option value="">No instructor</option>
+        {instructorNames.map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
+      </select>
+
+      {allowInviteCfi ? (
+        inviting ? (
+          <div className="flex flex-col gap-2 rounded-xl border border-dashed border-slate-300 p-3 dark:border-white/15">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Input placeholder="CFI's name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input type="email" placeholder="CFI's email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setInviting(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="button" size="sm" onClick={submitInvite} disabled={saving} className="flex-1">
+                {saving ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                Send invite
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setInviting(true)}
+            className="flex w-fit items-center gap-1.5 text-xs font-medium text-brand hover:underline"
+          >
+            <UserPlus className="size-3.5" />
+            Add your CFI
+          </button>
+        )
+      ) : null}
+      {notice ? <p className="text-xs text-slate-500 dark:text-slate-400">{notice}</p> : null}
+    </div>
   );
 }
 
-export function NewFlightClient({ instructorNames }: { instructorNames: string[] }) {
+export function NewFlightClient({
+  instructorNames,
+  allowInviteCfi,
+}: {
+  instructorNames: string[];
+  allowInviteCfi?: boolean;
+}) {
   const [mode, setMode] = useState<Mode>("search");
 
   return (
@@ -75,12 +151,16 @@ export function NewFlightClient({ instructorNames }: { instructorNames: string[]
         ))}
       </div>
 
-      {mode === "search" ? <SearchFlow instructorNames={instructorNames} /> : <ManualForm instructorNames={instructorNames} />}
+      {mode === "search" ? (
+        <SearchFlow instructorNames={instructorNames} allowInviteCfi={allowInviteCfi} />
+      ) : (
+        <ManualForm instructorNames={instructorNames} allowInviteCfi={allowInviteCfi} />
+      )}
     </div>
   );
 }
 
-function SearchFlow({ instructorNames }: { instructorNames: string[] }) {
+function SearchFlow({ instructorNames, allowInviteCfi }: { instructorNames: string[]; allowInviteCfi?: boolean }) {
   const router = useRouter();
   const [tail, setTail] = useState("N123AB");
   const [loading, setLoading] = useState(false);
@@ -110,6 +190,7 @@ function SearchFlow({ instructorNames }: { instructorNames: string[] }) {
       <ConfirmCandidateForm
         candidate={selecting}
         instructorNames={instructorNames}
+        allowInviteCfi={allowInviteCfi}
         onBack={() => setSelecting(null)}
         onCreated={(id) => router.push(`/flights/${id}`)}
       />
@@ -191,11 +272,13 @@ function SearchFlow({ instructorNames }: { instructorNames: string[] }) {
 function ConfirmCandidateForm({
   candidate,
   instructorNames,
+  allowInviteCfi,
   onBack,
   onCreated,
 }: {
   candidate: FlightCandidate;
   instructorNames: string[];
+  allowInviteCfi?: boolean;
   onBack: () => void;
   onCreated: (flightId: string) => void;
 }) {
@@ -247,7 +330,13 @@ function ConfirmCandidateForm({
         </div>
         <div>
           <Label htmlFor="instructor">Instructor (optional)</Label>
-          <InstructorSelect id="instructor" value={instructorName} onChange={setInstructorName} instructorNames={instructorNames} />
+          <InstructorSelect
+            id="instructor"
+            value={instructorName}
+            onChange={setInstructorName}
+            instructorNames={instructorNames}
+            allowInviteCfi={allowInviteCfi}
+          />
         </div>
         {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
         <div className="flex gap-2">
@@ -264,7 +353,7 @@ function ConfirmCandidateForm({
   );
 }
 
-function ManualForm({ instructorNames }: { instructorNames: string[] }) {
+function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: string[]; allowInviteCfi?: boolean }) {
   const router = useRouter();
   const [form, setForm] = useState({
     tailNumber: "N123AB",
@@ -341,6 +430,7 @@ function ManualForm({ instructorNames }: { instructorNames: string[] }) {
                   value={form.instructorName}
                   onChange={(v) => set("instructorName", v)}
                   instructorNames={instructorNames}
+                  allowInviteCfi={allowInviteCfi}
                 />
               </Field>
             </div>

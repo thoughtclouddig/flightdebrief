@@ -15,5 +15,10 @@ export default async function NewFlightPage() {
     .map((i) => i.name)
     .sort((a, b) => a.localeCompare(b));
 
-  return <NewFlightClient instructorNames={instructorNames} />;
+  return (
+    <NewFlightClient
+      instructorNames={instructorNames}
+      allowInviteCfi={viewer.role === "student" && viewer.organization.kind === "individual"}
+    />
+  );
 }
