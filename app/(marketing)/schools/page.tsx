@@ -173,6 +173,7 @@ export default function SchoolsPage() {
               $99
               <span className="ml-2 text-base tracking-normal font-medium text-[#68717D] sm:text-xl">/month/location</span>
             </p>
+            <p className="mt-1.5 text-sm font-semibold text-brand">or $990/year/location &mdash; save 17%</p>
             <p className="mt-2 text-base font-semibold text-brand">Your school&rsquo;s first 25 debriefs are free.</p>
             <p className="mt-4 text-lg text-[#68717D]">
               For independent flight schools and individual training locations.

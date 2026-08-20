@@ -65,7 +65,9 @@ export function Hero() {
               </Link>
             </div>
 
-            <p className="text-sm font-medium text-[#68717D]">No credit card &middot; Free to start &middot; Cancel anytime</p>
+            <p className="text-center text-sm font-medium text-[#68717D] sm:text-left">
+              No credit card &middot; Free to start &middot; Cancel anytime
+            </p>
           </div>
         </div>
 

@@ -34,6 +34,10 @@ export function DebriefRecorder({ flightId }: { flightId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ flightId, transcript, audioDurationSeconds: durationSeconds }),
       });
+      if (res.status === 402) {
+        router.push("/billing");
+        return;
+      }
       if (!res.ok) throw new Error("Analysis failed");
       router.push(`/flights/${flightId}/debrief/results`);
     } catch {

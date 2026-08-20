@@ -65,6 +65,7 @@ export const PRICING_TIERS: PricingTier[] = [
     audience: "For independent flight schools and training organizations.",
     price: "$99",
     priceSuffix: "/month/location",
+    priceNote: "or $990/year/location — save 17%",
     valueAnchor: "Your school's first 25 debriefs are free.",
     features: [
       "See every student's training progress",

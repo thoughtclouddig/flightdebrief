@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { analyzeDebrief } from "@/lib/ai";
 import { getRepository } from "@/lib/data";
+import { isBillingBlocked } from "@/lib/billing-gate";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { autoResolveActionItems } from "@/lib/action-items-autoresolve";
 import { buildTranscriptSegments, type CardBoundary } from "@/lib/debrief-cards/segments";
@@ -40,6 +41,14 @@ export async function POST(request: Request) {
   const flight = await repo.getFlight(body.flightId);
   if (!flight || !canAccessRecord(auth.viewer, { studentId: flight.userId, organizationId: flight.organizationId })) {
     return recordNotFound();
+  }
+
+  const organization = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
+  if (organization && (await isBillingBlocked(repo, organization))) {
+    return NextResponse.json(
+      { error: "billing_required", message: "You've used up your free debriefs. Subscribe to keep going." },
+      { status: 402 },
+    );
   }
 
   const previousActionItems = await getPreviousActionItems(flight.userId, flight.flightDate, flight.id);

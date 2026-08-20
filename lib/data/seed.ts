@@ -25,6 +25,11 @@ export const ORG_FALCON: Organization = {
   name: "Falcon Aviation",
   kind: "school",
   defaultGuidanceMode: "guided",
+  stripeCustomerId: null,
+  stripeSubscriptionId: null,
+  subscriptionStatus: null,
+  subscriptionPlan: null,
+  subscriptionQuantity: 1,
   createdAt: new Date().toISOString(),
 };
 
@@ -37,6 +42,11 @@ export const ORG_CFI_KEVIN: Organization = {
   name: "Kevin Ortiz's Flight Training",
   kind: "independent_cfi",
   defaultGuidanceMode: "guided",
+  stripeCustomerId: null,
+  stripeSubscriptionId: null,
+  subscriptionStatus: null,
+  subscriptionPlan: null,
+  subscriptionQuantity: 1,
   createdAt: new Date().toISOString(),
 };
 
@@ -45,6 +55,11 @@ export const ORG_INDIVIDUAL_ALEX: Organization = {
   name: "Alex Rivera's Flights",
   kind: "individual",
   defaultGuidanceMode: "freeform",
+  stripeCustomerId: null,
+  stripeSubscriptionId: null,
+  subscriptionStatus: null,
+  subscriptionPlan: null,
+  subscriptionQuantity: 1,
   createdAt: new Date().toISOString(),
 };
 
@@ -53,6 +68,11 @@ export const ORG_MESA: Organization = {
   name: "Mesa Flight Academy",
   kind: "school",
   defaultGuidanceMode: "guided",
+  stripeCustomerId: null,
+  stripeSubscriptionId: null,
+  subscriptionStatus: null,
+  subscriptionPlan: null,
+  subscriptionQuantity: 1,
   createdAt: new Date().toISOString(),
 };
 
@@ -61,6 +81,11 @@ export const ORG_PRESCOTT: Organization = {
   name: "Prescott Aviation",
   kind: "school",
   defaultGuidanceMode: "guided",
+  stripeCustomerId: null,
+  stripeSubscriptionId: null,
+  subscriptionStatus: null,
+  subscriptionPlan: null,
+  subscriptionQuantity: 1,
   createdAt: new Date().toISOString(),
 };
 

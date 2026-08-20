@@ -122,12 +122,21 @@ export async function setMembershipCertificateType(memberId: string, certificate
 export async function getOrganization(id: string): Promise<Organization | null> {
   const { rows } = await getDb().query("SELECT * FROM organizations WHERE id = $1", [id]);
   if (!rows[0]) return null;
+  return mapOrganizationRow(rows[0]);
+}
+
+function mapOrganizationRow(row: Record<string, unknown>): Organization {
   return {
-    id: rows[0].id,
-    name: rows[0].name,
-    kind: rows[0].kind,
-    defaultGuidanceMode: rows[0].default_guidance_mode,
-    createdAt: new Date(rows[0].created_at).toISOString(),
+    id: row.id as string,
+    name: row.name as string,
+    kind: row.kind as OrganizationKind,
+    defaultGuidanceMode: row.default_guidance_mode as Organization["defaultGuidanceMode"],
+    stripeCustomerId: (row.stripe_customer_id as string | null) ?? null,
+    stripeSubscriptionId: (row.stripe_subscription_id as string | null) ?? null,
+    subscriptionStatus: (row.subscription_status as string | null) ?? null,
+    subscriptionPlan: (row.subscription_plan as Organization["subscriptionPlan"]) ?? null,
+    subscriptionQuantity: row.subscription_quantity as number,
+    createdAt: new Date(row.created_at as string).toISOString(),
   };
 }
 
@@ -146,13 +155,7 @@ export async function createOrganization(input: { id?: string; name: string; kin
           input.name,
           input.kind,
         ]);
-  return {
-    id: rows[0].id,
-    name: rows[0].name,
-    kind: rows[0].kind,
-    defaultGuidanceMode: rows[0].default_guidance_mode,
-    createdAt: new Date(rows[0].created_at).toISOString(),
-  };
+  return mapOrganizationRow(rows[0]);
 }
 
 const DEFAULT_ORG_ID = "org-falcon";
