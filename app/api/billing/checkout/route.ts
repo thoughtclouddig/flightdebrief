@@ -65,6 +65,12 @@ export async function POST(request: Request) {
       client_reference_id: org.id,
       line_items: [{ price: getStripePriceId(plan, billingPeriod), quantity }],
       subscription_data: { metadata: { organizationId: org.id, plan } },
+      // Shows a promo/coupon code field on the Checkout page.
+      allow_promotion_codes: true,
+      // Skips card collection when a coupon zeroes out the total due today --
+      // without this, Stripe always asks for a card up front (it still might
+      // need one for a future non-zero renewal), even if nothing is owed now.
+      payment_method_collection: "if_required",
       success_url: `${baseUrl}/billing?checkout=success`,
       cancel_url: `${baseUrl}/billing?checkout=cancelled`,
     });
