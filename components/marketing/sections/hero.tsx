@@ -8,7 +8,7 @@ const BENEFITS = ["Capture every lesson", "Track real progress", "Improve faster
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-white pb-20 pt-24 sm:pb-28 sm:pt-28 lg:min-h-[680px] lg:pb-0">
+    <section className="relative overflow-hidden bg-white pt-24 sm:pt-28 lg:min-h-[680px] lg:pb-0">
       {/* Desktop: image as a full-height right-aligned panel, fading into the white background on its left edge. */}
       <div className="absolute inset-y-0 right-0 hidden w-[60%] lg:block">
         <Image
@@ -49,7 +49,7 @@ export function Hero() {
             ))}
           </ul>
 
-          <div className="mt-8 inline-flex flex-col items-stretch gap-3">
+          <div className="mt-8 flex flex-col items-stretch gap-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Link
                 href="/signup"
@@ -65,14 +65,7 @@ export function Hero() {
               </Link>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-              {["No credit card", "Free to start", "Cancel anytime"].map((item) => (
-                <span key={item} className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-[#101727]">
-                  <CheckCircle2 className="size-3.5 shrink-0 text-brand" />
-                  {item}
-                </span>
-              ))}
-            </div>
+            <p className="text-sm font-medium text-[#68717D]">No credit card &middot; Free to start &middot; Cancel anytime</p>
           </div>
         </div>
 

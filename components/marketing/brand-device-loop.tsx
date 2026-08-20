@@ -116,22 +116,28 @@ export function BrandDeviceLoop() {
 
       <div className="relative mx-auto max-w-4xl">
         <div className="font-display flex flex-wrap items-baseline justify-center gap-x-2 gap-y-3 text-[clamp(1.75rem,5.5vw,3.25rem)] font-extrabold uppercase leading-[1.25] tracking-wide text-white sm:gap-y-2 lg:flex-nowrap">
-          <span className="shrink-0 whitespace-nowrap">Fly. Debrief.&nbsp;</span>
-          <span
-            className="relative inline-block shrink-0 overflow-hidden align-baseline"
-            style={{
-              width: wordWidth ?? "auto",
-              transitionProperty: "width",
-              transitionDuration: `${WIDTH_TRANSITION_MS}ms`,
-              transitionTimingFunction: "ease-out",
-              overflowY: "visible",
-            }}
-          >
-            <span ref={wordRef} className={`inline-block whitespace-nowrap text-brand ${PHASE_CLASS[phase]}`}>
-              {WORDS[index]}.
+          <span className="shrink-0 whitespace-nowrap">Fly. Debrief.</span>
+          {/* The word and "Repeat." are grouped into one flex item on purpose -- with three
+              independent wrappable segments, a wide word (e.g. "Prepare.") could wrap onto its
+              own line between the other two, dropping this to three lines instead of two. Two
+              flex items can only ever wrap into at most two lines, regardless of word width. */}
+          <span className="inline-flex shrink-0 items-baseline gap-x-2 whitespace-nowrap">
+            <span
+              className="relative inline-block shrink-0 overflow-hidden align-baseline"
+              style={{
+                width: wordWidth ?? "auto",
+                transitionProperty: "width",
+                transitionDuration: `${WIDTH_TRANSITION_MS}ms`,
+                transitionTimingFunction: "ease-out",
+                overflowY: "visible",
+              }}
+            >
+              <span ref={wordRef} className={`inline-block whitespace-nowrap text-brand ${PHASE_CLASS[phase]}`}>
+                {WORDS[index]}.
+              </span>
             </span>
+            <span className="shrink-0 whitespace-nowrap">Repeat.</span>
           </span>
-          <span className="shrink-0 whitespace-nowrap">&nbsp;Repeat.</span>
         </div>
 
         <div className="relative mx-auto mt-0.5 h-6 max-w-4xl" aria-hidden="true">
