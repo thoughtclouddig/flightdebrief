@@ -93,7 +93,7 @@ export function DebriefRecorder({ flightId }: { flightId: string }) {
           <button
             onClick={handleFinish}
             disabled={phase === "analyzing" || transcription.status === "connecting"}
-            className="flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-60 dark:bg-white dark:text-slate-900"
+            className="flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
           >
             {phase === "analyzing" ? (
               <>
