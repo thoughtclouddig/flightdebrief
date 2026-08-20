@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { FlightCard } from "@/components/flight-card";
+import { FlightsList } from "@/components/flights-list";
 import { buttonVariants } from "@/components/ui/button";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
@@ -40,11 +40,7 @@ export default async function DashboardPage() {
           No flights yet. Add your first training flight to get started.
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {flights.map((flight) => (
-            <FlightCard key={flight.id} flight={flight} />
-          ))}
-        </div>
+        <FlightsList flights={flights} />
       )}
     </div>
   );

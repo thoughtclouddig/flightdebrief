@@ -2,13 +2,13 @@ import Link from "next/link";
 import { formatDurationShort } from "@/lib/utils";
 import type { FlightWithRelations } from "@/lib/types";
 
-const STATUS_LABEL: Record<FlightWithRelations["debriefStatus"], string> = {
+export const STATUS_LABEL: Record<FlightWithRelations["debriefStatus"], string> = {
   not_started: "Debrief flight",
   in_progress: "Continue debrief",
   complete: "View debrief",
 };
 
-const STATUS_TONE: Record<FlightWithRelations["debriefStatus"], "open" | "done"> = {
+export const STATUS_TONE: Record<FlightWithRelations["debriefStatus"], "open" | "done"> = {
   not_started: "open",
   in_progress: "open",
   complete: "done",
