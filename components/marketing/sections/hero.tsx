@@ -8,7 +8,7 @@ const BENEFITS = ["Capture every lesson", "Track real progress", "Improve faster
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-white pb-20 pt-24 sm:pb-28 sm:pt-28 lg:min-h-[680px] lg:pb-0">
+    <section className="relative overflow-hidden bg-white pt-24 sm:pt-28 lg:min-h-[680px] lg:pb-0">
       {/* Desktop: image as a full-height right-aligned panel, fading into the white background on its left edge. */}
       <div className="absolute inset-y-0 right-0 hidden w-[60%] lg:block">
         <Image
