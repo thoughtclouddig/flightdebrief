@@ -216,7 +216,10 @@ export async function StudentTrainingDetail({
               {openItems.map((item) => (
                 <li key={item.id} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
                   <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-amber-500" />
-                  {item.description}
+                  <span className="flex-1">{item.description}</span>
+                  <span className="shrink-0 text-xs text-slate-400">
+                    {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
                 </li>
               ))}
               {openItems.length === 0 ? <p className="text-sm text-slate-400">Nothing open.</p> : null}

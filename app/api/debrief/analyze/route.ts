@@ -3,6 +3,7 @@ import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { analyzeDebrief } from "@/lib/ai";
 import { getRepository } from "@/lib/data";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
+import { autoResolveActionItems } from "@/lib/action-items-autoresolve";
 import { buildTranscriptSegments, type CardBoundary } from "@/lib/debrief-cards/segments";
 import { computeAssessmentDifferences } from "@/lib/debrief-cards/differences";
 import { buildDebriefNarration } from "@/lib/debrief-narration";
@@ -86,6 +87,12 @@ export async function POST(request: Request) {
   }
 
   await repo.setFlightDebriefStatus(flight.id, "complete");
+
+  // Before adding this debrief's own new items, check whether its wentWell
+  // content resolves any still-open item from an earlier flight -- run here
+  // (not after createTrainingItems below) specifically so it only considers
+  // genuinely prior items, never this same debrief's freshly-created ones.
+  await autoResolveActionItems(repo, flight.userId, structured.wentWell);
 
   await repo.createTrainingItems([
     ...structured.needsWork.map((description) => ({
