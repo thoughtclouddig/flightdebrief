@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
-import { skillLabel } from "@/lib/topics";
-import type { TrainingSkill } from "@/lib/types";
 
 interface SetTasksBody {
-  taskCodes: TrainingSkill[];
+  /** taskCode is a catalog TrainingSkill or a "CUSTOM:<id>" code from the task picker's Add custom tile -- label is always client-supplied (skillLabel() only knows the fixed catalog, not a custom label). */
+  tasks: { taskCode: string; label: string }[];
 }
 
 /** CFI's "Flight Complete" task picker -- which maneuvers were flown, driving both self-assessment screens. Replaces the flight's full task list. */
@@ -21,13 +20,16 @@ export async function POST(request: Request, { params }: RouteContext<"/api/flig
   }
 
   const body = (await request.json()) as SetTasksBody;
-  if (!Array.isArray(body.taskCodes) || body.taskCodes.length === 0) {
+  if (!Array.isArray(body.tasks) || body.tasks.length === 0) {
     return NextResponse.json({ error: "At least one task is required" }, { status: 400 });
+  }
+  if (body.tasks.some((t) => !t.taskCode?.trim() || !t.label?.trim())) {
+    return NextResponse.json({ error: "Each task needs a code and a label" }, { status: 400 });
   }
 
   const tasks = await repo.setFlightTasks(
     id,
-    body.taskCodes.map((taskCode) => ({ taskCode, label: skillLabel(taskCode), source: "instructor_selected" as const })),
+    body.tasks.map((t) => ({ taskCode: t.taskCode, label: t.label, source: "instructor_selected" as const })),
   );
 
   return NextResponse.json({ tasks });

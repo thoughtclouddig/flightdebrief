@@ -226,13 +226,13 @@ export function allTrainingSkills(): { skill: TrainingSkill; label: string }[] {
   return TOPIC_LIBRARY.map((t) => ({ skill: t.skill, label: t.topic }));
 }
 
-/** Human-readable label for a normalized skill code, e.g. "STABILIZED_APPROACH" -> "Landings". */
-export function skillLabel(skill: TrainingSkill): string {
+/** Human-readable label for a normalized skill code, e.g. "STABILIZED_APPROACH" -> "Landings". Falls back to the code itself for a code outside the fixed catalog (e.g. a CFI-authored custom FlightTask). */
+export function skillLabel(skill: TrainingSkill | (string & {})): string {
   return TOPIC_LIBRARY.find((t) => t.skill === skill)?.topic ?? skill;
 }
 
-/** The TrainingCategory a given skill rolls up to -- backs FlightScore's per-category grouping (see lib/flight-score.ts). */
-export function categoryForSkill(skill: TrainingSkill): TrainingCategory {
+/** The TrainingCategory a given skill rolls up to -- backs FlightScore's per-category grouping (see lib/flight-score.ts). Falls back to PROCEDURES for a code outside the fixed catalog. */
+export function categoryForSkill(skill: TrainingSkill | (string & {})): TrainingCategory {
   return TOPIC_LIBRARY.find((t) => t.skill === skill)?.category ?? "PROCEDURES";
 }
 

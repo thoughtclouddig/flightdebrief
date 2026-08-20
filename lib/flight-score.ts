@@ -73,7 +73,7 @@ function trendFor(windowScores: number[]): SkillTrend {
 }
 
 export interface SkillScore {
-  skill: TrainingSkill;
+  skill: TrainingSkill | (string & {});
   label: string;
   category: TrainingCategory;
   categoryLabel: string;
@@ -89,7 +89,7 @@ export interface SkillScore {
   mostRecentFlightDate: string;
 }
 
-function scoreOneSkill(skill: TrainingSkill, observations: SkillObservation[]): SkillScore {
+function scoreOneSkill(skill: TrainingSkill | (string & {}), observations: SkillObservation[]): SkillScore {
   const sorted = [...observations].sort((a, b) => a.flightDate.localeCompare(b.flightDate));
   const window = sorted.slice(-OBSERVATIONS_PER_SKILL);
   const windowScores = window.map((o) => LEVEL_SCORE[o.performanceLevel]);
@@ -139,7 +139,7 @@ const BUILDING_RESULT_BASE: { gauge: null; skills: SkillScore[] } = { gauge: nul
 export function computeFlightScore(observations: SkillObservation[]): FlightScoreResult {
   const totalObservations = observations.length;
   const flightsObserved = new Set(observations.map((o) => o.flightId)).size;
-  const bySkill = new Map<TrainingSkill, SkillObservation[]>();
+  const bySkill = new Map<TrainingSkill | (string & {}), SkillObservation[]>();
   for (const obs of observations) {
     if (!bySkill.has(obs.taskCode)) bySkill.set(obs.taskCode, []);
     bySkill.get(obs.taskCode)!.push(obs);

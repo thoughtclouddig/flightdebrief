@@ -29,7 +29,7 @@ export default async function FlightTasksPage(props: PageProps<"/flights/[id]/de
       <TaskPickerForm
         flightId={id}
         allSkills={allTrainingSkills()}
-        initialSelected={existing.map((t) => t.taskCode)}
+        initialTasks={existing.map((t) => ({ taskCode: t.taskCode, label: t.label }))}
         redirectTo={`/flights/${id}`}
       />
     </div>
