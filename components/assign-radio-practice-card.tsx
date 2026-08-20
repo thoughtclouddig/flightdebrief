@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CheckCircle2, Loader2, Radio, XCircle } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle2, Loader2, Radio, Sparkles, X, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RADIO_PRACTICE_SCENARIOS, RADIO_SCENARIO_PHASE_LABEL, type RadioScenarioPhase } from "@/lib/radio-practice-scenarios";
@@ -9,53 +9,54 @@ import type { RadioPracticeAssignment } from "@/lib/types";
 
 const PHASES = Object.keys(RADIO_SCENARIO_PHASE_LABEL) as RadioScenarioPhase[];
 
-/** CFI/admin control for assigning a radio-practice scenario to one student, and seeing what's already assigned/completed. */
-export function AssignRadioPracticeCard({ studentId }: { studentId: string }) {
-  const [assignments, setAssignments] = useState<RadioPracticeAssignment[] | null>(null);
-  const [scenarioId, setScenarioId] = useState(RADIO_PRACTICE_SCENARIOS[0]!.id);
-  const [assigning, setAssigning] = useState(false);
+/**
+ * CFI/admin control for assigning a radio-practice scenario to one student,
+ * seeing what's already assigned/completed, and -- when the student's
+ * training signals flag a radio-communications weakness (RADIO_COMMUNICATIONS
+ * or TOWER_READBACKS at "Needs Coaching", computed server-side in
+ * components/student-training-detail.tsx) -- a one-click suggestion. Never
+ * auto-assigns; the CFI always confirms, same "suggest, don't act on their
+ * behalf" pattern training signals themselves already use.
+ */
+export function AssignRadioPracticeCard({
+  studentId,
+  initialAssignments,
+  suggestedScenarioId,
+}: {
+  studentId: string;
+  initialAssignments: RadioPracticeAssignment[];
+  suggestedScenarioId: string | null;
+}) {
+  const [assignments, setAssignments] = useState<RadioPracticeAssignment[]>(initialAssignments);
+  const [scenarioId, setScenarioId] = useState(suggestedScenarioId ?? RADIO_PRACTICE_SCENARIOS[0]!.id);
+  const [assigning, setAssigning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false);
 
-  async function load() {
-    const res = await fetch(`/api/radio-practice?studentId=${studentId}`);
-    if (res.ok) {
-      const data = await res.json();
-      setAssignments(data.assignments);
-    }
-  }
+  const suggestedScenario = suggestedScenarioId ? RADIO_PRACTICE_SCENARIOS.find((s) => s.id === suggestedScenarioId) : null;
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const res = await fetch(`/api/radio-practice?studentId=${studentId}`);
-      if (res.ok && !cancelled) {
-        const data = await res.json();
-        setAssignments(data.assignments);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [studentId]);
-
-  async function assign() {
-    setAssigning(true);
+  async function assignScenario(id: string) {
+    setAssigning(id);
     setError(null);
     try {
       const res = await fetch("/api/radio-practice/assign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenarioId, studentId }),
+        body: JSON.stringify({ scenarioId: id, studentId }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error || "Failed to assign.");
-      await load();
+      setAssignments((prev) => [data.assignment, ...prev]);
+      if (id === suggestedScenarioId) setSuggestionDismissed(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to assign.");
     } finally {
-      setAssigning(false);
+      setAssigning(null);
     }
   }
+
+  const alreadyAssigned = new Set(assignments.map((a) => a.scenarioId));
+  const showSuggestion = suggestedScenario && !suggestionDismissed && !alreadyAssigned.has(suggestedScenario.id);
 
   return (
     <Card>
@@ -66,6 +67,33 @@ export function AssignRadioPracticeCard({ studentId }: { studentId: string }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {showSuggestion ? (
+          <div className="flex items-start gap-2 rounded-xl border border-brand/30 bg-brand/5 px-3 py-2.5 dark:bg-brand/10">
+            <Sparkles className="mt-0.5 size-4 shrink-0 text-brand" />
+            <div className="flex-1">
+              <p className="text-sm text-foreground">
+                Flagged for radio comms -- suggest <span className="font-medium">{suggestedScenario.title}</span>?
+              </p>
+              <div className="mt-2 flex gap-2">
+                <Button size="sm" onClick={() => assignScenario(suggestedScenario.id)} disabled={assigning === suggestedScenario.id}>
+                  {assigning === suggestedScenario.id ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                  Assign this
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSuggestionDismissed(true)}>
+                  Not now
+                </Button>
+              </div>
+            </div>
+            <button
+              onClick={() => setSuggestionDismissed(true)}
+              aria-label="Dismiss suggestion"
+              className="shrink-0 rounded-full p-1 text-foreground-faint hover:bg-surface-sunken hover:text-foreground-soft"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        ) : null}
+
         <div className="flex flex-col gap-2 sm:flex-row">
           <select
             value={scenarioId}
@@ -82,16 +110,14 @@ export function AssignRadioPracticeCard({ studentId }: { studentId: string }) {
               </optgroup>
             ))}
           </select>
-          <Button onClick={assign} disabled={assigning}>
-            {assigning ? <Loader2 className="size-4 animate-spin" /> : null}
+          <Button onClick={() => assignScenario(scenarioId)} disabled={assigning === scenarioId}>
+            {assigning === scenarioId ? <Loader2 className="size-4 animate-spin" /> : null}
             Assign
           </Button>
         </div>
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
-        {assignments === null ? (
-          <p className="text-sm text-foreground-faint">Loading…</p>
-        ) : assignments.length === 0 ? (
+        {assignments.length === 0 ? (
           <p className="text-sm text-foreground-faint">Nothing assigned yet.</p>
         ) : (
           <ul className="flex flex-col gap-1.5">

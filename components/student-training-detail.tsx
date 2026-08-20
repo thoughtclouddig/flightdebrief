@@ -17,6 +17,7 @@ import { SkillProgressList } from "@/components/skill-progress-list";
 import { getRepository } from "@/lib/data";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeSkillProgression } from "@/lib/skill-progress";
+import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { formatDurationShort } from "@/lib/utils";
 import type { User } from "@/lib/types";
 import type { Viewer } from "@/lib/viewer";
@@ -41,11 +42,12 @@ export async function StudentTrainingDetail({
   handoffHref?: string;
 }) {
   const repo = getRepository();
-  const [flights, trainingItems, brief, signals] = await Promise.all([
+  const [flights, trainingItems, brief, signals, radioPracticeAssignments] = await Promise.all([
     repo.listFlights({ studentId: student.id }),
     repo.listTrainingItems(),
     computeNextLessonBrief(repo, student.id),
     repo.listTrainingSignals({ studentId: student.id }),
+    repo.listRadioPracticeAssignments(student.id),
   ]);
 
   const flightIds = new Set(flights.map((f) => f.id));
@@ -62,6 +64,20 @@ export async function StudentTrainingDetail({
 
   const result = brief.lastDebrief?.structuredResult;
   const skillProgressions = computeSkillProgression(signals.filter((s) => !s.dismissed));
+
+  // Radio-practice auto-suggest: only for skills unambiguously about radio
+  // communications (not EMERGENCY_PROCEDURES, which also covers non-radio
+  // emergency handling) -- surfaced as a one-click suggestion for the CFI to
+  // confirm, never silently auto-assigned, same "suggest, don't act" pattern
+  // training signals themselves already use.
+  const RADIO_SUGGESTION_SKILLS = new Set(["RADIO_COMMUNICATIONS", "TOWER_READBACKS"]);
+  const assignedScenarioIds = new Set(radioPracticeAssignments.map((a) => a.scenarioId));
+  const suggestedRadioScenarioId =
+    skillProgressions
+      .filter((p) => RADIO_SUGGESTION_SKILLS.has(p.skill) && p.status === "Needs Coaching")
+      .map((p) => RADIO_PRACTICE_SCENARIOS.find((s) => s.skill === p.skill && !assignedScenarioIds.has(s.id)))
+      .find((s): s is (typeof RADIO_PRACTICE_SCENARIOS)[number] => s !== undefined)?.id ?? null;
+
   const memberships = await repo.listMembershipsForUser(student.id);
   const certificateType =
     memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
@@ -179,7 +195,11 @@ export async function StudentTrainingDetail({
       </Card>
 
       {viewer.role === "instructor" || viewer.role === "admin" ? (
-        <AssignRadioPracticeCard studentId={student.id} />
+        <AssignRadioPracticeCard
+          studentId={student.id}
+          initialAssignments={radioPracticeAssignments}
+          suggestedScenarioId={suggestedRadioScenarioId}
+        />
       ) : null}
 
       <Card>
