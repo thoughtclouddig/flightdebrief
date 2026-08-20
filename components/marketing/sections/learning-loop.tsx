@@ -1,5 +1,24 @@
 import Image from "next/image";
+import { MessageCircle, Headphones, FileText } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
+
+const FORMATS = [
+  {
+    icon: MessageCircle,
+    label: "Live conversation",
+    copy: "Talk it through with your CFI right after you land, while it's fresh.",
+  },
+  {
+    icon: Headphones,
+    label: "Audio narration",
+    copy: "Replay a spoken summary of the debrief anytime -- on the drive home, before your next lesson.",
+  },
+  {
+    icon: FileText,
+    label: "Written summary",
+    copy: "A text summary with action items you can reread and check off before you fly again.",
+  },
+] as const;
 
 const FRAMES = [
   {
@@ -70,14 +89,25 @@ export function LearningLoop() {
           ))}
         </div>
 
-        <Reveal delay={400} className="mx-auto mt-16 max-w-3xl border-t border-[#E5E8EC] pt-10 text-center">
-          <p className="text-pretty text-sm text-[#68717D]">
-            <span className="font-semibold text-[#101727]">Why three formats, not one:</span> memory research on
-            multimedia learning has repeatedly found that pairing spoken and written review measurably improves
-            retention over either alone. AfterFlight debriefs give you all three -- the live conversation with your
-            CFI, an audio narration you can replay, and a written summary with action items you can reread before
-            your next flight.
+        <Reveal delay={400} className="mx-auto mt-16 max-w-4xl border-t border-[#E5E8EC] pt-10 text-center">
+          <h3 className="font-display text-balance text-xl font-bold text-[#101727] sm:text-2xl">
+            Why three formats, not one
+          </h3>
+          <p className="text-balance mt-2 text-sm text-[#68717D]">
+            Memory research on multimedia learning has repeatedly found that pairing spoken and written review
+            measurably improves retention over either alone.
           </p>
+          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {FORMATS.map(({ icon: Icon, label, copy }) => (
+              <div key={label} className="flex flex-col items-center gap-2 text-center">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/10">
+                  <Icon className="size-5 text-brand" strokeWidth={2} />
+                </span>
+                <p className="font-display text-sm font-bold text-[#101727]">{label}</p>
+                <p className="text-pretty text-sm text-[#68717D]">{copy}</p>
+              </div>
+            ))}
+          </div>
         </Reveal>
       </div>
     </section>
