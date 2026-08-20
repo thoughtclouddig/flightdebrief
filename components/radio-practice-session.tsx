@@ -127,7 +127,11 @@ export function RadioPracticeSession({
             </div>
           ) : phase === "call-played" ? (
             needsReadback ? (
-              <Button onClick={startRecording} size="lg" className="gap-2">
+              <Button
+                onClick={startRecording}
+                size="lg"
+                className="gap-2 bg-good text-white hover:bg-good/90 focus-visible:ring-good"
+              >
                 <Mic className="size-4" /> Record Your Readback
               </Button>
             ) : (
