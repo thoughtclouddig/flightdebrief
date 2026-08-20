@@ -69,6 +69,16 @@ export function LearningLoop() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={400} className="mx-auto mt-16 max-w-3xl border-t border-[#E5E8EC] pt-10 text-center">
+          <p className="text-pretty text-sm text-[#68717D]">
+            <span className="font-semibold text-[#101727]">Why three formats, not one:</span> memory research on
+            multimedia learning has repeatedly found that pairing spoken and written review measurably improves
+            retention over either alone. AfterFlight debriefs give you all three -- the live conversation with your
+            CFI, an audio narration you can replay, and a written summary with action items you can reread before
+            your next flight.
+          </p>
+        </Reveal>
       </div>
     </section>
   );
