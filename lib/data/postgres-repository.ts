@@ -372,6 +372,11 @@ export class PostgresRepository implements Repository {
     return mapRadioPracticeAssignment(rows[0]);
   }
 
+  async deleteRadioPracticeAssignment(id: string): Promise<void> {
+    const db = await this.db();
+    await db.query("DELETE FROM radio_practice_assignments WHERE id = $1", [id]);
+  }
+
   // --- Structured, CFI-led debrief: flight tasks ---
 
   async listFlightTasks(flightId: string): Promise<FlightTask[]> {

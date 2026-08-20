@@ -142,6 +142,7 @@ export interface Repository {
     id: string,
     result: { transcript: string; correct: boolean; matchedElements: { description: string; matched: boolean }[] },
   ): Promise<RadioPracticeAssignment>;
+  deleteRadioPracticeAssignment(id: string): Promise<void>;
 
   // --- Structured, CFI-led debrief: independent assessments ---
   getOrCreateAssessment(flightId: string, role: AssessmentRole, assessorUserId: string): Promise<DebriefAssessment>;

@@ -122,7 +122,11 @@ export function AssignRadioPracticeCard({
         ) : (
           <ul className="flex flex-col gap-2.5">
             {assignments.map((a) => (
-              <AssignmentRow key={a.id} assignment={a} />
+              <AssignmentRow
+                key={a.id}
+                assignment={a}
+                onDeleted={() => setAssignments((prev) => prev.filter((x) => x.id !== a.id))}
+              />
             ))}
           </ul>
         )}
@@ -131,7 +135,8 @@ export function AssignRadioPracticeCard({
   );
 }
 
-function AssignmentRow({ assignment: a }: { assignment: RadioPracticeAssignment }) {
+function AssignmentRow({ assignment: a, onDeleted }: { assignment: RadioPracticeAssignment; onDeleted: () => void }) {
+  const [deleting, setDeleting] = useState(false);
   const scenario = RADIO_PRACTICE_SCENARIOS.find((s) => s.id === a.scenarioId);
   const missed = a.matchedElements?.filter((el) => !el.matched) ?? [];
 
@@ -143,6 +148,16 @@ function AssignmentRow({ assignment: a }: { assignment: RadioPracticeAssignment 
           ? `Passed on attempt ${a.attempts}`
           : "Passed"
         : `Missed elements (attempt ${a.attempts})`;
+
+  async function remove() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/radio-practice/${a.id}`, { method: "DELETE" });
+      if (res.ok) onDeleted();
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <li className="flex flex-col gap-1 text-sm text-foreground-soft">
@@ -158,6 +173,14 @@ function AssignmentRow({ assignment: a }: { assignment: RadioPracticeAssignment 
         )}
         {scenario?.title ?? a.scenarioId}
         <span className="ml-auto text-xs text-foreground-faint">{statusLabel}</span>
+        <button
+          onClick={remove}
+          disabled={deleting}
+          aria-label={`Delete ${scenario?.title ?? "this"} practice item`}
+          className="shrink-0 rounded-full p-1 text-foreground-faint hover:bg-surface-sunken hover:text-danger disabled:opacity-50"
+        >
+          {deleting ? <Loader2 className="size-3.5 animate-spin" /> : <X className="size-3.5" />}
+        </button>
       </div>
       {missed.length > 0 ? (
         <ul className="ml-6 flex flex-col gap-0.5">
