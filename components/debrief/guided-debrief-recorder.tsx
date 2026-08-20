@@ -145,6 +145,10 @@ export function GuidedDebriefRecorder({
           cardBoundaries: boundaries,
         }),
       });
+      if (res.status === 402) {
+        router.push("/billing");
+        return;
+      }
       if (!res.ok) throw new Error();
       router.push(`/flights/${flightId}/debrief/results`);
     } catch {

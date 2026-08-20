@@ -181,6 +181,18 @@ export interface Repository {
   setUserAuthId(userId: string, authUserId: string): Promise<void>;
   getOrganization(id: string): Promise<Organization | null>;
   createOrganization(input: { id?: string; name: string; kind: OrganizationKind }): Promise<Organization>;
+  getOrganizationByStripeCustomerId(stripeCustomerId: string): Promise<Organization | null>;
+  /** Stripe is the source of truth for all of these -- only the webhook handler should call this. */
+  updateOrganizationBilling(
+    id: string,
+    billing: {
+      stripeCustomerId?: string | null;
+      stripeSubscriptionId?: string | null;
+      subscriptionStatus?: string | null;
+      subscriptionPlan?: Organization["subscriptionPlan"];
+      subscriptionQuantity?: number;
+    },
+  ): Promise<Organization>;
   listOrganizations(): Promise<Organization[]>;
   listOrganizationsForUser(userId: string): Promise<Organization[]>;
   listMembers(organizationId: string, role?: OrgRole): Promise<OrganizationMember[]>;

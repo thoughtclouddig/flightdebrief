@@ -30,12 +30,22 @@ export interface Aircraft {
 
 export type OrganizationKind = "individual" | "independent_cfi" | "school";
 
+/** Distinct from the unrelated Subscription/SubscriptionPlan types below (a pre-existing stub for a future CFI revenue-share feature, unconnected to real billing) -- this one is the actual Stripe-backed plan on an organization. */
+export type BillingPlan = "pilot" | "school_pro";
+
 export interface Organization {
   id: string;
   name: string;
   kind: OrganizationKind;
   /** One default guidance mode per org for now -- see DebriefGuidanceMode below. */
   defaultGuidanceMode: DebriefGuidanceMode;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+  /** Mirrors Stripe's own subscription status strings verbatim (active/past_due/canceled/etc.) -- null before a first checkout. Stripe is the source of truth; only the webhook handler writes this. */
+  subscriptionStatus: string | null;
+  subscriptionPlan: BillingPlan | null;
+  /** Seat/location count for Flight School Pro's adjustable-quantity price; always 1 for Pilot. */
+  subscriptionQuantity: number;
   createdAt: string;
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, LogOut } from "lucide-react";
+import { ChevronDown, CreditCard, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { homeHrefForRole } from "@/components/nav";
 import type { MembershipOption, Viewer } from "@/lib/viewer";
@@ -109,6 +109,17 @@ export function UserMenu({
                   );
                 })}
               </div>
+            ) : null}
+
+            {viewer.organization.kind !== "independent_cfi" &&
+            (viewer.organization.kind !== "school" || viewer.role === "admin") ? (
+              <a
+                href="/billing"
+                className="flex w-full items-center gap-2 border-t border-hairline px-3 py-2 text-left text-sm text-foreground-soft hover:bg-surface-sunken"
+              >
+                <CreditCard className="size-3.5" />
+                Billing
+              </a>
             ) : null}
 
             <button

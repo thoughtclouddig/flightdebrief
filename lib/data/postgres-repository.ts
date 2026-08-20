@@ -640,6 +640,44 @@ export class PostgresRepository implements Repository {
     return mapOrganization(rows[0]);
   }
 
+  async getOrganizationByStripeCustomerId(stripeCustomerId: string): Promise<Organization | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM organizations WHERE stripe_customer_id = $1", [stripeCustomerId]);
+    return rows[0] ? mapOrganization(rows[0]) : null;
+  }
+
+  async updateOrganizationBilling(
+    id: string,
+    billing: {
+      stripeCustomerId?: string | null;
+      stripeSubscriptionId?: string | null;
+      subscriptionStatus?: string | null;
+      subscriptionPlan?: Organization["subscriptionPlan"];
+      subscriptionQuantity?: number;
+    },
+  ): Promise<Organization> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `UPDATE organizations SET
+         stripe_customer_id = COALESCE($2, stripe_customer_id),
+         stripe_subscription_id = COALESCE($3, stripe_subscription_id),
+         subscription_status = COALESCE($4, subscription_status),
+         subscription_plan = COALESCE($5, subscription_plan),
+         subscription_quantity = COALESCE($6, subscription_quantity)
+       WHERE id = $1 RETURNING *`,
+      [
+        id,
+        billing.stripeCustomerId ?? null,
+        billing.stripeSubscriptionId ?? null,
+        billing.subscriptionStatus ?? null,
+        billing.subscriptionPlan ?? null,
+        billing.subscriptionQuantity ?? null,
+      ],
+    );
+    if (!rows[0]) throw new Error(`Organization ${id} not found`);
+    return mapOrganization(rows[0]);
+  }
+
   async listOrganizations(): Promise<Organization[]> {
     const db = await this.db();
     const { rows } = await db.query("SELECT * FROM organizations ORDER BY name");
@@ -1064,6 +1102,11 @@ function mapOrganization(row: Row): Organization {
     name: row.name as string,
     kind: row.kind as Organization["kind"],
     defaultGuidanceMode: row.default_guidance_mode as Organization["defaultGuidanceMode"],
+    stripeCustomerId: (row.stripe_customer_id as string | null) ?? null,
+    stripeSubscriptionId: (row.stripe_subscription_id as string | null) ?? null,
+    subscriptionStatus: (row.subscription_status as string | null) ?? null,
+    subscriptionPlan: (row.subscription_plan as Organization["subscriptionPlan"]) ?? null,
+    subscriptionQuantity: row.subscription_quantity as number,
     createdAt: iso(row.created_at),
   };
 }

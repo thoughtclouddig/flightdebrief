@@ -499,6 +499,22 @@ INSERT INTO card_definitions (id, organization_id, code, category, title, primar
     'What should we focus on next flight?', '{}', 1)
 ON CONFLICT (id) DO NOTHING;
 
+-- Stripe billing state (V1: Pilot and Flight School Pro only -- Enterprise is
+-- handled entirely outside Stripe Checkout, via manually-created invoices).
+-- subscription_status mirrors Stripe's own subscription status strings
+-- verbatim (active/past_due/canceled/unpaid/etc.) rather than inventing a
+-- parallel vocabulary -- one less place for a mapping bug to hide.
+-- subscription_quantity is the seat/location count for Flight School Pro's
+-- adjustable-quantity price; always 1 for Pilot. Populated by the Stripe
+-- webhook handler (app/api/webhooks/stripe/route.ts), never set directly by
+-- app code -- Stripe is the source of truth for all of these.
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_customer_id text;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_subscription_id text;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_status text;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_plan text CHECK (subscription_plan IN ('pilot','school_pro'));
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_quantity integer NOT NULL DEFAULT 1;
+CREATE UNIQUE INDEX IF NOT EXISTS organizations_stripe_customer_idx ON organizations (stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;
+
 -- The default organization every signup joins (see lib/auth/store.ts). This is
 -- real identity data, not demo content; demo users/flights are seeded
 -- separately and only when SEED_DEMO_DATA is set (lib/data/postgres-repository.ts).
