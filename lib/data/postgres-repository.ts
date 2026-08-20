@@ -1145,12 +1145,36 @@ function mapDebrief(row: Row): Debrief {
     flightId: row.flight_id as string,
     transcript: row.transcript as string,
     audioDurationSeconds: row.audio_duration_seconds as number,
-    structuredResult: row.structured_result as Debrief["structuredResult"],
+    structuredResult: normalizeStructuredResult(row.structured_result as Partial<Debrief["structuredResult"]> | null),
     analyzedWith: row.analyzed_with as Debrief["analyzedWith"],
     guidanceMode: (row.guidance_mode as Debrief["guidanceMode"]) ?? "freeform",
     recordingStartedAt: row.recording_started_at ? iso(row.recording_started_at) : null,
     recordingEndedAt: row.recording_ended_at ? iso(row.recording_ended_at) : null,
     createdAt: iso(row.created_at),
+  };
+}
+
+/**
+ * Debrief rows created before a given StructuredDebrief field existed are
+ * missing that key entirely in the stored JSON, not just empty -- every page
+ * that reads a debrief assumes each array field is always present (never
+ * undefined), so this backfills defaults for whatever an older row lacks
+ * instead of crashing pages that .map() over them.
+ */
+function normalizeStructuredResult(result: Partial<Debrief["structuredResult"]> | null): Debrief["structuredResult"] {
+  const r = result ?? {};
+  return {
+    flightSummary: r.flightSummary ?? "",
+    whatWeDid: r.whatWeDid ?? [],
+    wentWell: r.wentWell ?? [],
+    needsWork: r.needsWork ?? [],
+    instructorGuidance: r.instructorGuidance ?? [],
+    instructorAssistance: r.instructorAssistance ?? [],
+    riskManagementNotes: r.riskManagementNotes ?? [],
+    assessmentDifferences: r.assessmentDifferences ?? [],
+    actionItems: r.actionItems ?? [],
+    nextLessonFocus: r.nextLessonFocus ?? [],
+    studyReferences: r.studyReferences ?? [],
   };
 }
 
