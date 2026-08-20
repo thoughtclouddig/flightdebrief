@@ -20,6 +20,19 @@ CREATE TABLE IF NOT EXISTS organizations (
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS default_guidance_mode text NOT NULL DEFAULT 'guided'
   CHECK (default_guidance_mode IN ('guided','light','freeform'));
 
+-- Reconciliation (idempotent): a solo pilot has no CFI to provide an
+-- independent assessment, so "guided" mode's two-rater comparison can never
+-- complete -- every 'individual' org must be 'freeform'. This has been true
+-- since lib/auth/store.ts's resolveSignupOnLogin/createOrganization started
+-- enforcing it for NEW orgs, but ON CONFLICT DO NOTHING in this file's own
+-- seed inserts below means any 'individual' org row created before that
+-- logic existed is stuck on the column's old 'guided' default forever unless
+-- something actively re-checks it -- this UPDATE is that something, re-run
+-- on every schema apply so the fix doesn't depend on someone noticing and
+-- hand-patching it via psql again.
+UPDATE organizations SET default_guidance_mode = 'freeform'
+WHERE kind = 'individual' AND default_guidance_mode <> 'freeform';
+
 CREATE TABLE IF NOT EXISTS users (
   id text PRIMARY KEY,
   name text NOT NULL,
