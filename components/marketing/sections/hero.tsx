@@ -65,14 +65,7 @@ export function Hero() {
               </Link>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-              {["No credit card", "Free to start", "Cancel anytime"].map((item) => (
-                <span key={item} className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-[#101727]">
-                  <CheckCircle2 className="size-3.5 shrink-0 text-brand" />
-                  {item}
-                </span>
-              ))}
-            </div>
+            <p className="text-xs text-[#68717D]">No credit card &middot; Free to start &middot; Cancel anytime</p>
           </div>
         </div>
 
