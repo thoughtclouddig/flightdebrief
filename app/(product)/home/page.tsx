@@ -211,9 +211,14 @@ export default async function StudentHomePage() {
                 href={`/flights/${flight.id}/debrief/results`}
                 className="flex items-center justify-between rounded-lg px-2 py-1.5 -mx-2 hover:bg-surface-sunken"
               >
-                <span className="text-sm text-foreground-soft">
-                  {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                </span>
+                <div className="flex items-baseline gap-2.5">
+                  <span className="text-sm text-foreground-soft">
+                    {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                  <span className="text-sm text-foreground-faint">
+                    {flight.departureAirport} → {flight.arrivalAirport}
+                  </span>
+                </div>
                 <span className="text-sm text-foreground-faint">{flight.aircraft.tailNumber}</span>
               </Link>
             ))}
@@ -225,29 +230,39 @@ export default async function StudentHomePage() {
       ) : null}
 
       {pendingRadioPractice.length > 0 ? (
-        <Link href={`/practice/${pendingRadioPractice[0]!.id}`} className="block">
-          <Card className="border-brand/30 transition-colors hover:bg-surface-sunken">
-            <CardContent className="flex items-center gap-3 py-5">
-              <Radio className="size-5 shrink-0 text-brand" />
+        <Card className="border-brand/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Radio className="size-4 text-brand" />
+              Radio Practice
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Link
+              href={`/practice/${pendingRadioPractice[0]!.id}`}
+              className="-mx-2 flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-surface-sunken"
+            >
               <div>
                 <p className="text-sm font-medium text-foreground">
                   {RADIO_PRACTICE_SCENARIOS.find((s) => s.id === pendingRadioPractice[0]!.scenarioId)?.title ?? "Assigned practice"}
                 </p>
                 <p className="text-xs text-foreground-soft">
-                  {pendingRadioPractice.length > 1 ? `${pendingRadioPractice.length} assigned -- start this one →` : "Assigned practice -- tap to start →"}
+                  {pendingRadioPractice.length > 1 ? `${pendingRadioPractice.length} assigned -- tap to start this one →` : "Tap to practice this call →"}
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        </Link>
+            </Link>
+          </CardContent>
+        </Card>
       ) : (
         <Card className="border-dashed">
-          <CardContent className="flex items-center gap-3 py-5 text-foreground-faint">
-            <Radio className="size-5 shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-foreground-soft">Assigned practice</p>
-              <p className="text-xs">No radio-communications practice assigned yet.</p>
-            </div>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground-soft">
+              <Radio className="size-4" />
+              Radio Practice
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-foreground-faint">No radio-communications practice assigned yet.</p>
           </CardContent>
         </Card>
       )}
