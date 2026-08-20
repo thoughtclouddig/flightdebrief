@@ -370,6 +370,8 @@ export interface RadioPracticeAssignment {
   correct: boolean | null;
   /** Per-required-element pass/fail -- see lib/radio-practice-scoring.ts's RadioElementScore. */
   matchedElements: { description: string; matched: boolean }[] | null;
+  /** How many times this has been submitted (see "Try Again") -- only the latest transcript/score is kept, this is just the count. */
+  attempts: number;
   completedAt: string | null;
   createdAt: string;
 }

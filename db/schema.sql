@@ -472,6 +472,12 @@ CREATE TABLE IF NOT EXISTS radio_practice_assignments (
 );
 CREATE INDEX IF NOT EXISTS radio_practice_assignments_student_idx ON radio_practice_assignments (student_id, status);
 
+-- How many times this assignment has been submitted (see the submit route's
+-- "Try Again" support) -- not a full attempt-by-attempt log (transcript/
+-- matched_elements only ever hold the latest try), just enough for a CFI to
+-- see "passed on attempt 3" instead of only the final result.
+ALTER TABLE radio_practice_assignments ADD COLUMN IF NOT EXISTS attempts integer NOT NULL DEFAULT 0;
+
 -- Standard card set (item 9 of the debrief spec), global defaults
 -- (organization_id NULL). Schools can later add organization_id-scoped rows
 -- with the same `code` to override title/prompts without a schema change.

@@ -120,30 +120,55 @@ export function AssignRadioPracticeCard({
         {assignments.length === 0 ? (
           <p className="text-sm text-foreground-faint">Nothing assigned yet.</p>
         ) : (
-          <ul className="flex flex-col gap-1.5">
-            {assignments.map((a) => {
-              const scenario = RADIO_PRACTICE_SCENARIOS.find((s) => s.id === a.scenarioId);
-              return (
-                <li key={a.id} className="flex items-center gap-2 text-sm text-foreground-soft">
-                  {a.status === "completed" ? (
-                    a.correct ? (
-                      <CheckCircle2 className="size-4 shrink-0 text-good" />
-                    ) : (
-                      <XCircle className="size-4 shrink-0 text-danger" />
-                    )
-                  ) : (
-                    <span className="size-2 shrink-0 rounded-full bg-brand" />
-                  )}
-                  {scenario?.title ?? a.scenarioId}
-                  <span className="ml-auto text-xs text-foreground-faint">
-                    {a.status === "completed" ? (a.correct ? "Passed" : "Missed elements") : "Assigned"}
-                  </span>
-                </li>
-              );
-            })}
+          <ul className="flex flex-col gap-2.5">
+            {assignments.map((a) => (
+              <AssignmentRow key={a.id} assignment={a} />
+            ))}
           </ul>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function AssignmentRow({ assignment: a }: { assignment: RadioPracticeAssignment }) {
+  const scenario = RADIO_PRACTICE_SCENARIOS.find((s) => s.id === a.scenarioId);
+  const missed = a.matchedElements?.filter((el) => !el.matched) ?? [];
+
+  const statusLabel =
+    a.status !== "completed"
+      ? "Assigned"
+      : a.correct
+        ? a.attempts > 1
+          ? `Passed on attempt ${a.attempts}`
+          : "Passed"
+        : `Missed elements (attempt ${a.attempts})`;
+
+  return (
+    <li className="flex flex-col gap-1 text-sm text-foreground-soft">
+      <div className="flex items-center gap-2">
+        {a.status === "completed" ? (
+          a.correct ? (
+            <CheckCircle2 className="size-4 shrink-0 text-good" />
+          ) : (
+            <XCircle className="size-4 shrink-0 text-danger" />
+          )
+        ) : (
+          <span className="size-2 shrink-0 rounded-full bg-brand" />
+        )}
+        {scenario?.title ?? a.scenarioId}
+        <span className="ml-auto text-xs text-foreground-faint">{statusLabel}</span>
+      </div>
+      {missed.length > 0 ? (
+        <ul className="ml-6 flex flex-col gap-0.5">
+          {missed.map((el, i) => (
+            <li key={i} className="flex items-start gap-1.5 text-xs text-danger">
+              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-danger" />
+              {el.description}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </li>
   );
 }

@@ -365,7 +365,7 @@ export class PostgresRepository implements Repository {
     const db = await this.db();
     const { rows } = await db.query(
       `UPDATE radio_practice_assignments
-       SET status = 'completed', transcript = $2, correct = $3, matched_elements = $4, completed_at = now()
+       SET status = 'completed', transcript = $2, correct = $3, matched_elements = $4, completed_at = now(), attempts = attempts + 1
        WHERE id = $1 RETURNING *`,
       [id, result.transcript, result.correct, JSON.stringify(result.matchedElements)],
     );
@@ -1172,6 +1172,7 @@ function mapRadioPracticeAssignment(row: Row): RadioPracticeAssignment {
     transcript: (row.transcript as string | null) ?? null,
     correct: (row.correct as boolean | null) ?? null,
     matchedElements: (row.matched_elements as RadioPracticeAssignment["matchedElements"]) ?? null,
+    attempts: row.attempts as number,
     completedAt: row.completed_at ? iso(row.completed_at) : null,
     createdAt: iso(row.created_at),
   };
