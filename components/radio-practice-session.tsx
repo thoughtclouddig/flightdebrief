@@ -74,6 +74,13 @@ export function RadioPracticeSession({
     await submit("");
   }
 
+  /** Re-attempt the same assignment -- the submit route overwrites the previous transcript/score rather than blocking a second try. */
+  function tryAgain() {
+    setResult(null);
+    setError(null);
+    setPhase("ready");
+  }
+
   async function submit(transcript: string) {
     setPhase("submitting");
     setError(null);
@@ -98,7 +105,7 @@ export function RadioPracticeSession({
       <div>
         <p className="text-sm font-medium uppercase tracking-wide text-brand">Radio Practice</p>
         <h1 className="mt-1 text-2xl font-semibold text-foreground">{scenario.title}</h1>
-        <p className="mt-1 text-sm text-foreground-soft">{scenario.setup}</p>
+        <p className="mt-1.5 text-base text-foreground-soft">{scenario.setup}</p>
       </div>
 
       <Card>
@@ -176,9 +183,16 @@ export function RadioPracticeSession({
       ) : null}
 
       {phase === "done" ? (
-        <Button variant="outline" onClick={() => router.push("/home")}>
-          Back to Home
-        </Button>
+        <div className="flex gap-2">
+          {!result?.correct ? (
+            <Button onClick={tryAgain} className="flex-1">
+              Try Again
+            </Button>
+          ) : null}
+          <Button variant="outline" onClick={() => router.push("/home")} className={result?.correct ? "flex-1" : undefined}>
+            Back to Home
+          </Button>
+        </div>
       ) : null}
     </div>
   );

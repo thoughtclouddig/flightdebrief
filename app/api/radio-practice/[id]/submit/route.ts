@@ -8,7 +8,15 @@ interface SubmitBody {
   transcript: string;
 }
 
-/** Student submits a recorded/transcribed readback; scored deterministically (see lib/radio-practice-scoring.ts), then the assignment is marked complete. */
+/**
+ * Student submits a recorded/transcribed readback; scored deterministically
+ * (see lib/radio-practice-scoring.ts), then the assignment is marked
+ * complete. Resubmitting an already-completed assignment is allowed --
+ * overwrites the previous transcript/score rather than rejecting -- so a
+ * student can retry after a mistake (see components/radio-practice-session.tsx's
+ * "Try Again"). This only tracks the latest attempt, not a history of
+ * every retry.
+ */
 export async function POST(request: Request, { params }: RouteContext<"/api/radio-practice/[id]/submit">) {
   const auth = await authorize();
   if (auth.response) return auth.response;
@@ -19,9 +27,6 @@ export async function POST(request: Request, { params }: RouteContext<"/api/radi
   const assignment = await repo.getRadioPracticeAssignment(id);
   if (!assignment || assignment.studentId !== viewer.user.id) {
     return recordNotFound();
-  }
-  if (assignment.status === "completed") {
-    return NextResponse.json({ error: "This practice was already submitted." }, { status: 409 });
   }
 
   const scenario = RADIO_PRACTICE_SCENARIOS.find((s) => s.id === assignment.scenarioId);
