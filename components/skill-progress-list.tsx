@@ -83,7 +83,12 @@ function SkillProgressRow({
           <AcsBadge skill={progression.skill} certificateType={certificateType} />
         </div>
         <p className="mt-0.5 text-xs text-foreground-faint">
-          {progression.history.length} {progression.history.length === 1 ? "flight" : "flights"} tracked
+          {progression.history.length} {progression.history.length === 1 ? "flight" : "flights"} tracked · Last
+          flown{" "}
+          {new Date(progression.history[progression.history.length - 1]!.flightDate + "T12:00:00").toLocaleDateString(
+            "en-US",
+            { month: "short", day: "numeric", year: "numeric" },
+          )}
         </p>
       </div>
       {trendingUp ? <TrendingUp className="size-4 shrink-0 text-good" /> : null}

@@ -3,6 +3,7 @@ import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 import { buildDebriefNarration } from "@/lib/debrief-narration";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
+import { toPilotSpeak } from "@/lib/narration";
 import { getCachedAudio, setCachedAudio } from "@/lib/audio-cache";
 import { DEFAULT_TTS_VOICE, isValidTtsVoice } from "@/lib/tts-voices";
 
@@ -43,9 +44,10 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
     needsWork: debrief.structuredResult.needsWork,
     instructorGuidance: debrief.structuredResult.instructorGuidance,
     actionItems: debrief.structuredResult.actionItems,
+    studyReferences: debrief.structuredResult.studyReferences,
   });
 
-  const audio = await synthesizeSpeech(script, apiKey, voice);
+  const audio = await synthesizeSpeech(toPilotSpeak(script), apiKey, voice);
   if (!audio) {
     return NextResponse.json({ error: "Failed to generate audio." }, { status: 502 });
   }

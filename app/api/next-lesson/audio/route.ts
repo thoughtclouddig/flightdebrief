@@ -3,6 +3,7 @@ import { getRepository } from "@/lib/data";
 import { authorize } from "@/lib/auth/guard";
 import { buildNextLessonNarration } from "@/lib/next-lesson-narration";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
+import { toPilotSpeak } from "@/lib/narration";
 import { getCachedAudio, setCachedAudio } from "@/lib/audio-cache";
 import { DEFAULT_TTS_VOICE, isValidTtsVoice } from "@/lib/tts-voices";
 
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
     focus: debrief?.structuredResult.nextLessonFocus ?? [],
   });
 
-  const audio = await synthesizeSpeech(script, apiKey, voice);
+  const audio = await synthesizeSpeech(toPilotSpeak(script), apiKey, voice);
   if (!audio) {
     return NextResponse.json({ error: "Failed to generate audio." }, { status: 502 });
   }

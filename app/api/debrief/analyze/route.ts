@@ -5,7 +5,12 @@ import { getRepository } from "@/lib/data";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { buildTranscriptSegments, type CardBoundary } from "@/lib/debrief-cards/segments";
 import { computeAssessmentDifferences } from "@/lib/debrief-cards/differences";
-import type { DebriefGuidanceMode } from "@/lib/types";
+import { buildDebriefNarration } from "@/lib/debrief-narration";
+import { synthesizeSpeech } from "@/lib/deepgram-tts";
+import { toPilotSpeak } from "@/lib/narration";
+import { setCachedAudio } from "@/lib/audio-cache";
+import { DEFAULT_TTS_VOICE } from "@/lib/tts-voices";
+import type { DebriefGuidanceMode, StructuredDebrief } from "@/lib/types";
 import type { TranscriptWord } from "@/lib/transcription/types";
 
 interface AnalyzeBody {
@@ -118,7 +123,41 @@ export async function POST(request: Request) {
     })),
   );
 
+  prewarmDebriefAudio(flight.id, structured);
+
   return NextResponse.json({ debrief });
+}
+
+/**
+ * Fires off TTS synthesis for the default voice as soon as a debrief is
+ * ready, instead of waiting for the first "Listen" click to trigger it --
+ * the batch endpoint takes several seconds to render a full script (see
+ * lib/deepgram-tts.ts), and by the time a student reaches the results page
+ * this has often already finished, making that first click feel instant.
+ * Deliberately not awaited (mustn't add latency to analyze itself) and never
+ * throws -- a failed pre-warm just means the first click falls back to
+ * generating on demand, same as before this existed.
+ */
+function prewarmDebriefAudio(flightId: string, structured: StructuredDebrief): void {
+  const apiKey = process.env.DEEPGRAM_API_KEY;
+  if (!apiKey) return;
+
+  const script = toPilotSpeak(
+    buildDebriefNarration({
+      whatWeDid: structured.whatWeDid,
+      wentWell: structured.wentWell,
+      needsWork: structured.needsWork,
+      instructorGuidance: structured.instructorGuidance,
+      actionItems: structured.actionItems,
+      studyReferences: structured.studyReferences,
+    }),
+  );
+
+  synthesizeSpeech(script, apiKey, DEFAULT_TTS_VOICE)
+    .then((audio) => {
+      if (audio) setCachedAudio(`debrief:${flightId}:${DEFAULT_TTS_VOICE}`, audio);
+    })
+    .catch((err) => console.error("[debrief-audio] pre-warm failed:", err));
 }
 
 async function getPreviousActionItems(studentId: string, currentFlightDate: string, currentFlightId: string) {

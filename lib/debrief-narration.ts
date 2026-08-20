@@ -1,5 +1,5 @@
 import { speakList } from "@/lib/narration";
-import type { InstructorGuidance } from "@/lib/types";
+import type { InstructorGuidance, StudyReference } from "@/lib/types";
 
 /**
  * Turns a completed debrief's structured result into a short spoken script
@@ -13,10 +13,11 @@ export interface DebriefNarrationInput {
   needsWork: string[];
   instructorGuidance: InstructorGuidance[];
   actionItems: string[];
+  studyReferences: StudyReference[];
 }
 
 export function buildDebriefNarration(input: DebriefNarrationInput): string {
-  const lines: string[] = ["Here's your debrief."];
+  const lines: string[] = ["Welcome to your debrief."];
 
   if (input.whatWeDid.length > 0) {
     lines.push(`Today you worked on ${speakList(input.whatWeDid)}.`);
@@ -37,6 +38,12 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   if (input.actionItems.length > 0) {
     lines.push(`Before your next flight: ${speakList(input.actionItems)}.`);
   }
+
+  if (input.studyReferences.length > 0) {
+    lines.push("Take a look at the study resources below to dig deeper into today's topics.");
+  }
+
+  lines.push("Nice work today -- every flight like this one is building real skill. Keep it up, and fly safe.");
 
   return lines.join(" ");
 }
