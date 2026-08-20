@@ -27,6 +27,8 @@ export async function synthesizeSpeech(text: string, apiKey: string, requestedVo
   });
 
   if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    console.error(`[deepgram-tts] synthesis failed (${response.status}) for voice=${voice}: ${detail}`);
     return null;
   }
 
