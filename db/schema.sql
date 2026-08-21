@@ -125,6 +125,12 @@ CREATE TABLE IF NOT EXISTS reservations (
   external_id text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+-- listReservations always filters on one of these plus ORDER BY scheduled_start
+-- (postgres-repository.ts's listReservations) -- composite so the sort comes
+-- from the index instead of a separate sort step.
+CREATE INDEX IF NOT EXISTS reservations_org_start_idx ON reservations (organization_id, scheduled_start);
+CREATE INDEX IF NOT EXISTS reservations_instructor_start_idx ON reservations (instructor_id, scheduled_start);
+CREATE INDEX IF NOT EXISTS reservations_student_start_idx ON reservations (student_id, scheduled_start);
 
 CREATE TABLE IF NOT EXISTS flights (
   id text PRIMARY KEY,
@@ -146,6 +152,12 @@ CREATE TABLE IF NOT EXISTS flights (
 );
 CREATE INDEX IF NOT EXISTS flights_student_idx ON flights (student_id);
 CREATE INDEX IF NOT EXISTS flights_org_idx ON flights (organization_id);
+-- listFlights always filters on one of student/instructor/organization plus
+-- ORDER BY flight_date DESC -- composite indexes so that sort is served by
+-- the index instead of a separate sort step as flight volume grows.
+CREATE INDEX IF NOT EXISTS flights_org_date_idx ON flights (organization_id, flight_date);
+CREATE INDEX IF NOT EXISTS flights_student_date_idx ON flights (student_id, flight_date);
+CREATE INDEX IF NOT EXISTS flights_instructor_date_idx ON flights (instructor_id, flight_date);
 
 CREATE TABLE IF NOT EXISTS debriefs (
   id text PRIMARY KEY,

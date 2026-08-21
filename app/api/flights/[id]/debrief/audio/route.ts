@@ -21,10 +21,17 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
   const requestedVoice = new URL(request.url).searchParams.get("voice");
   const voice = requestedVoice && isValidTtsVoice(requestedVoice) ? requestedVoice : DEFAULT_TTS_VOICE;
 
+  // "private" (never shared/CDN cache -- this route is per-user access-controlled
+  // via canAccessRecord below, so a shared cache could serve one user's audio to
+  // another without ever re-checking authorization) but "immutable" -- a given
+  // (flight, voice) never changes once generated, so the browser never needs to
+  // re-fetch it on revisit.
+  const AUDIO_CACHE_HEADERS = { "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=604800, immutable" };
+
   const cacheKey = `debrief:${id}:${voice}`;
   const cached = getCachedAudio(cacheKey);
   if (cached) {
-    return new NextResponse(new Uint8Array(cached), { headers: { "Content-Type": "audio/mpeg" } });
+    return new NextResponse(new Uint8Array(cached), { headers: AUDIO_CACHE_HEADERS });
   }
 
   const repo = getRepository();
@@ -60,5 +67,5 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
   }
 
   setCachedAudio(cacheKey, audio);
-  return new NextResponse(new Uint8Array(audio), { headers: { "Content-Type": "audio/mpeg" } });
+  return new NextResponse(new Uint8Array(audio), { headers: AUDIO_CACHE_HEADERS });
 }
