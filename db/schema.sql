@@ -168,6 +168,21 @@ CREATE TABLE IF NOT EXISTS debriefs (
   UNIQUE (flight_id)
 );
 
+-- When a recording is completed while the organization is billing-blocked,
+-- retain the transcript so the pilot can resume AI analysis after access is
+-- restored instead of recording again.
+CREATE TABLE IF NOT EXISTS pending_debrief_transcripts (
+  flight_id text PRIMARY KEY REFERENCES flights(id) ON DELETE CASCADE,
+  transcript text NOT NULL,
+  audio_duration_seconds integer NOT NULL DEFAULT 0,
+  guidance_mode text NOT NULL DEFAULT 'freeform',
+  recording_started_at timestamptz,
+  recording_ended_at timestamptz,
+  words jsonb,
+  card_boundaries jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS training_items (
   id text PRIMARY KEY,
   flight_id text NOT NULL REFERENCES flights(id) ON DELETE CASCADE,
