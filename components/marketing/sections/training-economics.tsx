@@ -14,7 +14,7 @@ export function TrainingEconomics() {
       <div className="mx-auto max-w-[1320px]">
         <div className="grid grid-cols-1 items-center gap-x-16 gap-y-14 lg:grid-cols-2">
           <Reveal>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Make Every Training Hour Count</p>
+            <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Make Every Training Hour Count</p>
             <h2 className="font-display mt-3 text-balance text-3xl font-bold leading-tight text-[#101727] sm:text-4xl">
               Flight training is expensive. <span className="text-brand">Don&rsquo;t waste the lesson.</span>
             </h2>

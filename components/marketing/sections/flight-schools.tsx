@@ -9,7 +9,7 @@ export function FlightSchools() {
     <section id="schools" className="border-t border-hairline bg-surface-sunken px-6 py-24 sm:py-28">
       <div className="mx-auto max-w-5xl">
         <Reveal>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">For flight schools</p>
+          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">For flight schools</p>
           <h2 className="font-display mt-3 max-w-2xl text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
             See where students keep getting stuck.
           </h2>
@@ -27,13 +27,13 @@ export function FlightSchools() {
         <Reveal delay={250} className="mt-6">
           <Card>
             <CardContent>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
+              <p className="text-balance mb-3 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
                 What students are working on
               </p>
               <ul className="flex flex-col gap-2.5">
                 {DEMO_TOP_ISSUES.map((issue) => (
                   <li key={issue.label} className="flex items-center justify-between text-sm">
-                    <span className="text-foreground">{issue.label}</span>
+                    <span className="text-balance text-foreground">{issue.label}</span>
                     <span className="font-medium text-foreground-soft">{issue.studentCount} students</span>
                   </li>
                 ))}

@@ -22,20 +22,20 @@ export function CfiHandoff() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Recent Training</p>
-              <p className="mt-1 text-foreground-soft">{DEMO_HANDOFF.recentTraining.join(", ")}</p>
+              <p className="text-balance text-xs font-semibold uppercase tracking-wide text-foreground-faint">Recent Training</p>
+              <p className="text-pretty mt-1 text-foreground-soft">{DEMO_HANDOFF.recentTraining.join(", ")}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Current Focus</p>
-              <p className="mt-1 text-foreground-soft">{DEMO_HANDOFF.currentFocus.join(", ")}</p>
+              <p className="text-balance text-xs font-semibold uppercase tracking-wide text-foreground-faint">Current Focus</p>
+              <p className="text-pretty mt-1 text-foreground-soft">{DEMO_HANDOFF.currentFocus.join(", ")}</p>
             </div>
             <div className="sm:col-span-2 rounded-md bg-brand/5 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-brand">Last CFI Note</p>
-              <p className="mt-1 text-foreground">{DEMO_HANDOFF.lastNote}</p>
+              <p className="text-balance text-xs font-semibold uppercase tracking-wide text-brand">Last CFI Note</p>
+              <p className="text-pretty mt-1 text-foreground">{DEMO_HANDOFF.lastNote}</p>
             </div>
             <div className="sm:col-span-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Planned Next Lesson</p>
-              <p className="mt-1 text-foreground-soft">{DEMO_HANDOFF.plannedNextLesson}</p>
+              <p className="text-balance text-xs font-semibold uppercase tracking-wide text-foreground-faint">Planned Next Lesson</p>
+              <p className="text-pretty mt-1 text-foreground-soft">{DEMO_HANDOFF.plannedNextLesson}</p>
             </div>
           </CardContent>
         </Card>

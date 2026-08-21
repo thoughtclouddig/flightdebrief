@@ -25,7 +25,7 @@ export function Transformation() {
     <section className="border-y border-hairline bg-surface-sunken px-6 py-24 sm:py-28">
       <div className="mx-auto max-w-5xl">
         <Reveal>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">The transformation</p>
+          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">The transformation</p>
           <h2 className="font-display mt-3 max-w-2xl text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
             Today&rsquo;s debrief becomes tomorrow&rsquo;s briefing.
           </h2>
@@ -36,7 +36,7 @@ export function Transformation() {
             {DEMO_CONVERSATION.map((line, i) => (
               <div key={i} className={line.speaker === "CFI" ? "" : "pl-6"}>
                 <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">{line.speaker}</p>
-                <p className="mt-1 text-[17px] leading-relaxed text-foreground">{highlight(line.line)}</p>
+                <p className="text-pretty mt-1 text-[17px] leading-relaxed text-foreground">{highlight(line.line)}</p>
               </div>
             ))}
           </Reveal>

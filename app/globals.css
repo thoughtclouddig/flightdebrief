@@ -177,10 +177,19 @@ h1 {
    supported. */
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
+    /* Both ends of animation-range use the "entry" named range (not
+       "cover") deliberately: entry 0%-100% always spans exactly one
+       viewport-height of scroll, regardless of the element's own height.
+       "cover" instead scales with (element height + viewport height), so
+       for a section taller than the viewport (e.g. the School Pro pricing
+       card with its longer feature list) "cover 30%" lands much later in
+       scroll distance than "entry 100%" -- the section finishes entering
+       long before the animation's end point, so it gets stuck faded-in
+       partway. entry/entry has no such height dependency. */
     .reveal {
       animation: reveal-fade-up linear both;
       animation-timeline: view();
-      animation-range: entry 0% cover 30%;
+      animation-range: entry 0% entry 45%;
     }
 
     /* components/marketing/slide-in-right.tsx -- same technique, slides in
@@ -189,7 +198,7 @@ h1 {
     .reveal-slide-right {
       animation: reveal-slide-in-right linear both;
       animation-timeline: view();
-      animation-range: entry 0% cover 30%;
+      animation-range: entry 0% entry 45%;
     }
 
     /* components/marketing/sections/proof.tsx's local RevealUp -- more
@@ -198,7 +207,7 @@ h1 {
     .reveal-up-slow {
       animation: reveal-fade-up-slow linear both;
       animation-timeline: view();
-      animation-range: entry 0% cover 40%;
+      animation-range: entry 0% entry 60%;
     }
   }
 }

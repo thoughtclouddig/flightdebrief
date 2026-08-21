@@ -42,7 +42,7 @@ export function WhoItsFor() {
     <section className="bg-white px-6 pb-28 pt-14 sm:pb-36 sm:pt-16">
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">Who&rsquo;s It For</p>
+          <p className="text-balance text-sm font-bold uppercase tracking-[0.16em] text-brand">Who&rsquo;s It For</p>
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             Who is AfterFlight for?
           </h2>

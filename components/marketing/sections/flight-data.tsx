@@ -8,7 +8,7 @@ export function FlightData() {
     <section className="mx-auto max-w-5xl px-6 py-24 sm:py-28">
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
         <Reveal>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Flight data</p>
+          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Flight data</p>
           <h2 className="font-display mt-3 text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
             Your flight tells part of the story.
           </h2>

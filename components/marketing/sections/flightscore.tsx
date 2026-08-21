@@ -40,7 +40,7 @@ export function FlightScoreSection() {
     <section id="flightscore" className="bg-[#f4f5f6] px-6 py-20 sm:py-28">
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Your Training, Over Time</p>
+          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Your Training, Over Time</p>
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             See what&rsquo;s improving.
             <br />
@@ -74,7 +74,7 @@ export function FlightScoreSection() {
               return (
                 <SlideInRight key={category.label} delay={150 + i * 90} className="flex items-center gap-5 py-5">
                   <Icon className={`size-7 shrink-0 ${TONE_TEXT_CLASS[category.tone]}`} />
-                  <span className="flex-1 text-lg font-medium text-[#101727]">{category.label}</span>
+                  <span className="text-balance flex-1 text-lg font-medium text-[#101727]">{category.label}</span>
                   {trend ? (
                     <span className="flex items-center gap-2 text-sm font-semibold text-[#101727]">
                       <span className={`size-2.5 shrink-0 rounded-full ${trend.dotClass}`} aria-hidden="true" />
