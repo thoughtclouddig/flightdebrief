@@ -1,6 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
+import { CtaLink } from "@/components/marketing/cta-link";
 import { DebriefSummaryMockupCard } from "@/components/marketing/product-mockups";
 
 const BENEFITS = ["Capture every lesson", "Track real progress", "Improve faster"];
@@ -36,18 +36,10 @@ export function Hero() {
 
           <div className="mt-8 flex flex-col items-stretch gap-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Link
-                href="/signup"
-                className="rounded-lg bg-brand px-8 py-4 text-center text-base font-semibold text-white hover:bg-brand-dark"
-              >
-                Start Free
-              </Link>
-              <Link
-                href="#how-it-works"
-                className="whitespace-nowrap rounded-lg border border-slate-200 px-8 py-4 text-center text-base font-semibold text-[#101727] hover:bg-[#f4f5f6]"
-              >
+              <CtaLink href="/signup">Start Free</CtaLink>
+              <CtaLink href="#how-it-works" variant="secondary" className="whitespace-nowrap">
                 See How It Works
-              </Link>
+              </CtaLink>
             </div>
 
             <p className="text-balance text-center text-sm font-medium text-[#68717D] sm:text-left">

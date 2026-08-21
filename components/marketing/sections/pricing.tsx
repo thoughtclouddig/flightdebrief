@@ -119,10 +119,10 @@ export function Pricing() {
                   <TrackedLink
                     href={ENTERPRISE_PRICING.ctaHref}
                     event="select_enterprise"
-                    className="inline-flex items-center gap-2.5 rounded-lg bg-brand px-8 py-4 text-base font-bold text-white hover:bg-brand-dark"
+                    className="group inline-flex items-center gap-2.5 rounded-lg bg-brand px-8 py-4 text-base font-bold text-white transition-[transform,box-shadow,background-color] duration-150 ease-out hover:-translate-y-0.5 hover:bg-brand-dark hover:shadow-lg hover:shadow-brand/25 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                   >
                     {ENTERPRISE_PRICING.cta}
-                    <ArrowRight className="size-5" />
+                    <ArrowRight className="size-5 transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
                   </TrackedLink>
                 </div>
                 <p className="mt-5 max-w-md text-pretty text-sm text-white/60">{ENTERPRISE_PRICING.sectionSupportingLine}</p>
