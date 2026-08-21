@@ -49,15 +49,6 @@ export default async function ProgressPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Training Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SkillProgressList progressions={skillProgressions} certificateType={certificateType} />
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <CardContent className="flex flex-col gap-1 py-4">
@@ -72,35 +63,6 @@ export default async function ProgressPage() {
           </CardContent>
         </Card>
       </div>
-
-      {brief.recurringThemes.length > 0 ? (
-        <Card className="border-amber/40 bg-amber-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Repeat className="size-4 text-amber" />
-              Recurring Themes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {brief.recurringThemes.map((theme, i) => (
-              <div key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <p className="text-sm text-foreground-soft">
-                  <span className="font-semibold text-foreground">{theme.theme}</span> has come up in{" "}
-                  {theme.count} of your last {theme.consideredFlights} debriefs.
-                </p>
-                <AcsBadge skill={theme.skill} certificateType={certificateType} />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="flex items-center gap-3 py-5 text-foreground-faint">
-            <TrendingUp className="size-5 shrink-0" />
-            <p className="text-sm">Not enough debriefs yet to spot a recurring theme -- keep flying.</p>
-          </CardContent>
-        </Card>
-      )}
 
       {keepWorkingOn.length > 0 || beforeFlight.length > 0 ? (
         <Card>
@@ -154,6 +116,45 @@ export default async function ProgressPage() {
           </CardContent>
         </Card>
       ) : null}
+
+      {brief.recurringThemes.length > 0 ? (
+        <Card className="border-amber/40 bg-amber-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Repeat className="size-4 text-amber" />
+              Recurring Themes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {brief.recurringThemes.map((theme, i) => (
+              <div key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="text-sm text-foreground-soft">
+                  <span className="font-semibold text-foreground">{theme.theme}</span> has come up in{" "}
+                  {theme.count} of your last {theme.consideredFlights} debriefs.
+                </p>
+                <AcsBadge skill={theme.skill} certificateType={certificateType} />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="flex items-center gap-3 py-5 text-foreground-faint">
+            <TrendingUp className="size-5 shrink-0" />
+            <p className="text-sm">Not enough debriefs yet to spot a recurring theme -- keep flying.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Reference detail, not action -- deliberately last so it doesn't push the actionable cards below the fold. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Training Progress</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SkillProgressList progressions={skillProgressions} certificateType={certificateType} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

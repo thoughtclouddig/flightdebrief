@@ -48,7 +48,7 @@ export function ListenButton({ baseSrc, label = "Listen" }: { baseSrc: string; l
 
   return (
     <div className="flex flex-col items-start gap-1">
-      <Button variant="outline" size="sm" onClick={handleClick} disabled={status === "loading"}>
+      <Button size="lg" onClick={handleClick} disabled={status === "loading"} className="[&_svg]:size-5">
         {status === "loading" ? (
           <Loader2 className="animate-spin" />
         ) : status === "playing" ? (
