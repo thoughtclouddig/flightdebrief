@@ -157,3 +157,32 @@ h1 {
     transform: translateX(-50%);
   }
 }
+
+/* Marketing sections' scroll-reveal (components/marketing/reveal.tsx), done
+   with zero JavaScript instead of the old per-element IntersectionObserver
+   hook -- animation-timeline: view() lets the browser drive a real
+   scroll-linked fade-up on the compositor thread, no "use client" boundary
+   needed at all. Feature-detected: unsupported browsers (older Safari/
+   Firefox) simply render the content with no animation, same as the
+   no-animation baseline already shipped -- never worse, better where
+   supported. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal-fade-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+  }
+}
+
+@keyframes reveal-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,10 +1,14 @@
-"use client";
-
 import type { ReactNode } from "react";
-import { useInView } from "@/lib/marketing/use-in-view";
 import { cn } from "@/lib/utils";
 
-/** Fades/rises a section into place once, the first time it scrolls into view. */
+/**
+ * Marketing sections' scroll-triggered fade-up. Pure CSS (see .reveal /
+ * @keyframes reveal-fade-up in app/globals.css) via animation-timeline:
+ * view() -- no client JS, no IntersectionObserver, no "use client" boundary.
+ * Feature-detected there via @supports: browsers without scroll-driven
+ * animation support just render the content immediately with no reveal,
+ * same as having no animation at all -- never worse, better where supported.
+ */
 export function Reveal({
   children,
   className,
@@ -14,17 +18,8 @@ export function Reveal({
   className?: string;
   delay?: number;
 }) {
-  const { ref, inView } = useInView<HTMLDivElement>();
   return (
-    <div
-      ref={ref}
-      className={cn(
-        "transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none motion-reduce:transform-none",
-        inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",
-        className,
-      )}
-      style={{ transitionDelay: inView ? `${delay}ms` : "0ms" }}
-    >
+    <div className={cn("reveal", className)} style={delay ? { animationDelay: `${delay}ms` } : undefined}>
       {children}
     </div>
   );
