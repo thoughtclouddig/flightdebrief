@@ -10,6 +10,7 @@ import {
   PlaneTakeoff,
   Target,
 } from "lucide-react";
+import { AddFlightForm } from "@/components/add-flight-form";
 import { AssignRadioPracticeCard } from "@/components/assign-radio-practice-card";
 import { ScheduleLessonForm } from "@/components/schedule-lesson-form";
 import { StudentNotesCard } from "@/components/student-notes-card";
@@ -169,6 +170,15 @@ export async function StudentTrainingDetail({
                   <ScheduleLessonForm studentId={student.id} aircraft={aircraft} />
                 </div>
               ) : null}
+            </div>
+          ) : null}
+
+          {isCfiOrAdmin ? (
+            <div className="border-t border-brand/20 pt-3">
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <PlaneTakeoff className="size-3.5" /> Log a Flight
+              </p>
+              <AddFlightForm studentId={student.id} />
             </div>
           ) : null}
         </CardContent>
