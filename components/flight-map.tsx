@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Map } from "lucide-react";
+import { TrackPreview } from "@/components/track-preview";
+import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import type { TrackPosition } from "@/lib/types";
 
 /**
@@ -11,7 +14,9 @@ import type { TrackPosition } from "@/lib/types";
 const BASEMAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
 export function FlightMap({ track }: { track: TrackPosition[] | null }) {
-  if (!track || track.length < 2) {
+  const displayTrack = simplifyTrackForDisplay(track);
+
+  if (!displayTrack || displayTrack.length < 2) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-6 text-center dark:border-white/15">
         <p className="text-sm text-slate-400">No track data available for this flight.</p>
@@ -23,14 +28,110 @@ export function FlightMap({ track }: { track: TrackPosition[] | null }) {
     );
   }
 
+  return <DeferredMap track={displayTrack} />;
+}
+
+function DeferredMap({ track }: { track: TrackPosition[] }) {
+  const placeholderRef = useRef<HTMLDivElement>(null);
+  const [shouldLoadMap, setShouldLoadMap] = useState(false);
+  const [mapLoadFailed, setMapLoadFailed] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapAttempt, setMapAttempt] = useState(0);
+  const loadMap = useCallback(() => {
+    setMapLoadFailed(false);
+    setMapLoaded(false);
+    setMapAttempt((attempt) => attempt + 1);
+    setShouldLoadMap(true);
+  }, []);
+  const handleMapLoadError = useCallback(() => setMapLoadFailed(true), []);
+  const handleMapLoad = useCallback(() => setMapLoaded(true), []);
+
+  useEffect(() => {
+    const placeholder = placeholderRef.current;
+    if (!placeholder || shouldLoadMap || !("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          loadMap();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "320px 0px" },
+    );
+    observer.observe(placeholder);
+
+    return () => observer.disconnect();
+  }, [loadMap, shouldLoadMap]);
+
   return (
-    <div className="h-64 overflow-hidden rounded-xl border border-hairline sm:h-80">
-      <MapLibreTrack track={track} />
+    <div
+      ref={placeholderRef}
+      aria-busy={shouldLoadMap && !mapLoaded && !mapLoadFailed}
+      className="relative h-64 overflow-hidden rounded-xl border border-hairline bg-slate-50 dark:bg-slate-900/40 sm:h-80"
+    >
+      {!mapLoaded ? (
+        <TrackMapPlaceholder
+          track={track}
+          onLoadMap={loadMap}
+          failed={mapLoadFailed}
+          loading={shouldLoadMap && !mapLoadFailed}
+        />
+      ) : null}
+      {shouldLoadMap && !mapLoadFailed ? (
+        <MapLibreTrack
+          key={mapAttempt}
+          track={track}
+          onLoad={handleMapLoad}
+          onLoadError={handleMapLoadError}
+        />
+      ) : null}
     </div>
   );
 }
 
-function MapLibreTrack({ track }: { track: TrackPosition[] }) {
+function TrackMapPlaceholder({
+  track,
+  onLoadMap,
+  failed = false,
+  loading = false,
+}: {
+  track: TrackPosition[];
+  onLoadMap: () => void;
+  failed?: boolean;
+  loading?: boolean;
+}) {
+  return (
+    <div className="absolute inset-0 h-full w-full">
+      <TrackPreview track={track} />
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-white via-white/90 to-transparent px-4 pb-4 pt-12 dark:from-slate-950 dark:via-slate-950/90">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          {failed ? "The interactive map could not load." : loading ? "Loading interactive map…" : "Route preview"}
+        </p>
+        {!loading ? (
+          <button
+            type="button"
+            onClick={onLoadMap}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 dark:bg-slate-800 dark:text-slate-100 dark:ring-white/15 dark:hover:bg-slate-700"
+          >
+            <Map className="size-3.5" />
+            {failed ? "Try interactive map again" : "Load interactive map"}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function MapLibreTrack({
+  track,
+  onLoad,
+  onLoadError,
+}: {
+  track: TrackPosition[];
+  onLoad: () => void;
+  onLoadError: () => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,28 +139,29 @@ function MapLibreTrack({ track }: { track: TrackPosition[] }) {
     let cancelled = false;
 
     (async () => {
-      const maplibregl = await import("maplibre-gl");
-      await import("maplibre-gl/dist/maplibre-gl.css");
-      if (cancelled || !containerRef.current) return;
+      try {
+        const maplibregl = await import("maplibre-gl");
+        await import("maplibre-gl/dist/maplibre-gl.css");
+        if (cancelled || !containerRef.current) return;
 
-      const coords = track.map((p) => [p.lon, p.lat] as [number, number]);
-      const bounds = coords.reduce(
-        (b, c) => b.extend(c),
-        new maplibregl.LngLatBounds(coords[0], coords[0]),
-      );
+        const coords = track.map((p) => [p.lon, p.lat] as [number, number]);
+        const bounds = coords.reduce(
+          (b, c) => b.extend(c),
+          new maplibregl.LngLatBounds(coords[0], coords[0]),
+        );
 
-      const localMap = new maplibregl.Map({
-        container: containerRef.current,
-        style: BASEMAP_STYLE,
-        bounds,
-        fitBoundsOptions: { padding: 36 },
-        attributionControl: false,
-      });
-      map = localMap;
+        const localMap = new maplibregl.Map({
+          container: containerRef.current,
+          style: BASEMAP_STYLE,
+          bounds,
+          fitBoundsOptions: { padding: 36 },
+          attributionControl: false,
+        });
+        map = localMap;
 
-      localMap.addControl(new maplibregl.AttributionControl({ compact: true }));
+        localMap.addControl(new maplibregl.AttributionControl({ compact: true }));
 
-      localMap.on("load", () => {
+        localMap.on("load", () => {
         localMap.addSource("track", {
           type: "geojson",
           data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } },
@@ -168,14 +270,18 @@ function MapLibreTrack({ track }: { track: TrackPosition[] }) {
             features: [],
           });
         });
-      });
+          onLoad();
+        });
+      } catch {
+        if (!cancelled) onLoadError();
+      }
     })();
 
     return () => {
       cancelled = true;
       map?.remove();
     };
-  }, [track]);
+  }, [onLoad, onLoadError, track]);
 
-  return <div ref={containerRef} className="h-full w-full" />;
+  return <div ref={containerRef} className="absolute inset-0 h-full w-full" />;
 }

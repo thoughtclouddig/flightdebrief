@@ -22,6 +22,7 @@ import { SkillProgressList } from "@/components/skill-progress-list";
 import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { getRepository } from "@/lib/data";
 import { getAuthorizedFlight } from "@/lib/auth/access";
+import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { matchSkills } from "@/lib/topics";
 import { cn } from "@/lib/utils";
@@ -58,6 +59,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
     instructorLevel: d.instructorLevel,
     status: discrepancyStatusFor(discrepancyDistance(d.studentLevel, d.instructorLevel)),
   }));
+  const displayTrack = simplifyTrackForDisplay(flight.track);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
@@ -82,7 +84,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
           <CardTitle>Flight Path</CardTitle>
         </CardHeader>
         <CardContent>
-          <FlightMap track={flight.track} />
+          <FlightMap track={displayTrack} />
         </CardContent>
       </Card>
 

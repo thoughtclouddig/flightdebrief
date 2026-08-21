@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
+import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import { formatDuration } from "@/lib/utils";
 
 export default async function FlightDetailPage(props: PageProps<"/flights/[id]">) {
@@ -39,6 +40,7 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
     day: "numeric",
     year: "numeric",
   });
+  const displayTrack = simplifyTrackForDisplay(flight.track);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -65,7 +67,7 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Flight track</h2>
           <Badge variant="outline">ADS-B contextual data</Badge>
         </div>
-        <FlightMap track={flight.track} />
+        <FlightMap track={displayTrack} />
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
