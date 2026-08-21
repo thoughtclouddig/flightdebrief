@@ -261,57 +261,10 @@ export async function StudentTrainingDetail({
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {brief.focusAreas.length > 0 ? (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Recommended Focus</p>
-              <ol className="mt-1.5 flex flex-col gap-1.5">
-                {brief.focusAreas.map((f, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm text-slate-800 dark:text-slate-100">
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-semibold text-white">
-                      {i + 1}
-                    </span>
-                    {f}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          ) : (
-            <div>
-              <p className="text-sm text-slate-400">
-                No objectives for this lesson -- these come from the last debrief.
-              </p>
-              {pendingFlight ? (
-                <Link href={`/flights/${pendingFlight.id}`} className="mt-1 inline-block text-sm font-medium text-brand hover:underline">
-                  Debrief {formatFlightContext(pendingFlight)} to set them →
-                </Link>
-              ) : (
-                <Link
-                  href={`/flights/new?studentId=${student.id}`}
-                  className="mt-1 inline-block text-sm font-medium text-brand hover:underline"
-                >
-                  Log a flight to get started →
-                </Link>
-              )}
-            </div>
-          )}
-          {brief.beforeFlightItems.length > 0 ? (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Before Flight</p>
-              <ul className="mt-1.5 flex flex-col gap-1">
-                {brief.beforeFlightItems.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
-                    <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
           {canScheduleLessons || brief.upcomingReservation ? (
-            <div className="border-t border-brand/20 pt-3">
+            <div>
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <CalendarClock className="size-3.5" /> Next Scheduled Lesson
+                <CalendarClock className="size-3.5" /> When
               </p>
               {brief.upcomingReservation ? (
                 <p className="text-sm text-slate-700 dark:text-slate-200">
@@ -334,6 +287,53 @@ export async function StudentTrainingDetail({
             </div>
           ) : null}
 
+          <div className="border-t border-hairline pt-3">
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">What to work on</p>
+            {brief.focusAreas.length > 0 ? (
+              <ol className="flex flex-col gap-1.5">
+                {brief.focusAreas.map((f, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm text-slate-800 dark:text-slate-100">
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-semibold text-white">
+                      {i + 1}
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <div>
+                <p className="text-sm text-slate-400">
+                  Not set yet -- this comes from finishing the last debrief, not from scheduling.
+                </p>
+                {pendingFlight ? (
+                  <Link href={`/flights/${pendingFlight.id}`} className="mt-1 inline-block text-sm font-medium text-brand hover:underline">
+                    Debrief {formatFlightContext(pendingFlight)} to set it →
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/flights/new?studentId=${student.id}`}
+                    className="mt-1 inline-block text-sm font-medium text-brand hover:underline"
+                  >
+                    Log a flight to get started →
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+
+          {brief.beforeFlightItems.length > 0 ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Before Flight</p>
+              <ul className="mt-1.5 flex flex-col gap-1">
+                {brief.beforeFlightItems.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                    <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
