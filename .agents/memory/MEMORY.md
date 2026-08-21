@@ -1,2 +1,3 @@
 - [Auth and identity conventions](replit-auth-nextjs.md) — email magic links use normalized email as the identity anchor; Postgres remains the app-level source of truth.
 - [Membership switcher release policy](membership-switcher-release-policy.md) — keep role/org switching development-only until the user explicitly approves it for real users.
+- [Next.js build output isolation](next-build-output-isolation.md) — production builds must not share `.next` with the live dev workflow.

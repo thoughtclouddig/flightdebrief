@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS organization_members (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (organization_id, user_id, role)
 );
+CREATE INDEX IF NOT EXISTS organization_members_user_created_idx ON organization_members (user_id, created_at);
 
 -- --- Flight / training domain -----------------------------------------------
 -- Ids are text (seeded ids like 'flight-1' plus runtime UUIDs). Dates that the
@@ -125,6 +126,9 @@ CREATE TABLE IF NOT EXISTS reservations (
   external_id text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE INDEX IF NOT EXISTS reservations_org_instructor_start_idx ON reservations (organization_id, instructor_id, scheduled_start);
+CREATE INDEX IF NOT EXISTS reservations_student_start_idx ON reservations (student_id, scheduled_start);
+DROP INDEX IF EXISTS reservations_org_start_idx;
 
 CREATE TABLE IF NOT EXISTS flights (
   id text PRIMARY KEY,
@@ -144,8 +148,14 @@ CREATE TABLE IF NOT EXISTS flights (
   track jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS flights_student_idx ON flights (student_id);
-CREATE INDEX IF NOT EXISTS flights_org_idx ON flights (organization_id);
+CREATE INDEX IF NOT EXISTS flights_student_date_idx ON flights (student_id, flight_date DESC, created_at DESC);
+CREATE INDEX IF NOT EXISTS flights_org_date_idx ON flights (organization_id, flight_date DESC, created_at DESC);
+CREATE INDEX IF NOT EXISTS flights_instructor_date_idx ON flights (instructor_id, flight_date DESC, created_at DESC);
+CREATE INDEX IF NOT EXISTS flights_instructor_org_date_idx ON flights (instructor_id, organization_id, flight_date DESC, created_at DESC);
+-- Superseded by the date-ordered indexes above; keeping both would add write
+-- overhead without improving the current query shapes.
+DROP INDEX IF EXISTS flights_student_idx;
+DROP INDEX IF EXISTS flights_org_idx;
 
 CREATE TABLE IF NOT EXISTS debriefs (
   id text PRIMARY KEY,
