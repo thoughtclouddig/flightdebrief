@@ -51,7 +51,7 @@ export function Pricing() {
                 {tier.priceNote ? <p className="text-balance mt-1 text-base font-semibold text-brand">{tier.priceNote}</p> : null}
                 {tier.valueAnchor ? <p className="text-balance mt-2 text-sm font-semibold text-brand">{tier.valueAnchor}</p> : null}
                 {tier.id === "pilot" ? (
-                  <p className="text-pretty mt-3 inline-flex w-fit items-center rounded-full bg-[#fce0c8] px-3 py-1.5 text-sm font-semibold text-[#101727]">
+                  <p className="text-pretty mt-3 rounded-lg border border-brand/25 bg-[#fdf3ea] px-3 py-2 text-sm font-medium text-[#101727]">
                     Three flights, no clock ticking &mdash; see the full loop before you subscribe.
                   </p>
                 ) : null}
