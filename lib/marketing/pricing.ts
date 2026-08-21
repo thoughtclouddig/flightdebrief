@@ -26,7 +26,6 @@ export const PRICING_TIERS: PricingTier[] = [
     price: "$9.99",
     priceSuffix: "/mo",
     priceNote: "or $99/year — save 17%",
-    valueAnchor: "Three flights, no clock ticking — see the full loop before you subscribe.",
     features: [
       "Unlimited debriefs",
       "See your progress over time",
@@ -45,7 +44,6 @@ export const PRICING_TIERS: PricingTier[] = [
     audience: "For individual flight instructors.",
     price: "Free",
     priceSuffix: "",
-    valueAnchor: "CFIs never pay to debrief their students.",
     featured: true,
     featuredLabel: "Always Free for CFIs",
     features: [
@@ -66,7 +64,6 @@ export const PRICING_TIERS: PricingTier[] = [
     price: "$99",
     priceSuffix: "/month/location",
     priceNote: "or $990/year/location — save 17%",
-    valueAnchor: "Your school's first 25 debriefs are free.",
     features: [
       "See every student's training progress",
       "Identify recurring training gaps",
