@@ -1,10 +1,6 @@
-"use client";
-
-import { useEffect, useRef } from "react";
-import { useInView } from "@/lib/marketing/use-in-view";
 import type { TrackPosition } from "@/lib/types";
 
-/** Same projection as components/track-preview.tsx, plus a one-shot draw-on animation when it scrolls into view. */
+/** Same projection as components/track-preview.tsx, with a CSS view-timeline draw effect and no client hydration. */
 export function AnimatedTrack({
   track,
   cover = false,
@@ -15,9 +11,6 @@ export function AnimatedTrack({
   cover?: boolean;
   className?: string;
 }) {
-  const { ref: wrapperRef, inView } = useInView<HTMLDivElement>();
-  const pathRef = useRef<SVGPathElement>(null);
-
   const lats = track.map((p) => p.lat);
   const lons = track.map((p) => p.lon);
   const minLat = Math.min(...lats);
@@ -42,16 +35,8 @@ export function AnimatedTrack({
   const [startX, startY] = points[0];
   const [endX, endY] = points[points.length - 1];
 
-  useEffect(() => {
-    const el = pathRef.current;
-    if (!el) return;
-    const length = el.getTotalLength();
-    el.style.strokeDasharray = `${length}`;
-    el.style.strokeDashoffset = inView ? "0" : `${length}`;
-  }, [inView, path]);
-
   return (
-    <div ref={wrapperRef} className={className}>
+    <div className={className}>
       <svg
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio={cover ? "xMidYMid slice" : "xMidYMid meet"}
@@ -67,19 +52,31 @@ export function AnimatedTrack({
           </pattern>
         </defs>
         <rect width={width} height={height} fill="url(#mkGrid)" />
-        {inView ? <path d={`${path} L${endX},${height} L${startX},${height} Z`} fill="url(#mkTrackFade)" className="transition-opacity duration-700" /> : null}
         <path
-          ref={pathRef}
+          d={`${path} L${endX},${height} L${startX},${height} Z`}
+          fill="url(#mkTrackFade)"
+          className="marketing-track-fill"
+        />
+        <path
           d={path}
+          pathLength={1}
           fill="none"
           stroke="var(--color-brand)"
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="transition-[stroke-dashoffset] duration-[1400ms] ease-out motion-reduce:transition-none"
+          className="marketing-track-path"
         />
         <circle cx={startX} cy={startY} r={6} fill="var(--color-brand)" stroke="white" strokeWidth={2} />
-        {inView ? <circle cx={endX} cy={endY} r={6} fill="#101727" stroke="white" strokeWidth={2} className="transition-opacity duration-500" /> : null}
+        <circle
+          cx={endX}
+          cy={endY}
+          r={6}
+          fill="#101727"
+          stroke="white"
+          strokeWidth={2}
+          className="marketing-track-fill"
+        />
       </svg>
     </div>
   );

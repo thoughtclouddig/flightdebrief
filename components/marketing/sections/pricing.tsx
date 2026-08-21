@@ -1,15 +1,14 @@
-"use client";
-
-import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
+import { SectionViewEvent } from "@/components/marketing/section-view-event";
+import { TrackedLink } from "@/components/marketing/tracked-link";
 import { PRICING_TIERS, ENTERPRISE_PRICING } from "@/lib/marketing/pricing";
-import { trackEvent } from "@/lib/marketing/analytics";
 import { cn } from "@/lib/utils";
 
 export function Pricing() {
   return (
-    <section id="pricing" className="bg-[#f4f5f6] px-6 py-28 sm:py-36" onMouseEnter={() => trackEvent("view_pricing")}>
+    <section id="pricing" className="relative bg-[#f4f5f6] px-6 py-28 sm:py-36">
+      <SectionViewEvent event="view_pricing" />
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="text-center">
           <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">
@@ -68,9 +67,9 @@ export function Pricing() {
                   ))}
                 </ul>
 
-                <Link
+                <TrackedLink
                   href={tier.signupHref}
-                  onClick={() => trackEvent(tier.analyticsEvent)}
+                  event={tier.analyticsEvent}
                   className={cn(
                     "mt-9 rounded-xl px-6 py-3.5 text-center text-base font-bold transition-transform hover:scale-[1.02]",
                     tier.featured
@@ -79,7 +78,7 @@ export function Pricing() {
                   )}
                 >
                   {tier.cta}
-                </Link>
+                </TrackedLink>
 
                 {tier.upsell ? (
                   <div className="mt-5 text-pretty text-center">
@@ -117,14 +116,14 @@ export function Pricing() {
                 <p className="mt-6 font-display text-xl font-bold text-white">{ENTERPRISE_PRICING.sectionPriceLabel}</p>
 
                 <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-                  <Link
+                  <TrackedLink
                     href={ENTERPRISE_PRICING.ctaHref}
-                    onClick={() => trackEvent("select_enterprise")}
+                    event="select_enterprise"
                     className="inline-flex items-center gap-2.5 rounded-lg bg-brand px-8 py-4 text-base font-bold text-white hover:bg-brand-dark"
                   >
                     {ENTERPRISE_PRICING.cta}
                     <ArrowRight className="size-5" />
-                  </Link>
+                  </TrackedLink>
                 </div>
                 <p className="mt-5 max-w-md text-pretty text-sm text-white/60">{ENTERPRISE_PRICING.sectionSupportingLine}</p>
               </div>

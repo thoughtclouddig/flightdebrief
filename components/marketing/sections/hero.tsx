@@ -2,27 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { DebriefSummaryMockupCard } from "@/components/marketing/product-mockups";
-import { HeroScoreCard } from "@/components/marketing/hero-score-card";
 
 const BENEFITS = ["Capture every lesson", "Track real progress", "Improve faster"];
 
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-white pt-24 sm:pt-28 lg:min-h-[680px] lg:pb-0">
-      {/* Desktop: image as a full-height right-aligned panel, fading into the white background on its left edge. */}
-      <div className="absolute inset-y-0 right-0 hidden w-[60%] lg:block">
-        <Image
-          src="/images/marketing/hero-debrief-tablet.webp"
-          alt="A student pilot and CFI reviewing a flight debrief together on a tablet beside the aircraft"
-          fill
-          priority
-          className="object-cover"
-          sizes="(min-width: 1024px) 1200px, 100vw"
-        />
-        <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-white/60 via-white/35 to-transparent" />
-        <HeroScoreCard className="absolute -bottom-10 right-4 w-[340px] xl:right-8" />
-      </div>
-
       <div className="relative mx-auto max-w-[1320px] px-6">
         <div className="relative z-10 max-w-xl lg:py-16">
           <p className="text-base font-bold uppercase tracking-[0.16em] text-brand sm:text-lg">
@@ -71,22 +56,25 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Mobile/tablet: image as a normal rounded block below the text. The mockup card sits in normal flow
-            beneath the photo rather than overlapping it -- on a photo this narrow, the card (sized for a large
-            desktop panel) would otherwise cover nearly the entire image. */}
-        <div className="relative mt-12 lg:hidden">
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl">
-            <Image
-              src="/images/marketing/hero-debrief-tablet.webp"
-              alt="A student pilot and CFI reviewing a flight debrief together on a tablet beside the aircraft"
-              fill
-              className="object-cover"
-              sizes="(max-width: 1023px) 100vw, 0px"
-            />
-          </div>
-          <DebriefSummaryMockupCard className="relative z-10 mx-auto -mt-10 w-[min(320px,88%)] sm:-mt-12" />
-        </div>
       </div>
+
+      {/* One responsive hero image serves both layouts, avoiding an eager hidden desktop duplicate on mobile. */}
+      <div className="relative mx-6 mt-12 aspect-[4/3] overflow-visible lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:mt-0 lg:w-[60%] lg:aspect-auto">
+        <div className="absolute inset-0 overflow-hidden rounded-3xl lg:rounded-none">
+          <Image
+            src="/images/marketing/hero-debrief-tablet.webp"
+            alt="A student pilot and CFI reviewing a flight debrief together on a tablet beside the aircraft"
+            fill
+            priority
+            className="object-cover"
+            sizes="(min-width: 1024px) 60vw, 100vw"
+          />
+          <div className="absolute inset-y-0 left-0 hidden w-1/2 bg-gradient-to-r from-white/60 via-white/35 to-transparent lg:block" />
+        </div>
+        <DebriefSummaryMockupCard className="absolute -bottom-10 right-4 hidden w-[340px] lg:block xl:right-8" />
+        <DebriefSummaryMockupCard className="absolute -bottom-20 left-1/2 z-10 w-[min(320px,88%)] -translate-x-1/2 lg:hidden" />
+      </div>
+      <div className="h-24 lg:hidden" aria-hidden="true" />
     </section>
   );
 }

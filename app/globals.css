@@ -157,3 +157,58 @@ h1 {
     transform: translateX(-50%);
   }
 }
+
+@keyframes marketing-track-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes marketing-gauge-fill {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: var(--marketing-gauge-offset);
+  }
+}
+
+@keyframes marketing-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .marketing-track-path,
+    .marketing-track-fill,
+    .marketing-gauge-path {
+      animation-duration: 1ms;
+      animation-fill-mode: both;
+      animation-timing-function: linear;
+      animation-timeline: view(block);
+      animation-range: entry 0% entry 40%;
+    }
+
+    .marketing-track-path {
+      animation-name: marketing-track-draw;
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+    }
+
+    .marketing-track-fill {
+      animation-name: marketing-fade-in;
+    }
+
+    .marketing-gauge-path {
+      animation-name: marketing-gauge-fill;
+    }
+  }
+}

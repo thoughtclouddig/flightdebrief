@@ -1,8 +1,5 @@
-"use client";
-
-import Link from "next/link";
 import { Reveal } from "@/components/marketing/reveal";
-import { trackEvent } from "@/lib/marketing/analytics";
+import { TrackedLink } from "@/components/marketing/tracked-link";
 
 export function FinalCta() {
   return (
@@ -33,13 +30,13 @@ export function FinalCta() {
         </Reveal>
 
         <Reveal delay={150} className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Link
+          <TrackedLink
             href="/signup"
-            onClick={() => trackEvent("start_free")}
+            event="start_free"
             className="rounded-lg bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-dark"
           >
             Start Free
-          </Link>
+          </TrackedLink>
         </Reveal>
 
         <Reveal delay={250}>
