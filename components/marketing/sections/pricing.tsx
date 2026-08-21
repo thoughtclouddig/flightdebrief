@@ -49,11 +49,6 @@ export function Pricing() {
                   {tier.priceSuffix ? <span className="text-base text-[#68717D]/70">{tier.priceSuffix}</span> : null}
                 </p>
                 {tier.priceNote ? <p className="text-balance mt-1 text-base font-semibold text-brand">{tier.priceNote}</p> : null}
-                {tier.id === "pilot" ? (
-                  <p className="text-pretty mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-[#101727]">
-                    Three flights, no clock ticking &mdash; see the full loop before you subscribe.
-                  </p>
-                ) : null}
 
                 <ul className="mt-8 flex flex-1 flex-col gap-4 border-t border-[#e4e7ea] pt-8">
                   {tier.features.map((feature) => (
@@ -67,7 +62,7 @@ export function Pricing() {
                 </ul>
 
                 {tier.valueAnchor ? (
-                  <p className="text-balance mt-5 text-center text-sm font-semibold text-brand">{tier.valueAnchor}</p>
+                  <p className="text-balance mt-5 text-sm font-semibold text-brand">{tier.valueAnchor}</p>
                 ) : null}
 
                 <TrackedLink
