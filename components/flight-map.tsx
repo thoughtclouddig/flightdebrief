@@ -67,6 +67,7 @@ function DeferredMap({ track }: { track: TrackPosition[] }) {
   return (
     <div
       ref={placeholderRef}
+      data-testid="flight-map"
       aria-busy={shouldLoadMap && !mapLoaded && !mapLoadFailed}
       className="relative h-64 overflow-hidden rounded-xl border border-hairline bg-slate-50 dark:bg-slate-900/40 sm:h-80"
     >

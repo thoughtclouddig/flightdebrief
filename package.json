@@ -10,7 +10,8 @@
     "start": "NEXT_DIST_DIR=.next-build next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",
     "test": "vitest run",
-    "test:e2e:auth": "node e2e/auth-journey.mjs"
+    "test:e2e:auth": "node e2e/auth-journey.mjs",
+    "test:e2e:flight-map": "node e2e/flight-map-defer.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",
@@ -32,6 +33,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.21.0",
