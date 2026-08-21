@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AssessmentProgress } from "@/components/debrief/assessment-progress";
 import { TaskRatingCard } from "@/components/debrief/task-rating-card";
+import { formatFlightContext } from "@/lib/utils";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
 import type { AssessmentRole, FlightWithRelations } from "@/lib/types";
 
@@ -85,7 +86,7 @@ export function AssessmentForm({
       <div>
         {flight ? (
           <p className="text-sm font-medium uppercase tracking-wide text-brand">
-            {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+            {formatFlightContext(flight)}
           </p>
         ) : null}
         <h1 className="mt-1 text-2xl font-semibold text-foreground">{title}</h1>

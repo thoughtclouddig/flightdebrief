@@ -3,6 +3,7 @@ import { DebriefRecorder } from "@/components/debrief-recorder";
 import { GuidedDebriefRecorder } from "@/components/debrief/guided-debrief-recorder";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
+import { formatFlightContext } from "@/lib/utils";
 import type { FlightWithRelations } from "@/lib/types";
 
 /**
@@ -32,7 +33,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
         <div className="text-center">
           <p className="text-sm font-medium uppercase tracking-wide text-brand">Voice Debrief</p>
           <h1 className="mt-1 text-2xl font-semibold text-foreground">
-            {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+            {formatFlightContext(flight)}
           </h1>
         </div>
         <DebriefRecorder flightId={flight.id} />
@@ -96,7 +97,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
       <div className="text-center">
         <p className="text-sm font-medium uppercase tracking-wide text-brand">Guided Debrief</p>
         <h1 className="mt-1 text-2xl font-semibold text-foreground">
-          {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+          {formatFlightContext(flight)}
         </h1>
       </div>
       <GuidedDebriefRecorder flightId={flight.id} initialCards={cards} guidanceMode={guidanceMode} />

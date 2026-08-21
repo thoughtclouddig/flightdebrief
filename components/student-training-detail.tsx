@@ -22,7 +22,7 @@ import { getRepository } from "@/lib/data";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
-import { formatDurationShort } from "@/lib/utils";
+import { formatDurationShort, formatFlightContext } from "@/lib/utils";
 import type { User } from "@/lib/types";
 import type { Viewer } from "@/lib/viewer";
 
@@ -173,16 +173,22 @@ export async function StudentTrainingDetail({
             </div>
           ) : null}
 
-          {isCfiOrAdmin ? (
-            <div className="border-t border-brand/20 pt-3">
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <PlaneTakeoff className="size-3.5" /> Log a Flight
-              </p>
-              <AddFlightForm studentId={student.id} />
-            </div>
-          ) : null}
         </CardContent>
       </Card>
+
+      {isCfiOrAdmin ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PlaneTakeoff className="size-4 text-brand" />
+              Log a Flight
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AddFlightForm studentId={student.id} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       {brief.lastFlight ? (
         <Card>
@@ -194,8 +200,7 @@ export async function StudentTrainingDetail({
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {brief.lastFlight.aircraft.tailNumber} · {brief.lastFlight.departureAirport} →{" "}
-              {brief.lastFlight.arrivalAirport} · {formatDurationShort(brief.lastFlight.durationMinutes)}
+              {formatFlightContext(brief.lastFlight)} · {formatDurationShort(brief.lastFlight.durationMinutes)}
             </p>
 
             {result ? (

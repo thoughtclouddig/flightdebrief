@@ -25,7 +25,7 @@ import { getAuthorizedFlight } from "@/lib/auth/access";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { matchSkills } from "@/lib/topics";
-import { cn } from "@/lib/utils";
+import { cn, formatFlightContext } from "@/lib/utils";
 
 export default async function DebriefResultsPage(props: PageProps<"/flights/[id]/debrief/results">) {
   const { id } = await props.params;
@@ -66,7 +66,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
       <div>
         <p className="text-sm font-medium uppercase tracking-wide text-brand">Debrief Summary</p>
         <h1 className="mt-1 text-2xl font-semibold text-foreground">
-          {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+          {formatFlightContext(flight)}
         </h1>
         <p className="mt-1 text-sm text-foreground-soft">
           {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", {

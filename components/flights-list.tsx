@@ -25,7 +25,14 @@ function monthLabel(key: string): string {
  * single student's training history actually reaches; revisit with
  * server-side pagination only if that stops being true.
  */
-export function FlightsList({ flights }: { flights: FlightWithRelations[] }) {
+export function FlightsList({
+  flights,
+  studentNames,
+}: {
+  flights: FlightWithRelations[];
+  /** CFI/admin views spanning multiple students -- keyed by flight id, omitted on a single student's own flights page. */
+  studentNames?: Record<string, string>;
+}) {
   const [view, setView] = useState<ViewMode>("grid");
   const [sort, setSort] = useState<SortKey>("date-desc");
   const [month, setMonth] = useState("all");
@@ -122,13 +129,13 @@ export function FlightsList({ flights }: { flights: FlightWithRelations[] }) {
       ) : view === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2">
           {filtered.map((flight) => (
-            <FlightCard key={flight.id} flight={flight} />
+            <FlightCard key={flight.id} flight={flight} studentName={studentNames?.[flight.id]} />
           ))}
         </div>
       ) : (
         <div className="flex flex-col divide-y divide-hairline overflow-hidden rounded-xl border border-hairline">
           {filtered.map((flight) => (
-            <FlightListRow key={flight.id} flight={flight} />
+            <FlightListRow key={flight.id} flight={flight} studentName={studentNames?.[flight.id]} />
           ))}
         </div>
       )}
@@ -136,7 +143,7 @@ export function FlightsList({ flights }: { flights: FlightWithRelations[] }) {
   );
 }
 
-function FlightListRow({ flight }: { flight: FlightWithRelations }) {
+function FlightListRow({ flight, studentName }: { flight: FlightWithRelations; studentName?: string }) {
   const tone = STATUS_TONE[flight.debriefStatus];
   const href = flight.debriefStatus === "complete" ? `/flights/${flight.id}/debrief/results` : `/flights/${flight.id}`;
   const dateLabel = new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
@@ -160,6 +167,9 @@ function FlightListRow({ flight }: { flight: FlightWithRelations }) {
       <span className="hidden w-16 shrink-0 text-xs text-foreground-faint sm:block">
         {formatDurationShort(flight.durationMinutes)}
       </span>
+      {studentName ? (
+        <span className="hidden w-28 shrink-0 truncate text-xs text-foreground-faint md:block">{studentName}</span>
+      ) : null}
       <span className="ml-auto shrink-0 text-xs font-semibold uppercase tracking-wide text-brand">
         {STATUS_LABEL[flight.debriefStatus]} →
       </span>

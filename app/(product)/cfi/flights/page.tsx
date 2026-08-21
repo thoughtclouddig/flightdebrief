@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { FlightCard } from "@/components/flight-card";
+import { FlightsList } from "@/components/flights-list";
 import { buttonVariants } from "@/components/ui/button";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
@@ -12,6 +12,9 @@ export default async function CfiFlightsPage() {
   const viewer = await getViewer();
   const flights = await repo.listFlights({ instructorId: viewer.user.id });
   const students = await Promise.all(flights.map((f) => repo.getUser(f.userId)));
+  const studentNames = Object.fromEntries(
+    flights.map((flight, i) => [flight.id, students[i]?.name ?? "—"]),
+  );
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -34,11 +37,7 @@ export default async function CfiFlightsPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {flights.map((flight, i) => (
-            <FlightCard key={flight.id} flight={flight} studentName={students[i]?.name} />
-          ))}
-        </div>
+        <FlightsList flights={flights} studentNames={studentNames} />
       )}
     </div>
   );

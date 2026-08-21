@@ -25,7 +25,7 @@ function matchesFilter(entry: StudentRosterEntry, filter: Filter) {
   if (filter === "all") return true;
   if (filter === "active") return entry.status === "active";
   if (filter === "upcoming") return entry.nextReservation !== null;
-  if (filter === "needs_debrief") return entry.mostRecentFlight?.debriefStatus === "not_started";
+  if (filter === "needs_debrief") return entry.pendingFlight !== null;
   if (filter === "recently_flown") {
     if (!entry.mostRecentFlight) return false;
     const days = (Date.now() - new Date(entry.mostRecentFlight.flightDate).getTime()) / (1000 * 60 * 60 * 24);
@@ -104,20 +104,8 @@ export function StudentRosterList({ roster }: { roster: StudentRosterEntry[] }) 
                       </div>
                     ) : null}
                   </div>
-                  <Badge
-                    variant={
-                      entry.mostRecentFlight?.debriefStatus === "complete"
-                        ? "success"
-                        : entry.mostRecentFlight
-                          ? "warning"
-                          : "neutral"
-                    }
-                  >
-                    {entry.mostRecentFlight?.debriefStatus === "complete"
-                      ? "Debriefed"
-                      : entry.mostRecentFlight
-                        ? "Needs debrief"
-                        : "No flights"}
+                  <Badge variant={entry.pendingFlight ? "warning" : entry.mostRecentFlight ? "success" : "neutral"}>
+                    {entry.pendingFlight ? "Needs debrief" : entry.mostRecentFlight ? "Debriefed" : "No flights"}
                   </Badge>
                 </CardContent>
               </Card>
