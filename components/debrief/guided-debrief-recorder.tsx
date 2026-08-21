@@ -150,7 +150,7 @@ export function GuidedDebriefRecorder({
         return;
       }
       if (!res.ok) throw new Error();
-      router.push(`/flights/${flightId}/debrief/results`);
+      router.push(`/flights/${flightId}/debrief/review`);
     } catch {
       setError("Something went wrong analyzing your debrief. Please try again.");
       setPhase("recording");

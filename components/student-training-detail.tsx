@@ -47,11 +47,13 @@ export async function StudentTrainingDetail({
 }) {
   const repo = getRepository();
   const isCfiOrAdmin = viewer.role === "instructor" || viewer.role === "admin";
-  // School orgs are the ones actually running Flight Schedule Pro today --
-  // showing a second, unsynced scheduler there risks two systems drifting
-  // out of sync, not just going unused. Independent CFIs and solo accounts
-  // have no scheduling tool at all, so manual scheduling is real value there.
-  const canScheduleLessons = isCfiOrAdmin && viewer.organization.kind !== "school";
+  // Previously blocked for school orgs (the ones running Flight Schedule Pro
+  // today) over drift risk between two unsynced schedulers. Reopened at the
+  // user's explicit call -- it's now part of the normal debrief wrap-up flow
+  // for every org kind, with a caption disclosing it doesn't sync with FSP.
+  const canScheduleLessons = isCfiOrAdmin;
+  const scheduleCaption =
+    viewer.organization.kind === "school" ? "For your own planning -- this doesn't sync with Flight Schedule Pro." : undefined;
   const [flights, trainingItems, brief, signals, radioPracticeAssignments, studentNotes, aircraft] = await Promise.all([
     repo.listFlights({ studentId: student.id }),
     repo.listTrainingItems(),
@@ -167,7 +169,7 @@ export async function StudentTrainingDetail({
               )}
               {canScheduleLessons ? (
                 <div className="mt-2">
-                  <ScheduleLessonForm studentId={student.id} aircraft={aircraft} />
+                  <ScheduleLessonForm studentId={student.id} aircraft={aircraft} caption={scheduleCaption} />
                 </div>
               ) : null}
             </div>

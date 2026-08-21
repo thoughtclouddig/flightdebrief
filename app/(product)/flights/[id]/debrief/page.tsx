@@ -79,6 +79,15 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
     );
   }
 
+  // A recording already happened and got analyzed, but the CFI hasn't hit
+  // Finish on /review yet -- send both roles there instead of back into the
+  // compare/waiting/recorder branches below, so refreshing or reopening this
+  // URL mid-review is safely resumable like every other step in this flow.
+  const existingDebrief = await repo.getDebriefByFlight(id);
+  if (existingDebrief) {
+    redirect(`/flights/${id}/debrief/review`);
+  }
+
   const cards = await repo.listCards(id);
   if (!isInstructorViewer) {
     return <WaitingMessage flight={flight} text="Both assessments are in -- your instructor is starting the debrief." />;

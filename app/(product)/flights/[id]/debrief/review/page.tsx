@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { buttonVariants } from "@/components/ui/button";
 import { DebriefResultSections } from "@/components/debrief/debrief-result-sections";
+import { DebriefWrapUp } from "@/components/debrief/debrief-wrap-up";
 import { type ComparisonRow } from "@/components/debrief/comparison-table";
 import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { getRepository } from "@/lib/data";
@@ -10,7 +9,13 @@ import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { formatFlightContext } from "@/lib/utils";
 
-export default async function DebriefResultsPage(props: PageProps<"/flights/[id]/debrief/results">) {
+/**
+ * The "walk through it together" moment between recording ending and the
+ * debrief actually being finalized -- see GuidedDebriefRecorder's handleEnd,
+ * which lands here instead of /results now. Reachable by both roles (same
+ * content either way); only the CFI gets the Finish Debrief action.
+ */
+export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/debrief/review">) {
   const { id } = await props.params;
   const authorized = await getAuthorizedFlight(id);
   if (!authorized) notFound();
@@ -21,10 +26,12 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
 
   const { structuredResult: result } = debrief;
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
+  const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
 
-  const [allStudentSignals, memberships] = await Promise.all([
+  const [allStudentSignals, memberships, aircraft] = await Promise.all([
     repo.listTrainingSignals({ studentId: flight.userId }),
     repo.listMembershipsForUser(flight.userId),
+    isInstructorViewer ? repo.listAircraft(viewer.organization.id) : Promise.resolve([]),
   ]);
   const certificateType =
     memberships.find((m) => m.organizationId === flight.organizationId)?.certificateType ?? null;
@@ -34,7 +41,6 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
   const flightSkillProgressions = computeSkillProgression(allStudentSignals.filter((s) => !s.dismissed)).filter((p) =>
     flightSkills.has(p.skill),
   );
-  const canDismiss = viewer.role === "instructor" || viewer.role === "admin";
 
   const differenceRows: ComparisonRow[] = result.assessmentDifferences.map((d) => ({
     taskLabel: d.taskLabel,
@@ -47,18 +53,25 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <div>
-        <p className="text-sm font-medium uppercase tracking-wide text-brand">Debrief Summary</p>
-        <h1 className="mt-1 text-2xl font-semibold text-foreground">
-          {formatFlightContext(flight)}
-        </h1>
+        <p className="text-sm font-medium uppercase tracking-wide text-brand">Review Together</p>
+        <h1 className="mt-1 text-2xl font-semibold text-foreground">{formatFlightContext(flight)}</h1>
         <p className="mt-1 text-sm text-foreground-soft">
-          {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
+          {isInstructorViewer
+            ? "Walk through this with the student, then finish the debrief when you're both ready."
+            : "Your instructor is walking through this with you before it's finalized."}
         </p>
       </div>
+
+      {isInstructorViewer ? (
+        <DebriefWrapUp
+          flightId={flight.id}
+          studentId={flight.userId}
+          aircraft={aircraft}
+          scheduleCaption={
+            viewer.organization.kind === "school" ? "For your own planning -- this doesn't sync with Flight Schedule Pro." : undefined
+          }
+        />
+      ) : null}
 
       <DebriefResultSections
         result={result}
@@ -68,17 +81,8 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
         flightId={flight.id}
         flightSkillProgressions={flightSkillProgressions}
         certificateType={certificateType}
-        canDismiss={canDismiss}
+        canDismiss={isInstructorViewer}
       />
-
-      <div className="flex gap-2">
-        <Link href="/next-lesson" className={buttonVariants({ size: "lg", className: "flex-1" })}>
-          Go to Next-Lesson Brief
-        </Link>
-        <Link href="/dashboard" className={buttonVariants({ size: "lg", variant: "outline" })}>
-          Dashboard
-        </Link>
-      </div>
     </div>
   );
 }
