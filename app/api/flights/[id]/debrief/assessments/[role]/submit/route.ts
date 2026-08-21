@@ -4,6 +4,7 @@ import { assertAssessmentRole } from "@/lib/auth/assessment-access";
 import { getRepository } from "@/lib/data";
 import { generateDebriefCards } from "@/lib/debrief-cards/generate";
 import { computeRecentSkillHistory } from "@/lib/debrief-cards/history";
+import { notesToCardDrafts } from "@/lib/debrief-cards/notes-to-cards";
 import type { AssessmentRole } from "@/lib/types";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
 
@@ -84,5 +85,16 @@ async function generateAndPersistCards(flightId: string, studentAssessmentId: st
     lessonObjectiveTaskCode: null,
   });
 
-  await repo.createCards(drafts.map((draft) => ({ ...draft, flightId })));
+  // Open CFI notes for this student become guaranteed extra cards -- see
+  // notesToCardDrafts' doc comment. Marked done here (when they're queued
+  // into this debrief), not after the recording -- reliably tracking
+  // whether a specific card actually got discussed vs. skipped would need a
+  // note<->card link the schema doesn't have; being queued is a close enough
+  // signal, and a CFI can always re-add a note if it truly wasn't covered.
+  const openNotes = (await repo.listStudentNotes({ studentId: flight.userId })).filter((n) => !n.done);
+  const noteResults = notesToCardDrafts(openNotes, drafts.length);
+  await Promise.all(noteResults.map((r) => repo.setStudentNoteDone(r.noteId, true)));
+
+  const allDrafts = [...drafts, ...noteResults.map((r) => r.draft)];
+  await repo.createCards(allDrafts.map((draft) => ({ ...draft, flightId })));
 }

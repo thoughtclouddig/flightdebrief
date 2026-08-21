@@ -22,6 +22,7 @@ import type {
   Reservation,
   SkillObservation,
   StudentInstructor,
+  StudentNote,
   Subscription,
   TrainingItem,
   TrainingSignal,
@@ -33,6 +34,8 @@ import { buildSeed, DEMO_USER_ID } from "./seed";
 import type {
   CreateDebriefInput,
   CreateFlightInput,
+  CreateReservationInput,
+  CreateStudentNoteInput,
   ListFlightsFilter,
   ListReservationsFilter,
   ListTrainingItemsFilter,
@@ -366,6 +369,35 @@ export class PostgresRepository implements Repository {
     const db = await this.db();
     await db.query(
       "UPDATE training_items SET done = $2, completed_at = CASE WHEN $2 THEN now() ELSE NULL END WHERE id = $1",
+      [id, done],
+    );
+  }
+
+  // --- CFI-authored standing student notes ---
+
+  async listStudentNotes(filter: { studentId: string }): Promise<StudentNote[]> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      "SELECT * FROM student_notes WHERE student_id = $1 ORDER BY created_at",
+      [filter.studentId],
+    );
+    return rows.map(mapStudentNote);
+  }
+
+  async createStudentNote(input: CreateStudentNoteInput): Promise<StudentNote> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `INSERT INTO student_notes (id, organization_id, student_id, author_user_id, description)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [randomUUID(), input.organizationId, input.studentId, input.authorUserId, input.description],
+    );
+    return mapStudentNote(rows[0]);
+  }
+
+  async setStudentNoteDone(id: string, done: boolean): Promise<void> {
+    const db = await this.db();
+    await db.query(
+      "UPDATE student_notes SET done = $2, completed_at = CASE WHEN $2 THEN now() ELSE NULL END WHERE id = $1",
       [id, done],
     );
   }
@@ -845,6 +877,24 @@ export class PostgresRepository implements Repository {
     const db = await this.db();
     const { rows } = await db.query("SELECT * FROM reservations WHERE id = $1", [id]);
     return rows[0] ? mapReservation(rows[0]) : null;
+  }
+
+  async createReservation(input: CreateReservationInput): Promise<Reservation> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `INSERT INTO reservations (id, organization_id, student_id, instructor_id, aircraft_id, scheduled_start, scheduled_end)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [
+        randomUUID(),
+        input.organizationId,
+        input.studentId,
+        input.instructorId,
+        input.aircraftId,
+        input.scheduledStart,
+        input.scheduledEnd,
+      ],
+    );
+    return mapReservation(rows[0]);
   }
 
   // --- Structured training signals ---
@@ -1409,6 +1459,19 @@ function mapTrainingItem(row: Row): TrainingItem {
     done: row.done as boolean,
     completedAt: row.completed_at ? iso(row.completed_at) : null,
     visibility: (row.visibility as TrainingItem["visibility"]) ?? "shared",
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapStudentNote(row: Row): StudentNote {
+  return {
+    id: row.id as string,
+    organizationId: row.organization_id as string,
+    studentId: row.student_id as string,
+    authorUserId: row.author_user_id as string,
+    description: row.description as string,
+    done: row.done as boolean,
+    completedAt: row.completed_at ? iso(row.completed_at) : null,
     createdAt: iso(row.created_at),
   };
 }
