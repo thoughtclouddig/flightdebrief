@@ -17,8 +17,9 @@ import type { TranscriptWord } from "@/lib/transcription/types";
 
 interface AnalyzeBody {
   flightId: string;
-  transcript: string;
-  audioDurationSeconds: number;
+  /** Omit to resume a previously-saved pending transcript for this flight (see savePendingDebriefTranscript) instead of submitting a fresh recording. */
+  transcript?: string;
+  audioDurationSeconds?: number;
   /** Guided/Light mode only -- omitted defaults to "freeform" (today's behavior, unchanged). */
   guidanceMode?: DebriefGuidanceMode;
   recordingStartedAt?: string | null;
@@ -32,16 +33,40 @@ export async function POST(request: Request) {
   if (auth.response) return auth.response;
 
   const body = (await request.json()) as AnalyzeBody;
-  if (!body.flightId || !body.transcript?.trim()) {
-    return NextResponse.json({ error: "Missing flightId or transcript" }, { status: 400 });
+  if (!body.flightId) {
+    return NextResponse.json({ error: "Missing flightId" }, { status: 400 });
   }
-  const guidanceMode = body.guidanceMode ?? "freeform";
 
   const repo = getRepository();
   const flight = await repo.getFlight(body.flightId);
   if (!flight || !canAccessRecord(auth.viewer, { studentId: flight.userId, organizationId: flight.organizationId })) {
     return recordNotFound();
   }
+
+  // A fresh recording is saved as a pending transcript *before* the billing
+  // check below -- if the org is blocked, the recording the student just
+  // talked through is never discarded, only the AI analysis of it is
+  // deferred. Resuming (no transcript in the body) reads that saved row
+  // instead of requiring the student to re-record from scratch.
+  let pending: Awaited<ReturnType<typeof repo.getPendingDebriefTranscript>>;
+  if (body.transcript?.trim()) {
+    pending = await repo.savePendingDebriefTranscript({
+      flightId: flight.id,
+      transcript: body.transcript,
+      audioDurationSeconds: body.audioDurationSeconds ?? 0,
+      guidanceMode: body.guidanceMode ?? "freeform",
+      recordingStartedAt: body.recordingStartedAt ?? null,
+      recordingEndedAt: body.recordingEndedAt ?? null,
+      words: body.words ?? null,
+      cardBoundaries: body.cardBoundaries ?? null,
+    });
+  } else {
+    pending = await repo.getPendingDebriefTranscript(flight.id);
+    if (!pending) {
+      return NextResponse.json({ error: "Missing transcript, and no saved recording to resume" }, { status: 400 });
+    }
+  }
+  const guidanceMode = pending.guidanceMode;
 
   const organization = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
   if (organization && (await isBillingBlocked(repo, organization))) {
@@ -56,7 +81,7 @@ export async function POST(request: Request) {
     guidanceMode === "freeform" ? [] : await getAssessmentDifferences(flight.id);
 
   const { structured, analyzedWith } = await analyzeDebrief({
-    transcript: body.transcript,
+    transcript: pending.transcript,
     flightMeta: {
       tailNumber: flight.aircraft.tailNumber,
       aircraftType: flight.aircraft.type,
@@ -72,17 +97,18 @@ export async function POST(request: Request) {
 
   const debrief = await repo.createDebrief({
     flightId: flight.id,
-    transcript: body.transcript,
-    audioDurationSeconds: body.audioDurationSeconds ?? 0,
+    transcript: pending.transcript,
+    audioDurationSeconds: pending.audioDurationSeconds,
     structuredResult: structured,
     analyzedWith,
     guidanceMode,
-    recordingStartedAt: body.recordingStartedAt ?? null,
-    recordingEndedAt: body.recordingEndedAt ?? null,
+    recordingStartedAt: pending.recordingStartedAt,
+    recordingEndedAt: pending.recordingEndedAt,
   });
+  await repo.deletePendingDebriefTranscript(flight.id);
 
-  if (guidanceMode !== "freeform" && body.words?.length && body.cardBoundaries?.length) {
-    const segments = buildTranscriptSegments(body.words, body.cardBoundaries);
+  if (guidanceMode !== "freeform" && pending.words?.length && pending.cardBoundaries?.length) {
+    const segments = buildTranscriptSegments(pending.words, pending.cardBoundaries);
     await repo.createTranscriptSegments(
       segments.map((s) => ({
         flightId: flight.id,

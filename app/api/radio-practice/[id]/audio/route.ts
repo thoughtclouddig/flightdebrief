@@ -43,10 +43,15 @@ export async function GET(request: Request, { params }: RouteContext<"/api/radio
   const requestedVoice = new URL(request.url).searchParams.get("voice");
   const voice = requestedVoice && isValidTtsVoice(requestedVoice) ? requestedVoice : DEFAULT_TTS_VOICE;
 
+  // "private" (the URL is per-assignment and access-controlled above, so there's
+  // no shared-cache benefit to forgo) but "immutable" -- a given (scenario, voice)
+  // never changes, so the browser never needs to re-fetch it on revisit.
+  const AUDIO_CACHE_HEADERS = { "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=604800, immutable" };
+
   const cacheKey = `radio-practice:${scenario.id}:${voice}`;
   const cached = getCachedAudio(cacheKey);
   if (cached) {
-    return new NextResponse(new Uint8Array(cached), { headers: { "Content-Type": "audio/mpeg" } });
+    return new NextResponse(new Uint8Array(cached), { headers: AUDIO_CACHE_HEADERS });
   }
 
   let audio;
@@ -59,5 +64,5 @@ export async function GET(request: Request, { params }: RouteContext<"/api/radio
   }
 
   setCachedAudio(cacheKey, audio);
-  return new NextResponse(new Uint8Array(audio), { headers: { "Content-Type": "audio/mpeg" } });
+  return new NextResponse(new Uint8Array(audio), { headers: AUDIO_CACHE_HEADERS });
 }

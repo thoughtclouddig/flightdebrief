@@ -30,10 +30,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "No debriefed flight yet." }, { status: 404 });
   }
 
+  // "private" (never shared/CDN cache -- this route is per-user access-controlled,
+  // so a shared cache could serve one user's audio to another) but "immutable" --
+  // a given (flight, voice) never changes once generated, so the browser never
+  // needs to re-fetch it on revisit.
+  const AUDIO_CACHE_HEADERS = { "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=604800, immutable" };
+
   const cacheKey = `next-lesson:${lastDebriefed.id}:${voice}`;
   const cached = getCachedAudio(cacheKey);
   if (cached) {
-    return new NextResponse(new Uint8Array(cached), { headers: { "Content-Type": "audio/mpeg" } });
+    return new NextResponse(new Uint8Array(cached), { headers: AUDIO_CACHE_HEADERS });
   }
 
   const [debrief, trainingItems] = await Promise.all([
@@ -61,5 +67,5 @@ export async function GET(request: Request) {
   }
 
   setCachedAudio(cacheKey, audio);
-  return new NextResponse(new Uint8Array(audio), { headers: { "Content-Type": "audio/mpeg" } });
+  return new NextResponse(new Uint8Array(audio), { headers: AUDIO_CACHE_HEADERS });
 }

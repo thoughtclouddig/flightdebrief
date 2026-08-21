@@ -1,5 +1,5 @@
-import { cookies } from "next/headers";
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { ACTIVE_MEMBERSHIP_COOKIE, getSession } from "@/lib/auth/session";
 import * as store from "@/lib/auth/store";
 import type { Organization, OrgRole, User } from "@/lib/types";
@@ -25,6 +25,13 @@ const getOrganization = cache((organizationId: string) => store.getOrganization(
  * redirected before a page gets this far -- this is a defensive backstop,
  * not the primary guard) or if a signed-in Replit user has no matching
  * app-level user/membership yet.
+ *
+ * Wrapped in React's cache() -- nested layouts and pages each call this
+ * independently (e.g. root product layout, a nested role layout, and the
+ * page itself), which without memoization means 3 full user/membership/org
+ * DB round-trips repeated for a single request. cache() dedupes all calls
+ * within one request to a single execution; a fresh request always
+ * re-resolves (server-only, request-scoped, never leaks across requests).
  */
 export const getViewer = cache(async function getViewer(): Promise<Viewer> {
   const session = await getSession();

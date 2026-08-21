@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { createClient, LiveTranscriptionEvents, type ListenLiveClient } from "@deepgram/sdk";
+import type { ListenLiveClient } from "@deepgram/sdk";
 import type { FinishedTranscription, TranscriptionState, TranscriptWord, UseTranscription } from "./types";
 
 /**
@@ -47,6 +47,12 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
     setState((s) => ({ ...s, status: "connecting", transcript: "", interimTranscript: "", error: null }));
 
     try {
+      // Deferred until recording actually starts, not loaded just for the
+      // recorder page to render -- the SDK (and its ws/transport deps) has
+      // no reason to ship in the initial page bundle before the mic is
+      // even requested.
+      const { createClient, LiveTranscriptionEvents } = await import("@deepgram/sdk");
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
