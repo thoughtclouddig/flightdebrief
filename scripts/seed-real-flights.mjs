@@ -10,9 +10,18 @@
 //
 // Usage:
 //   FR24_API_KEY=... DATABASE_URL=... node scripts/seed-real-flights.mjs N123AB N456CD
+//   FR24_API_KEY=... DATABASE_URL=... node scripts/seed-real-flights.mjs --callsign=OXF
 //   Add --airport=KXYZ to require a different airport than the default
 //   (Falcon Aviation's home base, matching the org's existing seeded
 //   aircraft); --airport=ANY disables the filter entirely.
+//
+//   --callsign=OXF searches FR24's `callsigns` filter (confirmed as a real
+//   flight-summary parameter via FR24's own API MCP server source -- their
+//   rendered docs page didn't return readable content when fetched). Whether
+//   it accepts a bare prefix like "OXF" or requires the exact full callsign
+//   is NOT confirmed from available docs -- this is exploratory; if it comes
+//   back empty, try a full callsign (e.g. OXF123) instead of just the
+//   3-letter operator prefix.
 import pg from "pg";
 import { randomUUID } from "node:crypto";
 
@@ -34,14 +43,23 @@ if (process.env.REPLIT_DEPLOYMENT) {
 const rawArgs = process.argv.slice(2);
 const airportArg = rawArgs.find((a) => a.startsWith("--airport="));
 const requiredAirport = (airportArg ? airportArg.slice("--airport=".length) : "KFFZ").toUpperCase();
+const callsignArgs = rawArgs.filter((a) => a.startsWith("--callsign=")).map((a) => a.slice("--callsign=".length).toUpperCase());
 const tailNumbers = rawArgs.filter((a) => !a.startsWith("--")).map((t) => t.toUpperCase());
-if (tailNumbers.length === 0) {
-  console.error("Usage: node scripts/seed-real-flights.mjs <TAIL1> [TAIL2] ... [--airport=KFFZ]");
+
+// Each search term is either {mode: "registration", value} (an aircraft's
+// tail number) or {mode: "callsign", value} (an operator/flight prefix,
+// e.g. a flight school's callsign like OXF) -- see searchFlights below.
+const searchTerms = [
+  ...tailNumbers.map((value) => ({ mode: "registration", value })),
+  ...callsignArgs.map((value) => ({ mode: "callsign", value })),
+];
+if (searchTerms.length === 0) {
+  console.error("Usage: node scripts/seed-real-flights.mjs <TAIL1> [TAIL2] ... [--callsign=OXF] [--airport=KFFZ]");
   process.exit(1);
 }
 console.log(
   requiredAirport === "ANY"
-    ? "[seed-real-flights] No airport filter -- keeping every real flight found for these tail numbers."
+    ? "[seed-real-flights] No airport filter -- keeping every real flight found."
     : `[seed-real-flights] Only keeping real flights that depart or arrive at ${requiredAirport}.`,
 );
 
@@ -61,12 +79,13 @@ async function fr24Request(path, params) {
 }
 
 /** Same 14-day window FR24Provider.searchFlightsByTailNumber uses -- flight-summary requires a bounded range. */
-async function searchFlightsByTailNumber(tailNumber) {
+async function searchFlights(term) {
   const now = new Date();
   const from = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
   const toFr24Datetime = (d) => d.toISOString().replace(/\.\d{3}Z$/, "");
+  const filterParam = term.mode === "callsign" ? "callsigns" : "registrations";
   const data = await fr24Request("/api/flight-summary/full", {
-    registrations: tailNumber,
+    [filterParam]: term.value,
     flight_datetime_from: toFr24Datetime(from),
     flight_datetime_to: toFr24Datetime(now),
     limit: "10",
@@ -103,15 +122,18 @@ await client.connect();
 
 try {
   let totalCreated = 0;
-  for (const tailNumber of tailNumbers) {
-    console.log(`[seed-real-flights] Searching FR24 for ${tailNumber}...`);
-    const summaries = await searchFlightsByTailNumber(tailNumber);
+  for (const term of searchTerms) {
+    console.log(`[seed-real-flights] Searching FR24 for ${term.mode} ${term.value}...`);
+    const summaries = await searchFlights(term);
     if (summaries.length === 0) {
-      console.log(`[seed-real-flights] No flights found for ${tailNumber} in the last 14 days.`);
+      console.log(`[seed-real-flights] No flights found for ${term.mode} ${term.value} in the last 14 days.`);
       continue;
     }
 
     for (const s of summaries) {
+      // The real registration, per FR24 -- not the search term itself, since
+      // a callsign search can match multiple different real aircraft.
+      const tailNumber = (s.reg ?? term.value).toUpperCase();
       const orig = (s.orig_icao ?? "").toUpperCase();
       const dest = (s.dest_icao ?? "").toUpperCase();
       if (requiredAirport !== "ANY" && orig !== requiredAirport && dest !== requiredAirport) {
@@ -125,6 +147,12 @@ try {
       const durationMinutes = landed
         ? Math.max(1, Math.round((new Date(landed).getTime() - new Date(takeoff).getTime()) / 60000))
         : 60;
+
+      const alreadySeeded = await client.query("SELECT 1 FROM flights WHERE fr24_flight_id = $1", [s.fr24_id]);
+      if (alreadySeeded.rows.length > 0) {
+        console.log(`[seed-real-flights] ${tailNumber} / ${s.fr24_id}: already seeded, skipping.`);
+        continue;
+      }
 
       const track = await getFlightTrack(s.fr24_id);
       if (track.length === 0) {
