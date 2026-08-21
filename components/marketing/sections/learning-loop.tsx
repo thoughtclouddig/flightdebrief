@@ -55,7 +55,7 @@ export function LearningLoop() {
   return (
     <section className="bg-white px-6 py-28 sm:py-36">
       <div className="mx-auto max-w-[1320px]">
-        <Reveal className="text-center">
+        <Reveal className="mx-auto max-w-2xl text-center">
           <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Your Training Loop</p>
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             AfterFlight fits into the way you already train.

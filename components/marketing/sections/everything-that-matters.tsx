@@ -8,8 +8,8 @@ const CARDS = [
     copy: "Structured prompts guide the conversation between student and instructor so the important parts of the flight don't disappear when the debrief ends.",
     visual: (
       <PhotoVisual
-        src="/images/marketing/debrief-lounge-screen.webp"
-        alt="A student pilot and CFI debriefing together immediately after a flight"
+        src="/images/marketing/debrief-conference-room.webp"
+        alt="A CFI and student pilot reviewing a debrief summary together, with the flight's key takeaways and action items shown on a screen behind them"
       />
     ),
   },
