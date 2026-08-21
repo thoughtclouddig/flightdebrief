@@ -68,12 +68,21 @@ const ORG_FALCON_ID = "org-falcon";
 const INSTRUCTOR_ID = "user-danny"; // Danny -- Falcon's seeded CFI
 const STUDENT_ID = "user-andy"; // Andy -- Falcon's seeded student, already linked to Danny
 
-async function fr24Request(path, params) {
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Retries 429s with backoff (1s, 2s, 4s, 8s) -- flight-tracks calls easily trip FR24's rate limit when a tail number has many real flights. */
+async function fr24Request(path, params, attempt = 0) {
   const url = new URL(path, FR24_BASE_URL);
   for (const [key, value] of Object.entries(params ?? {})) url.searchParams.set(key, value);
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${fr24ApiKey}`, Accept: "application/json", "Accept-Version": "v1" },
   });
+  if (res.status === 429 && attempt < 4) {
+    const waitMs = 1000 * 2 ** attempt;
+    console.log(`[seed-real-flights] Rate limited, waiting ${waitMs}ms before retrying...`);
+    await sleep(waitMs);
+    return fr24Request(path, params, attempt + 1);
+  }
   if (!res.ok) throw new Error(`FR24 request failed (${res.status}): ${await res.text()}`);
   return res.json();
 }
@@ -154,7 +163,22 @@ try {
         continue;
       }
 
-      const track = await getFlightTrack(s.fr24_id);
+      // Small pacing delay before each track fetch -- proactive, on top of
+      // fr24Request's reactive 429 backoff, since a single tail number with
+      // many real flights (a busy training aircraft) can otherwise fire off
+      // a dozen track requests back to back.
+      await sleep(400);
+
+      let track;
+      try {
+        track = await getFlightTrack(s.fr24_id);
+      } catch (err) {
+        // One flight failing (rate limit exhausted after retries, or any
+        // other transient FR24 error) should not kill the whole batch --
+        // log it and move on to the next real flight.
+        console.error(`[seed-real-flights] ${tailNumber} / ${s.fr24_id}: track fetch failed (${err.message}), skipping.`);
+        continue;
+      }
       if (track.length === 0) {
         console.log(`[seed-real-flights] ${tailNumber} / ${s.fr24_id}: no track points returned, skipping.`);
         continue;
