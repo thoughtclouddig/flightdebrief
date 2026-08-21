@@ -9,6 +9,7 @@ import type { FlightWithRelations } from "@/lib/types";
 
 type SortKey = "date-desc" | "date-asc";
 type ViewMode = "grid" | "list";
+type StatusFilter = "all" | "pending" | "done";
 
 function monthKey(flightDate: string): string {
   return flightDate.slice(0, 7); // "YYYY-MM"
@@ -37,6 +38,7 @@ export function FlightsList({
   const [sort, setSort] = useState<SortKey>("date-desc");
   const [month, setMonth] = useState("all");
   const [airport, setAirport] = useState("all");
+  const [status, setStatus] = useState<StatusFilter>("all");
 
   const months = useMemo(() => {
     const keys = Array.from(new Set(flights.map((f) => monthKey(f.flightDate)))).sort().reverse();
@@ -54,16 +56,34 @@ export function FlightsList({
 
   const filtered = useMemo(() => {
     let result = flights;
+    if (status === "pending") result = result.filter((f) => f.debriefStatus !== "complete");
+    if (status === "done") result = result.filter((f) => f.debriefStatus === "complete");
     if (month !== "all") result = result.filter((f) => monthKey(f.flightDate) === month);
     if (airport !== "all") result = result.filter((f) => f.departureAirport === airport || f.arrivalAirport === airport);
     result = [...result].sort((a, b) =>
       sort === "date-desc" ? b.flightDate.localeCompare(a.flightDate) : a.flightDate.localeCompare(b.flightDate),
     );
     return result;
-  }, [flights, month, airport, sort]);
+  }, [flights, status, month, airport, sort]);
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex rounded-lg border border-hairline bg-surface p-0.5 sm:self-start">
+        {(["all", "pending", "done"] as StatusFilter[]).map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setStatus(s)}
+            aria-pressed={status === s}
+            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors sm:flex-none ${
+              status === s ? "bg-brand text-white" : "text-foreground-faint hover:text-foreground"
+            }`}
+          >
+            {s === "all" ? "All" : s === "pending" ? "Pending" : "Debriefed"}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <select
           value={month}

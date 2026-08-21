@@ -27,9 +27,16 @@ export function formatFlightDate(flightDate: string) {
 /**
  * Shared "which flight is this" line shown on every debrief screen (waiting
  * room, task picker, both assessment forms, results). Always includes the
- * date -- a bare tail number/route is ambiguous once a student has more than
- * one flight on the same aircraft, which real seeded flight data hits fast.
+ * date AND duration -- a bare tail number/route is ambiguous once a student
+ * has more than one flight on the same aircraft (even same day), which real
+ * seeded flight data hits fast.
  */
-export function formatFlightContext(flight: { aircraft: { tailNumber: string }; departureAirport: string; arrivalAirport: string; flightDate: string }) {
-  return `${flight.aircraft.tailNumber} · ${flight.departureAirport} → ${flight.arrivalAirport} · ${formatFlightDate(flight.flightDate)}`;
+export function formatFlightContext(flight: {
+  aircraft: { tailNumber: string };
+  departureAirport: string;
+  arrivalAirport: string;
+  flightDate: string;
+  durationMinutes: number;
+}) {
+  return `${flight.aircraft.tailNumber} · ${flight.departureAirport} → ${flight.arrivalAirport} · ${formatFlightDate(flight.flightDate)} · ${formatDurationShort(flight.durationMinutes)}`;
 }

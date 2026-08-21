@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { AssessmentForm } from "@/components/debrief/assessment-form";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { formatFlightContext } from "@/lib/utils";
 
 export default async function InstructorAssessmentPage(props: PageProps<"/flights/[id]/debrief/instructor-assessment">) {
@@ -19,6 +20,7 @@ export default async function InstructorAssessmentPage(props: PageProps<"/flight
   if (assessment?.status === "submitted") {
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
+        <AutoRefresh />
         <p className="text-sm font-medium uppercase tracking-wide text-brand">
           {formatFlightContext(flight)}
         </p>
