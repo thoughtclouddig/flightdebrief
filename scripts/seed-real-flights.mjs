@@ -10,6 +10,9 @@
 //
 // Usage:
 //   FR24_API_KEY=... DATABASE_URL=... node scripts/seed-real-flights.mjs N123AB N456CD
+//   Add --airport=KXYZ to require a different airport than the default
+//   (Falcon Aviation's home base, matching the org's existing seeded
+//   aircraft); --airport=ANY disables the filter entirely.
 import pg from "pg";
 import { randomUUID } from "node:crypto";
 
@@ -28,11 +31,19 @@ if (process.env.REPLIT_DEPLOYMENT) {
   process.exit(1);
 }
 
-const tailNumbers = process.argv.slice(2).map((t) => t.toUpperCase());
+const rawArgs = process.argv.slice(2);
+const airportArg = rawArgs.find((a) => a.startsWith("--airport="));
+const requiredAirport = (airportArg ? airportArg.slice("--airport=".length) : "KFFZ").toUpperCase();
+const tailNumbers = rawArgs.filter((a) => !a.startsWith("--")).map((t) => t.toUpperCase());
 if (tailNumbers.length === 0) {
-  console.error("Usage: node scripts/seed-real-flights.mjs <TAIL1> [TAIL2] ...");
+  console.error("Usage: node scripts/seed-real-flights.mjs <TAIL1> [TAIL2] ... [--airport=KFFZ]");
   process.exit(1);
 }
+console.log(
+  requiredAirport === "ANY"
+    ? "[seed-real-flights] No airport filter -- keeping every real flight found for these tail numbers."
+    : `[seed-real-flights] Only keeping real flights that depart or arrive at ${requiredAirport}.`,
+);
 
 const FR24_BASE_URL = "https://fr24api.flightradar24.com";
 const ORG_FALCON_ID = "org-falcon";
@@ -101,6 +112,13 @@ try {
     }
 
     for (const s of summaries) {
+      const orig = (s.orig_icao ?? "").toUpperCase();
+      const dest = (s.dest_icao ?? "").toUpperCase();
+      if (requiredAirport !== "ANY" && orig !== requiredAirport && dest !== requiredAirport) {
+        console.log(`[seed-real-flights] ${tailNumber} / ${s.fr24_id}: ${orig || "?"}->${dest || "?"} does not touch ${requiredAirport}, skipping.`);
+        continue;
+      }
+
       const takeoff = s.datetime_takeoff ?? null;
       const landed = s.datetime_landed ?? null;
       if (!takeoff) continue; // no real timing data to build a Flight from
