@@ -24,25 +24,34 @@ export function buildNextLessonNarration(input: NextLessonNarrationInput): strin
     month: "long",
     day: "numeric",
   });
-  lines.push(`Hi ${input.studentFirstName}, here's your brief before today's flight.`);
+
+  // Lead with the focus, not a status readout -- this is meant to be heard
+  // once, driving to the airport, and land on "here's what today is about,"
+  // not feel like a bullet list read aloud. The encouragement is specific to
+  // what they're actually working on, not a generic sign-off.
+  lines.push(`Hey ${input.studentFirstName}, quick brief before you fly.`);
+
+  if (input.focus.length > 0) {
+    lines.push(`Today's about ${speakList(input.focus)} -- that's your main focus up there.`);
+  }
 
   if (input.whatWeDid.length > 0) {
-    lines.push(`Last time, on ${dateLabel}, you worked on ${speakList(input.whatWeDid)}.`);
+    lines.push(`Last time, on ${dateLabel}, you worked on ${speakList(input.whatWeDid)}, and that's carrying forward.`);
   }
 
   if (input.keepWorkingOn.length > 0) {
-    lines.push(`Your instructor wants you to keep working on ${speakList(input.keepWorkingOn)}.`);
+    lines.push(`Keep an eye on ${speakList(input.keepWorkingOn)} -- you're already making progress there.`);
   }
 
   if (input.beforeToday.length > 0) {
-    lines.push(`Before you fly today: ${speakList(input.beforeToday)}.`);
+    lines.push(`One more thing before you go: ${speakList(input.beforeToday)}.`);
   }
 
-  if (input.focus.length > 0) {
-    lines.push(`Today's focus is ${speakList(input.focus)}.`);
-  }
-
-  lines.push("Good luck out there.");
+  lines.push(
+    input.focus.length > 0
+      ? `You know what you're working on. Fly it deliberately, and you'll walk away better than you started.`
+      : `You've prepared for this. Fly it deliberately, and you'll walk away better than you started.`,
+  );
 
   return lines.join(" ");
 }

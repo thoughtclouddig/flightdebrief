@@ -76,7 +76,7 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
       </div>
 
       {hasPendingDebrief && flight.debriefStatus !== "complete" ? (
-        <Card className="border-brand/30 bg-brand/5 dark:bg-brand/10">
+        <Card>
           <CardContent className="py-4 text-sm text-foreground-soft">
             You have a debrief recording ready to analyze -- pick up right where you left off, no need to
             re-record.

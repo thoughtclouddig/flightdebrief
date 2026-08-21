@@ -68,14 +68,14 @@ export function FlightsList({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex rounded-lg border border-hairline bg-surface p-0.5 sm:self-start">
+      <div className="flex rounded-md border border-hairline bg-surface p-0.5 sm:self-start">
         {(["all", "pending", "done"] as StatusFilter[]).map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => setStatus(s)}
             aria-pressed={status === s}
-            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors sm:flex-none ${
+            className={`flex-1 rounded px-3 py-1.5 text-xs font-medium capitalize transition-colors sm:flex-none ${
               status === s ? "bg-brand text-white" : "text-foreground-faint hover:text-foreground"
             }`}
           >
@@ -88,7 +88,7 @@ export function FlightsList({
         <select
           value={month}
           onChange={(e) => setMonth(e.target.value)}
-          className="h-9 rounded-lg border border-hairline bg-surface px-2.5 text-xs text-foreground"
+          className="h-9 rounded-md border border-hairline bg-surface px-2.5 text-xs text-foreground"
         >
           <option value="all">All months</option>
           {months.map((m) => (
@@ -101,7 +101,7 @@ export function FlightsList({
         <select
           value={airport}
           onChange={(e) => setAirport(e.target.value)}
-          className="h-9 rounded-lg border border-hairline bg-surface px-2.5 text-xs text-foreground"
+          className="h-9 rounded-md border border-hairline bg-surface px-2.5 text-xs text-foreground"
         >
           <option value="all">All airports</option>
           {airports.map((a) => (
@@ -114,19 +114,19 @@ export function FlightsList({
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortKey)}
-          className="h-9 rounded-lg border border-hairline bg-surface px-2.5 text-xs text-foreground"
+          className="h-9 rounded-md border border-hairline bg-surface px-2.5 text-xs text-foreground"
         >
           <option value="date-desc">Newest first</option>
           <option value="date-asc">Oldest first</option>
         </select>
 
-        <div className="ml-auto flex rounded-lg border border-hairline bg-surface p-0.5">
+        <div className="ml-auto flex rounded-md border border-hairline bg-surface p-0.5">
           <button
             type="button"
             onClick={() => setView("grid")}
             aria-label="Grid view"
             aria-pressed={view === "grid"}
-            className={`flex size-8 items-center justify-center rounded-md ${view === "grid" ? "bg-brand text-white" : "text-foreground-faint hover:text-foreground"}`}
+            className={`flex size-8 items-center justify-center rounded ${view === "grid" ? "bg-brand text-white" : "text-foreground-faint hover:text-foreground"}`}
           >
             <LayoutGrid className="size-4" />
           </button>
@@ -135,7 +135,7 @@ export function FlightsList({
             onClick={() => setView("list")}
             aria-label="List view"
             aria-pressed={view === "list"}
-            className={`flex size-8 items-center justify-center rounded-md ${view === "list" ? "bg-brand text-white" : "text-foreground-faint hover:text-foreground"}`}
+            className={`flex size-8 items-center justify-center rounded ${view === "list" ? "bg-brand text-white" : "text-foreground-faint hover:text-foreground"}`}
           >
             <List className="size-4" />
           </button>
@@ -143,7 +143,7 @@ export function FlightsList({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-hairline p-10 text-center text-foreground-soft">
+        <div className="rounded-lg border border-dashed border-hairline p-10 text-center text-foreground-soft">
           No flights match these filters.
         </div>
       ) : view === "grid" ? (
@@ -153,7 +153,7 @@ export function FlightsList({
           ))}
         </div>
       ) : (
-        <div className="flex flex-col divide-y divide-hairline overflow-hidden rounded-xl border border-hairline">
+        <div className="flex flex-col divide-y divide-hairline overflow-hidden rounded-lg border border-hairline">
           {filtered.map((flight) => (
             <FlightListRow key={flight.id} flight={flight} studentName={studentNames?.[flight.id]} />
           ))}
@@ -179,18 +179,18 @@ function FlightListRow({ flight, studentName }: { flight: FlightWithRelations; s
         style={{ background: tone === "open" ? "var(--brand)" : "var(--good)" }}
         aria-hidden="true"
       />
-      <span className="w-24 shrink-0 text-xs text-foreground-faint">{dateLabel}</span>
-      <span className="w-28 shrink-0 font-display text-sm font-bold uppercase text-foreground">
+      <span className="w-20 shrink-0 text-xs text-foreground-faint">{dateLabel}</span>
+      <span className="w-24 shrink-0 font-display text-sm font-bold uppercase text-foreground">
         {flight.departureAirport} → {flight.arrivalAirport}
       </span>
-      <span className="hidden w-20 shrink-0 text-xs text-foreground-faint sm:block">{flight.aircraft.tailNumber}</span>
-      <span className="hidden w-16 shrink-0 text-xs text-foreground-faint sm:block">
+      <span className="hidden w-20 shrink-0 text-xs text-foreground-faint lg:block">{flight.aircraft.tailNumber}</span>
+      <span className="hidden w-16 shrink-0 text-xs text-foreground-faint lg:block">
         {formatDurationShort(flight.durationMinutes)}
       </span>
       {studentName ? (
-        <span className="hidden w-28 shrink-0 truncate text-xs text-foreground-faint md:block">{studentName}</span>
+        <span className="hidden w-28 shrink-0 truncate text-xs text-foreground-faint lg:block">{studentName}</span>
       ) : null}
-      <span className="ml-auto shrink-0 text-xs font-semibold uppercase tracking-wide text-brand">
+      <span className="ml-auto shrink-0 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-brand">
         {STATUS_LABEL[flight.debriefStatus]} →
       </span>
     </Link>

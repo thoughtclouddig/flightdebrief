@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarPlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { localIsoDate } from "@/lib/date";
 import type { Aircraft } from "@/lib/types";
+
+/** Tomorrow, not today -- a CFI scheduling from the wrap-up flow is planning the *next* lesson, not repeating today's. */
+function defaultLessonDate(): string {
+  return localIsoDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
+}
 
 /** CFI/admin-only "schedule a lesson" affordance -- see Repository.createReservation's doc comment. */
 export function ScheduleLessonForm({
@@ -29,8 +35,8 @@ export function ScheduleLessonForm({
   const router = useRouter();
   const [open, setOpen] = useState(Boolean(autoOpen));
   const [aircraftId, setAircraftId] = useState(aircraft[0]?.id ?? "");
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
+  const [date, setDate] = useState(defaultLessonDate);
+  const [startTime, setStartTime] = useState("09:00");
   const [durationMinutes, setDurationMinutes] = useState(90);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,13 +90,15 @@ export function ScheduleLessonForm({
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="min-h-11 flex-1 rounded-lg border border-slate-200 bg-transparent px-3 py-2 text-sm dark:border-white/10"
+          style={{ accentColor: "var(--brand)" }}
+          className="min-h-11 flex-1 rounded-lg border border-slate-200 bg-transparent px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:text-white dark:[color-scheme:dark]"
         />
         <input
           type="time"
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
-          className="min-h-11 flex-1 rounded-lg border border-slate-200 bg-transparent px-3 py-2 text-sm dark:border-white/10"
+          style={{ accentColor: "var(--brand)" }}
+          className="min-h-11 flex-1 rounded-lg border border-slate-200 bg-transparent px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:text-white dark:[color-scheme:dark]"
         />
       </div>
       <div className="flex gap-2">

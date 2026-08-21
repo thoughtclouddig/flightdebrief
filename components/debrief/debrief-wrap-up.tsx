@@ -50,7 +50,7 @@ export function DebriefWrapUp({
 
   if (stage === "schedule") {
     return (
-      <div className="flex flex-col gap-3 rounded-2xl border border-brand/30 bg-brand/5 p-4 dark:bg-brand/10">
+      <div className="flex flex-col gap-3 rounded-lg border border-hairline bg-surface p-4">
         <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <CheckCircle2 className="size-4 text-good" /> Debrief finished. Schedule the next lesson?
         </p>

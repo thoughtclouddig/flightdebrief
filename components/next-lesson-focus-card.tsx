@@ -1,11 +1,10 @@
 import { CheckSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 /** Numbered "Today's Suggested Focus" / "Next Flight Brief" card -- shared by the real app and marketing demos. */
 export function NextLessonFocusCard({ title = "Today's Suggested Focus", items, className }: { title?: string; items: string[]; className?: string }) {
   return (
-    <Card className={cn("border-brand/30 bg-brand/5", className)}>
+    <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CheckSquare className="size-4 text-brand" />

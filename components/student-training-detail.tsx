@@ -70,6 +70,9 @@ export async function StudentTrainingDetail({
   const debriefedFlights = [...flights]
     .filter((f) => f.debriefStatus === "complete")
     .sort((a, b) => b.flightDate.localeCompare(a.flightDate));
+  const pendingFlight = [...flights]
+    .filter((f) => f.debriefStatus !== "complete")
+    .sort((a, b) => b.flightDate.localeCompare(a.flightDate))[0];
 
   const timeline = await Promise.all(
     debriefedFlights.map(async (flight) => ({ flight, debrief: await repo.getDebriefByFlight(flight.id) })),
@@ -250,7 +253,7 @@ export async function StudentTrainingDetail({
         ) : null}
       </div>
 
-      <Card className="border-brand/30 bg-brand/5 dark:bg-brand/10">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckSquare className="size-4 text-brand" />
@@ -273,7 +276,23 @@ export async function StudentTrainingDetail({
               </ol>
             </div>
           ) : (
-            <p className="text-sm text-slate-400">No objectives set for the next lesson yet.</p>
+            <div>
+              <p className="text-sm text-slate-400">
+                No objectives for this lesson -- these come from the last debrief.
+              </p>
+              {pendingFlight ? (
+                <Link href={`/flights/${pendingFlight.id}`} className="mt-1 inline-block text-sm font-medium text-brand hover:underline">
+                  Debrief {formatFlightContext(pendingFlight)} to set them →
+                </Link>
+              ) : (
+                <Link
+                  href={`/flights/new?studentId=${student.id}`}
+                  className="mt-1 inline-block text-sm font-medium text-brand hover:underline"
+                >
+                  Log a flight to get started →
+                </Link>
+              )}
+            </div>
           )}
           {brief.beforeFlightItems.length > 0 ? (
             <div>

@@ -68,7 +68,7 @@ export function AssignRadioPracticeCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {showSuggestion ? (
-          <div className="flex items-start gap-2 rounded-xl border border-brand/30 bg-brand/5 px-3 py-2.5 dark:bg-brand/10">
+          <div className="flex items-start gap-2 rounded-lg border border-hairline bg-surface-sunken px-3 py-2.5">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-brand" />
             <div className="flex-1">
               <p className="text-sm text-foreground">

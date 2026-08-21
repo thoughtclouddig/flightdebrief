@@ -94,6 +94,18 @@ export function StudentRosterList({ roster }: { roster: StudentRosterEntry[] }) 
                         ? `Last flew ${new Date(entry.mostRecentFlight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${formatDurationShort(entry.mostRecentFlight.durationMinutes)}`
                         : "No flights yet"}
                     </p>
+                    {entry.nextReservation ? (
+                      <p className="mt-0.5 text-sm font-medium text-brand">
+                        Next:{" "}
+                        {new Date(entry.nextReservation.scheduledStart).toLocaleString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    ) : null}
                     {entry.currentFocus.length > 0 ? (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {entry.currentFocus.slice(0, 3).map((f, i) => (

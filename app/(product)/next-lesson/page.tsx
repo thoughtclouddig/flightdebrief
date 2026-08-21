@@ -137,9 +137,12 @@ export default async function NextLessonPage() {
 
       {brief.focusAreas.length > 0 ? <NextLessonFocusCard items={brief.focusAreas} /> : null}
 
-      <Link href="/flights/new" className={buttonVariants({ size: "lg" })}>
-        Start Today&rsquo;s Flight
-      </Link>
+      <div className="flex flex-col items-center gap-1.5">
+        <Link href="/flights/new" className={buttonVariants({ size: "lg", className: "w-full" })}>
+          Log Today&rsquo;s Flight
+        </Link>
+        <p className="text-xs text-foreground-faint">After you land -- this isn&rsquo;t a pre-flight step.</p>
+      </div>
     </div>
   );
 }
