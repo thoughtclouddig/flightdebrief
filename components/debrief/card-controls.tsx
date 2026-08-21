@@ -56,7 +56,7 @@ export function CardControls({
             Next <ChevronRight className="size-4" />
           </Button>
         ) : null}
-        <Button variant="destructive" onClick={onEnd} disabled={disabled} className="flex-1">
+        <Button variant={isLast ? "default" : "outline"} onClick={onEnd} disabled={disabled} className="flex-1">
           <Square className="size-4" /> End Debrief
         </Button>
       </div>

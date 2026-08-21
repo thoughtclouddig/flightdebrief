@@ -13,19 +13,14 @@ interface CreateReservationBody {
  * App-originated reservation scheduling -- see the doc comment on
  * Repository.createReservation. Instructor/admin only; the calling CFI is
  * always the reservation's instructor (scheduling on behalf of a colleague
- * is out of scope for this pass). Disabled for school orgs -- they're the
- * ones actually running Flight Schedule Pro today, and a second, unsynced
- * scheduler there risks two systems drifting out of sync (see
- * components/student-training-detail.tsx's canScheduleLessons, which hides
- * the button; this is the server-side half of that same rule).
+ * is out of scope for this pass). Available for every org kind, including
+ * schools -- see components/student-training-detail.tsx's canScheduleLessons
+ * doc comment for why the earlier school-org block was lifted.
  */
 export async function POST(request: Request) {
   const auth = await authorize(["instructor", "admin"]);
   if (auth.response) return auth.response;
   const viewer = auth.viewer;
-  if (viewer.organization.kind === "school") {
-    return NextResponse.json({ error: "Not available for this organization." }, { status: 403 });
-  }
 
   const body = (await request.json()) as CreateReservationBody;
   if (!body.studentId || !body.aircraftId || !body.scheduledStart || !body.scheduledEnd) {

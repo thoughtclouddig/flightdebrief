@@ -19,7 +19,7 @@ import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeDebriefProgress } from "@/lib/debrief-progress";
 import { suggestStudyReferences } from "@/lib/topics";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
-import { formatDurationShort } from "@/lib/utils";
+import { formatDurationShort, formatFlightContext } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -124,36 +124,31 @@ export default async function StudentHomePage() {
       ) : null}
 
       {pendingFlight && pendingProgress ? (
-        <Card className="border-brand/30 bg-brand/5 dark:bg-brand/10">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PlaneTakeoff className="size-4 text-brand" />
-              {pendingProgress.stage === "awaiting_student_assessment" ? "Needs Your Input" : "Debrief In Progress"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between gap-4">
-            <div>
-              <p className="font-medium text-foreground">
-                {pendingFlight.departureAirport} → {pendingFlight.arrivalAirport} · {pendingFlight.aircraft.tailNumber}
-              </p>
-              <p className="text-sm text-foreground-soft">
-                {pendingProgress.stage === "awaiting_tasks" || pendingProgress.stage === "awaiting_instructor_assessment"
-                  ? "Waiting on your instructor."
-                  : pendingProgress.stage === "awaiting_student_assessment"
-                    ? "Your instructor submitted their assessment -- your turn."
-                    : "Both assessments are in -- your instructor is starting the debrief."}
-              </p>
-            </div>
-            {pendingProgress.stage === "awaiting_student_assessment" ? (
-              <Link
-                href={`/flights/${pendingFlight.id}/debrief/self-assessment`}
-                className={buttonVariants({ size: "sm" })}
-              >
-                Do it now
-              </Link>
-            ) : null}
-          </CardContent>
-        </Card>
+        <Link href={`/flights/${pendingFlight.id}/debrief`} className="block">
+          <Card className="border-brand/30 bg-brand/5 transition-colors hover:bg-brand/10 dark:bg-brand/10 dark:hover:bg-brand/15">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PlaneTakeoff className="size-4 text-brand" />
+                {pendingProgress.stage === "awaiting_student_assessment" ? "Needs Your Input" : "Debrief In Progress"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-medium text-foreground">{formatFlightContext(pendingFlight)}</p>
+                <p className="text-sm text-foreground-soft">
+                  {pendingProgress.stage === "awaiting_tasks" || pendingProgress.stage === "awaiting_instructor_assessment"
+                    ? "Waiting on your instructor."
+                    : pendingProgress.stage === "awaiting_student_assessment"
+                      ? "Your instructor submitted their assessment -- your turn."
+                      : "Both assessments are in -- your instructor is starting the debrief."}
+                </p>
+              </div>
+              {pendingProgress.stage === "awaiting_student_assessment" ? (
+                <span className={buttonVariants({ size: "sm" })}>Do it now</span>
+              ) : null}
+            </CardContent>
+          </Card>
+        </Link>
       ) : null}
 
       {brief.lastFlight ? (

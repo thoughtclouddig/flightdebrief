@@ -3,6 +3,7 @@ import { DebriefRecorder } from "@/components/debrief-recorder";
 import { GuidedDebriefRecorder } from "@/components/debrief/guided-debrief-recorder";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
+import { formatFlightContext } from "@/lib/utils";
 import type { FlightWithRelations } from "@/lib/types";
 
 /**
@@ -32,7 +33,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
         <div className="text-center">
           <p className="text-sm font-medium uppercase tracking-wide text-brand">Voice Debrief</p>
           <h1 className="mt-1 text-2xl font-semibold text-foreground">
-            {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+            {formatFlightContext(flight)}
           </h1>
         </div>
         <DebriefRecorder flightId={flight.id} />
@@ -78,6 +79,15 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
     );
   }
 
+  // A recording already happened and got analyzed, but the CFI hasn't hit
+  // Finish on /review yet -- send both roles there instead of back into the
+  // compare/waiting/recorder branches below, so refreshing or reopening this
+  // URL mid-review is safely resumable like every other step in this flow.
+  const existingDebrief = await repo.getDebriefByFlight(id);
+  if (existingDebrief) {
+    redirect(`/flights/${id}/debrief/review`);
+  }
+
   const cards = await repo.listCards(id);
   if (!isInstructorViewer) {
     return <WaitingMessage flight={flight} text="Both assessments are in -- your instructor is starting the debrief." />;
@@ -96,7 +106,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
       <div className="text-center">
         <p className="text-sm font-medium uppercase tracking-wide text-brand">Guided Debrief</p>
         <h1 className="mt-1 text-2xl font-semibold text-foreground">
-          {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+          {formatFlightContext(flight)}
         </h1>
       </div>
       <GuidedDebriefRecorder flightId={flight.id} initialCards={cards} guidanceMode={guidanceMode} />

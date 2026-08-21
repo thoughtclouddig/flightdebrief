@@ -6,8 +6,9 @@ import { CfiStudentCard } from "@/components/cfi-student-card";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { attentionReasons, computeInstructorRoster, computeNextLessonBrief } from "@/lib/training-memory";
-import { computeDebriefProgress } from "@/lib/debrief-progress";
+import { computeDebriefProgress, debriefStageLabel } from "@/lib/debrief-progress";
 import { localIsoDate } from "@/lib/date";
+import { formatFlightContext } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -51,17 +52,25 @@ export default async function CfiTodayPage() {
     }),
   );
 
-  const needingAttention = (
-    await Promise.all(
-      roster.map(async (entry) => {
-        const progress =
-          entry.mostRecentFlight && entry.mostRecentFlight.debriefStatus !== "complete"
-            ? await computeDebriefProgress(repo, entry.mostRecentFlight)
-            : undefined;
-        return { entry, reasons: attentionReasons(entry, progress) };
-      }),
-    )
-  ).filter(({ reasons }) => reasons.length > 0);
+  const rosterWithProgress = await Promise.all(
+    roster.map(async (entry) => ({
+      entry,
+      progress: entry.pendingFlight ? await computeDebriefProgress(repo, entry.pendingFlight) : undefined,
+    })),
+  );
+
+  // Split out anything actively moving through the debrief flow (tasks
+  // already picked, at least one assessment in) into its own section so it
+  // reads the same way the student's own "Debrief In Progress" home card
+  // does -- otherwise this state was only visible as one generic badge
+  // buried in "Needing Attention", easy to miss after a student submits.
+  const debriefInProgress = rosterWithProgress.filter(
+    ({ progress }) => progress && progress.stage !== "awaiting_tasks",
+  );
+  const needingAttention = rosterWithProgress
+    .filter(({ progress }) => !progress || progress.stage === "awaiting_tasks")
+    .map(({ entry, progress }) => ({ entry, reasons: attentionReasons(entry, progress) }))
+    .filter(({ reasons }) => reasons.length > 0);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -97,6 +106,32 @@ export default async function CfiTodayPage() {
         )}
       </div>
 
+      {debriefInProgress.length > 0 ? (
+        <div>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <PlaneTakeoff className="size-4 text-brand" />
+            Debrief In Progress
+          </h2>
+          <Card>
+            <CardContent className="flex flex-col gap-3">
+              {debriefInProgress.map(({ entry, progress }) => (
+                <Link
+                  key={entry.student.id}
+                  href={`/flights/${entry.pendingFlight!.id}/debrief`}
+                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 -mx-2 hover:bg-slate-50 dark:hover:bg-white/5"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{entry.student.name}</p>
+                    <p className="text-xs text-slate-400">{formatFlightContext(entry.pendingFlight!)}</p>
+                  </div>
+                  <Badge variant="outline">{debriefStageLabel(progress!)}</Badge>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
       {needingAttention.length > 0 ? (
         <div>
           <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -126,7 +161,7 @@ export default async function CfiTodayPage() {
         </div>
       ) : null}
 
-      {cards.length === 0 && needingAttention.length === 0 ? (
+      {cards.length === 0 && debriefInProgress.length === 0 && needingAttention.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-10 text-center text-slate-400">
           <PlaneTakeoff className="size-8" />
           <p className="text-sm">All caught up. Nothing scheduled and no open items.</p>

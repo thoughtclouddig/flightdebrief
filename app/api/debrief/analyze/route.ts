@@ -130,7 +130,14 @@ export async function POST(request: Request) {
     );
   }
 
-  await repo.setFlightDebriefStatus(flight.id, "complete");
+  // Guided/light mode holds off marking the flight complete here -- the CFI
+  // still needs to walk through the generated debrief with the student and
+  // hit "Finish" on /review (see app/api/flights/[id]/debrief/finish/route.ts)
+  // before it's final. Freeform mode has no review step, so it keeps the old
+  // immediate-complete behavior.
+  if (guidanceMode === "freeform") {
+    await repo.setFlightDebriefStatus(flight.id, "complete");
+  }
 
   // Before adding this debrief's own new items, check whether its wentWell
   // content resolves any still-open item from an earlier flight -- run here

@@ -124,6 +124,15 @@ export interface StudentRosterEntry {
   status: "active" | "inactive";
   isPrimary: boolean;
   mostRecentFlight: FlightWithRelations | null;
+  /**
+   * The most recent flight that ISN'T debriefed yet, independent of
+   * mostRecentFlight -- a CFI backfilling an older flight (e.g. real FR24
+   * data logged after the fact) means the newest flight by date can easily
+   * already be complete while an older one still sits mid-debrief. Without
+   * this split, attentionReasons() below silently loses track of any pending
+   * flight that isn't also the newest one.
+   */
+  pendingFlight: FlightWithRelations | null;
   lastDebriefStatus: DebriefStatus | null;
   nextReservation: Reservation | null;
   currentFocus: string[];
@@ -148,6 +157,10 @@ export async function computeInstructorRoster(
       ]);
 
       const mostRecentFlight = [...flights].sort((a, b) => b.flightDate.localeCompare(a.flightDate))[0] ?? null;
+      const pendingFlight =
+        [...flights]
+          .filter((f) => f.debriefStatus !== "complete")
+          .sort((a, b) => b.flightDate.localeCompare(a.flightDate))[0] ?? null;
       const now = Date.now();
       const nextReservation =
         reservations
@@ -159,6 +172,7 @@ export async function computeInstructorRoster(
         status: link.status,
         isPrimary: link.isPrimary,
         mostRecentFlight,
+        pendingFlight,
         lastDebriefStatus: mostRecentFlight?.debriefStatus ?? null,
         nextReservation,
         currentFocus: brief.focusAreas,
@@ -178,10 +192,10 @@ export async function computeInstructorRoster(
  */
 export function attentionReasons(entry: StudentRosterEntry, progress?: DebriefProgress): string[] {
   const reasons: string[] = [];
-  if (entry.mostRecentFlight && entry.mostRecentFlight.debriefStatus !== "complete") {
+  if (entry.pendingFlight) {
     reasons.push(progress ? debriefStageLabel(progress) : "Debrief not completed");
   }
-  if (entry.mostRecentFlight?.debriefStatus === "complete" && entry.currentFocus.length === 0) {
+  if (!entry.pendingFlight && entry.mostRecentFlight?.debriefStatus === "complete" && entry.currentFocus.length === 0) {
     reasons.push("Next lesson has no objectives");
   }
   if (!entry.mostRecentFlight) {

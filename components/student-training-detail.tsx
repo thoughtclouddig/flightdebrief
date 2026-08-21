@@ -22,7 +22,7 @@ import { getRepository } from "@/lib/data";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
-import { formatDurationShort } from "@/lib/utils";
+import { formatDurationShort, formatFlightContext } from "@/lib/utils";
 import type { User } from "@/lib/types";
 import type { Viewer } from "@/lib/viewer";
 
@@ -47,11 +47,13 @@ export async function StudentTrainingDetail({
 }) {
   const repo = getRepository();
   const isCfiOrAdmin = viewer.role === "instructor" || viewer.role === "admin";
-  // School orgs are the ones actually running Flight Schedule Pro today --
-  // showing a second, unsynced scheduler there risks two systems drifting
-  // out of sync, not just going unused. Independent CFIs and solo accounts
-  // have no scheduling tool at all, so manual scheduling is real value there.
-  const canScheduleLessons = isCfiOrAdmin && viewer.organization.kind !== "school";
+  // Previously blocked for school orgs (the ones running Flight Schedule Pro
+  // today) over drift risk between two unsynced schedulers. Reopened at the
+  // user's explicit call -- it's now part of the normal debrief wrap-up flow
+  // for every org kind, with a caption disclosing it doesn't sync with FSP.
+  const canScheduleLessons = isCfiOrAdmin;
+  const scheduleCaption =
+    viewer.organization.kind === "school" ? "For your own planning -- this doesn't sync with Flight Schedule Pro." : undefined;
   const [flights, trainingItems, brief, signals, radioPracticeAssignments, studentNotes, aircraft] = await Promise.all([
     repo.listFlights({ studentId: student.id }),
     repo.listTrainingItems(),
@@ -167,22 +169,28 @@ export async function StudentTrainingDetail({
               )}
               {canScheduleLessons ? (
                 <div className="mt-2">
-                  <ScheduleLessonForm studentId={student.id} aircraft={aircraft} />
+                  <ScheduleLessonForm studentId={student.id} aircraft={aircraft} caption={scheduleCaption} />
                 </div>
               ) : null}
             </div>
           ) : null}
 
-          {isCfiOrAdmin ? (
-            <div className="border-t border-brand/20 pt-3">
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <PlaneTakeoff className="size-3.5" /> Log a Flight
-              </p>
-              <AddFlightForm studentId={student.id} />
-            </div>
-          ) : null}
         </CardContent>
       </Card>
+
+      {isCfiOrAdmin ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PlaneTakeoff className="size-4 text-brand" />
+              Log a Flight
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AddFlightForm studentId={student.id} />
+          </CardContent>
+        </Card>
+      ) : null}
 
       {brief.lastFlight ? (
         <Card>
@@ -194,8 +202,7 @@ export async function StudentTrainingDetail({
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              {brief.lastFlight.aircraft.tailNumber} · {brief.lastFlight.departureAirport} →{" "}
-              {brief.lastFlight.arrivalAirport} · {formatDurationShort(brief.lastFlight.durationMinutes)}
+              {formatFlightContext(brief.lastFlight)} · {formatDurationShort(brief.lastFlight.durationMinutes)}
             </p>
 
             {result ? (

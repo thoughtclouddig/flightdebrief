@@ -18,3 +18,18 @@ export function formatDurationShort(minutes: number) {
   const m = minutes % 60;
   return `${h}:${m.toString().padStart(2, "0")}`;
 }
+
+/** ISO "YYYY-MM-DD" -> "Aug 20" -- the T12:00:00 avoids UTC/local rollover shifting the day. */
+export function formatFlightDate(flightDate: string) {
+  return new Date(flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/**
+ * Shared "which flight is this" line shown on every debrief screen (waiting
+ * room, task picker, both assessment forms, results). Always includes the
+ * date -- a bare tail number/route is ambiguous once a student has more than
+ * one flight on the same aircraft, which real seeded flight data hits fast.
+ */
+export function formatFlightContext(flight: { aircraft: { tailNumber: string }; departureAirport: string; arrivalAirport: string; flightDate: string }) {
+  return `${flight.aircraft.tailNumber} · ${flight.departureAirport} → ${flight.arrivalAirport} · ${formatFlightDate(flight.flightDate)}`;
+}

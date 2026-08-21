@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { AssessmentForm } from "@/components/debrief/assessment-form";
+import { formatFlightContext } from "@/lib/utils";
 
 export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]/debrief/self-assessment">) {
   const { id } = await props.params;
@@ -24,7 +25,7 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
         <p className="text-sm font-medium uppercase tracking-wide text-brand">
-          {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+          {formatFlightContext(flight)}
         </p>
         <h1 className="mt-1 text-2xl font-semibold text-foreground">Not quite yet</h1>
         <p className="text-sm text-foreground-soft">Your instructor needs to submit their assessment first.</p>
