@@ -10,7 +10,7 @@ export function SimpleByDesign() {
   return (
     <section className="border-t border-hairline px-6 py-24 text-center sm:py-28">
       <Reveal>
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Simple by design</p>
+        <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Simple by design</p>
         <h2 className="font-display mt-3 text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
           Nothing extra to fill out.
         </h2>

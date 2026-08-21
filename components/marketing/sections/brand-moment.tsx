@@ -25,7 +25,7 @@ export function BrandMoment() {
 
       <Reveal className="relative mx-auto max-w-3xl text-center">
         <p
-          className="text-xs font-bold uppercase tracking-[0.2em] text-brand"
+          className="text-balance text-xs font-bold uppercase tracking-[0.2em] text-brand"
           style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
         >
           The Problem

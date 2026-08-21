@@ -11,7 +11,7 @@ export function FinalCta() {
           <p className="font-display text-balance text-lg italic leading-snug text-white/70 sm:text-xl">
             &ldquo;After four decades of flying, I still [debrief] after every flight.&rdquo;
           </p>
-          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
+          <p className="text-balance mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
             William E. Dubois <span className="font-normal normal-case text-white/35">&mdash; Pilot, Instructor &amp; FAA Safety Team Representative</span>
           </p>
         </Reveal>
@@ -23,9 +23,9 @@ export function FinalCta() {
             every flight?
           </h2>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-white/75">
-            <li>No credit card required</li>
-            <li>Free to start</li>
-            <li>Cancel anytime</li>
+            <li className="text-balance">No credit card required</li>
+            <li className="text-balance">Free to start</li>
+            <li className="text-balance">Cancel anytime</li>
           </ul>
         </Reveal>
 
@@ -40,7 +40,7 @@ export function FinalCta() {
         </Reveal>
 
         <Reveal delay={250}>
-          <p className="mt-6 text-xs text-white/55">Join pilots and instructors improving every day.</p>
+          <p className="text-balance mt-6 text-xs text-white/55">Join pilots and instructors improving every day.</p>
         </Reveal>
       </div>
     </section>

@@ -29,7 +29,7 @@ export function DebriefDoctrine() {
         <p className="font-display mt-2 text-balance text-[clamp(1.5rem,1.25rem+1.3vw,2.25rem)] font-bold leading-tight text-white">
           A structured debrief is the single most effective way to accelerate learning and improve performance.
         </p>
-        <p className="mt-6 text-sm font-semibold uppercase tracking-[0.14em] text-white/60">
+        <p className="text-balance mt-6 text-sm font-semibold uppercase tracking-[0.14em] text-white/60">
           Brandon Williams <span className="font-normal normal-case text-white/45">&mdash; U.S. Air Force Fighter Pilot &amp; Instructor</span>
         </p>
       </Reveal>

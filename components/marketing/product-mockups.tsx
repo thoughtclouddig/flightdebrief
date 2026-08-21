@@ -23,10 +23,10 @@ export function DebriefSummaryMockupCard({ className, style }: { className?: str
         className="rounded-t-[22px] border border-black/[0.06] bg-white p-6"
         style={{ boxShadow: "0 1px 2px rgba(16,23,39,0.04), 0 16px 40px -12px rgba(16,23,39,0.22)" }}
       >
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">Flight Debrief</p>
+        <p className="text-balance text-[11px] font-bold uppercase tracking-[0.14em] text-brand">Flight Debrief</p>
 
-        <p className="font-display mt-2 text-[21px] font-bold tracking-tight text-[#101727]">KSBD &rarr; KFUL</p>
-        <p className="mt-0.5 text-[13.5px] text-[#8c97a2]">May 12, 2026 &middot; 1.3 Hobbs</p>
+        <p className="text-balance font-display mt-2 text-[21px] font-bold tracking-tight text-[#101727]">KSBD &rarr; KFUL</p>
+        <p className="text-balance mt-0.5 text-[13.5px] text-[#8c97a2]">May 12, 2026 &middot; 1.3 Hobbs</p>
 
         <ul className="mt-5 flex flex-col gap-2.5">
           {DEBRIEF_ROWS.map((row) => (
@@ -59,13 +59,13 @@ export function FlightHistoryMockupCard({ className }: { className?: string }) {
         className="rounded-[22px] border border-black/[0.06] bg-white p-5"
         style={{ boxShadow: "0 1px 2px rgba(16,23,39,0.04), 0 16px 40px -12px rgba(16,23,39,0.22)" }}
       >
-        <p className="font-display text-[13px] font-bold uppercase tracking-wide text-[#101727]">Flight History</p>
+        <p className="text-balance font-display text-[13px] font-bold uppercase tracking-wide text-[#101727]">Flight History</p>
         <ul className="mt-2 flex flex-col divide-y divide-black/[0.05]">
           {FLIGHT_HISTORY_ROWS.map((row) => (
             <li key={row.pair} className="flex items-center justify-between py-2.5">
               <div>
-                <p className="text-[13.5px] font-semibold text-[#101727]">{row.pair}</p>
-                <p className="text-[11.5px] text-[#8c97a2]">{row.date}</p>
+                <p className="text-balance text-[13.5px] font-semibold text-[#101727]">{row.pair}</p>
+                <p className="text-balance text-[11.5px] text-[#8c97a2]">{row.date}</p>
               </div>
               <span
                 className="font-display flex size-8 items-center justify-center rounded-full text-[13px] font-bold"

@@ -8,7 +8,7 @@ export function Students() {
     <section className="mx-auto max-w-5xl px-6 py-24 sm:py-28">
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center lg:gap-16">
         <Reveal>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">For students</p>
+          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">For students</p>
           <h2 className="font-display mt-3 text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
             See your training take shape.
           </h2>
@@ -29,7 +29,7 @@ export function Students() {
             <CardContent className="flex flex-col gap-2 text-sm">
               {DEMO_STUDENT_PROGRESS.improving.map((item) => (
                 <div key={item} className="flex items-center justify-between text-foreground">
-                  <span>{item}</span>
+                  <span className="text-balance">{item}</span>
                   <ArrowUp className="size-3.5 text-good" />
                 </div>
               ))}
@@ -45,7 +45,7 @@ export function Students() {
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm text-foreground">
               {DEMO_STUDENT_PROGRESS.workingOn.map((item) => (
-                <span key={item}>{item}</span>
+                <span key={item} className="text-balance">{item}</span>
               ))}
             </CardContent>
           </Card>
@@ -59,7 +59,7 @@ export function Students() {
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm text-foreground">
               {DEMO_STUDENT_PROGRESS.nextUp.map((item) => (
-                <span key={item}>{item}</span>
+                <span key={item} className="text-balance">{item}</span>
               ))}
             </CardContent>
           </Card>

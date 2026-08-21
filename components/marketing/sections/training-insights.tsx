@@ -7,7 +7,7 @@ export function TrainingInsights() {
   return (
     <section className="mx-auto max-w-5xl px-6 py-24 sm:py-28">
       <Reveal>
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Training insights</p>
+        <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Training insights</p>
         <h2 className="font-display mt-3 max-w-2xl text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
           See patterns before they become problems.
         </h2>

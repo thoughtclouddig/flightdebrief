@@ -20,7 +20,7 @@ export function Proof() {
     <section className="bg-white px-6 py-28 sm:py-40">
       <div className="mx-auto max-w-3xl text-center">
         <RevealUp>
-          <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">The Proof</p>
+          <p className="text-balance text-sm font-bold uppercase tracking-[0.16em] text-brand">The Proof</p>
           <p className="font-display mt-6 text-balance text-4xl font-bold sm:text-5xl">
             <span className="text-[#101727]">The</span> <span className="text-brand">proven power</span>{" "}
             <span className="text-[#101727]">of structured debriefing.</span>
@@ -46,7 +46,7 @@ export function Proof() {
         </RevealUp>
 
         <RevealUp delay={600} className="mx-auto mt-10 border-t border-[#e4e7ea] pt-8">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8c97a2]">According to studies by</p>
+          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-[#8c97a2]">According to studies by</p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 sm:gap-x-8">
             <span className="font-display text-base font-bold tracking-[0.06em] text-[#4b545d] sm:text-xl sm:tracking-[0.1em]">
               FAA

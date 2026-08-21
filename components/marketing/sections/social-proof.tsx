@@ -6,7 +6,7 @@ export function SocialProof() {
     <section className="border-t border-hairline px-6 py-20 sm:py-24">
       <div className="mx-auto max-w-3xl">
         <Reveal>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Why this matters</p>
+          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Why this matters</p>
           <h2 className="font-display mt-3 text-balance text-3xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-4xl">
             Most student pilots don&rsquo;t quit over money.
           </h2>

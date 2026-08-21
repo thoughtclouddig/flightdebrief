@@ -11,7 +11,7 @@ export function Pricing() {
       <SectionViewEvent event="view_pricing" />
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">
+          <p className="text-balance text-sm font-bold uppercase tracking-[0.16em] text-brand">
             Built for Every Part of Flight Training.
           </p>
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
@@ -38,7 +38,7 @@ export function Pricing() {
                     {tier.featuredLabel}
                   </span>
                 ) : null}
-                <p className={cn("font-display text-lg font-bold uppercase tracking-wide text-[#101727]", tier.featured && "mt-2")}>
+                <p className={cn("text-balance font-display text-lg font-bold uppercase tracking-wide text-[#101727]", tier.featured && "mt-2")}>
                   {tier.name}
                 </p>
                 <p className="text-balance mt-1.5 text-base text-[#68717D]">{tier.audience}</p>
@@ -48,17 +48,17 @@ export function Pricing() {
                   </span>
                   {tier.priceSuffix ? <span className="text-base text-[#68717D]/70">{tier.priceSuffix}</span> : null}
                 </p>
-                {tier.priceNote ? <p className="mt-1.5 text-sm font-semibold text-brand">{tier.priceNote}</p> : null}
-                {tier.valueAnchor ? <p className="mt-2 text-sm font-semibold text-brand">{tier.valueAnchor}</p> : null}
+                {tier.priceNote ? <p className="text-balance mt-1.5 text-sm font-semibold text-brand">{tier.priceNote}</p> : null}
+                {tier.valueAnchor ? <p className="text-balance mt-2 text-sm font-semibold text-brand">{tier.valueAnchor}</p> : null}
                 {tier.id === "pilot" ? (
-                  <p className="mt-1.5 text-xs text-[#68717D]">
+                  <p className="text-pretty mt-1.5 text-xs text-[#68717D]">
                     Three flights, no clock ticking &mdash; see the full loop before you subscribe.
                   </p>
                 ) : null}
 
                 <ul className="mt-8 flex flex-1 flex-col gap-4 border-t border-[#e4e7ea] pt-8">
                   {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 text-base text-[#4b545d]">
+                    <li key={feature} className="text-balance flex items-start gap-3 text-base text-[#4b545d]">
                       <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-brand/10">
                         <Check className="size-3.5 text-brand" strokeWidth={3} />
                       </span>
@@ -113,7 +113,7 @@ export function Pricing() {
                   {ENTERPRISE_PRICING.sectionHeadlineLine2}
                 </h3>
                 <p className="mt-4 max-w-md text-pretty text-white/70">{ENTERPRISE_PRICING.sectionCopy}</p>
-                <p className="mt-6 font-display text-xl font-bold text-white">{ENTERPRISE_PRICING.sectionPriceLabel}</p>
+                <p className="text-balance mt-6 font-display text-xl font-bold text-white">{ENTERPRISE_PRICING.sectionPriceLabel}</p>
 
                 <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
                   <TrackedLink
@@ -132,7 +132,7 @@ export function Pricing() {
                 {ENTERPRISE_PRICING.capabilityTiles.map((tile) => (
                   <div key={tile.title} className="rounded-xl border border-white/10 bg-white/[0.04] p-5">
                     <span className="block h-0.5 w-6 bg-brand" aria-hidden="true" />
-                    <p className="mt-3 text-sm font-bold uppercase tracking-wide text-white">{tile.title}</p>
+                    <p className="text-balance mt-3 text-sm font-bold uppercase tracking-wide text-white">{tile.title}</p>
                     <p className="mt-1.5 text-pretty text-[13px] leading-relaxed text-white/55">{tile.description}</p>
                   </div>
                 ))}

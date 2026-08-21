@@ -10,7 +10,7 @@ export function Hero() {
     <section className="relative overflow-hidden bg-white pt-24 sm:pt-28 lg:min-h-[680px] lg:pb-0">
       <div className="relative mx-auto max-w-[1320px] px-6">
         <div className="relative z-10 max-w-xl lg:py-16">
-          <p className="text-base font-bold uppercase tracking-[0.16em] text-brand sm:text-lg">
+          <p className="text-balance text-base font-bold uppercase tracking-[0.16em] text-brand sm:text-lg">
             Make every debrief count.
           </p>
           <h1
@@ -50,7 +50,7 @@ export function Hero() {
               </Link>
             </div>
 
-            <p className="text-center text-sm font-medium text-[#68717D] sm:text-left">
+            <p className="text-balance text-center text-sm font-medium text-[#68717D] sm:text-left">
               No credit card &middot; Free to start &middot; Cancel anytime
             </p>
           </div>

@@ -102,7 +102,7 @@ export function LearningLoop() {
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/10">
                   <Icon className="size-5 text-brand" strokeWidth={2} />
                 </span>
-                <p className="font-display text-base font-bold text-[#101727]">{label}</p>
+                <p className="text-balance font-display text-base font-bold text-[#101727]">{label}</p>
                 <p className="text-pretty text-base text-[#68717D]">{copy}</p>
               </div>
             ))}

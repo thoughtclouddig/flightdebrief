@@ -89,7 +89,7 @@ export function EverythingThatMatters() {
             <Reveal key={card.eyebrow} delay={(i % 3) * 100} className="flex flex-col gap-4">
               {card.visual}
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">{card.eyebrow}</p>
+                <p className="text-balance text-xs font-bold uppercase tracking-[0.14em] text-brand">{card.eyebrow}</p>
                 <p className="font-display mt-1.5 text-balance text-xl font-bold text-[#101727]">{card.headline}</p>
                 <p className="text-pretty mt-2 text-sm leading-relaxed text-[#68717D]">{card.copy}</p>
               </div>
