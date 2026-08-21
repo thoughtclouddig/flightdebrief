@@ -31,7 +31,7 @@ export function BrandMoment() {
           The Problem
         </p>
 
-        <p className="font-display mt-6 text-balance text-[clamp(3rem,2.25rem+3vw,4.5rem)] font-bold leading-[0.95] text-[#101727]">
+        <p className="font-display mt-6 text-balance text-3xl font-bold leading-[1.05] text-[#101727] sm:text-[clamp(3rem,2.25rem+3vw,4.5rem)] sm:leading-[0.95]">
           The most valuable ten minutes <span className="text-brand">of a lesson disappear.</span>
         </p>
         <p

@@ -294,8 +294,8 @@ export default function SchoolsPage() {
             <p className="mt-1.5 text-sm font-semibold text-brand">or $990/year/location &mdash; save 17%</p>
             <p className="mt-2 text-base font-semibold text-brand">Your first 25 debriefs are free.</p>
             <p className="mt-4 text-lg text-[#68717D] tracking-[0.01em]">
-              Try AfterFlight with a few instructors and students before you commit &mdash; for independent flight
-              schools and individual training locations.
+              Try AfterFlight with a few instructors and students before you commit &mdash; for&nbsp;independent
+              flight schools and individual training locations.
             </p>
 
             <div className="mt-8 flex justify-center">

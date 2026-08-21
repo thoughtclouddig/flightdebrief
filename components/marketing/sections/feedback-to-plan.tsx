@@ -5,7 +5,7 @@ import { Reveal } from "@/components/marketing/reveal";
 const NEXT_FLIGHT_STATS = [
   { label: "Practice", value: "Steep turns" },
   { label: "Focus", value: "Altitude control" },
-  { label: "Goal", value: "±100 ft" },
+  { label: "Goal", value: "±100 ft" },
 ];
 
 /** A single thread node: dot on the connecting line + a block of content. Reused for every stage so the "these are one lesson" relationship reads as one continuous UI, not a row of unrelated widgets. */
@@ -97,7 +97,7 @@ export function FeedbackToPlan() {
                   {NEXT_FLIGHT_STATS.map((stat) => (
                     <div key={stat.label}>
                       <p className="text-xs font-medium text-[#8c97a2]">{stat.label}</p>
-                      <p className="text-balance font-display mt-0.5 text-sm font-bold text-[#101727]">{stat.value}</p>
+                      <p className="font-display mt-0.5 whitespace-nowrap text-sm font-bold text-[#101727]">{stat.value}</p>
                     </div>
                   ))}
                 </div>
