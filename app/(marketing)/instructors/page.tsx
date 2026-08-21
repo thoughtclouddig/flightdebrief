@@ -67,13 +67,15 @@ export default function InstructorsPage() {
               >
                 Know where you left&nbsp;off. Every student. Every flight.
               </h1>
-              <p className="mt-6 max-w-md text-pretty text-lg leading-relaxed text-[#68717D]">
+              <p className="mt-6 max-w-md text-pretty text-lg leading-relaxed text-[#68717D] tracking-[0.01em]">
                 AfterFlight turns the post-flight debrief you&rsquo;re already having into a clear record of what
                 happened, what the student needs to work on, and what comes next.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <CtaLink href="/signup/cfi">Start using AfterFlight free</CtaLink>
+                <CtaLink href="/signup/cfi" className="w-full justify-center sm:w-auto">
+                  Start using AfterFlight free
+                </CtaLink>
               </div>
               <p className="mt-4 text-sm font-semibold text-brand">Free for CFIs.</p>
             </Reveal>
@@ -99,11 +101,22 @@ export default function InstructorsPage() {
           <h2 className="font-display mt-3 text-balance text-3xl font-bold text-[#101727] sm:text-4xl">
             Too many lessons live in memory.
           </h2>
-          <p className="mt-5 text-pretty text-lg text-[#68717D]">
-            A good instructor gives valuable feedback after every flight. Then the student leaves, you move to
-            another lesson, and days may pass before the next one. By then, the details get reconstructed from
-            memory, notes, or logbook entries. The issue isn&rsquo;t that instructors don&rsquo;t debrief &mdash;
-            it&rsquo;s that the value of the debrief disappears after the conversation ends.
+          <p className="mt-5 text-pretty text-lg text-[#68717D] tracking-[0.01em]">
+            A good instructor gives valuable feedback after every flight.
+          </p>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-2 gap-y-3 text-xs font-bold uppercase tracking-wide text-[#101727] sm:text-sm">
+            {["Student leaves", "Next lesson", "Days pass", "Reconstructed from memory"].map((step, i, arr) => (
+              <span key={step} className="flex items-center gap-2">
+                <span className="rounded-full bg-white px-4 py-2">{step}</span>
+                {i < arr.length - 1 ? <ArrowRight className="size-3.5 text-[#8c97a2]" /> : null}
+              </span>
+            ))}
+          </div>
+
+          <p className="mt-8 text-pretty text-lg text-[#68717D] tracking-[0.01em]">
+            The issue isn&rsquo;t that instructors don&rsquo;t debrief &mdash; it&rsquo;s that the value of the
+            debrief disappears after the conversation ends.
           </p>
         </Reveal>
       </section>
@@ -115,15 +128,15 @@ export default function InstructorsPage() {
           <h2 className="font-display mt-3 text-balance text-3xl font-bold text-[#101727] sm:text-4xl">
             The CFI teaches. AfterFlight remembers.
           </h2>
-          <p className="mt-5 text-pretty text-lg text-[#68717D]">
+          <p className="mt-5 text-pretty text-lg text-[#68717D] tracking-[0.01em]">
             AfterFlight captures the post-flight conversation you&rsquo;re already having and organizes your
             guidance into something useful &mdash; for the student, and for the next lesson.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm font-bold uppercase tracking-wide">
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 text-sm font-bold uppercase tracking-wide sm:flex-row">
             <span className="rounded-full bg-[#f4f5f6] px-4 py-2 text-[#101727]">Debrief</span>
-            <ArrowRight className="size-4 text-brand" />
+            <ArrowRight className="size-4 rotate-90 text-brand sm:rotate-0" />
             <span className="rounded-full bg-brand px-4 py-2 text-white">AfterFlight</span>
-            <ArrowRight className="size-4 text-brand" />
+            <ArrowRight className="size-4 rotate-90 text-brand sm:rotate-0" />
             <span className="rounded-full bg-[#f4f5f6] px-4 py-2 text-[#101727]">Continuity</span>
           </div>
         </Reveal>
@@ -141,7 +154,7 @@ export default function InstructorsPage() {
           <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-2">
             <Reveal className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-8">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">After Today&rsquo;s Flight</p>
-              <p className="text-pretty text-[#68717D]">
+              <p className="text-pretty text-[#68717D] tracking-[0.01em]">
                 You have the normal post-flight debrief. AfterFlight preserves:
               </p>
               <ul className="mt-2 flex flex-col gap-2.5">
@@ -156,7 +169,7 @@ export default function InstructorsPage() {
 
             <Reveal delay={100} className="flex flex-col gap-4 rounded-2xl border border-brand/30 bg-white p-8">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">Before the Next Flight</p>
-              <p className="text-pretty text-[#68717D]">
+              <p className="text-pretty text-[#68717D] tracking-[0.01em]">
                 You don&rsquo;t have to reconstruct the previous lesson. AfterFlight brings forward:
               </p>
               <ul className="mt-2 flex flex-col gap-2.5">
@@ -179,7 +192,7 @@ export default function InstructorsPage() {
             <h2 className="font-display text-balance text-3xl font-bold text-[#101727] sm:text-4xl">
               Your guidance doesn&rsquo;t disappear when the student leaves.
             </h2>
-            <p className="mt-5 text-pretty text-lg text-[#68717D]">
+            <p className="mt-5 text-pretty text-lg text-[#68717D] tracking-[0.01em]">
               You&rsquo;re still the teacher. AfterFlight just helps the student actually use what you told them
               &mdash; giving your instruction a life beyond the ten-minute conversation after landing.
             </p>
@@ -207,7 +220,7 @@ export default function InstructorsPage() {
             <p className="font-display text-xl font-bold text-[#101727] sm:text-2xl">
               Your judgment. <span className="text-brand">Not ours.</span>
             </p>
-            <p className="mt-3 text-pretty text-[#68717D]">
+            <p className="mt-3 text-pretty text-[#68717D] tracking-[0.01em]">
               AfterFlight doesn&rsquo;t replace the instructor, independently grade the student, or tell the
               student that AI knows better than their CFI. You provide the judgment. AfterFlight helps capture,
               organize, and carry that guidance forward.
@@ -225,13 +238,13 @@ export default function InstructorsPage() {
               <h2 className="font-display mt-3 text-balance text-3xl font-bold text-[#101727] sm:text-4xl">
                 Different instructor. Same training history.
               </h2>
-              <p className="mt-4 text-pretty text-[#68717D]">
+              <p className="mt-4 text-pretty text-[#68717D] tracking-[0.01em]">
                 Students don&rsquo;t always fly with the same instructor &mdash; schedule changes, availability,
                 stage checks, or a transfer. The next instructor shouldn&rsquo;t have to reconstruct the
                 student&rsquo;s recent training from scratch. AfterFlight carries the context from previous
                 debriefs forward, so a Handoff Brief is ready whenever another CFI steps in.
               </p>
-              <p className="mt-4 text-sm text-[#8c97a2]">
+              <p className="mt-4 text-pretty text-base text-[#68717D] tracking-[0.01em]">
                 This is about instructional continuity &mdash; not a replacement for official logbooks, training
                 records, or endorsements.
               </p>
@@ -262,7 +275,7 @@ export default function InstructorsPage() {
                   {item.step}
                 </span>
                 <h3 className="font-display text-lg font-bold text-[#101727]">{item.title}</h3>
-                <p className="text-pretty text-sm text-[#68717D]">{item.copy}</p>
+                <p className="text-pretty text-base text-[#68717D] tracking-[0.01em]">{item.copy}</p>
               </Reveal>
             ))}
           </div>
@@ -276,7 +289,7 @@ export default function InstructorsPage() {
           <h2 className="font-display mt-4 text-balance text-3xl font-bold text-[#101727] sm:text-4xl">
             Free for CFIs.
           </h2>
-          <p className="mt-4 text-pretty text-lg text-[#68717D]">
+          <p className="mt-4 text-pretty text-lg text-[#68717D] tracking-[0.01em]">
             You can use AfterFlight with your students at no cost, full stop. If your student is on a paid plan or
             flies at a school running AfterFlight, you get the same continuity either way &mdash; you never need a
             subscription just to use AfterFlight with a student.
@@ -287,7 +300,7 @@ export default function InstructorsPage() {
       <section className="bg-[#f4f5f6] px-6 py-14">
         <div className="mx-auto max-w-[1320px]">
           <Reveal className="text-center">
-            <p className="text-[#68717D]">
+            <p className="text-[#68717D] tracking-[0.01em]">
               Instructing at a flight school?{" "}
               <Link href="/schools" className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">
                 See AfterFlight for Schools <ArrowRight className="size-4" />
@@ -307,8 +320,10 @@ export default function InstructorsPage() {
           <p className="mt-4 text-pretty text-white/70">
             Use the debrief you&rsquo;re already having to create continuity across every student&rsquo;s training.
           </p>
-          <div className="mt-8">
-            <CtaLink href="/signup/cfi">Start using AfterFlight free</CtaLink>
+          <div className="mt-8 flex justify-center">
+            <CtaLink href="/signup/cfi" className="w-full justify-center sm:w-auto">
+              Start using AfterFlight free
+            </CtaLink>
           </div>
           <p className="mt-5 text-sm text-white/55">Free for CFIs.</p>
         </Reveal>
