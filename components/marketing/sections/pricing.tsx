@@ -49,9 +49,8 @@ export function Pricing() {
                   {tier.priceSuffix ? <span className="text-base text-[#68717D]/70">{tier.priceSuffix}</span> : null}
                 </p>
                 {tier.priceNote ? <p className="text-balance mt-1 text-base font-semibold text-brand">{tier.priceNote}</p> : null}
-                {tier.valueAnchor ? <p className="text-balance mt-2 text-sm font-semibold text-brand">{tier.valueAnchor}</p> : null}
                 {tier.id === "pilot" ? (
-                  <p className="text-pretty mt-3 rounded-lg border border-brand/25 bg-[#fdf3ea] px-3 py-2 text-sm font-medium text-[#101727]">
+                  <p className="text-pretty mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-[#101727]">
                     Three flights, no clock ticking &mdash; see the full loop before you subscribe.
                   </p>
                 ) : null}
@@ -66,6 +65,10 @@ export function Pricing() {
                     </li>
                   ))}
                 </ul>
+
+                {tier.valueAnchor ? (
+                  <p className="text-balance mt-5 text-center text-sm font-semibold text-brand">{tier.valueAnchor}</p>
+                ) : null}
 
                 <TrackedLink
                   href={tier.signupHref}
