@@ -25,7 +25,7 @@ export default async function CfiFlightsPage() {
         </div>
         <Link href="/cfi/students" className={buttonVariants({ variant: "outline", size: "sm" })}>
           <Plus className="size-4" />
-          Add Flight for a Student
+          Choose a Student to Log a Flight
         </Link>
       </div>
 
