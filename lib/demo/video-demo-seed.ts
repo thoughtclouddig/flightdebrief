@@ -167,26 +167,28 @@ async function seedTodayFlight(studentId: string): Promise<void> {
     [INSTRUCTOR_ASSESSMENT_ID, DEMO_FLIGHT_ID, DEMO_INSTRUCTOR_ID],
   );
 
-  // Three FAA-aligned cards for Scene 3 -- enough to "advance through 2-3
-  // representative questions quickly" without a long card stack.
+  // Three cards for Scene 3, written specific to this lesson's actual theme
+  // (traffic patterns and landings, building toward the curated
+  // stabilized-approach/flare/centerline result in DEMO_CURATED_RESULT) --
+  // not generic FAA-template boilerplate.
   const cards: { category: string; title: string; prompt: string; followUps: string[] }[] = [
     {
-      category: "OBJECTIVE",
-      title: "Lesson Objective",
-      prompt: "What were we working on today?",
-      followUps: ["How did the traffic pattern work go overall?"],
+      category: "KEY_TASK",
+      title: "Approach Speed Control",
+      prompt: "Walk through your approach speed on today's landings -- were you on-speed by the time you turned final?",
+      followUps: ["Where in the pattern did you get configured -- downwind, base, or final?"],
     },
     {
       category: "STRENGTHS",
       title: "What Went Well",
-      prompt: "What felt solid during today's landings?",
-      followUps: ["How did radio communications go?"],
+      prompt: "Airspeed control and checklist flow both looked sharp today -- what changed from last time?",
+      followUps: ["How did the radio calls go, including the runway change from tower?"],
     },
     {
       category: "IMPROVEMENT",
-      title: "Areas to Improve",
-      prompt: "Where did the approach and landing need work?",
-      followUps: ["What's one thing to focus on stabilizing the approach earlier next time?"],
+      title: "Flare and Centerline",
+      prompt: "A couple of those landings ballooned a little in the flare -- what were you seeing out front when that happened?",
+      followUps: ["What's one adjustment to hold centerline better through rollout?"],
     },
   ];
   for (let i = 0; i < cards.length; i++) {
