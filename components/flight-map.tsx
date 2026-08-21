@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Maximize2 } from "lucide-react";
+import { TrackPreview } from "@/components/track-preview";
 import type { TrackPosition } from "@/lib/types";
 
 /**
@@ -11,6 +13,13 @@ import type { TrackPosition } from "@/lib/types";
 const BASEMAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
 export function FlightMap({ track }: { track: TrackPosition[] | null }) {
+  // The interactive map (MapLibre JS/CSS + basemap style + tiles) only starts
+  // downloading once the CFI/student actually asks for it -- previously it
+  // initialized on every mount regardless of whether anyone scrolled to it.
+  // The free, no-network TrackPreview SVG is shown first so the flight path
+  // is still visible immediately.
+  const [showInteractive, setShowInteractive] = useState(false);
+
   if (!track || track.length < 2) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-6 text-center dark:border-white/15">
@@ -20,6 +29,24 @@ export function FlightMap({ track }: { track: TrackPosition[] | null }) {
           this doesn&rsquo;t affect the rest of the debrief.
         </p>
       </div>
+    );
+  }
+
+  if (!showInteractive) {
+    return (
+      <button
+        type="button"
+        onClick={() => setShowInteractive(true)}
+        className="group relative block h-64 w-full overflow-hidden rounded-xl border border-hairline sm:h-80"
+      >
+        <TrackPreview track={track} />
+        <span className="absolute inset-0 flex items-center justify-center bg-slate-950/0 transition-colors group-hover:bg-slate-950/10">
+          <span className="flex items-center gap-1.5 rounded-full bg-white/95 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg dark:bg-slate-900/95 dark:text-white">
+            <Maximize2 className="size-3.5" />
+            View interactive map
+          </span>
+        </span>
+      </button>
     );
   }
 
