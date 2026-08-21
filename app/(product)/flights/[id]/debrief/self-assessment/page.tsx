@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { AssessmentForm } from "@/components/debrief/assessment-form";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { formatFlightContext } from "@/lib/utils";
 
 export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]/debrief/self-assessment">) {
@@ -24,6 +25,7 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
   if (instructorAssessment?.status !== "submitted") {
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
+        <AutoRefresh />
         <p className="text-sm font-medium uppercase tracking-wide text-brand">
           {formatFlightContext(flight)}
         </p>
@@ -37,6 +39,7 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
   if (assessment?.status === "submitted") {
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
+        <AutoRefresh />
         <h1 className="text-2xl font-semibold text-foreground">Self-assessment submitted</h1>
         <p className="text-sm text-foreground-soft">
           You&rsquo;re all set -- your instructor is starting the debrief.

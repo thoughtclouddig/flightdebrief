@@ -3,6 +3,7 @@ import { AlertTriangle, CalendarClock, PlaneTakeoff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CfiStudentCard } from "@/components/cfi-student-card";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { attentionReasons, computeInstructorRoster, computeNextLessonBrief } from "@/lib/training-memory";
@@ -74,6 +75,7 @@ export default async function CfiTodayPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
+      <AutoRefresh intervalMs={20000} />
       <div>
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Today</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Who you&rsquo;re flying with, and where you left off.</p>

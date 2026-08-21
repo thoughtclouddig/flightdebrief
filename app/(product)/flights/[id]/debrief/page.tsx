@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { DebriefRecorder } from "@/components/debrief-recorder";
 import { GuidedDebriefRecorder } from "@/components/debrief/guided-debrief-recorder";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { formatFlightContext } from "@/lib/utils";
@@ -117,9 +118,8 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
 function WaitingMessage({ flight, text }: { flight: FlightWithRelations; text: string }) {
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
-      <p className="text-sm font-medium uppercase tracking-wide text-brand">
-        {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
-      </p>
+      <AutoRefresh />
+      <p className="text-sm font-medium uppercase tracking-wide text-brand">{formatFlightContext(flight)}</p>
       <h1 className="mt-1 text-2xl font-semibold text-foreground">Not quite yet</h1>
       <p className="text-sm text-foreground-soft">{text}</p>
     </div>
