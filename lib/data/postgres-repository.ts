@@ -1186,6 +1186,8 @@ function mapUser(row: Row): User {
     name: row.name as string,
     email: row.email as string,
     authUserId: (row.auth_user_id as string | null) ?? null,
+    profileCompleted: Boolean(row.profile_completed),
+    avatarUrl: (row.avatar_url as string | null) ?? null,
     createdAt: iso(row.created_at),
   };
 }

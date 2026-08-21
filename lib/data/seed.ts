@@ -92,37 +92,37 @@ export const ORG_PRESCOTT: Organization = {
 // Real, receivable addresses (Gmail "+" aliasing -- same inbox, distinct
 // identities) so the demo student/CFI logins actually work end-to-end with
 // magic-link auth, not just placeholder emails no one can receive.
-export const USER_ANDY: User = { id: "user-andy", name: "Andy", email: "andyrenk+student@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_DANNY: User = { id: "user-danny", name: "Danny Franks", email: "andyrenk+cfi@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_MARIA: User = { id: "user-maria", name: "Maria Chen", email: "maria@falconaviation.example", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_SARAH: User = { id: "user-sarah", name: "Sarah Miller", email: "sarah@example.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_ANDY: User = { id: "user-andy", name: "Andy", email: "andyrenk+student@gmail.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_DANNY: User = { id: "user-danny", name: "Danny Franks", email: "andyrenk+cfi@gmail.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_MARIA: User = { id: "user-maria", name: "Maria Chen", email: "maria@falconaviation.example", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_SARAH: User = { id: "user-sarah", name: "Sarah Miller", email: "sarah@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
 // Real, receivable address (like Andy/Danny above). Jordan is the Falcon
 // Aviation administrator and does not hold memberships at other schools.
-export const USER_JORDAN: User = { id: "user-jordan", name: "Jordan Reyes", email: "andyrenk+admin@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_JORDAN: User = { id: "user-jordan", name: "Jordan Reyes", email: "andyrenk+admin@gmail.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
 
 // Additional students spanning different training phases, for testing/demo
 // variety -- early pattern work, post-solo cross-country, and checkride prep.
-export const USER_MARCUS: User = { id: "user-marcus", name: "Marcus Webb", email: "marcus@example.com", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_PRIYA: User = { id: "user-priya", name: "Priya Anand", email: "priya@example.com", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_TOM: User = { id: "user-tom", name: "Tom Reilly", email: "tom@example.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_MARCUS: User = { id: "user-marcus", name: "Marcus Webb", email: "marcus@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_PRIYA: User = { id: "user-priya", name: "Priya Anand", email: "priya@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_TOM: User = { id: "user-tom", name: "Tom Reilly", email: "tom@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
 
 // Independent CFI persona (real, receivable email like Andy/Danny) with a
 // small roster of their own, entirely separate from Falcon Aviation.
-export const USER_KEVIN: User = { id: "user-kevin", name: "Kevin Ortiz", email: "andyrenk+indycfi@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_EMMA: User = { id: "user-emma", name: "Emma Sato", email: "emma@example.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_KEVIN: User = { id: "user-kevin", name: "Kevin Ortiz", email: "andyrenk+indycfi@gmail.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_EMMA: User = { id: "user-emma", name: "Emma Sato", email: "emma@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
 
 // Individual (solo, no school) student persona -- real, receivable email.
-export const USER_ALEX: User = { id: "user-alex", name: "Alex Rivera", email: "andyrenk+indystudent@gmail.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_ALEX: User = { id: "user-alex", name: "Alex Rivera", email: "andyrenk+indystudent@gmail.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
 
 // Mesa Flight Academy roster (one of the two extra "locations" for the
 // multi-org admin demo -- see USER_JORDAN above).
-export const USER_NINA: User = { id: "user-nina", name: "Nina Alvarez", email: "nina@mesaflight.example", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_CARLOS: User = { id: "user-carlos", name: "Carlos Mendez", email: "carlos@example.com", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_LEAH: User = { id: "user-leah", name: "Leah Kim", email: "leah@example.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_NINA: User = { id: "user-nina", name: "Nina Alvarez", email: "nina@mesaflight.example", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_CARLOS: User = { id: "user-carlos", name: "Carlos Mendez", email: "carlos@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_LEAH: User = { id: "user-leah", name: "Leah Kim", email: "leah@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
 
 // Prescott Aviation roster (the third "location" for the multi-org admin demo).
-export const USER_OMAR: User = { id: "user-omar", name: "Omar Haddad", email: "omar@prescottaviation.example", authUserId: null, createdAt: new Date().toISOString() };
-export const USER_ZOE: User = { id: "user-zoe", name: "Zoe Bennett", email: "zoe@example.com", authUserId: null, createdAt: new Date().toISOString() };
+export const USER_OMAR: User = { id: "user-omar", name: "Omar Haddad", email: "omar@prescottaviation.example", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_ZOE: User = { id: "user-zoe", name: "Zoe Bennett", email: "zoe@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
 
 /** The default viewer when the app first loads (see lib/viewer.ts). */
 export const DEMO_USER_ID = USER_ANDY.id;

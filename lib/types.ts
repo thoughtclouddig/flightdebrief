@@ -57,6 +57,8 @@ export interface User {
   authUserId: string | null;
   /** True once they've confirmed their name on the one-time onboarding form. */
   profileCompleted?: boolean;
+  /** Small square photo as a data: URL, or null for the initials fallback. */
+  avatarUrl: string | null;
   createdAt: string;
 }
 
