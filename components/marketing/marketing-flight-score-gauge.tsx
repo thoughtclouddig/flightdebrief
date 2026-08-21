@@ -1,4 +1,7 @@
+"use client";
+
 import type { CSSProperties } from "react";
+import { useInView } from "@/lib/marketing/use-in-view";
 import type { FlightScoreTone } from "@/components/flight-score/types";
 
 const TONE_GRADIENT: Record<FlightScoreTone, { from: string; to: string }> = {
@@ -7,7 +10,7 @@ const TONE_GRADIENT: Record<FlightScoreTone, { from: string; to: string }> = {
   danger: { from: "#f87171", to: "#a3241c" },
 };
 
-/** Marketing-only responsive gauge whose near-viewport fill effect needs no client JavaScript. */
+/** Marketing-only responsive gauge that draws its fill in once scrolled into view. */
 export function MarketingFlightScoreGauge({
   score,
   label,
@@ -19,11 +22,16 @@ export function MarketingFlightScoreGauge({
   tone: FlightScoreTone;
   caption: string;
 }) {
+  const { ref, inView } = useInView<HTMLDivElement>();
   const gradient = TONE_GRADIENT[tone];
-  const offset = 1 - Math.max(0, Math.min(100, score)) / 100;
+  const targetOffset = 1 - Math.max(0, Math.min(100, score)) / 100;
+  // Starts fully undrawn (offset 1) until scrolled into view, then transitions
+  // to the real value -- stroke-dashoffset is natively transitionable, so this
+  // needs no per-frame JS the way CountUp's numeral does.
+  const offset = inView ? targetOffset : 1;
 
   return (
-    <div className="relative inline-flex size-[260px] items-center justify-center sm:size-[440px]">
+    <div ref={ref} className="relative inline-flex size-[260px] items-center justify-center sm:size-[440px]">
       <div
         className="absolute size-[92%] rounded-full opacity-[0.16]"
         style={{ background: `radial-gradient(circle, ${gradient.to} 0%, transparent 72%)` }}
@@ -47,7 +55,7 @@ export function MarketingFlightScoreGauge({
           strokeLinecap="round"
           strokeDasharray={1}
           strokeDashoffset={offset}
-          className="marketing-gauge-path"
+          className="motion-safe:transition-[stroke-dashoffset] motion-safe:duration-[1400ms] motion-safe:ease-out"
           style={{ "--marketing-gauge-offset": offset } as CSSProperties}
         />
       </svg>

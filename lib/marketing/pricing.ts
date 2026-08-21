@@ -5,7 +5,7 @@ export interface PricingTier {
   price: string;
   priceSuffix: string;
   priceNote?: string;
-  /** Small orange value-anchor line shown just beneath the price. */
+  /** Small orange value-anchor line shown just above the CTA button. */
   valueAnchor?: string;
   featured?: boolean;
   featuredLabel?: string;
@@ -26,7 +26,7 @@ export const PRICING_TIERS: PricingTier[] = [
     price: "$9.99",
     priceSuffix: "/mo",
     priceNote: "or $99/year — save 17%",
-    valueAnchor: "Less than the cost of 2 minutes of flight time.",
+    valueAnchor: "Three flights, no clock ticking — see the full loop before you subscribe.",
     features: [
       "Unlimited debriefs",
       "See your progress over time",

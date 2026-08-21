@@ -22,8 +22,9 @@ export function CtaLink({
       onClick={onClick}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-lg px-8 py-4 text-center text-base font-semibold",
-        variant === "primary" && "bg-brand text-white hover:bg-brand-dark",
-        variant === "secondary" && "border border-slate-200 text-[#101727] hover:bg-[#f4f5f6]",
+        "transition-[transform,box-shadow,background-color] duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+        variant === "primary" && "bg-brand text-white hover:bg-brand-bright hover:shadow-lg hover:shadow-brand/25",
+        variant === "secondary" && "border border-slate-200 text-[#101727] hover:bg-[#f4f5f6] hover:shadow-md",
         variant === "dark" && "border border-white/20 text-white hover:bg-white/10",
         className,
       )}
