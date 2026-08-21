@@ -10,7 +10,6 @@ import {
   PlaneTakeoff,
   Target,
 } from "lucide-react";
-import { AddFlightForm } from "@/components/add-flight-form";
 import { AssignRadioPracticeCard } from "@/components/assign-radio-practice-card";
 import { ScheduleLessonForm } from "@/components/schedule-lesson-form";
 import { StudentNotesCard } from "@/components/student-notes-card";
@@ -22,7 +21,7 @@ import { getRepository } from "@/lib/data";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
-import { formatDurationShort, formatFlightContext } from "@/lib/utils";
+import { formatFlightContext } from "@/lib/utils";
 import type { User } from "@/lib/types";
 import type { Viewer } from "@/lib/viewer";
 
@@ -179,17 +178,13 @@ export async function StudentTrainingDetail({
       </Card>
 
       {isCfiOrAdmin ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PlaneTakeoff className="size-4 text-brand" />
-              Log a Flight
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AddFlightForm studentId={student.id} />
-          </CardContent>
-        </Card>
+        <Link
+          href={`/flights/new?studentId=${student.id}`}
+          className={buttonVariants({ variant: "outline", size: "sm", className: "self-start" })}
+        >
+          <PlaneTakeoff className="size-4" />
+          Log a Flight for {student.name.split(" ")[0]}
+        </Link>
       ) : null}
 
       {brief.lastFlight ? (
@@ -201,9 +196,7 @@ export async function StudentTrainingDetail({
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {formatFlightContext(brief.lastFlight)} · {formatDurationShort(brief.lastFlight.durationMinutes)}
-            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{formatFlightContext(brief.lastFlight)}</p>
 
             {result ? (
               <>

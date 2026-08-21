@@ -119,11 +119,17 @@ function InstructorSelect({
 export function NewFlightClient({
   instructorNames,
   allowInviteCfi,
+  students,
+  initialStudentId,
 }: {
   instructorNames: string[];
   allowInviteCfi?: boolean;
+  /** Present only for instructor/admin viewers -- their roster to log a flight on behalf of. */
+  students?: { id: string; name: string }[];
+  initialStudentId?: string;
 }) {
   const [mode, setMode] = useState<Mode>("search");
+  const [studentId, setStudentId] = useState(initialStudentId ?? students?.[0]?.id ?? "");
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
@@ -133,6 +139,24 @@ export function NewFlightClient({
           Look up recent flights by tail number, or enter the details yourself.
         </p>
       </div>
+
+      {students ? (
+        <div>
+          <Label htmlFor="student">Student</Label>
+          <select
+            id="student"
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
+            className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
+          >
+            {students.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       <div className="flex rounded-full border border-slate-200 bg-white p-1 dark:border-white/10 dark:bg-slate-900">
         {(["search", "manual"] as Mode[]).map((m) => (
@@ -152,15 +176,24 @@ export function NewFlightClient({
       </div>
 
       {mode === "search" ? (
-        <SearchFlow instructorNames={instructorNames} allowInviteCfi={allowInviteCfi} />
+        <SearchFlow instructorNames={instructorNames} allowInviteCfi={allowInviteCfi} studentId={students ? studentId : undefined} />
       ) : (
-        <ManualForm instructorNames={instructorNames} allowInviteCfi={allowInviteCfi} />
+        <ManualForm instructorNames={instructorNames} allowInviteCfi={allowInviteCfi} studentId={students ? studentId : undefined} />
       )}
     </div>
   );
 }
 
-function SearchFlow({ instructorNames, allowInviteCfi }: { instructorNames: string[]; allowInviteCfi?: boolean }) {
+function SearchFlow({
+  instructorNames,
+  allowInviteCfi,
+  studentId,
+}: {
+  instructorNames: string[];
+  allowInviteCfi?: boolean;
+  /** Present in CFI/admin mode -- when set, the confirm step skips the instructor picker entirely (the caller is the instructor of record). */
+  studentId?: string;
+}) {
   const router = useRouter();
   const [tail, setTail] = useState("N123AB");
   const [loading, setLoading] = useState(false);
@@ -191,6 +224,7 @@ function SearchFlow({ instructorNames, allowInviteCfi }: { instructorNames: stri
         candidate={selecting}
         instructorNames={instructorNames}
         allowInviteCfi={allowInviteCfi}
+        studentId={studentId}
         onBack={() => setSelecting(null)}
         onCreated={(id) => router.push(`/flights/${id}`)}
       />
@@ -273,12 +307,14 @@ function ConfirmCandidateForm({
   candidate,
   instructorNames,
   allowInviteCfi,
+  studentId,
   onBack,
   onCreated,
 }: {
   candidate: FlightCandidate;
   instructorNames: string[];
   allowInviteCfi?: boolean;
+  studentId?: string;
   onBack: () => void;
   onCreated: (flightId: string) => void;
 }) {
@@ -302,6 +338,7 @@ function ConfirmCandidateForm({
           durationMinutes: candidate.durationMinutes ?? 60,
           instructorName: instructorName || undefined,
           providerFlightId: candidate.providerFlightId,
+          studentId: studentId || undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -328,16 +365,18 @@ function ConfirmCandidateForm({
             {candidate.tailNumber} · {new Date(candidate.scheduledDeparture).toLocaleDateString()}
           </p>
         </div>
-        <div>
-          <Label htmlFor="instructor">Instructor (optional)</Label>
-          <InstructorSelect
-            id="instructor"
-            value={instructorName}
-            onChange={setInstructorName}
-            instructorNames={instructorNames}
-            allowInviteCfi={allowInviteCfi}
-          />
-        </div>
+        {studentId ? null : (
+          <div>
+            <Label htmlFor="instructor">Instructor (optional)</Label>
+            <InstructorSelect
+              id="instructor"
+              value={instructorName}
+              onChange={setInstructorName}
+              instructorNames={instructorNames}
+              allowInviteCfi={allowInviteCfi}
+            />
+          </div>
+        )}
         {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
         <div className="flex gap-2">
           <Button variant="outline" onClick={onBack} className="flex-1">
@@ -353,7 +392,15 @@ function ConfirmCandidateForm({
   );
 }
 
-function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: string[]; allowInviteCfi?: boolean }) {
+function ManualForm({
+  instructorNames,
+  allowInviteCfi,
+  studentId,
+}: {
+  instructorNames: string[];
+  allowInviteCfi?: boolean;
+  studentId?: string;
+}) {
   const router = useRouter();
   const [form, setForm] = useState({
     tailNumber: "N123AB",
@@ -379,7 +426,7 @@ function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: stri
       const res = await fetch("/api/flights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, instructorName: form.instructorName || undefined }),
+        body: JSON.stringify({ ...form, instructorName: form.instructorName || undefined, studentId: studentId || undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.flight) {
@@ -423,17 +470,19 @@ function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: stri
                 required
               />
             </Field>
-            <div className="sm:col-span-2">
-              <Field label="Instructor (optional)">
-                <InstructorSelect
-                  id="manual-instructor"
-                  value={form.instructorName}
-                  onChange={(v) => set("instructorName", v)}
-                  instructorNames={instructorNames}
-                  allowInviteCfi={allowInviteCfi}
-                />
-              </Field>
-            </div>
+            {studentId ? null : (
+              <div className="sm:col-span-2">
+                <Field label="Instructor (optional)">
+                  <InstructorSelect
+                    id="manual-instructor"
+                    value={form.instructorName}
+                    onChange={(v) => set("instructorName", v)}
+                    instructorNames={instructorNames}
+                    allowInviteCfi={allowInviteCfi}
+                  />
+                </Field>
+              </div>
+            )}
           </div>
           {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
           <Button type="submit" disabled={saving} className="w-full">

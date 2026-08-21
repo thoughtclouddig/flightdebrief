@@ -23,17 +23,17 @@ export default async function CfiFlightsPage() {
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Your flights</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Across all of your students.</p>
         </div>
-        <Link href="/cfi/students" className={buttonVariants({ variant: "outline", size: "sm" })}>
+        <Link href="/flights/new" className={buttonVariants({ variant: "outline", size: "sm" })}>
           <Plus className="size-4" />
-          Choose a Student to Log a Flight
+          Add Flight
         </Link>
       </div>
 
       {flights.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-500 dark:border-white/15 dark:text-slate-400">
           <p>No flights yet.</p>
-          <Link href="/cfi/students" className={buttonVariants({ variant: "outline", size: "sm" })}>
-            Log one from a student&rsquo;s page
+          <Link href="/flights/new" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            Add a flight
           </Link>
         </div>
       ) : (
