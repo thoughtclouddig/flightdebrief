@@ -1,6 +1,6 @@
 import type { TrackPosition } from "@/lib/types";
 
-/** Lightweight SVG track renderer used when no Mapbox token is configured. */
+/** Lightweight SVG track renderer used while the interactive map is deferred. */
 export function TrackPreview({ track }: { track: TrackPosition[] }) {
   const lats = track.map((p) => p.lat);
   const lons = track.map((p) => p.lon);

@@ -72,7 +72,6 @@ export function LearningLoop() {
                   src={frame.src}
                   alt={frame.alt}
                   fill
-                  priority
                   className="scale-[1.12] object-cover transition-transform duration-700 ease-out group-hover:translate-x-[3%] group-hover:scale-[1.18] motion-reduce:transition-none"
                   sizes="(min-width: 640px) 644px, 100vw"
                 />

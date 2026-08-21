@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS organization_members (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (organization_id, user_id, role)
 );
+CREATE INDEX IF NOT EXISTS organization_members_user_created_idx ON organization_members (user_id, created_at);
 
 -- --- Flight / training domain -----------------------------------------------
 -- Ids are text (seeded ids like 'flight-1' plus runtime UUIDs). Dates that the
@@ -125,12 +126,9 @@ CREATE TABLE IF NOT EXISTS reservations (
   external_id text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
--- listReservations always filters on one of these plus ORDER BY scheduled_start
--- (postgres-repository.ts's listReservations) -- composite so the sort comes
--- from the index instead of a separate sort step.
-CREATE INDEX IF NOT EXISTS reservations_org_start_idx ON reservations (organization_id, scheduled_start);
-CREATE INDEX IF NOT EXISTS reservations_instructor_start_idx ON reservations (instructor_id, scheduled_start);
+CREATE INDEX IF NOT EXISTS reservations_org_instructor_start_idx ON reservations (organization_id, instructor_id, scheduled_start);
 CREATE INDEX IF NOT EXISTS reservations_student_start_idx ON reservations (student_id, scheduled_start);
+DROP INDEX IF EXISTS reservations_org_start_idx;
 
 CREATE TABLE IF NOT EXISTS flights (
   id text PRIMARY KEY,
@@ -150,14 +148,14 @@ CREATE TABLE IF NOT EXISTS flights (
   track jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS flights_student_idx ON flights (student_id);
-CREATE INDEX IF NOT EXISTS flights_org_idx ON flights (organization_id);
--- listFlights always filters on one of student/instructor/organization plus
--- ORDER BY flight_date DESC -- composite indexes so that sort is served by
--- the index instead of a separate sort step as flight volume grows.
-CREATE INDEX IF NOT EXISTS flights_org_date_idx ON flights (organization_id, flight_date);
-CREATE INDEX IF NOT EXISTS flights_student_date_idx ON flights (student_id, flight_date);
-CREATE INDEX IF NOT EXISTS flights_instructor_date_idx ON flights (instructor_id, flight_date);
+CREATE INDEX IF NOT EXISTS flights_student_date_idx ON flights (student_id, flight_date DESC, created_at DESC);
+CREATE INDEX IF NOT EXISTS flights_org_date_idx ON flights (organization_id, flight_date DESC, created_at DESC);
+CREATE INDEX IF NOT EXISTS flights_instructor_date_idx ON flights (instructor_id, flight_date DESC, created_at DESC);
+CREATE INDEX IF NOT EXISTS flights_instructor_org_date_idx ON flights (instructor_id, organization_id, flight_date DESC, created_at DESC);
+-- Superseded by the date-ordered indexes above; keeping both would add write
+-- overhead without improving the current query shapes.
+DROP INDEX IF EXISTS flights_student_idx;
+DROP INDEX IF EXISTS flights_org_idx;
 
 CREATE TABLE IF NOT EXISTS debriefs (
   id text PRIMARY KEY,
@@ -168,6 +166,21 @@ CREATE TABLE IF NOT EXISTS debriefs (
   analyzed_with text NOT NULL CHECK (analyzed_with IN ('claude','mock')),
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (flight_id)
+);
+
+-- When a recording is completed while the organization is billing-blocked,
+-- retain the transcript so the pilot can resume AI analysis after access is
+-- restored instead of recording again.
+CREATE TABLE IF NOT EXISTS pending_debrief_transcripts (
+  flight_id text PRIMARY KEY REFERENCES flights(id) ON DELETE CASCADE,
+  transcript text NOT NULL,
+  audio_duration_seconds integer NOT NULL DEFAULT 0,
+  guidance_mode text NOT NULL DEFAULT 'freeform',
+  recording_started_at timestamptz,
+  recording_ended_at timestamptz,
+  words jsonb,
+  card_boundaries jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS training_items (
@@ -546,25 +559,6 @@ ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_status text;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_plan text CHECK (subscription_plan IN ('pilot','school_pro'));
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_quantity integer NOT NULL DEFAULT 1;
 CREATE UNIQUE INDEX IF NOT EXISTS organizations_stripe_customer_idx ON organizations (stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;
-
--- Holds a debrief recording that was submitted while billing-blocked (free
--- tier exhausted, no active subscription) so it is never discarded -- the
--- billing gate in app/api/debrief/analyze/route.ts checks *after* this row
--- is saved, not before, so a student who hits the paywall mid-flow can
--- subscribe and resume analysis without re-recording. One row per flight;
--- a retry (re-recording, or resuming) overwrites it. Deleted once analysis
--- actually succeeds and the real debriefs row exists.
-CREATE TABLE IF NOT EXISTS pending_debrief_transcripts (
-  flight_id text PRIMARY KEY REFERENCES flights(id) ON DELETE CASCADE,
-  transcript text NOT NULL,
-  audio_duration_seconds integer NOT NULL DEFAULT 0,
-  guidance_mode text NOT NULL DEFAULT 'freeform' CHECK (guidance_mode IN ('guided','light','freeform')),
-  recording_started_at timestamptz,
-  recording_ended_at timestamptz,
-  words jsonb,
-  card_boundaries jsonb,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
 
 -- The default organization every signup joins (see lib/auth/store.ts). This is
 -- real identity data, not demo content; demo users/flights are seeded

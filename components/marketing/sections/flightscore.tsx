@@ -1,7 +1,7 @@
 import { Gauge, MessageCircle, Navigation as NavigationIcon, Brain, ClipboardCheck } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 import { SlideInRight } from "@/components/marketing/slide-in-right";
-import { FlightScoreGauge } from "@/components/flight-score/flight-score-gauge";
+import { MarketingFlightScoreGauge } from "@/components/marketing/marketing-flight-score-gauge";
 import { mockFlightScoreOnTrack } from "@/components/flight-score/mock-data";
 
 const CATEGORY_ICONS: Record<string, typeof Gauge> = {
@@ -55,12 +55,12 @@ export function FlightScoreSection() {
 
         <div className="mt-12 flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:justify-center lg:gap-20">
           <Reveal className="flex flex-col items-center">
-            <div className="sm:hidden">
-              <FlightScoreGauge score={data.score} label={data.label} tone={data.tone} caption="Last 8 flights" size={260} />
-            </div>
-            <div className="hidden sm:block">
-              <FlightScoreGauge score={data.score} label={data.label} tone={data.tone} caption="Last 8 flights" size={440} />
-            </div>
+            <MarketingFlightScoreGauge
+              score={data.score}
+              label={data.label}
+              tone={data.tone}
+              caption="Last 8 flights"
+            />
             <p className="mt-4 max-w-[320px] text-balance text-center text-sm text-[#68717D]">
               Built from structured, instructor-reviewed observations across your training &mdash; not an AI grade
               of a single flight.

@@ -4,7 +4,7 @@ import { LearningLoop } from "@/components/marketing/sections/learning-loop";
 import { BrandMoment } from "@/components/marketing/sections/brand-moment";
 import { DebriefDoctrine } from "@/components/marketing/sections/debrief-doctrine";
 import { Proof } from "@/components/marketing/sections/proof";
-import { BrandDeviceLoop } from "@/components/marketing/brand-device-loop";
+import { DeferredBrandDeviceLoop } from "@/components/marketing/deferred-brand-device-loop";
 import { EverythingThatMatters } from "@/components/marketing/sections/everything-that-matters";
 import { FeedbackToPlan } from "@/components/marketing/sections/feedback-to-plan";
 import { FlightScoreSection } from "@/components/marketing/sections/flightscore";
@@ -24,7 +24,7 @@ export default function MarketingHomePage() {
   return (
     <>
       <Hero />
-      <BrandDeviceLoop />
+      <DeferredBrandDeviceLoop />
       <BrandMoment />
       <LearningLoop />
       <DebriefDoctrine />

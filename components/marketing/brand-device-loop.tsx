@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Plane } from "lucide-react";
+import { BrandDeviceFrame } from "@/components/marketing/brand-device-frame";
 
 const WORDS = ["Learn", "Study", "Prepare", "Improve"] as const;
 
@@ -111,17 +112,9 @@ export function BrandDeviceLoop() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[#101727] px-6 pb-1 pt-8 text-center sm:pb-2 sm:pt-10">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#171f33_0%,_#0c1220_75%)]" />
-
-      <div className="relative mx-auto max-w-4xl">
-        <div className="font-display flex flex-wrap items-baseline justify-center gap-x-2 gap-y-3 text-[clamp(1.75rem,5.5vw,3.25rem)] font-extrabold uppercase leading-[1.25] tracking-wide text-white sm:gap-y-2 lg:flex-nowrap">
-          <span className="shrink-0 whitespace-nowrap">Fly. Debrief.</span>
-          {/* The word and "Repeat." are grouped into one flex item on purpose -- with three
-              independent wrappable segments, a wide word (e.g. "Prepare.") could wrap onto its
-              own line between the other two, dropping this to three lines instead of two. Two
-              flex items can only ever wrap into at most two lines, regardless of word width. */}
-          <span className="inline-flex shrink-0 items-baseline gap-x-2 whitespace-nowrap">
+    <BrandDeviceFrame
+      action={
+        <>
             <span
               className="relative inline-block shrink-0 overflow-hidden align-baseline"
               style={{
@@ -136,15 +129,13 @@ export function BrandDeviceLoop() {
                 {WORDS[index]}.
               </span>
             </span>
-            <span className="shrink-0 whitespace-nowrap">Repeat.</span>
-          </span>
-        </div>
-
-        <div className="relative mx-auto mt-0.5 h-6 max-w-4xl" aria-hidden="true">
-          {reducedMotionForPlane ? (
-            <Plane className="absolute left-1/2 top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 rotate-45 text-brand" />
-          ) : (
-            <div ref={flyContainerRef} className="absolute inset-0">
+        </>
+      }
+      plane={
+        reducedMotionForPlane ? (
+          <Plane className="absolute left-1/2 top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 rotate-45 text-brand" />
+        ) : (
+          <div ref={flyContainerRef} className="absolute inset-0">
               <Plane
                 className="absolute top-1/2 size-5 -translate-y-1/2 rotate-45 text-brand"
                 style={{
@@ -153,10 +144,9 @@ export function BrandDeviceLoop() {
                   transition: flying ? "left 4800ms ease-in-out, opacity 1000ms ease-in 3800ms" : "none",
                 }}
               />
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
+          </div>
+        )
+      }
+    />
   );
 }
