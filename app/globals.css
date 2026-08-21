@@ -173,6 +173,24 @@ h1 {
       animation-timeline: view();
       animation-range: entry 0% cover 30%;
     }
+
+    /* components/marketing/slide-in-right.tsx -- same technique, slides in
+       from the right instead of rising, for list rows rather than whole
+       sections. */
+    .reveal-slide-right {
+      animation: reveal-slide-in-right linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+
+    /* components/marketing/sections/proof.tsx's local RevealUp -- more
+       upward travel and a later range end for a slower, gentler feel,
+       scoped to that section only. */
+    .reveal-up-slow {
+      animation: reveal-fade-up-slow linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 40%;
+    }
   }
 }
 
@@ -180,6 +198,28 @@ h1 {
   from {
     opacity: 0;
     transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-fade-up-slow {
+  from {
+    opacity: 0;
+    transform: translateY(48px);
   }
   to {
     opacity: 1;

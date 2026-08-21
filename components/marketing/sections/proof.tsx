@@ -1,23 +1,15 @@
-"use client";
-
 import type { ReactNode } from "react";
-import { useInView } from "@/lib/marketing/use-in-view";
 import { cn } from "@/lib/utils";
 
-/** Same fade/rise pattern as components/marketing/reveal.tsx, but with more
- * upward travel and a slower, gentler ease -- scoped to this section only. */
+/**
+ * Same fade/rise pattern as components/marketing/reveal.tsx, but with more
+ * upward travel and a later range end for a slower, gentler feel -- scoped
+ * to this section only. Pure CSS via animation-timeline: view(), see
+ * .reveal-up-slow in app/globals.css -- no client JS.
+ */
 function RevealUp({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
-  const { ref, inView } = useInView<HTMLDivElement>();
   return (
-    <div
-      ref={ref}
-      className={cn(
-        "transition-[opacity,transform] duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none motion-reduce:transform-none",
-        inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12",
-        className,
-      )}
-      style={{ transitionDelay: inView ? `${delay}ms` : "0ms" }}
-    >
+    <div className={cn("reveal-up-slow", className)} style={delay ? { animationDelay: `${delay}ms` } : undefined}>
       {children}
     </div>
   );
