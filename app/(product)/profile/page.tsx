@@ -1,4 +1,5 @@
 import { Building2, Mail, User as UserIcon, Users, Volume2 } from "lucide-react";
+import { AvatarUpload } from "@/components/avatar-upload";
 import { ChangeEmailForm } from "@/components/change-email-form";
 import { LeaveOrganizationButton } from "@/components/leave-organization-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,12 +54,7 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
       <Card>
         <CardContent className="flex flex-col gap-4 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand/10 text-lg font-semibold text-brand-dark dark:bg-brand/20 dark:text-brand-light">
-              {viewer.user.name
-                .split(" ")
-                .map((p) => p[0])
-                .join("")}
-            </div>
+            <AvatarUpload name={viewer.user.name} avatarUrl={viewer.user.avatarUrl} />
             <div>
               <p className="font-semibold text-slate-900 dark:text-white">{viewer.user.name}</p>
               <p className="text-sm capitalize text-slate-500 dark:text-slate-400">{viewer.role}</p>

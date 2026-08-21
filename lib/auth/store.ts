@@ -16,6 +16,7 @@ interface UserRow {
   email: string;
   auth_user_id: string | null;
   profile_completed: boolean;
+  avatar_url: string | null;
   created_at: string;
 }
 
@@ -26,6 +27,7 @@ function toUser(row: UserRow): User {
     email: row.email,
     authUserId: row.auth_user_id,
     profileCompleted: row.profile_completed,
+    avatarUrl: row.avatar_url,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
@@ -47,6 +49,11 @@ export async function tryMarkMagicLinkSent(email: string, cooldownSeconds: numbe
 /** One-time onboarding: confirm/edit name and mark the profile complete. */
 export async function completeProfile(userId: string, name: string): Promise<void> {
   await getDb().query("UPDATE users SET name = $1, profile_completed = true WHERE id = $2", [name, userId]);
+}
+
+/** Set or clear (null) the user's profile photo -- see users.avatar_url doc comment in db/schema.sql. */
+export async function updateUserAvatar(userId: string, avatarUrl: string | null): Promise<void> {
+  await getDb().query("UPDATE users SET avatar_url = $1 WHERE id = $2", [avatarUrl, userId]);
 }
 
 export async function getUserByAuthId(authUserId: string): Promise<User | null> {

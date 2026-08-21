@@ -42,11 +42,17 @@ CREATE TABLE IF NOT EXISTS users (
   auth_user_id text UNIQUE,
   -- Set once they confirm their name on the one-time onboarding form.
   profile_completed boolean NOT NULL DEFAULT false,
+  -- Small square photo, stored inline as a data: URL (client resizes/compresses
+  -- before upload, see components/avatar-upload.tsx) -- no object storage is
+  -- wired up in this app, and profile photos are small enough that adding one
+  -- wasn't worth it. Null falls back to initials.
+  avatar_url text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
 -- Idempotent column additions for existing databases.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed boolean NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text;
 
 -- Legacy migration (idempotent): auth_user_id used to hold a Replit OIDC
 -- subject; with magic-link sign-in it must be the normalized email. Rewrite

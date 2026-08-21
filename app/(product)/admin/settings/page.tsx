@@ -1,4 +1,5 @@
 import { Mail } from "lucide-react";
+import { AvatarUpload } from "@/components/avatar-upload";
 import { ChangeEmailForm } from "@/components/change-email-form";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,9 +41,12 @@ export default async function AdminSettingsPage(props: PageProps<"/admin/setting
 
       <Card>
         <CardContent className="flex flex-col gap-4 py-5">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Your account</p>
-            <p className="mt-1 text-lg font-medium text-slate-900 dark:text-white">{viewer.user.name}</p>
+          <div className="flex items-center gap-3">
+            <AvatarUpload name={viewer.user.name} avatarUrl={viewer.user.avatarUrl} />
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Your account</p>
+              <p className="mt-1 text-lg font-medium text-slate-900 dark:text-white">{viewer.user.name}</p>
+            </div>
           </div>
           <div className="flex flex-col gap-1.5 border-t border-slate-100 pt-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
             <p className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
