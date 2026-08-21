@@ -26,10 +26,10 @@ export default function MarketingHomePage() {
       <Hero />
       <DeferredBrandDeviceLoop />
       <BrandMoment />
+      <EverythingThatMatters />
       <LearningLoop />
       <DebriefDoctrine />
       <Proof />
-      <EverythingThatMatters />
       <FeedbackToPlan />
       <FlightScoreSection />
       <TrainingEconomics />

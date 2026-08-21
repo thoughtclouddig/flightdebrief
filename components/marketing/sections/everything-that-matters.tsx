@@ -8,8 +8,8 @@ const CARDS = [
     copy: "Structured prompts guide the conversation between student and instructor so the important parts of the flight don't disappear when the debrief ends.",
     visual: (
       <PhotoVisual
-        src="/images/marketing/debrief-lounge-screen.webp"
-        alt="A student pilot and CFI debriefing together immediately after a flight"
+        src="/images/marketing/debrief-conference-room.webp"
+        alt="A CFI and student pilot reviewing a debrief summary together, with the flight's key takeaways and action items shown on a screen behind them"
       />
     ),
   },
@@ -72,15 +72,16 @@ const CARDS = [
 
 export function EverythingThatMatters() {
   return (
-    <section className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
+    <section id="how-it-works" className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
-            Everything AfterFlight does after you land.
+          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">How AfterFlight Works</p>
+          <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
+            One debrief. Everything you need for the next flight.
           </h2>
           <p className="mt-4 text-balance text-lg text-[#68717D]">
-            AfterFlight captures the conversation, organizes what matters, connects it to the standards, and turns
-            it into a plan for your next flight.
+            AfterFlight turns the conversation you already have after landing into a clear record of what happened,
+            what to work on, and what comes next.
           </p>
         </Reveal>
 

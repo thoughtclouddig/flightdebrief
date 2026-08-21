@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Plane } from "lucide-react";
 import { BrandDeviceFrame } from "@/components/marketing/brand-device-frame";
 
 const WORDS = ["Learn", "Study", "Prepare", "Improve"] as const;
@@ -34,9 +33,6 @@ export function BrandDeviceLoop() {
   const cancelledRef = useRef(false);
   const wordRef = useRef<HTMLSpanElement>(null);
   const [wordWidth, setWordWidth] = useState<number | null>(null);
-  const flyContainerRef = useRef<HTMLDivElement>(null);
-  const [flying, setFlying] = useState(false);
-  const [reducedMotionForPlane, setReducedMotionForPlane] = useState(false);
 
   // Measures the just-updated word and animates the wrapping box to that width
   // (via CSS transition on `width`) instead of reserving a fixed-width slot --
@@ -93,24 +89,6 @@ export function BrandDeviceLoop() {
     };
   }, []);
 
-  // Replays the flyover every time it scrolls into view (unlike the one-shot
-  // Reveal pattern) -- a one-shot version left the plane permanently sitting
-  // in its faded-out end state for the rest of the page visit. Under
-  // prefers-reduced-motion, skip the observer entirely and show a static
-  // plane -- never a plane frozen invisible mid-fade.
-  useEffect(() => {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setReducedMotionForPlane(reduceMotion);
-    if (reduceMotion) return;
-
-    const el = flyContainerRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => setFlying(entry.isIntersecting), { threshold: 0.4 });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <BrandDeviceFrame
       action={
@@ -130,22 +108,6 @@ export function BrandDeviceLoop() {
               </span>
             </span>
         </>
-      }
-      plane={
-        reducedMotionForPlane ? (
-          <Plane className="absolute left-1/2 top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 rotate-45 text-brand" />
-        ) : (
-          <div ref={flyContainerRef} className="absolute inset-0">
-              <Plane
-                className="absolute top-1/2 size-5 -translate-y-1/2 rotate-45 text-brand"
-                style={{
-                  left: flying ? "calc(100% - 4px)" : "-4px",
-                  opacity: flying ? 0 : 1,
-                  transition: flying ? "left 4800ms ease-in-out, opacity 1000ms ease-in 3800ms" : "none",
-                }}
-              />
-          </div>
-        )
       }
     />
   );

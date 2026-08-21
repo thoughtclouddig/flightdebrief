@@ -72,9 +72,11 @@ export function Hero() {
           <div className="absolute inset-y-0 left-0 hidden w-1/2 bg-gradient-to-r from-white/60 via-white/35 to-transparent lg:block" />
         </div>
         <DebriefSummaryMockupCard className="absolute -bottom-10 right-4 hidden w-[340px] lg:block xl:right-8" />
-        <DebriefSummaryMockupCard className="absolute -bottom-20 left-1/2 z-10 w-[min(320px,88%)] -translate-x-1/2 lg:hidden" />
       </div>
-      <div className="h-24 lg:hidden" aria-hidden="true" />
+      {/* In normal flow (not absolute) on mobile so the card's real height sets the
+          section's height -- an absolutely-positioned card here previously needed a
+          hardcoded spacer below it that never matched the card's actual content height. */}
+      <DebriefSummaryMockupCard className="relative z-10 -mt-16 mx-auto mb-10 w-[min(320px,88%)] lg:hidden" />
     </section>
   );
 }
