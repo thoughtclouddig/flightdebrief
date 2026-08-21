@@ -82,8 +82,8 @@ export function LearningLoop() {
                 </p>
               </div>
               <div>
-                <p className="font-display text-balance text-lg font-bold text-[#101727]">{frame.headline}</p>
-                <p className="text-pretty mt-1 text-sm text-[#68717D]">{frame.copy}</p>
+                <p className="font-display text-balance text-xl font-bold text-[#101727]">{frame.headline}</p>
+                <p className="text-pretty mt-1.5 text-base text-[#68717D]">{frame.copy}</p>
               </div>
             </Reveal>
           ))}
@@ -93,7 +93,7 @@ export function LearningLoop() {
           <h3 className="font-display text-balance text-xl font-bold text-[#101727] sm:text-2xl">
             Why three formats, not one
           </h3>
-          <p className="text-balance mt-2 text-sm text-[#68717D]">
+          <p className="text-balance mt-3 text-base text-[#68717D]">
             Memory research on multimedia learning has repeatedly found that pairing spoken and written review
             measurably improves retention over either alone.
           </p>
@@ -103,8 +103,8 @@ export function LearningLoop() {
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/10">
                   <Icon className="size-5 text-brand" strokeWidth={2} />
                 </span>
-                <p className="font-display text-sm font-bold text-[#101727]">{label}</p>
-                <p className="text-pretty text-sm text-[#68717D]">{copy}</p>
+                <p className="font-display text-base font-bold text-[#101727]">{label}</p>
+                <p className="text-pretty text-base text-[#68717D]">{copy}</p>
               </div>
             ))}
           </div>
