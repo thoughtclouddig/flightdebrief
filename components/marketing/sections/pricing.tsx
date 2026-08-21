@@ -48,7 +48,7 @@ export function Pricing() {
                   </span>
                   {tier.priceSuffix ? <span className="text-base text-[#68717D]/70">{tier.priceSuffix}</span> : null}
                 </p>
-                {tier.priceNote ? <p className="text-balance mt-1.5 text-sm font-semibold text-brand">{tier.priceNote}</p> : null}
+                {tier.priceNote ? <p className="text-balance mt-1 text-base font-semibold text-brand">{tier.priceNote}</p> : null}
                 {tier.valueAnchor ? <p className="text-balance mt-2 text-sm font-semibold text-brand">{tier.valueAnchor}</p> : null}
                 {tier.id === "pilot" ? (
                   <p className="text-pretty mt-1.5 text-xs text-[#68717D]">
@@ -119,7 +119,7 @@ export function Pricing() {
                   <TrackedLink
                     href={ENTERPRISE_PRICING.ctaHref}
                     event="select_enterprise"
-                    className="group inline-flex items-center gap-2.5 rounded-lg bg-brand px-8 py-4 text-base font-bold text-white transition-[transform,box-shadow,background-color] duration-150 ease-out hover:-translate-y-0.5 hover:bg-brand-dark hover:shadow-lg hover:shadow-brand/25 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                    className="group inline-flex items-center gap-2.5 rounded-lg bg-brand px-8 py-4 text-base font-bold text-white transition-[transform,box-shadow,background-color] duration-150 ease-out hover:-translate-y-0.5 hover:bg-brand-bright hover:shadow-lg hover:shadow-brand/25 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                   >
                     {ENTERPRISE_PRICING.cta}
                     <ArrowRight className="size-5 transition-transform duration-150 ease-out group-hover:translate-x-0.5" />

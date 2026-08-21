@@ -16,6 +16,8 @@
   --brand: #f07621;
   --brand-dark: #b8540f;
   --brand-light: #fce0c8;
+  /* Hover state for CTAs that should brighten, not darken, on rollover. */
+  --brand-bright: #ff8f3d;
 
   /* Runway-light amber -- status/emphasis, kept separate from the accent */
   --amber: #b87621;
@@ -41,6 +43,7 @@
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
   --color-brand-light: var(--brand-light);
+  --color-brand-bright: var(--brand-bright);
   --color-surface: var(--surface);
   --color-surface-sunken: var(--surface-sunken);
   --color-hairline: var(--hairline);
