@@ -46,6 +46,11 @@ export async function StudentTrainingDetail({
 }) {
   const repo = getRepository();
   const isCfiOrAdmin = viewer.role === "instructor" || viewer.role === "admin";
+  // School orgs are the ones actually running Flight Schedule Pro today --
+  // showing a second, unsynced scheduler there risks two systems drifting
+  // out of sync, not just going unused. Independent CFIs and solo accounts
+  // have no scheduling tool at all, so manual scheduling is real value there.
+  const canScheduleLessons = isCfiOrAdmin && viewer.organization.kind !== "school";
   const [flights, trainingItems, brief, signals, radioPracticeAssignments, studentNotes, aircraft] = await Promise.all([
     repo.listFlights({ studentId: student.id }),
     repo.listTrainingItems(),
@@ -53,7 +58,7 @@ export async function StudentTrainingDetail({
     repo.listTrainingSignals({ studentId: student.id }),
     repo.listRadioPracticeAssignments(student.id),
     isCfiOrAdmin ? repo.listStudentNotes({ studentId: student.id }) : Promise.resolve([]),
-    isCfiOrAdmin ? repo.listAircraft(viewer.organization.id) : Promise.resolve([]),
+    canScheduleLessons ? repo.listAircraft(viewer.organization.id) : Promise.resolve([]),
   ]);
 
   const flightIds = new Set(flights.map((f) => f.id));
@@ -158,7 +163,7 @@ export async function StudentTrainingDetail({
             ) : (
               <p className="text-sm text-slate-400">Nothing scheduled yet.</p>
             )}
-            {isCfiOrAdmin ? (
+            {canScheduleLessons ? (
               <div className="mt-2">
                 <ScheduleLessonForm studentId={student.id} aircraft={aircraft} />
               </div>
