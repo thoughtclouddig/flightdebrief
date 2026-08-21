@@ -47,12 +47,18 @@ export function Proof() {
 
         <RevealUp delay={600} className="mx-auto mt-10 border-t border-[#e4e7ea] pt-8">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8c97a2]">According to studies by</p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-            <span className="font-display text-xl font-bold tracking-[0.1em] text-[#4b545d]">FAA</span>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 sm:gap-x-8">
+            <span className="font-display text-base font-bold tracking-[0.06em] text-[#4b545d] sm:text-xl sm:tracking-[0.1em]">
+              FAA
+            </span>
             <span className="h-5 w-px bg-[#d5d9dd]" aria-hidden="true" />
-            <span className="font-display text-xl font-bold tracking-[0.1em] text-[#4b545d]">NASA</span>
+            <span className="font-display text-base font-bold tracking-[0.06em] text-[#4b545d] sm:text-xl sm:tracking-[0.1em]">
+              NASA
+            </span>
             <span className="h-5 w-px bg-[#d5d9dd]" aria-hidden="true" />
-            <span className="font-display text-xl font-bold tracking-[0.1em] text-[#4b545d]">Human Factors</span>
+            <span className="font-display text-base font-bold tracking-[0.06em] text-[#4b545d] sm:text-xl sm:tracking-[0.1em]">
+              Human Factors
+            </span>
           </div>
         </RevealUp>
 

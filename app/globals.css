@@ -122,6 +122,15 @@
   }
 }
 
+html,
+body {
+  /* Belt-and-suspenders against any element (marquee, oversized clamp() type,
+     rounding on a vw-based width) coming out a fraction wider than the
+     viewport -- without this, that lets mobile browsers pan the whole page
+     sideways on a thumb drag instead of just clipping the offending element. */
+  overflow-x: hidden;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

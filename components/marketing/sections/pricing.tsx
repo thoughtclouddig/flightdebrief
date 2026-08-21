@@ -34,7 +34,7 @@ export function Pricing() {
                 )}
               >
                 {tier.featured ? (
-                  <span className="absolute left-1/2 top-0 inline-block w-fit -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-brand/30">
+                  <span className="absolute inset-x-0 top-0 mx-auto inline-block w-fit -translate-y-1/2 rounded-full bg-brand px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-brand/30">
                     {tier.featuredLabel}
                   </span>
                 ) : null}
