@@ -12,6 +12,8 @@ interface CreateFlightBody {
   durationMinutes: number;
   instructorName?: string;
   providerFlightId?: string | null;
+  /** Instructor/admin only -- lets a CFI log a flight for one of their students instead of themselves. */
+  studentId?: string;
 }
 
 export async function POST(request: Request) {
@@ -33,6 +35,25 @@ export async function POST(request: Request) {
 
   const repo = getRepository();
 
+  // A CFI/admin logging a flight for a specific student -- the person doing
+  // the logging becomes the instructor of record by default (see below), no
+  // separate instructor picker needed for this path.
+  let studentId = viewer.user.id;
+  let loggedByInstructor = false;
+  if (body.studentId && body.studentId !== viewer.user.id) {
+    if (viewer.role !== "instructor" && viewer.role !== "admin") {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const student = await repo.getUser(body.studentId);
+    if (!student) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const memberships = await repo.listMembershipsForUser(student.id);
+    if (!memberships.some((m) => m.organizationId === viewer.organization.id)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    studentId = student.id;
+    loggedByInstructor = true;
+  }
+
   try {
     const aircraft = await repo.getOrCreateAircraft({
       tailNumber: body.tailNumber,
@@ -41,8 +62,9 @@ export async function POST(request: Request) {
       organizationId: viewer.organization.id,
     });
 
-    const instructor = body.instructorName?.trim()
-      ? await repo.getOrCreateInstructor(body.instructorName.trim(), viewer.organization.id)
+    const instructorName = loggedByInstructor ? viewer.user.name : body.instructorName?.trim();
+    const instructor = instructorName
+      ? await repo.getOrCreateInstructor(instructorName, viewer.organization.id)
       : null;
 
     let track = null;
@@ -57,7 +79,7 @@ export async function POST(request: Request) {
     const flight = await repo.createFlight({
       aircraftId: aircraft.id,
       organizationId: viewer.organization.id,
-      studentId: viewer.user.id,
+      studentId,
       departureAirport: departureAirport.toUpperCase(),
       arrivalAirport: arrivalAirport.toUpperCase(),
       flightDate: body.flightDate,

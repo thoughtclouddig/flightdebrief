@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AssessmentProgress } from "@/components/debrief/assessment-progress";
 import { TaskRatingCard } from "@/components/debrief/task-rating-card";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
-import type { AssessmentRole } from "@/lib/types";
+import type { AssessmentRole, FlightWithRelations } from "@/lib/types";
 
 interface TaskInput {
   id: string;
@@ -16,6 +16,7 @@ interface TaskInput {
 
 export function AssessmentForm({
   flightId,
+  flight,
   role,
   tasks,
   initialRatings,
@@ -24,6 +25,8 @@ export function AssessmentForm({
   helpText,
 }: {
   flightId: string;
+  /** Optional -- when provided, shown above the title so it's always clear which flight this assessment is for. */
+  flight?: FlightWithRelations;
   role: AssessmentRole;
   tasks: TaskInput[];
   initialRatings: Record<string, PerformanceLevelCode>;
@@ -80,7 +83,12 @@ export function AssessmentForm({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+        {flight ? (
+          <p className="text-sm font-medium uppercase tracking-wide text-brand">
+            {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+          </p>
+        ) : null}
+        <h1 className="mt-1 text-2xl font-semibold text-foreground">{title}</h1>
         <p className="mt-1 text-sm text-foreground-soft">{helpText}</p>
       </div>
 

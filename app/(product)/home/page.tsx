@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
+import { computeDebriefProgress } from "@/lib/debrief-progress";
 import { suggestStudyReferences } from "@/lib/topics";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { formatDurationShort } from "@/lib/utils";
@@ -52,6 +53,15 @@ export default async function StudentHomePage() {
   const openActionItems = trainingItems.filter(
     (t) => flightIds.has(t.flightId) && !t.done && t.category !== "todo" && t.visibility === "shared",
   );
+
+  // The most recent flight that isn't debriefed yet, if any -- invisible to
+  // brief.lastFlight (pre-filtered to complete-only, lib/training-memory.ts)
+  // and the source of a real gap: neither dashboard showed a flight was
+  // sitting mid-debrief at all. See lib/debrief-progress.ts.
+  const pendingFlight = [...flights]
+    .filter((f) => f.debriefStatus !== "complete")
+    .sort((a, b) => b.flightDate.localeCompare(a.flightDate))[0] ?? null;
+  const pendingProgress = pendingFlight ? await computeDebriefProgress(repo, pendingFlight) : null;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -109,6 +119,39 @@ export default async function StudentHomePage() {
             <Link href="/next-lesson" className={buttonVariants({ size: "sm" })}>
               View full brief
             </Link>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {pendingFlight && pendingProgress ? (
+        <Card className="border-brand/30 bg-brand/5 dark:bg-brand/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PlaneTakeoff className="size-4 text-brand" />
+              {pendingProgress.stage === "awaiting_student_assessment" ? "Needs Your Input" : "Debrief In Progress"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-medium text-foreground">
+                {pendingFlight.departureAirport} → {pendingFlight.arrivalAirport} · {pendingFlight.aircraft.tailNumber}
+              </p>
+              <p className="text-sm text-foreground-soft">
+                {pendingProgress.stage === "awaiting_tasks" || pendingProgress.stage === "awaiting_instructor_assessment"
+                  ? "Waiting on your instructor."
+                  : pendingProgress.stage === "awaiting_student_assessment"
+                    ? "Your instructor submitted their assessment -- your turn."
+                    : "Both assessments are in -- your instructor is starting the debrief."}
+              </p>
+            </div>
+            {pendingProgress.stage === "awaiting_student_assessment" ? (
+              <Link
+                href={`/flights/${pendingFlight.id}/debrief/self-assessment`}
+                className={buttonVariants({ size: "sm" })}
+              >
+                Do it now
+              </Link>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}
@@ -267,7 +310,7 @@ export default async function StudentHomePage() {
         </Card>
       )}
 
-      {!brief.lastFlight && !brief.upcomingReservation ? (
+      {!brief.lastFlight && !brief.upcomingReservation && !pendingFlight ? (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-hairline p-10 text-center text-foreground-soft">
           <BookOpen className="size-8 text-foreground-faint" />
           No flights yet. Add your first training flight to get started.

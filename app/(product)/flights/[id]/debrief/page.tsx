@@ -3,6 +3,7 @@ import { DebriefRecorder } from "@/components/debrief-recorder";
 import { GuidedDebriefRecorder } from "@/components/debrief/guided-debrief-recorder";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
+import type { FlightWithRelations } from "@/lib/types";
 
 /**
  * State-machine resolver: which step of the structured debrief flow a viewer
@@ -44,7 +45,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
   const tasks = await repo.listFlightTasks(id);
   if (tasks.length === 0) {
     if (isInstructorViewer) redirect(`/flights/${id}/debrief/tasks`);
-    return <WaitingMessage text="Your instructor hasn't picked today's tasks yet." />;
+    return <WaitingMessage flight={flight} text="Your instructor hasn't picked today's tasks yet." />;
   }
 
   const [studentAssessment, instructorAssessment] = await Promise.all([
@@ -52,15 +53,22 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
     repo.getAssessment(id, "instructor"),
   ]);
 
-  if (!isInstructorViewer && studentAssessment?.status !== "submitted") {
-    redirect(`/flights/${id}/debrief/self-assessment`);
-  }
+  // CFI always goes first now (see the same rule enforced server-side in
+  // the submit route and self-assessment/page.tsx) -- the student branch
+  // only redirects to the form once the instructor's is actually in.
   if (isInstructorViewer && instructorAssessment?.status !== "submitted") {
     redirect(`/flights/${id}/debrief/instructor-assessment`);
+  }
+  if (!isInstructorViewer && instructorAssessment?.status !== "submitted") {
+    return <WaitingMessage flight={flight} text="Your instructor needs to submit their assessment first." />;
+  }
+  if (!isInstructorViewer && studentAssessment?.status !== "submitted") {
+    redirect(`/flights/${id}/debrief/self-assessment`);
   }
   if (studentAssessment?.status !== "submitted" || instructorAssessment?.status !== "submitted") {
     return (
       <WaitingMessage
+        flight={flight}
         text={
           isInstructorViewer
             ? "Waiting on the student's self-assessment."
@@ -72,7 +80,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
 
   const cards = await repo.listCards(id);
   if (!isInstructorViewer) {
-    return <WaitingMessage text="Both assessments are in -- your instructor is starting the debrief." />;
+    return <WaitingMessage flight={flight} text="Both assessments are in -- your instructor is starting the debrief." />;
   }
 
   // Both assessments are in but the CFI hasn't come from the Compare screen
@@ -96,10 +104,13 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
   );
 }
 
-function WaitingMessage({ text }: { text: string }) {
+function WaitingMessage({ flight, text }: { flight: FlightWithRelations; text: string }) {
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
-      <h1 className="text-2xl font-semibold text-foreground">Not quite yet</h1>
+      <p className="text-sm font-medium uppercase tracking-wide text-brand">
+        {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+      </p>
+      <h1 className="mt-1 text-2xl font-semibold text-foreground">Not quite yet</h1>
       <p className="text-sm text-foreground-soft">{text}</p>
     </div>
   );

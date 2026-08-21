@@ -7,7 +7,7 @@ export default async function InstructorAssessmentPage(props: PageProps<"/flight
   const { id } = await props.params;
   const authorized = await getAuthorizedFlight(id);
   if (!authorized) notFound();
-  const { viewer } = authorized;
+  const { viewer, flight } = authorized;
   if (viewer.role !== "instructor" && viewer.role !== "admin") notFound();
 
   const repo = getRepository();
@@ -18,7 +18,10 @@ export default async function InstructorAssessmentPage(props: PageProps<"/flight
   if (assessment?.status === "submitted") {
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
-        <h1 className="text-2xl font-semibold text-foreground">Assessment submitted</h1>
+        <p className="text-sm font-medium uppercase tracking-wide text-brand">
+          {flight.aircraft.tailNumber} · {flight.departureAirport} → {flight.arrivalAirport}
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold text-foreground">Assessment submitted</h1>
         <p className="text-sm text-foreground-soft">
           Once the student&rsquo;s assessment is in too, you&rsquo;ll be able to compare notes before the debrief.
         </p>
@@ -33,6 +36,7 @@ export default async function InstructorAssessmentPage(props: PageProps<"/flight
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <AssessmentForm
         flightId={id}
+        flight={flight}
         role="instructor"
         tasks={tasks.map((t) => ({ id: t.id, label: t.label }))}
         initialRatings={initialRatings}

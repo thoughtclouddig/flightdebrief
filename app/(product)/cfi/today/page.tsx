@@ -6,6 +6,7 @@ import { CfiStudentCard } from "@/components/cfi-student-card";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { attentionReasons, computeInstructorRoster, computeNextLessonBrief } from "@/lib/training-memory";
+import { computeDebriefProgress } from "@/lib/debrief-progress";
 import { localIsoDate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
@@ -50,9 +51,17 @@ export default async function CfiTodayPage() {
     }),
   );
 
-  const needingAttention = roster
-    .map((entry) => ({ entry, reasons: attentionReasons(entry) }))
-    .filter(({ reasons }) => reasons.length > 0);
+  const needingAttention = (
+    await Promise.all(
+      roster.map(async (entry) => {
+        const progress =
+          entry.mostRecentFlight && entry.mostRecentFlight.debriefStatus !== "complete"
+            ? await computeDebriefProgress(repo, entry.mostRecentFlight)
+            : undefined;
+        return { entry, reasons: attentionReasons(entry, progress) };
+      }),
+    )
+  ).filter(({ reasons }) => reasons.length > 0);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">

@@ -15,10 +15,9 @@ interface SubmitBody {
 const OTHER_ROLE: Record<AssessmentRole, AssessmentRole> = { student: "instructor", instructor: "student" };
 
 /**
- * Submits the caller's own independent assessment. Card generation is
- * triggered once BOTH assessments are submitted -- not hardcoded to whichever
- * role submits second, so it works regardless of which order the CFI and
- * student actually finish in.
+ * Submits the caller's own independent assessment. The CFI must submit
+ * first -- a student's submission is rejected until the instructor's is in
+ * (see the check below). Card generation triggers once both are submitted.
  */
 export async function POST(
   request: Request,
@@ -37,6 +36,21 @@ export async function POST(
   const roleCheck = assertAssessmentRole(auth.viewer, flight, roleParam);
   if (roleCheck.response) return roleCheck.response;
   const role = roleCheck.role;
+
+  // CFI goes first, always -- the two-assessments-in-any-order design was
+  // the source of real confusion in practice (nobody knew whose turn it
+  // was). The real boundary is here, not the page-level gate or the
+  // resolver's redirect -- either of those alone can be bypassed by hitting
+  // the self-assessment URL directly.
+  if (role === "student") {
+    const instructorAssessment = await repo.getAssessment(id, "instructor");
+    if (instructorAssessment?.status !== "submitted") {
+      return NextResponse.json(
+        { error: "Your instructor needs to submit their assessment first." },
+        { status: 400 },
+      );
+    }
+  }
 
   const body = (await request.json().catch(() => ({}))) as SubmitBody;
   const assessment = await repo.getOrCreateAssessment(id, role, auth.viewer.user.id);

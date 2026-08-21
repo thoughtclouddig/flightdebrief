@@ -1,4 +1,6 @@
 import { skillLabel } from "@/lib/topics";
+import { debriefStageLabel } from "@/lib/debrief-progress";
+import type { DebriefProgress } from "@/lib/debrief-progress";
 import type { Repository } from "@/lib/data/types";
 import type {
   Debrief,
@@ -167,11 +169,17 @@ export async function computeInstructorRoster(
   return entries.filter((e): e is StudentRosterEntry => e !== null);
 }
 
-/** Short, human-readable reasons a student needs a CFI's attention -- kept restrained on purpose. */
-export function attentionReasons(entry: StudentRosterEntry): string[] {
+/**
+ * Short, human-readable reasons a student needs a CFI's attention -- kept
+ * restrained on purpose. `progress`, when supplied, replaces the generic
+ * "Debrief not completed" with the actual stage (see
+ * lib/debrief-progress.ts) -- optional so callers that haven't computed it
+ * (cheaper, no extra queries) still get a reasonable fallback.
+ */
+export function attentionReasons(entry: StudentRosterEntry, progress?: DebriefProgress): string[] {
   const reasons: string[] = [];
   if (entry.mostRecentFlight && entry.mostRecentFlight.debriefStatus !== "complete") {
-    reasons.push("Debrief not completed");
+    reasons.push(progress ? debriefStageLabel(progress) : "Debrief not completed");
   }
   if (entry.mostRecentFlight?.debriefStatus === "complete" && entry.currentFocus.length === 0) {
     reasons.push("Next lesson has no objectives");
