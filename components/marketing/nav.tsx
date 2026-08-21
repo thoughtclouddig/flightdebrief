@@ -18,7 +18,19 @@ export function MarketingNav() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-[1320px] items-center justify-between px-6">
-        <Link href="/" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
+        <Link
+          href="/"
+          className="flex shrink-0 items-center"
+          onClick={() => {
+            setOpen(false);
+            // Link only resets scroll on an actual route change -- clicking the
+            // logo while already on "/" is a no-op navigation, so it would
+            // otherwise leave the page scrolled wherever it was.
+            if (window.location.pathname === "/") {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
+        >
           <Image
             src="/brand/afterflight-lockup-dark.svg"
             alt="AfterFlight"
