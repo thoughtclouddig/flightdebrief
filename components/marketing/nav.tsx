@@ -25,7 +25,7 @@ export function MarketingNav() {
             width={166}
             height={26}
             priority
-            className="h-5 w-auto sm:h-[26px]"
+            className="h-6 w-auto sm:h-[26px]"
           />
         </Link>
 

@@ -158,57 +158,71 @@ h1 {
   }
 }
 
-@keyframes marketing-track-draw {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
+/* Marketing sections' scroll-reveal (components/marketing/reveal.tsx), done
+   with zero JavaScript instead of the old per-element IntersectionObserver
+   hook -- animation-timeline: view() lets the browser drive a real
+   scroll-linked fade-up on the compositor thread, no "use client" boundary
+   needed at all. Feature-detected: unsupported browsers (older Safari/
+   Firefox) simply render the content with no animation, same as the
+   no-animation baseline already shipped -- never worse, better where
+   supported. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal-fade-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+
+    /* components/marketing/slide-in-right.tsx -- same technique, slides in
+       from the right instead of rising, for list rows rather than whole
+       sections. */
+    .reveal-slide-right {
+      animation: reveal-slide-in-right linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+
+    /* components/marketing/sections/proof.tsx's local RevealUp -- more
+       upward travel and a later range end for a slower, gentler feel,
+       scoped to that section only. */
+    .reveal-up-slow {
+      animation: reveal-fade-up-slow linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 40%;
+    }
   }
 }
 
-@keyframes marketing-gauge-fill {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: var(--marketing-gauge-offset);
-  }
-}
-
-@keyframes marketing-fade-in {
+@keyframes reveal-fade-up {
   from {
     opacity: 0;
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .marketing-track-path,
-    .marketing-track-fill,
-    .marketing-gauge-path {
-      animation-duration: 1ms;
-      animation-fill-mode: both;
-      animation-timing-function: linear;
-      animation-timeline: view(block);
-      animation-range: entry 0% entry 40%;
-    }
+@keyframes reveal-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
-    .marketing-track-path {
-      animation-name: marketing-track-draw;
-      stroke-dasharray: 1;
-      stroke-dashoffset: 1;
-    }
-
-    .marketing-track-fill {
-      animation-name: marketing-fade-in;
-    }
-
-    .marketing-gauge-path {
-      animation-name: marketing-gauge-fill;
-    }
+@keyframes reveal-fade-up-slow {
+  from {
+    opacity: 0;
+    transform: translateY(48px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
