@@ -183,6 +183,26 @@ CREATE TABLE IF NOT EXISTS training_items (
 );
 CREATE INDEX IF NOT EXISTS training_items_flight_idx ON training_items (flight_id);
 
+-- CFI-authored standing notes about a student, independent of any specific
+-- flight or debrief (unlike training_items, whose flight_id/debrief_id are
+-- NOT NULL by design). A CFI can add one any time -- mid-flight, between
+-- lessons, before a flight is even logged -- and open notes surface as
+-- guaranteed debrief cards next time that student debriefs (see the
+-- 'instructor_selected'-source injection in
+-- app/api/flights/[id]/debrief/assessments/[role]/submit/route.ts), then get
+-- marked done automatically once that debrief completes.
+CREATE TABLE IF NOT EXISTS student_notes (
+  id text PRIMARY KEY,
+  organization_id text NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  student_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  author_user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  description text NOT NULL,
+  done boolean NOT NULL DEFAULT false,
+  completed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS student_notes_student_idx ON student_notes (student_id);
+
 CREATE TABLE IF NOT EXISTS training_signals (
   id text PRIMARY KEY,
   organization_id text REFERENCES organizations(id) ON DELETE SET NULL,

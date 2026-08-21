@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  CalendarClock,
   CheckCircle2,
   CheckSquare,
   ClipboardCheck,
@@ -10,6 +11,8 @@ import {
   Target,
 } from "lucide-react";
 import { AssignRadioPracticeCard } from "@/components/assign-radio-practice-card";
+import { ScheduleLessonForm } from "@/components/schedule-lesson-form";
+import { StudentNotesCard } from "@/components/student-notes-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,12 +45,15 @@ export async function StudentTrainingDetail({
   handoffHref?: string;
 }) {
   const repo = getRepository();
-  const [flights, trainingItems, brief, signals, radioPracticeAssignments] = await Promise.all([
+  const isCfiOrAdmin = viewer.role === "instructor" || viewer.role === "admin";
+  const [flights, trainingItems, brief, signals, radioPracticeAssignments, studentNotes, aircraft] = await Promise.all([
     repo.listFlights({ studentId: student.id }),
     repo.listTrainingItems(),
     computeNextLessonBrief(repo, student.id),
     repo.listTrainingSignals({ studentId: student.id }),
     repo.listRadioPracticeAssignments(student.id),
+    isCfiOrAdmin ? repo.listStudentNotes({ studentId: student.id }) : Promise.resolve([]),
+    isCfiOrAdmin ? repo.listAircraft(viewer.organization.id) : Promise.resolve([]),
   ]);
 
   const flightIds = new Set(flights.map((f) => f.id));
@@ -134,6 +140,30 @@ export async function StudentTrainingDetail({
               </ul>
             </div>
           ) : null}
+
+          <div className="border-t border-brand/20 pt-3">
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <CalendarClock className="size-3.5" /> Next Scheduled Lesson
+            </p>
+            {brief.upcomingReservation ? (
+              <p className="text-sm text-slate-700 dark:text-slate-200">
+                {new Date(brief.upcomingReservation.scheduledStart).toLocaleString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </p>
+            ) : (
+              <p className="text-sm text-slate-400">Nothing scheduled yet.</p>
+            )}
+            {isCfiOrAdmin ? (
+              <div className="mt-2">
+                <ScheduleLessonForm studentId={student.id} aircraft={aircraft} />
+              </div>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
 
@@ -247,6 +277,8 @@ export async function StudentTrainingDetail({
           ) : null}
         </CardContent>
       </Card>
+
+      {isCfiOrAdmin ? <StudentNotesCard studentId={student.id} initialNotes={studentNotes} /> : null}
 
       {timeline.length > 0 ? (
         <div>

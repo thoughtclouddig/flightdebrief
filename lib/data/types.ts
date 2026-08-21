@@ -23,6 +23,7 @@ import type {
   Reservation,
   SkillObservation,
   StudentInstructor,
+  StudentNote,
   Subscription,
   TrainingCategory,
   TrainingItem,
@@ -88,6 +89,22 @@ export interface ListTrainingItemsFilter {
   studentId?: string;
 }
 
+export interface CreateReservationInput {
+  organizationId: string;
+  studentId: string;
+  instructorId: string;
+  aircraftId: string;
+  scheduledStart: string;
+  scheduledEnd: string;
+}
+
+export interface CreateStudentNoteInput {
+  organizationId: string;
+  studentId: string;
+  authorUserId: string;
+  description: string;
+}
+
 /**
  * Data access boundary for the whole app, implemented by PostgresRepository
  * against the Replit Postgres database (DATABASE_URL, schema in
@@ -126,6 +143,11 @@ export interface Repository {
     items: Omit<TrainingItem, "id" | "createdAt">[],
   ): Promise<TrainingItem[]>;
   setTrainingItemDone(id: string, done: boolean): Promise<void>;
+
+  // --- CFI-authored standing student notes (independent of any flight/debrief) ---
+  listStudentNotes(filter: { studentId: string }): Promise<StudentNote[]>;
+  createStudentNote(input: CreateStudentNoteInput): Promise<StudentNote>;
+  setStudentNoteDone(id: string, done: boolean): Promise<void>;
 
   // --- Structured, CFI-led debrief: flight tasks ---
   listFlightTasks(flightId: string): Promise<FlightTask[]>;
@@ -218,9 +240,15 @@ export interface Repository {
   }): Promise<StudentInstructor>;
   setStudentInstructorStatus(linkId: string, status: StudentInstructor["status"]): Promise<void>;
 
-  // --- Reservations (read-only; produced by a SchedulingProvider) ---
+  // --- Reservations ---
+  // Historically produced only by a SchedulingProvider/seed data (see
+  // lib/scheduling/ -- still dormant, no real provider exists yet).
+  // createReservation adds a second, app-originated source: a CFI scheduling
+  // a lesson directly. A future real SchedulingProvider sync would become a
+  // third writer into the same table, not a replacement for this one.
   listReservations(filter?: ListReservationsFilter): Promise<Reservation[]>;
   getReservation(id: string): Promise<Reservation | null>;
+  createReservation(input: CreateReservationInput): Promise<Reservation>;
 
   // --- Structured training signals (see lib/taxonomy.ts) ---
   createTrainingSignals(items: Omit<TrainingSignal, "id" | "createdAt">[]): Promise<TrainingSignal[]>;

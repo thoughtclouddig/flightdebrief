@@ -102,10 +102,12 @@ export interface StudentInstructor {
 export type ReservationStatus = "scheduled" | "completed" | "cancelled";
 
 /**
- * A scheduled lesson, sourced from a SchedulingProvider (e.g. Flight Schedule
- * Pro) or seed data. Read-only from this app's perspective -- it exists only
- * to give the debrief experience operational context (who/when/what
- * aircraft), never to manage scheduling itself.
+ * A scheduled lesson -- either produced by a SchedulingProvider (e.g. Flight
+ * Schedule Pro; see lib/scheduling/, still dormant/unimplemented) or created
+ * directly by a CFI in-app (Repository.createReservation). App-originated
+ * reservations leave externalProvider/externalId null; a future real
+ * scheduling sync would be a second writer into this same table, not a
+ * replacement for manual scheduling.
  */
 export interface Reservation {
   id: string;
@@ -230,6 +232,23 @@ export interface TrainingItem {
   done: boolean;
   completedAt: string | null;
   visibility: TrainingItemVisibility;
+  createdAt: string;
+}
+
+/**
+ * A CFI-authored standing note about a student, independent of any specific
+ * flight or debrief -- addable any time, unlike TrainingItem (which always
+ * belongs to a completed debrief). Open notes surface as guaranteed debrief
+ * cards next time that student debriefs, then get marked done automatically.
+ */
+export interface StudentNote {
+  id: string;
+  organizationId: string;
+  studentId: string;
+  authorUserId: string;
+  description: string;
+  done: boolean;
+  completedAt: string | null;
   createdAt: string;
 }
 
