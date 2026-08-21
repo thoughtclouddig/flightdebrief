@@ -14,6 +14,8 @@ import { setCachedAudio } from "@/lib/audio-cache";
 import { DEFAULT_TTS_VOICE } from "@/lib/tts-voices";
 import type { DebriefGuidanceMode, StructuredDebrief } from "@/lib/types";
 import type { TranscriptWord } from "@/lib/transcription/types";
+import { DEMO_FLIGHT_ID } from "@/lib/demo/video-demo-data";
+import { DEMO_CURATED_RESULT } from "@/lib/demo/video-demo-seed";
 
 interface AnalyzeBody {
   flightId: string;
@@ -80,20 +82,27 @@ export async function POST(request: Request) {
   const assessmentDifferences =
     guidanceMode === "freeform" ? [] : await getAssessmentDifferences(flight.id);
 
-  const { structured, analyzedWith } = await analyzeDebrief({
-    transcript: pending.transcript,
-    flightMeta: {
-      tailNumber: flight.aircraft.tailNumber,
-      aircraftType: flight.aircraft.type,
-      departureAirport: flight.departureAirport,
-      arrivalAirport: flight.arrivalAirport,
-      flightDate: flight.flightDate,
-      durationMinutes: flight.durationMinutes,
-      instructorName: flight.instructor?.name ?? null,
-    },
-    previousActionItems,
-    assessmentDifferences,
-  });
+  // Video Demo Mode's fixed flight: always return the curated result instead
+  // of running the analyzer, so Scene 6 shows identical, camera-ready copy
+  // on every take regardless of what actually got said on mic -- see
+  // lib/demo/video-demo-data.ts's DEMO_CURATED_RESULT doc comment.
+  const { structured, analyzedWith } =
+    flight.id === DEMO_FLIGHT_ID
+      ? { structured: DEMO_CURATED_RESULT, analyzedWith: "mock" as const }
+      : await analyzeDebrief({
+          transcript: pending.transcript,
+          flightMeta: {
+            tailNumber: flight.aircraft.tailNumber,
+            aircraftType: flight.aircraft.type,
+            departureAirport: flight.departureAirport,
+            arrivalAirport: flight.arrivalAirport,
+            flightDate: flight.flightDate,
+            durationMinutes: flight.durationMinutes,
+            instructorName: flight.instructor?.name ?? null,
+          },
+          previousActionItems,
+          assessmentDifferences,
+        });
 
   const debrief = await repo.createDebrief({
     flightId: flight.id,
