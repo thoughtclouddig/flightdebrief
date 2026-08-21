@@ -71,7 +71,7 @@ export default async function StudentHomePage() {
       </div>
 
       {brief.upcomingReservation ? (
-        <Card className="border-brand/30 bg-brand/5 dark:bg-brand/10">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CalendarClock className="size-4 text-brand" />
@@ -125,7 +125,7 @@ export default async function StudentHomePage() {
 
       {pendingFlight && pendingProgress ? (
         <Link href={`/flights/${pendingFlight.id}/debrief`} className="block">
-          <Card className="border-brand/30 bg-brand/5 transition-colors hover:bg-brand/10 dark:bg-brand/10 dark:hover:bg-brand/15">
+          <Card className="transition-colors hover:bg-surface-sunken">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PlaneTakeoff className="size-4 text-brand" />

@@ -66,7 +66,7 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
       ) : null}
 
       {brief.focusAreas.length > 0 ? (
-        <Card className="border-brand/30 bg-brand/5 dark:bg-brand/10">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="size-4 text-brand" />
