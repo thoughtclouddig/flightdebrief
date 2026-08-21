@@ -146,29 +146,31 @@ export async function StudentTrainingDetail({
             </div>
           ) : null}
 
-          <div className="border-t border-brand/20 pt-3">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              <CalendarClock className="size-3.5" /> Next Scheduled Lesson
-            </p>
-            {brief.upcomingReservation ? (
-              <p className="text-sm text-slate-700 dark:text-slate-200">
-                {new Date(brief.upcomingReservation.scheduledStart).toLocaleString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
+          {canScheduleLessons || brief.upcomingReservation ? (
+            <div className="border-t border-brand/20 pt-3">
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <CalendarClock className="size-3.5" /> Next Scheduled Lesson
               </p>
-            ) : (
-              <p className="text-sm text-slate-400">Nothing scheduled yet.</p>
-            )}
-            {canScheduleLessons ? (
-              <div className="mt-2">
-                <ScheduleLessonForm studentId={student.id} aircraft={aircraft} />
-              </div>
-            ) : null}
-          </div>
+              {brief.upcomingReservation ? (
+                <p className="text-sm text-slate-700 dark:text-slate-200">
+                  {new Date(brief.upcomingReservation.scheduledStart).toLocaleString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </p>
+              ) : (
+                <p className="text-sm text-slate-400">Nothing scheduled yet.</p>
+              )}
+              {canScheduleLessons ? (
+                <div className="mt-2">
+                  <ScheduleLessonForm studentId={student.id} aircraft={aircraft} />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
