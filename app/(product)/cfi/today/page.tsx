@@ -17,6 +17,11 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
+function formatUpcomingDateTime(iso: string) {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} · ${formatTime(iso)}`;
+}
+
 export default async function CfiTodayPage() {
   const repo = getRepository();
   const viewer = await getViewer();
@@ -51,6 +56,22 @@ export default async function CfiTodayPage() {
       );
       return { reservation, student, aircraft, brief, todaysFlight };
     }),
+  );
+
+  const upcomingWindowEnd = new Date(endOfDay.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const upcomingReservations = reservations
+    .filter((r) => {
+      const t = new Date(r.scheduledStart).getTime();
+      return r.status === "scheduled" && t > endOfDay.getTime() && t <= upcomingWindowEnd.getTime();
+    })
+    .sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart));
+
+  const upcomingCards = await Promise.all(
+    upcomingReservations.map(async (reservation) => ({
+      reservation,
+      student: await repo.getUser(reservation.studentId),
+      aircraft: await repo.getAircraft(reservation.aircraftId),
+    })),
   );
 
   const rosterWithProgress = await Promise.all(
@@ -108,6 +129,32 @@ export default async function CfiTodayPage() {
         )}
       </div>
 
+      {upcomingCards.length > 0 ? (
+        <div>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+            <CalendarClock className="size-4 text-foreground-faint" />
+            Upcoming (next 7 days)
+          </h2>
+          <Card>
+            <CardContent className="flex flex-col gap-3">
+              {upcomingCards.map(({ reservation, student, aircraft }) => (
+                <Link
+                  key={reservation.id}
+                  href={`/cfi/students/${student?.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 -mx-2 hover:bg-slate-50 dark:hover:bg-white/5"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{student?.name ?? "—"}</p>
+                    <p className="text-xs text-slate-400">{aircraft?.tailNumber ?? "—"}</p>
+                  </div>
+                  <span className="text-xs font-medium text-foreground-faint">{formatUpcomingDateTime(reservation.scheduledStart)}</span>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+
       {debriefInProgress.length > 0 ? (
         <div>
           <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -163,7 +210,7 @@ export default async function CfiTodayPage() {
         </div>
       ) : null}
 
-      {cards.length === 0 && debriefInProgress.length === 0 && needingAttention.length === 0 ? (
+      {cards.length === 0 && upcomingCards.length === 0 && debriefInProgress.length === 0 && needingAttention.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-10 text-center text-slate-400">
           <PlaneTakeoff className="size-8" />
           <p className="text-sm">All caught up. Nothing scheduled and no open items.</p>
