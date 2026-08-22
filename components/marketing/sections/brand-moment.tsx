@@ -257,6 +257,18 @@ export function BrandMoment() {
         >
           Pilots know the problem
         </p>
+        <p
+          className="font-display mx-auto mt-3 max-w-xl text-balance text-center text-xl font-bold leading-snug text-[#101727] sm:text-2xl"
+          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
+        >
+          You&rsquo;re not the only one asking for something better.
+        </p>
+        <p
+          className="mx-auto mt-3 max-w-md text-pretty text-center text-base text-[#4b545d]"
+          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
+        >
+          Students and instructors are already talking about the gaps between one flight and the next.
+        </p>
         <QuoteRail />
       </Reveal>
 
