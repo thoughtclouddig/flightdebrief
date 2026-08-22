@@ -3,44 +3,50 @@ import { ArrowDown } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 
 /**
- * Real comments/quotes about flight-training debriefs, gathered as evidence
- * this is a known problem -- not endorsements of AfterFlight itself. No
- * source URLs were supplied for these (only publication/subreddit names), so
- * `source` renders as plain text rather than a guessed link -- add `href` per
- * quote once real links are available.
+ * Real comments about flight-training debriefs, shortened to a punchy
+ * excerpt of the original -- evidence this is a known problem, not
+ * endorsements of AfterFlight. `snippet`/`highlight` are genuine contiguous
+ * substrings of the full quote, never invented text. No source URLs were
+ * supplied (only publication/subreddit names), so `source` renders as plain
+ * text rather than a guessed link -- add `href` per quote once real links
+ * are available.
  */
 const QUOTES = [
   {
-    quote: "Too often in general aviation, this critical part of flight training is rushed, informal, or skipped altogether.",
+    snippet: "rushed, informal, or skipped altogether",
+    highlight: "skipped altogether",
     attribution: "Brandon Williams",
     role: "Former U.S. Air Force fighter pilot, instructor & aviation safety officer",
     source: "AOPA",
     emphasis: true,
   },
   {
-    quote: "My instructor gives feedback, but between lessons I feel a bit lost in terms of tracking progress.",
+    snippet: "between lessons I feel a bit lost",
+    highlight: "feel a bit lost",
     attribution: "Student Pilot",
     role: null,
     source: "r/flying",
     emphasis: false,
   },
   {
-    quote: "My instructor never did debriefs with me or went over with me to review what I have learned during my lesson.",
+    snippet: "never did debriefs with me",
+    highlight: "never did debriefs",
     attribution: "Student Pilot",
     role: null,
     source: "r/flying",
     emphasis: false,
   },
   {
-    quote: "TAKE. NOTES. Keep them on every student, after every lesson. Helps you and helps them.",
+    snippet: "TAKE. NOTES. Keep them on every student.",
+    highlight: "TAKE. NOTES.",
     attribution: "CFI",
     role: null,
     source: "r/flying",
     emphasis: false,
   },
   {
-    quote:
-      "I'm always so impressed when my instructor shows up knowing exactly what happened in the last lesson weeks ago, my current skills, and with a plan to work on it.",
+    snippet: "shows up knowing exactly what happened",
+    highlight: "knowing exactly what happened",
     attribution: "Student Pilot",
     role: null,
     source: "r/flying",
@@ -48,24 +54,35 @@ const QUOTES = [
   },
 ] as const;
 
+function HighlightedSnippet({ text, highlight }: { text: string; highlight: string }) {
+  const start = text.indexOf(highlight);
+  if (start === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, start)}
+      <span className="text-brand">{text.slice(start, start + highlight.length)}</span>
+      {text.slice(start + highlight.length)}
+    </>
+  );
+}
+
 function QuoteRail() {
   return (
-    <div className="relative mx-auto mt-14 w-full sm:max-w-4xl">
-      <p className="text-balance text-center text-xs font-bold uppercase tracking-[0.16em] text-[#8c97a2]">
-        Pilots know the problem
-      </p>
-      <div
-        className="mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 [&::-webkit-scrollbar]:hidden"
-        style={{ scrollbarWidth: "none" }}
-      >
-        {QUOTES.map((q, i) => (
+    <div className="relative mt-14 -mx-6 overflow-hidden">
+      {/* Content is duplicated so the loop point (-50%) is seamless, same technique as ppl-payoff.tsx's photo marquee. */}
+      <div className="flex w-max animate-[marquee-slide_38s_linear_infinite] gap-4 px-6 hover:[animation-play-state:paused] motion-reduce:animate-none">
+        {[...QUOTES, ...QUOTES].map((q, i) => (
           <div
             key={i}
-            className={`w-[82%] shrink-0 snap-start rounded-lg border bg-white p-5 text-left shadow-sm sm:w-72 lg:w-80 ${
+            className={`w-64 shrink-0 rounded-lg border bg-white p-5 text-left shadow-sm sm:w-72 ${
               q.emphasis ? "border-brand/30" : "border-slate-200"
             }`}
           >
-            <p className="text-pretty text-sm leading-relaxed text-[#101727]">&ldquo;{q.quote}&rdquo;</p>
+            <p className="font-display text-pretty text-xl font-bold leading-snug text-[#101727]">
+              &ldquo;
+              <HighlightedSnippet text={q.snippet} highlight={q.highlight} />
+              &rdquo;
+            </p>
             <div className="mt-4 flex items-end justify-between gap-3 border-t border-slate-100 pt-3">
               <div>
                 <p className="text-xs font-semibold text-[#101727]">{q.attribution}</p>
@@ -107,10 +124,10 @@ export function BrandMoment() {
 
       <Reveal className="relative mx-auto max-w-3xl text-center">
         <p
-          className="text-balance text-xs font-bold uppercase tracking-[0.2em] text-brand"
+          className="text-balance text-base font-bold uppercase tracking-[0.2em] text-brand sm:text-lg"
           style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
         >
-          The Problem
+          Pilots know the problem
         </p>
 
         <p className="font-display mt-6 text-balance text-3xl font-bold leading-[1.05] text-[#101727] sm:text-[clamp(3rem,2.25rem+3vw,4.5rem)] sm:leading-[0.95]">
@@ -122,13 +139,6 @@ export function BrandMoment() {
         >
           You land. You talk it through. Your instructor tells you what worked, what didn&rsquo;t, and what to
           fix next time. Then the details start to&nbsp;fade.
-        </p>
-
-        <p
-          className="mx-auto mt-10 max-w-sm text-pretty text-base font-semibold text-[#101727]"
-          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
-        >
-          It doesn&rsquo;t have to disappear when you leave the airplane.
         </p>
 
         <a
