@@ -36,22 +36,6 @@ const QUOTES = [
     source: "r/flying",
     emphasis: false,
   },
-  {
-    snippet: "TAKE. NOTES. Keep them on every student, after every lesson.",
-    highlight: "TAKE. NOTES.",
-    attribution: "CFI",
-    role: null,
-    source: "r/flying",
-    emphasis: false,
-  },
-  {
-    snippet: "my instructor shows up knowing exactly what happened in the last lesson",
-    highlight: "knowing exactly what happened",
-    attribution: "Student Pilot",
-    role: null,
-    source: "r/flying",
-    emphasis: false,
-  },
 ] as const;
 
 function HighlightedSnippet({ text, highlight }: { text: string; highlight: string }) {
