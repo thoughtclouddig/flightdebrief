@@ -13,7 +13,7 @@ import { Reveal } from "@/components/marketing/reveal";
  */
 const QUOTES = [
   {
-    snippet: "rushed, informal, or skipped altogether",
+    snippet: "this critical part of flight training is rushed, informal, or skipped altogether",
     highlight: "skipped altogether",
     attribution: "Brandon Williams",
     role: "Former U.S. Air Force fighter pilot, instructor & aviation safety officer",
@@ -21,7 +21,7 @@ const QUOTES = [
     emphasis: true,
   },
   {
-    snippet: "between lessons I feel a bit lost",
+    snippet: "between lessons I feel a bit lost in terms of tracking progress",
     highlight: "feel a bit lost",
     attribution: "Student Pilot",
     role: null,
@@ -29,7 +29,7 @@ const QUOTES = [
     emphasis: false,
   },
   {
-    snippet: "never did debriefs with me",
+    snippet: "My instructor never did debriefs with me",
     highlight: "never did debriefs",
     attribution: "Student Pilot",
     role: null,
@@ -37,7 +37,7 @@ const QUOTES = [
     emphasis: false,
   },
   {
-    snippet: "TAKE. NOTES. Keep them on every student.",
+    snippet: "TAKE. NOTES. Keep them on every student, after every lesson.",
     highlight: "TAKE. NOTES.",
     attribution: "CFI",
     role: null,
@@ -45,7 +45,7 @@ const QUOTES = [
     emphasis: false,
   },
   {
-    snippet: "shows up knowing exactly what happened",
+    snippet: "my instructor shows up knowing exactly what happened in the last lesson",
     highlight: "knowing exactly what happened",
     attribution: "Student Pilot",
     role: null,
