@@ -35,7 +35,7 @@ export function BrandMoment() {
           Too much of the debrief <span className="text-brand">gets lost.</span>
         </p>
         <p
-          className="mx-auto mt-8 max-w-md text-pretty text-lg text-[#4b545d]"
+          className="mx-auto mt-8 max-w-md text-balance text-lg text-[#4b545d] sm:max-w-2xl"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
           You land. You talk it through. Your instructor tells you what worked, what didn&rsquo;t, and what to
