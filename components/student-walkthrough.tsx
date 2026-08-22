@@ -1,35 +1,48 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { Compass, PlaneTakeoff, MessageSquareQuote, TrendingUp, X } from "lucide-react";
+import { Compass, LayoutList, History, TrendingUp, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Bump this suffix to reshow the walkthrough after a content change that's
 // worth re-surfacing; unrelated to profileCompleted, which gates the
 // mandatory name-confirmation step, not this optional tour.
-const STORAGE_KEY_PREFIX = "af_walkthrough_seen_v1_";
+const STORAGE_KEY_PREFIX = "af_walkthrough_seen_v2_";
 
+// One step per real nav tab (see STUDENT_ITEMS in components/nav.tsx) plus a
+// welcome screen -- same icons as the nav itself, so what's described here
+// is recognizable the moment they land on it.
 const STEPS = [
   {
     icon: Compass,
     title: "Welcome to AfterFlight",
-    body: "Let's take a quick look around before your first flight.",
+    body: "Five things worth knowing before your first flight -- one screen each.",
   },
   {
-    icon: PlaneTakeoff,
-    title: "Log a flight after you land",
-    body: "Once you're back on the ground, log the flight here -- tail number, route, how long you flew.",
+    icon: Compass,
+    title: "Home is your dashboard",
+    body: "Your next scheduled lesson, any debrief still in progress, and your most recent flight -- all in one glance.",
   },
   {
-    icon: MessageSquareQuote,
-    title: "Debrief it with your CFI",
-    body: "You and your instructor each say what went well and what to work on -- then walk through it together.",
+    icon: LayoutList,
+    title: "Flights holds every flight you log",
+    body: "After you land, log the flight here. Filter by pending or debriefed, and tap one to open its full debrief.",
+  },
+  {
+    icon: History,
+    title: "Training is your full history",
+    body: "Every debrief you've done with any instructor, in order -- what you covered, when, and in what aircraft.",
   },
   {
     icon: TrendingUp,
-    title: "Watch your progress build",
-    body: "Every debrief adds to your training history, so patterns across flights actually show up.",
+    title: "Progress tracks the patterns",
+    body: "Skill-by-skill progress, themes that keep coming up across debriefs, and your open action items.",
+  },
+  {
+    icon: Users,
+    title: "Profile is where you fine-tune it",
+    body: "Your listen voice for audio briefs, your instructors, and your account details.",
   },
 ] as const;
 
