@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ArrowDown, ArrowRight } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 
 /**
@@ -113,24 +113,6 @@ function ProblemSequence() {
   );
 }
 
-function ProblemArrows() {
-  return (
-    <div
-      className="mx-auto mt-16 hidden max-w-4xl sm:flex"
-      style={{ paddingLeft: "calc(16.6667% - 1.5rem)", paddingRight: "calc(16.6667% - 1.5rem)" }}
-      aria-hidden="true"
-    >
-      <div className="flex flex-1 justify-center">
-        <ArrowRight className="size-4 text-[#c7ccd1]" />
-      </div>
-      <div className="flex flex-1 justify-center">
-        <ArrowRight className="size-4 text-[#c7ccd1]" />
-      </div>
-      <div className="flex-1" />
-    </div>
-  );
-}
-
 function QuoteRail() {
   return (
     <div className="relative mt-8 -mx-6 overflow-hidden">
@@ -208,7 +190,6 @@ export function BrandMoment() {
 
       <Reveal delay={100} className="relative w-full">
         <ProblemSequence />
-        <ProblemArrows />
       </Reveal>
 
       <Reveal delay={300} className="relative mt-16 w-full">
