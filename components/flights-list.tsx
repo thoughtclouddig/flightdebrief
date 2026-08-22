@@ -190,7 +190,7 @@ function FlightListRow({ flight, studentName }: { flight: FlightWithRelations; s
       {studentName ? (
         <span className="hidden w-28 shrink-0 truncate text-xs text-foreground-faint lg:block">{studentName}</span>
       ) : null}
-      <span className="ml-auto shrink-0 whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-brand">
+      <span className="ml-auto text-right text-xs font-semibold uppercase tracking-wide text-brand sm:shrink-0 sm:whitespace-nowrap">
         {STATUS_LABEL[flight.debriefStatus]} →
       </span>
     </Link>

@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   LayoutList,
   Lightbulb,
+  MoreHorizontal,
   PlaneTakeoff,
   Plus,
   Settings,
@@ -89,6 +90,62 @@ function Wordmark({ href, compact = false }: { href: string; compact?: boolean }
 }
 
 const MAX_VISIBLE_DESKTOP_ITEMS = 5;
+const MAX_VISIBLE_MOBILE_ITEMS = 5;
+
+type NavItem = { href: string; label: string; icon: (typeof STUDENT_ITEMS)[number]["icon"] };
+
+/**
+ * Mobile bottom-tab-bar counterpart to NavOverflowMenu -- only kicks in for
+ * roles with more items than fit comfortably in the fixed bar (today, just
+ * admin's 7). Renders as its own flex-1 tab so it matches its siblings'
+ * touch target size, with a full-width panel above the bar rather than a
+ * corner dropdown, since a small anchored menu is awkward to reach one-handed
+ * at the bottom of a phone screen.
+ */
+function MobileNavOverflow({ items, active }: { items: NavItem[]; active: boolean }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative flex flex-1">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium",
+          active ? "text-brand" : "text-foreground-faint",
+        )}
+      >
+        <MoreHorizontal className="size-5" strokeWidth={active ? 2.5 : 2} />
+        More
+      </button>
+
+      {open ? (
+        <>
+          <button
+            aria-label="Close"
+            className="fixed inset-0 z-30 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute bottom-full left-0 right-0 z-40 mb-2 overflow-hidden rounded-xl border border-hairline bg-surface py-1 shadow-lg">
+            {items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground-soft hover:bg-surface-sunken"
+                >
+                  <Icon className="size-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
 
 function NavOverflowMenu({
   items,
@@ -144,6 +201,12 @@ export function Nav({ viewer, memberships }: { viewer: Viewer; memberships: Memb
   const overflowItems = items.length > MAX_VISIBLE_DESKTOP_ITEMS ? items.slice(MAX_VISIBLE_DESKTOP_ITEMS - 1) : [];
   const overflowActive = overflowItems.some((item) => pathname.startsWith(item.href));
 
+  const mobileVisibleItems =
+    items.length > MAX_VISIBLE_MOBILE_ITEMS ? items.slice(0, MAX_VISIBLE_MOBILE_ITEMS - 1) : items;
+  const mobileOverflowItems =
+    items.length > MAX_VISIBLE_MOBILE_ITEMS ? items.slice(MAX_VISIBLE_MOBILE_ITEMS - 1) : [];
+  const mobileOverflowActive = mobileOverflowItems.some((item) => pathname.startsWith(item.href));
+
   return (
     <>
       <header className="sticky top-0 z-20 hidden border-b border-hairline bg-surface/90 backdrop-blur md:block">
@@ -185,7 +248,7 @@ export function Nav({ viewer, memberships }: { viewer: Viewer; memberships: Memb
       </header>
 
       <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-hairline bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:hidden">
-        {items.map((item) => {
+        {mobileVisibleItems.map((item) => {
           const active = pathname.startsWith(item.href);
           const Icon = item.icon;
           return (
@@ -202,6 +265,9 @@ export function Nav({ viewer, memberships }: { viewer: Viewer; memberships: Memb
             </Link>
           );
         })}
+        {mobileOverflowItems.length > 0 ? (
+          <MobileNavOverflow items={mobileOverflowItems} active={mobileOverflowActive} />
+        ) : null}
 
         {viewer.role === "student" ? (
           <Link
