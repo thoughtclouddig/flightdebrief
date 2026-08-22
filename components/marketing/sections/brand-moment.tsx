@@ -234,22 +234,6 @@ export function BrandMoment() {
         <ProblemArrows />
       </Reveal>
 
-      <Reveal delay={200} className="relative mx-auto mt-16 max-w-2xl text-center">
-        <p
-          className="font-display text-balance text-2xl font-bold leading-tight text-[#101727] sm:text-3xl"
-          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
-        >
-          That&rsquo;s more than lost notes. <span className="text-brand">It&rsquo;s lost learning.</span>
-        </p>
-        <p
-          className="mx-auto mt-4 max-w-xl text-pretty text-base leading-relaxed text-[#4b545d]"
-          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
-        >
-          A good debrief helps a student understand what happened, recognize patterns, correct mistakes, and prepare
-          for what comes next. Over time, that&rsquo;s part of becoming a more proficient, safer pilot.
-        </p>
-      </Reveal>
-
       <Reveal delay={300} className="relative mt-16 w-full">
         <p
           className="text-balance text-center text-xs font-bold uppercase tracking-[0.16em] text-[#8c97a2]"
