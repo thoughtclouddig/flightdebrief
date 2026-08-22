@@ -75,17 +75,17 @@ export function EverythingThatMatters() {
     <section id="how-it-works" className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">How AfterFlight Works</p>
+          <p className="text-balance text-lg font-bold uppercase tracking-[0.16em] text-brand sm:text-xl">The Solution</p>
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             One debrief. Everything you need for the next flight.
           </h2>
           <p className="mt-4 text-balance text-lg text-[#68717D]">
-            AfterFlight turns the conversation you already have after landing into a clear record of what happened,
-            what to work on, and what comes next.
+            AfterFlight turns the conversation you already have after landing into clear takeaways, visible
+            progress, and a plan for what comes next.
           </p>
         </Reveal>
 
-        <div className="mt-16 grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-20 grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
           {CARDS.map((card, i) => (
             <Reveal key={card.eyebrow} delay={(i % 3) * 100} className="flex flex-col gap-4">
               {card.visual}
