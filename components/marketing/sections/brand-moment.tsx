@@ -203,15 +203,9 @@ export function BrandMoment() {
       </Reveal>
 
       <Reveal delay={350} className="relative flex flex-col items-center">
-        <p
-          className="text-balance mt-10 text-xs font-bold uppercase tracking-[0.16em] text-brand"
-          style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
-        >
-          The Solution
-        </p>
         <a
           href="#how-it-works"
-          className="mt-3 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white/70 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] backdrop-blur-sm transition-colors hover:border-brand/50 hover:bg-white"
+          className="mt-10 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] transition-colors hover:border-brand/50"
         >
           See how we solve it
           <ArrowDown className="size-4 animate-bounce" />
