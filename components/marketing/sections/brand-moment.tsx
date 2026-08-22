@@ -43,14 +43,6 @@ export function BrandMoment() {
         </p>
 
         <p
-          className="mx-auto mt-5 max-w-md text-pretty text-base text-[#56636f]"
-          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
-        >
-          That conversation isn&rsquo;t just something to remember &mdash; it&rsquo;s how pilots actually get
-          better, one flight at a time. When it fades, so does the progress it was meant to create.
-        </p>
-
-        <p
           className="mx-auto mt-10 max-w-sm text-pretty text-base font-semibold text-[#101727]"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
