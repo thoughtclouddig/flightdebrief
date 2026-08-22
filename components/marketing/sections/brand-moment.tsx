@@ -141,17 +141,20 @@ export function BrandMoment() {
           fix next time. Then the details start to&nbsp;fade.
         </p>
 
-        <a
-          href="#how-it-works"
-          className="mt-8 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white/70 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] backdrop-blur-sm transition-colors hover:border-brand/50 hover:bg-white"
-        >
-          See how we solve it
-          <ArrowDown className="size-4 animate-bounce" />
-        </a>
       </Reveal>
 
       <Reveal delay={150} className="relative w-full">
         <QuoteRail />
+      </Reveal>
+
+      <Reveal delay={250}>
+        <a
+          href="#how-it-works"
+          className="mt-10 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white/70 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] backdrop-blur-sm transition-colors hover:border-brand/50 hover:bg-white"
+        >
+          See how we solve it
+          <ArrowDown className="size-4 animate-bounce" />
+        </a>
       </Reveal>
     </section>
   );
