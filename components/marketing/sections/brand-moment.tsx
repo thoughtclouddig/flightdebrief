@@ -42,9 +42,24 @@ export function BrandMoment() {
           fix next time. Then the details start to&nbsp;fade.
         </p>
 
+        <p
+          className="mx-auto mt-5 max-w-md text-pretty text-base text-[#56636f]"
+          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
+        >
+          That conversation isn&rsquo;t just something to remember &mdash; it&rsquo;s how pilots actually get
+          better, one flight at a time. When it fades, so does the progress it was meant to create.
+        </p>
+
+        <p
+          className="mx-auto mt-10 max-w-sm text-pretty text-base font-semibold text-[#101727]"
+          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
+        >
+          It doesn&rsquo;t have to disappear when you leave the airplane.
+        </p>
+
         <a
           href="#how-it-works"
-          className="mt-14 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white/70 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] backdrop-blur-sm transition-colors hover:border-brand/50 hover:bg-white"
+          className="mt-8 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white/70 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] backdrop-blur-sm transition-colors hover:border-brand/50 hover:bg-white"
         >
           See how we solve it
           <ArrowDown className="size-4 animate-bounce" />
