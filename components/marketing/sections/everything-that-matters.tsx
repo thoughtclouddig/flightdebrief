@@ -70,14 +70,6 @@ const CARDS = [
   },
 ] as const;
 
-const PROCESS_STEPS = [
-  { label: "Reflect", detail: "Student self-assessment, right after landing." },
-  { label: "Instructor's Read", detail: "The CFI's own assessment of the same flight." },
-  { label: "Talk It Through", detail: "What worked, what didn't, and any judgment calls along the way." },
-  { label: "Next-Flight Focus", detail: "Clear priorities carried into the next lesson." },
-  { label: "Your Record", detail: "Everything saved to the student's training history." },
-] as const;
-
 export function EverythingThatMatters() {
   return (
     <section id="how-it-works" className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
@@ -88,44 +80,8 @@ export function EverythingThatMatters() {
             One debrief. Everything you need for the next flight.
           </h2>
           <p className="mt-4 text-balance text-lg text-[#68717D]">
-            AfterFlight turns the conversation you already have after landing into a clear record of what happened,
-            what to work on, and what comes next.
-          </p>
-        </Reveal>
-
-        <Reveal className="mx-auto mt-16 max-w-4xl">
-          <p className="text-balance text-center text-sm font-semibold text-[#68717D]">
-            A guided conversation, not another form.
-          </p>
-
-          <div className="relative mt-10">
-            <div
-              className="absolute left-[10%] right-[10%] top-5 hidden h-px bg-[#e4e7ea] sm:block"
-              aria-hidden="true"
-            />
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-5 sm:gap-4">
-              {PROCESS_STEPS.map((step, i) => (
-                <Reveal
-                  key={step.label}
-                  delay={i * 80}
-                  className="relative flex items-start gap-4 sm:flex-col sm:items-center sm:gap-3 sm:text-center"
-                >
-                  <span className="relative z-10 flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-brand bg-white text-sm font-bold text-brand">
-                    {i + 1}
-                  </span>
-                  <div>
-                    <p className="font-display text-base font-bold text-[#101727]">{step.label}</p>
-                    <p className="text-pretty mt-1 text-sm leading-relaxed text-[#68717D] sm:max-w-[10rem]">
-                      {step.detail}
-                    </p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-
-          <p className="text-balance mt-12 text-center text-lg font-semibold text-[#101727]">
-            This flight becomes the starting point for the next one.
+            AfterFlight turns the conversation you already have after landing into clear takeaways, visible
+            progress, and a plan for what comes next.
           </p>
         </Reveal>
 
