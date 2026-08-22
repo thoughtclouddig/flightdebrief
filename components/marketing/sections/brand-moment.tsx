@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { ArrowDown } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 
 /**
@@ -135,7 +134,7 @@ export function BrandMoment() {
           className="text-balance text-lg font-bold uppercase tracking-[0.2em] text-brand sm:text-xl"
           style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
         >
-          Pilots know the problem
+          The Problem
         </p>
 
         <p className="font-display mt-6 text-balance text-3xl font-bold leading-[1.05] text-[#101727] sm:text-[clamp(3rem,2.25rem+3vw,4.5rem)] sm:leading-[0.95]">
@@ -155,19 +154,9 @@ export function BrandMoment() {
           className="font-display mx-auto max-w-2xl text-balance text-center text-lg font-bold leading-snug text-[#101727] sm:whitespace-nowrap sm:text-xl"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
-          You&rsquo;re not the only one asking for <span className="text-brand">something better.</span>
+          You&rsquo;re not the only one who sees <span className="text-brand">the problem.</span>
         </p>
         <QuoteRail />
-      </Reveal>
-
-      <Reveal delay={350} className="relative flex flex-col items-center">
-        <a
-          href="#how-it-works"
-          className="mt-16 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] transition-colors hover:border-brand/50"
-        >
-          See how we solve it
-          <ArrowDown className="size-4 animate-bounce" />
-        </a>
       </Reveal>
     </section>
   );
