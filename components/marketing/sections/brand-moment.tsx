@@ -144,8 +144,8 @@ export function BrandMoment() {
           className="mx-auto mt-8 max-w-md text-balance text-lg text-[#4b545d] sm:max-w-2xl"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
-          Every flight ends with a conversation that matters. But there&rsquo;s no guarantee the right things get
-          discussed, remembered, or carried into the next lesson.
+          Every flight ends with a conversation that matters. But there&rsquo;s no guarantee the right things{" "}
+          <span className="text-brand">get discussed, remembered, or carried into the next lesson.</span>
         </p>
       </Reveal>
 
