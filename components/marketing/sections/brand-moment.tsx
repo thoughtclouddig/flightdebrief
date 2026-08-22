@@ -15,16 +15,14 @@ const QUOTES = [
   {
     snippet: "rushed, informal, or skipped altogether",
     highlight: "skipped altogether",
-    attribution: "Brandon Williams",
-    role: "Former U.S. Air Force fighter pilot",
-    source: "AOPA",
+    attribution: "AOPA",
+    source: null,
     emphasis: true,
   },
   {
-    snippet: "between lessons I feel a bit lost",
-    highlight: "feel a bit lost",
-    attribution: "Student Pilot",
-    role: null,
+    snippet: "Some students enter every lesson blind.",
+    highlight: "enter every lesson blind",
+    attribution: "Pilot",
     source: "r/flying",
     emphasis: false,
   },
@@ -32,7 +30,34 @@ const QUOTES = [
     snippet: "My instructor never did debriefs with me",
     highlight: "never did debriefs",
     attribution: "Student Pilot",
-    role: null,
+    source: "r/flying",
+    emphasis: false,
+  },
+  {
+    snippet: "debriefs are just an oral discussion",
+    highlight: "just an oral discussion",
+    attribution: "Pilot",
+    source: "r/CFILounge",
+    emphasis: false,
+  },
+  {
+    snippet: "retain information, even when it's recent",
+    highlight: "even when it's recent",
+    attribution: "CFI",
+    source: "r/flying",
+    emphasis: false,
+  },
+  {
+    snippet: "I feel lost tracking my progress",
+    highlight: "feel lost",
+    attribution: "Student Pilot",
+    source: "r/flying",
+    emphasis: false,
+  },
+  {
+    snippet: "kept showing up across multiple flights",
+    highlight: "across multiple flights",
+    attribution: "Student Pilot",
     source: "r/flying",
     emphasis: false,
   },
@@ -67,16 +92,15 @@ function QuoteRail() {
               <HighlightedSnippet text={q.snippet} highlight={q.highlight} />
               &rdquo;
             </p>
-            <div className="mt-4 flex items-end justify-between gap-3 border-t border-slate-100 pt-3">
-              <div>
-                <p className="text-xs font-semibold text-[#101727]">{q.attribution}</p>
-                {q.role ? <p className="mt-0.5 text-[11px] text-[#8c97a2]">{q.role}</p> : null}
-              </div>
-              <span
-                className={`shrink-0 text-[11px] font-bold uppercase tracking-wide ${q.emphasis ? "text-brand" : "text-[#8c97a2]"}`}
-              >
-                {q.source}
-              </span>
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+              <p className="text-xs font-semibold text-[#101727]">{q.attribution}</p>
+              {q.source ? (
+                <span
+                  className={`shrink-0 text-[11px] font-bold uppercase tracking-wide ${q.emphasis ? "text-brand" : "text-[#8c97a2]"}`}
+                >
+                  {q.source}
+                </span>
+              ) : null}
             </div>
           </div>
         ))}
