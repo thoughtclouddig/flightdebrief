@@ -32,7 +32,7 @@ export function BrandMoment() {
         </p>
 
         <p className="font-display mt-6 text-balance text-3xl font-bold leading-[1.05] text-[#101727] sm:text-[clamp(3rem,2.25rem+3vw,4.5rem)] sm:leading-[0.95]">
-          The most valuable ten minutes <span className="text-brand">of a lesson disappear.</span>
+          Too much of the debrief <span className="text-brand">gets lost.</span>
         </p>
         <p
           className="mx-auto mt-8 max-w-md text-pretty text-lg text-[#4b545d]"
