@@ -2,9 +2,91 @@ import Image from "next/image";
 import { ArrowDown } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 
+/**
+ * Real comments/quotes about flight-training debriefs, gathered as evidence
+ * this is a known problem -- not endorsements of AfterFlight itself. No
+ * source URLs were supplied for these (only publication/subreddit names), so
+ * `source` renders as plain text rather than a guessed link -- add `href` per
+ * quote once real links are available.
+ */
+const QUOTES = [
+  {
+    quote: "Too often in general aviation, this critical part of flight training is rushed, informal, or skipped altogether.",
+    attribution: "Brandon Williams",
+    role: "Former U.S. Air Force fighter pilot, instructor & aviation safety officer",
+    source: "AOPA",
+    emphasis: true,
+  },
+  {
+    quote: "My instructor gives feedback, but between lessons I feel a bit lost in terms of tracking progress.",
+    attribution: "Student Pilot",
+    role: null,
+    source: "r/flying",
+    emphasis: false,
+  },
+  {
+    quote: "My instructor never did debriefs with me or went over with me to review what I have learned during my lesson.",
+    attribution: "Student Pilot",
+    role: null,
+    source: "r/flying",
+    emphasis: false,
+  },
+  {
+    quote: "TAKE. NOTES. Keep them on every student, after every lesson. Helps you and helps them.",
+    attribution: "CFI",
+    role: null,
+    source: "r/flying",
+    emphasis: false,
+  },
+  {
+    quote:
+      "I'm always so impressed when my instructor shows up knowing exactly what happened in the last lesson weeks ago, my current skills, and with a plan to work on it.",
+    attribution: "Student Pilot",
+    role: null,
+    source: "r/flying",
+    emphasis: false,
+  },
+] as const;
+
+function QuoteRail() {
+  return (
+    <div className="relative mx-auto mt-14 w-full sm:max-w-4xl">
+      <p className="text-balance text-center text-xs font-bold uppercase tracking-[0.16em] text-[#8c97a2]">
+        Pilots know the problem
+      </p>
+      <div
+        className="mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {QUOTES.map((q, i) => (
+          <div
+            key={i}
+            className={`w-[82%] shrink-0 snap-start rounded-lg border bg-white p-5 text-left shadow-sm sm:w-72 lg:w-80 ${
+              q.emphasis ? "border-brand/30" : "border-slate-200"
+            }`}
+          >
+            <p className="text-pretty text-sm leading-relaxed text-[#101727]">&ldquo;{q.quote}&rdquo;</p>
+            <div className="mt-4 flex items-end justify-between gap-3 border-t border-slate-100 pt-3">
+              <div>
+                <p className="text-xs font-semibold text-[#101727]">{q.attribution}</p>
+                {q.role ? <p className="mt-0.5 text-[11px] text-[#8c97a2]">{q.role}</p> : null}
+              </div>
+              <span
+                className={`shrink-0 text-[11px] font-bold uppercase tracking-wide ${q.emphasis ? "text-brand" : "text-[#8c97a2]"}`}
+              >
+                {q.source}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function BrandMoment() {
   return (
-    <section className="relative flex min-h-[560px] items-center overflow-hidden bg-white px-6 py-20 sm:min-h-[680px] sm:py-24 lg:min-h-[860px]">
+    <section className="relative flex min-h-[560px] flex-col items-center overflow-hidden bg-white px-6 py-20 sm:min-h-[680px] sm:py-24 lg:min-h-[860px]">
       <div className="absolute inset-0">
         <Image
           src="/images/marketing/ten-minutes-back.webp"
@@ -56,6 +138,10 @@ export function BrandMoment() {
           See how we solve it
           <ArrowDown className="size-4 animate-bounce" />
         </a>
+      </Reveal>
+
+      <Reveal delay={150} className="relative w-full">
+        <QuoteRail />
       </Reveal>
     </section>
   );
