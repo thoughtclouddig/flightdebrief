@@ -155,7 +155,7 @@ export function BrandMoment() {
           className="font-display mx-auto max-w-2xl text-balance text-center text-lg font-bold leading-snug text-[#101727] sm:whitespace-nowrap sm:text-xl"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
-          You&rsquo;re not the only one asking for something better.
+          You&rsquo;re not the only one asking for <span className="text-brand">something better.</span>
         </p>
         <QuoteRail />
       </Reveal>
