@@ -13,15 +13,15 @@ import { Reveal } from "@/components/marketing/reveal";
  */
 const QUOTES = [
   {
-    snippet: "this critical part of flight training is rushed, informal, or skipped altogether",
+    snippet: "rushed, informal, or skipped altogether",
     highlight: "skipped altogether",
     attribution: "Brandon Williams",
-    role: "Former U.S. Air Force fighter pilot, instructor & aviation safety officer",
+    role: "Former U.S. Air Force fighter pilot",
     source: "AOPA",
     emphasis: true,
   },
   {
-    snippet: "between lessons I feel a bit lost in terms of tracking progress",
+    snippet: "between lessons I feel a bit lost",
     highlight: "feel a bit lost",
     attribution: "Student Pilot",
     role: null,
