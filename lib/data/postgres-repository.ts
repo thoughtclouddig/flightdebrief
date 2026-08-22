@@ -15,6 +15,7 @@ import type {
   FlightTaskSource,
   FlightWithRelations,
   Instructor,
+  Milestone,
   Organization,
   OrganizationMember,
   OrgRole,
@@ -954,6 +955,29 @@ export class PostgresRepository implements Repository {
     return rows.map(mapTrainingSignal);
   }
 
+  // --- Rewards Phase 1: milestones (see lib/milestones.ts) ---
+
+  async listMilestones(studentId: string): Promise<Milestone[]> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      "SELECT * FROM milestones WHERE student_id = $1 ORDER BY achieved_at DESC",
+      [studentId],
+    );
+    return rows.map(mapMilestone);
+  }
+
+  async createMilestoneIfNew(input: Omit<Milestone, "id" | "createdAt" | "achievedAt">): Promise<Milestone | null> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `INSERT INTO milestones (id, student_id, type, source, related_flight_id, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (student_id, type) DO NOTHING
+       RETURNING *`,
+      [randomUUID(), input.studentId, input.type, input.source, input.relatedFlightId, JSON.stringify(input.metadata)],
+    );
+    return rows[0] ? mapMilestone(rows[0]) : null;
+  }
+
   // --- Recording consent (V1 change 12) ---
 
   async createConsentRecord(input: {
@@ -1474,6 +1498,19 @@ function mapStudentNote(row: Row): StudentNote {
     description: row.description as string,
     done: row.done as boolean,
     completedAt: row.completed_at ? iso(row.completed_at) : null,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapMilestone(row: Row): Milestone {
+  return {
+    id: row.id as string,
+    studentId: row.student_id as string,
+    type: row.type as string,
+    source: row.source as Milestone["source"],
+    achievedAt: iso(row.achieved_at),
+    relatedFlightId: (row.related_flight_id as string | null) ?? null,
+    metadata: (row.metadata as Record<string, unknown>) ?? {},
     createdAt: iso(row.created_at),
   };
 }

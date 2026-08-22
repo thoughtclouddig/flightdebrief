@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
+import { evaluateAndAwardMilestones } from "@/lib/milestones";
 
 /**
  * Marks a guided/light-mode debrief complete once the CFI has walked through
@@ -26,6 +27,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/flig
   }
 
   await repo.setFlightDebriefStatus(id, "complete");
+  await evaluateAndAwardMilestones(repo, flight.userId, id);
 
   return NextResponse.json({ ok: true });
 }

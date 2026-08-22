@@ -4,6 +4,7 @@ import { analyzeDebrief } from "@/lib/ai";
 import { getRepository } from "@/lib/data";
 import { isBillingBlocked } from "@/lib/billing-gate";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
+import { evaluateAndAwardMilestones } from "@/lib/milestones";
 import { autoResolveActionItems } from "@/lib/action-items-autoresolve";
 import { buildTranscriptSegments, type CardBoundary } from "@/lib/debrief-cards/segments";
 import { computeAssessmentDifferences } from "@/lib/debrief-cards/differences";
@@ -137,6 +138,7 @@ export async function POST(request: Request) {
   // immediate-complete behavior.
   if (guidanceMode === "freeform") {
     await repo.setFlightDebriefStatus(flight.id, "complete");
+    await evaluateAndAwardMilestones(repo, flight.userId, flight.id);
   }
 
   // Before adding this debrief's own new items, check whether its wentWell
