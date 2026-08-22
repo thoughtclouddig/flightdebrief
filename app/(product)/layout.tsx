@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Nav } from "@/components/nav";
+import { StudentWalkthrough } from "@/components/student-walkthrough";
 import { getViewer, listMembershipOptions } from "@/lib/viewer";
 import { isMembershipSwitcherEnabled } from "@/lib/auth/membership-switcher";
 import { DemoControlPanel } from "@/components/demo/demo-control-panel";
@@ -20,6 +21,7 @@ export default async function ProductLayout({ children }: { children: ReactNode 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-10 md:pt-8">
         {children}
       </main>
+      {viewer.role === "student" ? <StudentWalkthrough userId={viewer.user.id} /> : null}
       {showDemoPanel ? <DemoControlPanel /> : null}
     </>
   );
