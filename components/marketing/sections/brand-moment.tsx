@@ -1,15 +1,15 @@
 import Image from "next/image";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 
 /**
- * Real comments about flight-training debriefs, shortened to a punchy
- * excerpt of the original -- evidence this is a known problem, not
- * endorsements of AfterFlight. `snippet`/`highlight` are genuine contiguous
- * substrings of the full quote, never invented text. No source URLs were
+ * Real comments about flight-training debriefs -- evidence this is a known
+ * problem, not endorsements of AfterFlight. LOCKED CONTENT: quote text and
+ * attribution have already been researched/selected/approved -- do not
+ * rewrite, shorten, expand, reorder, or add to them. Only their visual
+ * presentation (card size, scroll speed) should change. No source URLs were
  * supplied (only publication/subreddit names), so `source` renders as plain
- * text rather than a guessed link -- add `href` per quote once real links
- * are available.
+ * text rather than a guessed link.
  */
 const QUOTES = [
   {
@@ -63,6 +63,28 @@ const QUOTES = [
   },
 ] as const;
 
+/** The three connected failures this section walks through, left to right. */
+const PROBLEMS = [
+  {
+    number: "01",
+    label: "Inconsistent",
+    detail: "Some debriefs are thorough. Others are rushed, vague, or skipped.",
+    question: "Was the right conversation had?",
+  },
+  {
+    number: "02",
+    label: "Forgotten",
+    detail: "You talk through what worked, what didn't, and what to fix. Then the details start to fade.",
+    question: "Will you remember it?",
+  },
+  {
+    number: "03",
+    label: "Disconnected",
+    detail: "By the next lesson, there may be no clear record of what happened, what's improving, or what to work on next.",
+    question: "Will it change the next flight?",
+  },
+] as const;
+
 function HighlightedSnippet({ text, highlight }: { text: string; highlight: string }) {
   const start = text.indexOf(highlight);
   if (start === -1) return <>{text}</>;
@@ -75,15 +97,72 @@ function HighlightedSnippet({ text, highlight }: { text: string; highlight: stri
   );
 }
 
+function ProblemSequence() {
+  return (
+    <div className="mx-auto mt-16 flex max-w-4xl flex-col gap-6 sm:flex-row sm:items-start sm:gap-3">
+      {PROBLEMS.map((p) => (
+        <div key={p.number} className="flex gap-4 sm:flex-1 sm:flex-col sm:gap-0 sm:text-center">
+          <div className="flex flex-col items-start sm:items-center">
+            <span
+              className="text-sm font-bold tracking-[0.08em] text-brand"
+              style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
+            >
+              {p.number}
+            </span>
+            <p
+              className="font-display mt-1 text-lg font-bold text-[#101727]"
+              style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
+            >
+              {p.label}
+            </p>
+          </div>
+          <div className="sm:mt-2">
+            <p
+              className="text-pretty text-sm leading-relaxed text-[#4b545d] sm:mx-auto sm:max-w-[15rem]"
+              style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
+            >
+              {p.detail}
+            </p>
+            <p
+              className="mt-2 text-xs font-semibold uppercase tracking-wide text-[#8c97a2]"
+              style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
+            >
+              {p.question}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProblemArrows() {
+  return (
+    <div
+      className="mx-auto mt-16 hidden max-w-4xl sm:flex"
+      style={{ paddingLeft: "calc(16.6667% - 1.5rem)", paddingRight: "calc(16.6667% - 1.5rem)" }}
+      aria-hidden="true"
+    >
+      <div className="flex flex-1 justify-center">
+        <ArrowRight className="size-4 text-[#c7ccd1]" />
+      </div>
+      <div className="flex flex-1 justify-center">
+        <ArrowRight className="size-4 text-[#c7ccd1]" />
+      </div>
+      <div className="flex-1" />
+    </div>
+  );
+}
+
 function QuoteRail() {
   return (
-    <div className="relative mt-14 -mx-6 overflow-hidden">
+    <div className="relative mt-8 -mx-6 overflow-hidden">
       {/* Content is duplicated so the loop point (-50%) is seamless, same technique as ppl-payoff.tsx's photo marquee. */}
-      <div className="flex w-max animate-[marquee-slide_38s_linear_infinite] gap-4 px-6 hover:[animation-play-state:paused] motion-reduce:animate-none">
+      <div className="flex w-max animate-[marquee-slide_75s_linear_infinite] gap-4 px-6 hover:[animation-play-state:paused] motion-reduce:animate-none">
         {[...QUOTES, ...QUOTES].map((q, i) => (
           <div
             key={i}
-            className={`w-64 shrink-0 rounded-lg border bg-white p-5 text-left shadow-sm sm:w-72 ${
+            className={`w-72 shrink-0 rounded-lg border bg-white p-5 text-left shadow-sm ${
               q.emphasis ? "border-brand/30" : "border-slate-200"
             }`}
           >
@@ -132,10 +211,10 @@ export function BrandMoment() {
 
       <Reveal className="relative mx-auto max-w-3xl text-center">
         <p
-          className="text-balance text-base font-bold uppercase tracking-[0.2em] text-brand sm:text-lg"
+          className="text-balance text-xs font-bold uppercase tracking-[0.2em] text-brand"
           style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
         >
-          Pilots know the problem
+          The Problem
         </p>
 
         <p className="font-display mt-6 text-balance text-3xl font-bold leading-[1.05] text-[#101727] sm:text-[clamp(3rem,2.25rem+3vw,4.5rem)] sm:leading-[0.95]">
@@ -145,20 +224,52 @@ export function BrandMoment() {
           className="mx-auto mt-8 max-w-md text-balance text-lg text-[#4b545d] sm:max-w-2xl"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
-          You land. You talk it through. Your instructor tells you what worked, what didn&rsquo;t, and what to
-          fix next time. Then the details start to&nbsp;fade.
+          Every flight ends with a conversation that matters. But there&rsquo;s no guarantee the right things get
+          discussed, remembered, or carried into the next lesson.
         </p>
-
       </Reveal>
 
-      <Reveal delay={150} className="relative w-full">
+      <Reveal delay={100} className="relative w-full">
+        <ProblemSequence />
+        <ProblemArrows />
+      </Reveal>
+
+      <Reveal delay={200} className="relative mx-auto mt-16 max-w-2xl text-center">
+        <p
+          className="font-display text-balance text-2xl font-bold leading-tight text-[#101727] sm:text-3xl"
+          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
+        >
+          That&rsquo;s more than lost notes. <span className="text-brand">It&rsquo;s lost learning.</span>
+        </p>
+        <p
+          className="mx-auto mt-4 max-w-xl text-pretty text-base leading-relaxed text-[#4b545d]"
+          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
+        >
+          A good debrief helps a student understand what happened, recognize patterns, correct mistakes, and prepare
+          for what comes next. Over time, that&rsquo;s part of becoming a more proficient, safer pilot.
+        </p>
+      </Reveal>
+
+      <Reveal delay={300} className="relative mt-16 w-full">
+        <p
+          className="text-balance text-center text-xs font-bold uppercase tracking-[0.16em] text-[#8c97a2]"
+          style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
+        >
+          Pilots know the problem
+        </p>
         <QuoteRail />
       </Reveal>
 
-      <Reveal delay={250}>
+      <Reveal delay={350} className="relative flex flex-col items-center">
+        <p
+          className="text-balance mt-10 text-xs font-bold uppercase tracking-[0.16em] text-brand"
+          style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
+        >
+          The Solution
+        </p>
         <a
           href="#how-it-works"
-          className="mt-10 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white/70 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] backdrop-blur-sm transition-colors hover:border-brand/50 hover:bg-white"
+          className="mt-3 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white/70 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] backdrop-blur-sm transition-colors hover:border-brand/50 hover:bg-white"
         >
           See how we solve it
           <ArrowDown className="size-4 animate-bounce" />
