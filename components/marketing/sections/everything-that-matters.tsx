@@ -83,7 +83,7 @@ export function EverythingThatMatters() {
     <section id="how-it-works" className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">How AfterFlight Works</p>
+          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">The Solution</p>
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             One debrief. Everything you need for the next flight.
           </h2>
