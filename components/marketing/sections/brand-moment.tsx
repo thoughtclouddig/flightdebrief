@@ -65,24 +65,9 @@ const QUOTES = [
 
 /** The three connected failures this section walks through, left to right. */
 const PROBLEMS = [
-  {
-    number: "01",
-    label: "Inconsistent",
-    detail: "Some debriefs are thorough. Others are rushed, vague, or skipped.",
-    question: "Was the right conversation had?",
-  },
-  {
-    number: "02",
-    label: "Forgotten",
-    detail: "You talk through what worked, what didn't, and what to fix. Then the details start to fade.",
-    question: "Will you remember it?",
-  },
-  {
-    number: "03",
-    label: "Disconnected",
-    detail: "By the next lesson, there may be no clear record of what happened, what's improving, or what to work on next.",
-    question: "Will it change the next flight?",
-  },
+  { number: "01", label: "Inconsistent", detail: "Some debriefs are rushed, vague, or skipped." },
+  { number: "02", label: "Forgotten", detail: "Details fade before the next lesson." },
+  { number: "03", label: "Disconnected", detail: "Nothing carries forward." },
 ] as const;
 
 function HighlightedSnippet({ text, highlight }: { text: string; highlight: string }) {
@@ -116,20 +101,12 @@ function ProblemSequence() {
               {p.label}
             </p>
           </div>
-          <div className="sm:mt-2">
-            <p
-              className="text-pretty text-sm leading-relaxed text-[#4b545d] sm:mx-auto sm:max-w-[15rem]"
-              style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
-            >
-              {p.detail}
-            </p>
-            <p
-              className="mt-2 text-xs font-semibold uppercase tracking-wide text-[#8c97a2]"
-              style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
-            >
-              {p.question}
-            </p>
-          </div>
+          <p
+            className="text-pretty mt-1 text-sm leading-relaxed text-[#4b545d] sm:mx-auto sm:max-w-[13rem]"
+            style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
+          >
+            {p.detail}
+          </p>
         </div>
       ))}
     </div>
@@ -211,10 +188,10 @@ export function BrandMoment() {
 
       <Reveal className="relative mx-auto max-w-3xl text-center">
         <p
-          className="text-balance text-xs font-bold uppercase tracking-[0.2em] text-brand"
+          className="text-balance text-lg font-bold uppercase tracking-[0.2em] text-brand sm:text-xl"
           style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
         >
-          The Problem
+          Pilots know the problem
         </p>
 
         <p className="font-display mt-6 text-balance text-3xl font-bold leading-[1.05] text-[#101727] sm:text-[clamp(3rem,2.25rem+3vw,4.5rem)] sm:leading-[0.95]">
@@ -236,22 +213,10 @@ export function BrandMoment() {
 
       <Reveal delay={300} className="relative mt-16 w-full">
         <p
-          className="text-balance text-center text-xs font-bold uppercase tracking-[0.16em] text-[#8c97a2]"
-          style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
-        >
-          Pilots know the problem
-        </p>
-        <p
-          className="font-display mx-auto mt-3 max-w-xl text-balance text-center text-xl font-bold leading-snug text-[#101727] sm:text-2xl"
+          className="font-display mx-auto max-w-2xl text-balance text-center text-xl font-bold leading-snug text-[#101727] sm:whitespace-nowrap sm:text-2xl"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
           You&rsquo;re not the only one asking for something better.
-        </p>
-        <p
-          className="mx-auto mt-3 max-w-md text-pretty text-center text-base text-[#4b545d]"
-          style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
-        >
-          Students and instructors are already talking about the gaps between one flight and the next.
         </p>
         <QuoteRail />
       </Reveal>
