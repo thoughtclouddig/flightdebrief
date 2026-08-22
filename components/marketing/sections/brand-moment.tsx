@@ -13,7 +13,7 @@ import { Reveal } from "@/components/marketing/reveal";
  */
 const QUOTES = [
   {
-    snippet: "rushed, informal, or skipped altogether",
+    snippet: "this critical part of flight training is rushed, informal, or skipped altogether",
     highlight: "skipped altogether",
     attribution: "AOPA",
     source: null,
@@ -34,28 +34,28 @@ const QUOTES = [
     emphasis: false,
   },
   {
-    snippet: "debriefs are just an oral discussion",
+    snippet: "Most flight instructor debriefs are just an oral discussion.",
     highlight: "just an oral discussion",
     attribution: "Pilot",
     source: "r/CFILounge",
     emphasis: false,
   },
   {
-    snippet: "retain information, even when it's recent",
+    snippet: "Students don't always retain information, even when it's recent",
     highlight: "even when it's recent",
     attribution: "CFI",
     source: "r/flying",
     emphasis: false,
   },
   {
-    snippet: "I feel lost tracking my progress",
+    snippet: "Between lessons, I feel lost tracking my progress.",
     highlight: "feel lost",
     attribution: "Student Pilot",
     source: "r/flying",
     emphasis: false,
   },
   {
-    snippet: "kept showing up across multiple flights",
+    snippet: "The same issue kept showing up across multiple flights.",
     highlight: "across multiple flights",
     attribution: "Student Pilot",
     source: "r/flying",
@@ -83,7 +83,7 @@ function QuoteRail() {
         {[...QUOTES, ...QUOTES].map((q, i) => (
           <div
             key={i}
-            className={`w-72 shrink-0 rounded-lg border bg-white p-5 text-left shadow-sm ${
+            className={`w-80 shrink-0 rounded-lg border bg-white p-4 text-left shadow-sm ${
               q.emphasis ? "border-brand/30" : "border-slate-200"
             }`}
           >
