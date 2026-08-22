@@ -90,7 +90,7 @@ const LIGHT_SCOPE_STYLE = {
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-white" style={LIGHT_SCOPE_STYLE}>
+    <div className="bg-white font-medium" style={LIGHT_SCOPE_STYLE}>
       <MarketingNav />
       {children}
       <footer id="resources" className="border-t border-slate-200 bg-white px-6 pb-8 pt-16 text-sm">
