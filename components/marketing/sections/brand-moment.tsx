@@ -63,13 +63,6 @@ const QUOTES = [
   },
 ] as const;
 
-/** The three connected failures this section walks through, left to right. */
-const PROBLEMS = [
-  { number: "01", label: "Inconsistent", detail: "Some debriefs are rushed, vague, or skipped." },
-  { number: "02", label: "Forgotten", detail: "Details fade before the next lesson." },
-  { number: "03", label: "Disconnected", detail: "Nothing carries forward." },
-] as const;
-
 function HighlightedSnippet({ text, highlight }: { text: string; highlight: string }) {
   const start = text.indexOf(highlight);
   if (start === -1) return <>{text}</>;
@@ -79,37 +72,6 @@ function HighlightedSnippet({ text, highlight }: { text: string; highlight: stri
       <span className="text-brand">{text.slice(start, start + highlight.length)}</span>
       {text.slice(start + highlight.length)}
     </>
-  );
-}
-
-function ProblemSequence() {
-  return (
-    <div className="mx-auto mt-16 flex max-w-4xl flex-col gap-6 sm:flex-row sm:items-start sm:gap-3">
-      {PROBLEMS.map((p) => (
-        <div key={p.number} className="flex gap-4 sm:flex-1 sm:flex-col sm:gap-0 sm:text-center">
-          <div className="flex flex-col items-start sm:items-center">
-            <span
-              className="text-sm font-bold tracking-[0.08em] text-brand"
-              style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
-            >
-              {p.number}
-            </span>
-            <p
-              className="font-display mt-1 text-lg font-bold text-[#101727]"
-              style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
-            >
-              {p.label}
-            </p>
-          </div>
-          <p
-            className="text-pretty mt-1 text-sm leading-relaxed text-[#4b545d] sm:mx-auto sm:max-w-[13rem]"
-            style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
-          >
-            {p.detail}
-          </p>
-        </div>
-      ))}
-    </div>
   );
 }
 
@@ -188,13 +150,9 @@ export function BrandMoment() {
         </p>
       </Reveal>
 
-      <Reveal delay={100} className="relative w-full">
-        <ProblemSequence />
-      </Reveal>
-
       <Reveal delay={300} className="relative mt-16 w-full">
         <p
-          className="font-display mx-auto max-w-2xl text-balance text-center text-xl font-bold leading-snug text-[#101727] sm:whitespace-nowrap sm:text-2xl"
+          className="font-display mx-auto max-w-2xl text-balance text-center text-lg font-bold leading-snug text-[#101727] sm:whitespace-nowrap sm:text-xl"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
           You&rsquo;re not the only one asking for something better.
@@ -205,7 +163,7 @@ export function BrandMoment() {
       <Reveal delay={350} className="relative flex flex-col items-center">
         <a
           href="#how-it-works"
-          className="mt-10 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] transition-colors hover:border-brand/50"
+          className="mt-16 inline-flex items-center gap-2.5 rounded-full border border-brand/25 bg-white px-5 py-2.5 text-sm font-bold uppercase tracking-[0.16em] text-brand shadow-[0_2px_12px_rgba(240,118,33,0.12)] transition-colors hover:border-brand/50"
         >
           See how we solve it
           <ArrowDown className="size-4 animate-bounce" />
