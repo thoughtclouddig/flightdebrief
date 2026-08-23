@@ -23,7 +23,7 @@ export function DebriefSummaryMockupCard({ className, style }: { className?: str
         className="rounded-t-[22px] border border-black/[0.06] bg-white p-6"
         style={{ boxShadow: "0 1px 2px rgba(16,23,39,0.04), 0 16px 40px -12px rgba(16,23,39,0.22)" }}
       >
-        <p className="text-balance text-[11px] font-bold uppercase tracking-[0.14em] text-brand">Flight Debrief</p>
+        <p className="text-balance text-xs font-bold uppercase tracking-[0.14em] text-brand">Flight Debrief</p>
 
         <p className="text-balance font-display mt-2 text-[21px] font-bold tracking-tight text-[#101727]">KSBD &rarr; KFUL</p>
         <p className="text-balance mt-0.5 text-[13.5px] text-[#8c97a2]">May 12, 2026 &middot; 1.3 Hobbs</p>

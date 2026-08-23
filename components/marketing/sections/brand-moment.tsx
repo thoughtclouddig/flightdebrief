@@ -100,7 +100,7 @@ function QuoteRail() {
               <p className="text-xs font-semibold text-[#101727]">{q.attribution}</p>
               {q.source ? (
                 <span
-                  className={`shrink-0 text-[11px] font-bold uppercase tracking-wide ${q.emphasis ? "text-brand" : "text-[#8c97a2]"}`}
+                  className={`shrink-0 text-xs font-bold uppercase tracking-wide ${q.emphasis ? "text-brand" : "text-[#8c97a2]"}`}
                 >
                   {q.source}
                 </span>

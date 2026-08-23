@@ -156,7 +156,7 @@ export default function EnterprisePage() {
                   <>
                     <div className="min-w-0">
                       <p className="font-display truncate text-sm font-bold tracking-tight text-[#101727]">KSDL &rarr; KSEZ</p>
-                      <p className="text-[11px] text-[#8c97a2]">May 12 &middot; 1.3 Hobbs</p>
+                      <p className="text-xs text-[#8c97a2]">May 12 &middot; 1.3 Hobbs</p>
                     </div>
                     <Pill tone="#16803d">Complete</Pill>
                   </>
