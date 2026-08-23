@@ -578,3 +578,25 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO organization_members (id, organization_id, user_id, role) VALUES
   ('member-owner','org-falcon','user-owner','admin')
 ON CONFLICT (id) DO NOTHING;
+
+-- Rewards Phase 1: milestone/streak tracking. `type` is deliberately a free
+-- string, not a CHECK-constrained enum -- future milestone types (first
+-- solo, checkride passed, etc.) are just a new constant in lib/milestones.ts,
+-- not a schema change. `source` IS constrained to the 3 values the full
+-- Rewards spec calls for, even though Phase 1 only ever writes 'automatic'.
+-- UNIQUE (student_id, type) is the idempotency backstop -- every Phase 1 rule
+-- fires at most once per student by construction (evaluated as an exact
+-- threshold match, not a range), so this should never actually be hit in
+-- normal operation, just guard against double-processing/races.
+CREATE TABLE IF NOT EXISTS milestones (
+  id text PRIMARY KEY,
+  student_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type text NOT NULL,
+  source text NOT NULL DEFAULT 'automatic' CHECK (source IN ('automatic','student_confirmed','cfi_confirmed')),
+  achieved_at timestamptz NOT NULL DEFAULT now(),
+  related_flight_id text REFERENCES flights(id) ON DELETE SET NULL,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (student_id, type)
+);
+CREATE INDEX IF NOT EXISTS milestones_student_idx ON milestones (student_id, achieved_at DESC);

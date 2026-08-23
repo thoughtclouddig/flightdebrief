@@ -547,3 +547,24 @@ export interface TranscriptSegment {
   speakerLabel: string | null;
   createdAt: string;
 }
+
+export type MilestoneSource = "automatic" | "student_confirmed" | "cfi_confirmed";
+
+/**
+ * Rewards Phase 1: a recognized training milestone. `type` is an open string
+ * namespace (see lib/milestones.ts), not a closed enum -- new milestone
+ * types (first solo, checkride passed, etc.) are additive, never a schema
+ * change. `metadata` holds only the small snapshot value a rule needs to
+ * describe itself later (e.g. { streakLength: 10 }) -- never data that's
+ * already reliably derivable from the related flight record.
+ */
+export interface Milestone {
+  id: string;
+  studentId: string;
+  type: string;
+  source: MilestoneSource;
+  achievedAt: string;
+  relatedFlightId: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}

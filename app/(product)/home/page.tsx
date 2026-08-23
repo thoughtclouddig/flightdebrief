@@ -17,6 +17,7 @@ import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeDebriefProgress } from "@/lib/debrief-progress";
+import { computeDebriefStreak, computeTotalCaptured } from "@/lib/milestones";
 import { suggestStudyReferences } from "@/lib/topics";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { formatDurationShort, formatFlightContext } from "@/lib/utils";
@@ -39,11 +40,12 @@ export default async function StudentHomePage() {
   const viewer = await getViewer();
   const studentId = viewer.user.id;
 
-  const [flights, trainingItems, brief, radioPractice] = await Promise.all([
+  const [flights, trainingItems, brief, radioPractice, milestones] = await Promise.all([
     repo.listFlights({ studentId }),
     repo.listTrainingItems(),
     computeNextLessonBrief(repo, studentId),
     repo.listRadioPracticeAssignments(studentId),
+    repo.listMilestones(studentId),
   ]);
   const pendingRadioPractice = radioPractice.filter((a) => a.status === "assigned");
 
@@ -53,6 +55,17 @@ export default async function StudentHomePage() {
   const openActionItems = trainingItems.filter(
     (t) => flightIds.has(t.flightId) && !t.done && t.category !== "todo" && t.visibility === "shared",
   );
+
+  // Rewards Phase 1: a compact, non-clickable summary -- there's no My
+  // Journey destination to link into yet (that's Phase 2), and a dead-end
+  // link would be worse than no link. Deliberately understated relative to
+  // the hero cards above it -- see lib/milestones.ts for what counts.
+  const totalCaptured = computeTotalCaptured(flights);
+  const debriefStreak = computeDebriefStreak([...flights].sort((a, b) => b.flightDate.localeCompare(a.flightDate)));
+  const rewardsSummary =
+    totalCaptured > 0
+      ? `${totalCaptured} flight${totalCaptured === 1 ? "" : "s"} captured · ${debriefStreak}-flight streak · ${milestones.length} milestone${milestones.length === 1 ? "" : "s"}`
+      : null;
 
   // The most recent flight that isn't debriefed yet, if any -- invisible to
   // brief.lastFlight (pre-filtered to complete-only, lib/training-memory.ts)
@@ -194,6 +207,10 @@ export default async function StudentHomePage() {
           </CardContent>
         </Card>
       </Link>
+
+      {rewardsSummary ? (
+        <p className="text-center text-xs text-foreground-faint">{rewardsSummary}</p>
+      ) : null}
 
       {brief.focusAreas.length > 0 ? (
         <Card>

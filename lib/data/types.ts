@@ -15,6 +15,7 @@ import type {
   FlightTaskSource,
   FlightWithRelations,
   Instructor,
+  Milestone,
   Organization,
   OrganizationKind,
   OrganizationMember,
@@ -255,6 +256,11 @@ export interface Repository {
   listTrainingSignals(filter?: ListTrainingSignalsFilter): Promise<TrainingSignal[]>;
   /** CFI authority (V1 change 14): excludes the signal from progression/aggregation without deleting it. */
   setTrainingSignalDismissed(id: string, dismissed: boolean): Promise<void>;
+
+  // --- Rewards Phase 1: milestones (see lib/milestones.ts) ---
+  listMilestones(studentId: string): Promise<Milestone[]>;
+  /** Insert-or-noop on (studentId, type); returns null when the milestone already existed (not newly awarded). */
+  createMilestoneIfNew(input: Omit<Milestone, "id" | "createdAt" | "achievedAt">): Promise<Milestone | null>;
 
   // --- Recording consent (V1 change 12) ---
   createConsentRecord(input: {

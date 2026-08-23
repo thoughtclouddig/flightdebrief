@@ -77,12 +77,17 @@ function HighlightedSnippet({ text, highlight }: { text: string; highlight: stri
 function QuoteRail() {
   return (
     <div className="relative mt-8 -mx-6 overflow-hidden">
-      {/* Content is duplicated so the loop point (-50%) is seamless, same technique as ppl-payoff.tsx's photo marquee. */}
-      <div className="flex w-max animate-[marquee-slide_75s_linear_infinite] gap-4 px-6 hover:[animation-play-state:paused] motion-reduce:animate-none">
+      {/* Mobile: a plain touch-scrollable, snap-aligned row -- manual swipe, no competing motion.
+          sm and up: the same track instead auto-scrolls (content duplicated for a seamless -50% loop,
+          same technique as ppl-payoff.tsx's photo marquee), since there's no touch input to fight there. */}
+      <div
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 [&::-webkit-scrollbar]:hidden sm:w-max sm:snap-none sm:animate-[marquee-slide_75s_linear_infinite] sm:overflow-visible sm:pb-0 sm:hover:[animation-play-state:paused] motion-reduce:sm:animate-none"
+        style={{ scrollbarWidth: "none" }}
+      >
         {[...QUOTES, ...QUOTES].map((q, i) => (
           <div
             key={i}
-            className={`w-80 shrink-0 rounded-lg border bg-white p-4 text-left shadow-sm ${
+            className={`w-80 shrink-0 snap-start rounded-lg border bg-white p-4 text-left shadow-sm ${
               q.emphasis ? "border-brand/30" : "border-slate-200"
             }`}
           >
