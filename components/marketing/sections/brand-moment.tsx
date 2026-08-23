@@ -49,7 +49,7 @@ export function BrandMoment() {
         >
           <iframe
             className="sproutvideo-player"
-            src="https://videos.sproutvideo.com/embed/ee9adcbb161ee1c664/9f8eb983a05fd24e?playerColor=ff6f08&playerTheme=light&showControls=false"
+            src="https://videos.sproutvideo.com/embed/ee9adcbb161ee1c664/9f8eb983a05fd24e?playerColor=ff6f08&playerTheme=light&showControls=false&endFrame=posterFrame"
             style={{ position: "absolute", width: "100%", height: "100%", left: 0, top: 0 }}
             frameBorder={0}
             allowFullScreen
