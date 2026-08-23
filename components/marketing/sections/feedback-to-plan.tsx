@@ -57,7 +57,7 @@ export function FeedbackToPlan() {
               <span className="size-1.5 rounded-full bg-black/25" />
             </div>
 
-            <div className="rounded-[26px] bg-white p-8 ring-1 ring-black/[0.05] sm:p-10">
+            <div className="rounded-[26px] bg-white p-5 ring-1 ring-black/[0.05] sm:p-10">
               <p className="text-balance mb-6 text-xs font-bold uppercase tracking-[0.14em] text-brand">
                 Today&rsquo;s Flight &middot; Steep Turns
               </p>
@@ -93,11 +93,11 @@ export function FeedbackToPlan() {
               </ThreadBlock>
 
               <ThreadBlock icon={Target} eyebrow="Next flight" last>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4">
                   {NEXT_FLIGHT_STATS.map((stat) => (
                     <div key={stat.label}>
                       <p className="text-xs font-medium text-[#8c97a2]">{stat.label}</p>
-                      <p className="font-display mt-0.5 whitespace-nowrap text-sm font-bold text-[#101727]">{stat.value}</p>
+                      <p className="font-display mt-0.5 text-pretty text-sm font-bold text-[#101727]">{stat.value}</p>
                     </div>
                   ))}
                 </div>
