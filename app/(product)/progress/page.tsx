@@ -1,6 +1,7 @@
 import { AlertCircle, ClipboardList, Repeat, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TabPanels } from "@/components/ui/tab-panels";
 import { AcsBadge } from "@/components/acs-badge";
 import { SkillProgressList } from "@/components/skill-progress-list";
 import { TrainingItemChecklist } from "@/components/training-item-checklist";
@@ -35,73 +36,49 @@ export default async function ProgressPage() {
   const skillProgressions = computeSkillProgression(signals.filter((s) => !s.dismissed));
   const freeFlights = computeStudentFreeFlights(flights);
 
-  return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Your progress</h1>
-        <p className="mt-1 text-sm text-foreground-soft">
-          Patterns across your training -- conservative on purpose. Nothing here is a trend until it&rsquo;s shown up more than once.
-        </p>
-        <p className="mt-2 text-xs font-semibold text-brand">
-          {freeFlights.exhausted
-            ? "You've used your 3 free flights."
-            : `${freeFlights.used} of ${freeFlights.cap} free flights used`}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="flex flex-col gap-1 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Flights debriefed</p>
-            <p className="text-2xl font-semibold text-foreground">{debriefedCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-1 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Open action items</p>
-            <p className="text-2xl font-semibold text-foreground">{openItems.length}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {keepWorkingOn.length > 0 || beforeFlight.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardList className="size-4 text-brand" />
-              Action Items
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {keepWorkingOn.length > 0 ? (
-              <div>
-                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
-                  <AlertCircle className="size-3.5" />
-                  Ongoing ({keepWorkingOn.length})
-                </p>
-                <p className="mt-1 text-xs text-foreground-faint">
-                  Skills flagged across your debriefs. These clear on their own once a later flight shows you&rsquo;ve got
-                  it -- or check one off yourself if you feel ready.
-                </p>
-                <div className="mt-2">
-                  <TrainingItemChecklist items={keepWorkingOn} />
-                </div>
+  const actionItemsPanel =
+    keepWorkingOn.length > 0 || beforeFlight.length > 0 ? (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ClipboardList className="size-4 text-brand" />
+            Action Items
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {keepWorkingOn.length > 0 ? (
+            <div>
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
+                <AlertCircle className="size-3.5" />
+                Ongoing ({keepWorkingOn.length})
+              </p>
+              <p className="mt-1 text-xs text-foreground-faint">
+                Skills flagged across your debriefs. These clear on their own once a later flight shows you&rsquo;ve got
+                it -- or check one off yourself if you feel ready.
+              </p>
+              <div className="mt-2">
+                <TrainingItemChecklist items={keepWorkingOn} />
               </div>
-            ) : null}
-            {beforeFlight.length > 0 ? (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">
-                  Before your next flight ({beforeFlight.length})
-                </p>
-                <div className="mt-2">
-                  <TrainingItemChecklist items={beforeFlight} />
-                </div>
+            </div>
+          ) : null}
+          {beforeFlight.length > 0 ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">
+                Before your next flight ({beforeFlight.length})
+              </p>
+              <div className="mt-2">
+                <TrainingItemChecklist items={beforeFlight} />
               </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      ) : null}
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+    ) : (
+      <p className="py-8 text-center text-sm text-foreground-faint">Nothing open right now.</p>
+    );
 
+  const themesPanel = (
+    <>
       {brief.focusAreas.length > 0 ? (
         <Card>
           <CardHeader>
@@ -145,16 +122,56 @@ export default async function ProgressPage() {
           </CardContent>
         </Card>
       )}
+    </>
+  );
 
-      {/* Reference detail, not action -- deliberately last so it doesn't push the actionable cards below the fold. */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Training Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SkillProgressList progressions={skillProgressions} certificateType={certificateType} />
-        </CardContent>
-      </Card>
+  const skillsPanel = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Training Progress</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <SkillProgressList progressions={skillProgressions} certificateType={certificateType} />
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="mx-auto flex max-w-2xl flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">Your progress</h1>
+        <p className="mt-1 text-sm text-foreground-soft">
+          Patterns across your training -- conservative on purpose. Nothing here is a trend until it&rsquo;s shown up more than once.
+        </p>
+        <p className="mt-2 text-xs font-semibold text-brand">
+          {freeFlights.exhausted
+            ? "You've used your 3 free flights."
+            : `${freeFlights.used} of ${freeFlights.cap} free flights used`}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="flex flex-col gap-1 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Flights debriefed</p>
+            <p className="text-2xl font-semibold text-foreground">{debriefedCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex flex-col gap-1 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Open action items</p>
+            <p className="text-2xl font-semibold text-foreground">{openItems.length}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <TabPanels
+        tabs={[
+          { id: "action-items", label: "Action Items", content: actionItemsPanel },
+          { id: "themes", label: "Themes", content: themesPanel },
+          { id: "skills", label: "Skills", content: skillsPanel },
+        ]}
+      />
     </div>
   );
 }

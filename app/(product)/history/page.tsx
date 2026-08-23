@@ -1,9 +1,6 @@
-import Link from "next/link";
-import { History } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { TrainingHistoryList } from "@/components/training-history-list";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
-import { formatDurationShort } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -26,38 +23,7 @@ export default async function HistoryPage() {
         </p>
       </div>
 
-      {withDebriefs.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-500 dark:border-white/15 dark:text-slate-400">
-          <History className="size-8 text-slate-300" />
-          No debriefed flights yet.
-        </div>
-      ) : (
-        <ol className="relative flex flex-col gap-8 border-l border-slate-200 pl-6 dark:border-white/10">
-          {withDebriefs.map(({ flight, debrief }) => (
-            <li key={flight.id} className="relative">
-              <span className="absolute -left-[29px] top-1 flex size-3.5 items-center justify-center rounded-full border-2 border-white bg-brand dark:border-[#0a0e17]" />
-              <Link href={`/flights/${flight.id}/debrief/results`} className="group">
-                <p className="text-sm font-semibold text-slate-900 group-hover:text-brand dark:text-white">
-                  {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                  <span className="ml-2 font-normal text-slate-400">
-                    {flight.aircraft.tailNumber} · {formatDurationShort(flight.durationMinutes)}
-                  </span>
-                </p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {(debrief?.structuredResult.whatWeDid ?? []).map((topic, i) => (
-                    <Badge key={i} variant="neutral">
-                      {topic}
-                    </Badge>
-                  ))}
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ol>
-      )}
+      <TrainingHistoryList rows={withDebriefs} />
     </div>
   );
 }
