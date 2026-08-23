@@ -30,7 +30,7 @@ export function AppScreen({ header, children }: { header: ReactNode; children: R
 export function Pill({ tone, children }: { tone: string; children: ReactNode }) {
   return (
     <span
-      className="shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-wide"
+      className="shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide"
       style={{ backgroundColor: `${tone}1a`, color: tone }}
     >
       {children}

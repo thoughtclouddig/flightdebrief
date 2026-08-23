@@ -240,7 +240,7 @@ export default async function StudentHomePage() {
                   {stat.value}
                 </span>
               </div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-foreground-faint">{stat.label}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">{stat.label}</p>
             </div>
           ))}
         </div>
