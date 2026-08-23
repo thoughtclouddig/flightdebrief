@@ -62,9 +62,13 @@ export default async function StudentHomePage() {
   // the hero cards above it -- see lib/milestones.ts for what counts.
   const totalCaptured = computeTotalCaptured(flights);
   const debriefStreak = computeDebriefStreak([...flights].sort((a, b) => b.flightDate.localeCompare(a.flightDate)));
-  const rewardsSummary =
+  const rewardsStats =
     totalCaptured > 0
-      ? `${totalCaptured} flight${totalCaptured === 1 ? "" : "s"} captured · ${debriefStreak}-flight streak · ${milestones.length} milestone${milestones.length === 1 ? "" : "s"}`
+      ? [
+          { value: totalCaptured, label: "Captured", color: "var(--brand)" },
+          { value: debriefStreak, label: "Streak", color: "var(--good)" },
+          { value: milestones.length, label: milestones.length === 1 ? "Milestone" : "Milestones", color: "var(--amber)" },
+        ]
       : null;
 
   // The most recent flight that isn't debriefed yet, if any -- invisible to
@@ -208,8 +212,38 @@ export default async function StudentHomePage() {
         </Card>
       </Link>
 
-      {rewardsSummary ? (
-        <p className="text-center text-xs text-foreground-faint">{rewardsSummary}</p>
+      {rewardsStats ? (
+        <div className="grid grid-cols-3 gap-1">
+          {rewardsStats.map((stat, i) => (
+            <div
+              key={stat.label}
+              className={
+                i > 0 ? "flex flex-col items-center gap-1.5 border-l border-hairline py-1" : "flex flex-col items-center gap-1.5 py-1"
+              }
+            >
+              <div className="relative size-11">
+                <svg viewBox="0 0 44 44" className="-rotate-90">
+                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--hairline)" strokeWidth="4" />
+                  <circle
+                    cx="22"
+                    cy="22"
+                    r="18"
+                    fill="none"
+                    stroke={stat.color}
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeDasharray="113"
+                    strokeDashoffset="28"
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-foreground">
+                  {stat.value}
+                </span>
+              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-foreground-faint">{stat.label}</p>
+            </div>
+          ))}
+        </div>
       ) : null}
 
       {brief.focusAreas.length > 0 ? (
