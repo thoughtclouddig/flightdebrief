@@ -6,10 +6,19 @@ export function Visual({ children }: { children: ReactNode }) {
   return <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-[#f4f5f6]">{children}</div>;
 }
 
-export function PhotoVisual({ src, alt }: { src: string; alt: string }) {
+/** `label` overlays a white uppercase eyebrow on the photo itself (bottom-left, over a dark scrim) instead of as separate text below the card -- for photos where the eyebrow needs to stand out against the image rather than get buried under the headline. */
+export function PhotoVisual({ src, alt, label }: { src: string; alt: string; label?: string }) {
   return (
     <Visual>
       <Image src={src} alt={alt} fill className="object-cover" sizes="(min-width: 1024px) 420px, (min-width: 640px) 320px, 100vw" />
+      {label ? (
+        <>
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
+          <p className="absolute bottom-3 left-4 text-balance text-xs font-bold uppercase tracking-[0.14em] text-white">
+            {label}
+          </p>
+        </>
+      ) : null}
     </Visual>
   );
 }
