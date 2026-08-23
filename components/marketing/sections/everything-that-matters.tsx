@@ -92,7 +92,7 @@ export function EverythingThatMatters() {
               <div>
                 <p className="text-balance text-xs font-bold uppercase tracking-[0.14em] text-brand">{card.eyebrow}</p>
                 <p className="font-display mt-1.5 text-balance text-xl font-bold text-[#101727]">{card.headline}</p>
-                <p className="text-pretty mt-2 text-sm leading-relaxed text-[#68717D]">{card.copy}</p>
+                <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
               </div>
             </Reveal>
           ))}
