@@ -2,13 +2,13 @@ import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 import { getRepository } from "@/lib/data";
 import { localIsoDate } from "@/lib/date";
-import { generatePatternTrack } from "@/lib/geo";
 import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { autoResolveActionItems } from "@/lib/action-items-autoresolve";
 import { evaluateAndAwardMilestones } from "@/lib/milestones";
 import { DEMO_HISTORY } from "@/lib/demo/video-demo-data";
-import type { StructuredDebrief } from "@/lib/types";
+import { REAL_DEMO_FLIGHTS } from "@/lib/demo/real-flight-fixtures";
+import type { StructuredDebrief, TrackPosition } from "@/lib/types";
 
 /**
  * Public "try it live" demo -- distinct from lib/demo/video-demo-seed.ts
@@ -32,10 +32,6 @@ export interface LiveDemoResult {
 const PILOT_AIRPORT = "KFFZ";
 const SCHOOL_AIRPORT = "KCHD";
 
-function daysAgoIso(daysAgo: number): string {
-  return localIsoDate(new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000));
-}
-
 interface HistoricalFlightRecord {
   flightId: string;
   debriefId: string;
@@ -48,9 +44,41 @@ interface HistoricalFlightRecord {
 }
 
 /**
- * Runs `entries` through analyzeMock() and inserts one flight+debrief per
- * entry, same technique lib/demo/video-demo-seed.ts uses -- realistic
- * derived content at zero AI cost. Returns one record per entry so the
+ * Rotating cursor over REAL_DEMO_FLIGHTS (lib/demo/real-flight-fixtures.ts,
+ * fetched once from FR24 -- see scripts/fetch-real-tracks.mjs) so a single
+ * demo org's several historical flights don't all draw the same real flight,
+ * and different orgs/visitors don't all draw flights in the same order.
+ * Wraps around if more flights are needed than were fetched.
+ */
+let realFlightCursor = Math.floor(Math.random() * REAL_DEMO_FLIGHTS.length);
+function nextRealFlight() {
+  const flight = REAL_DEMO_FLIGHTS[realFlightCursor % REAL_DEMO_FLIGHTS.length];
+  realFlightCursor++;
+  return flight;
+}
+
+/** Reconstructs timestamps for a real track's points (FR24's raw points are already time-ordered, but scripts/fetch-real-tracks.mjs strips their absolute timestamps) by spreading them evenly across the flight's real duration starting at `startIso`. */
+function withTimestamps(track: { lat: number; lon: number; altitudeFt?: number; groundSpeedKt?: number }[], startIso: string, durationMinutes: number): TrackPosition[] {
+  const startMs = new Date(startIso).getTime();
+  const totalMs = durationMinutes * 60 * 1000;
+  return track.map((p, i) => ({
+    ...p,
+    timestamp: new Date(startMs + (i / Math.max(1, track.length - 1)) * totalMs).toISOString(),
+  }));
+}
+
+/**
+ * Inserts one flight+debrief per transcript, pairing each with a REAL flight
+ * (route, date, duration, GPS track) drawn from REAL_DEMO_FLIGHTS -- only the
+ * debrief narrative itself is fabricated (analyzeMock against a scripted
+ * transcript), since no real audio exists for these real flights. The
+ * aircraft identity (tail/type) stays the org's own seeded aircraft rather
+ * than the real flight's actual registration, both to avoid colliding with
+ * `aircraft_tail_number_idx`'s global UNIQUE constraint across concurrent
+ * demo sessions drawing from the same small real-flight pool, and because
+ * attributing a real operator's real aircraft to this fictional flight
+ * school would be misleading -- the flown geometry is real, the airplane
+ * "flying" it in the demo is not. Returns one record per transcript so the
  * caller can run the same post-analysis side effects the real
  * app/api/debrief/analyze/route.ts does (training items, training signals,
  * milestones) via seedDerivedContent() once these rows are committed --
@@ -60,60 +88,61 @@ interface HistoricalFlightRecord {
  */
 async function seedHistoricalFlights(
   db: { query: (text: string, params?: unknown[]) => Promise<unknown> },
-  entries: { daysAgo: number; durationMinutes: number; transcript: string }[],
+  transcripts: string[],
   opts: {
     studentId: string;
     organizationId: string;
     aircraftId: string;
     aircraftTail: string;
     aircraftType: string;
-    airport: string;
     instructorId: string | null;
     instructorName: string | null;
   },
 ): Promise<HistoricalFlightRecord[]> {
   const records: HistoricalFlightRecord[] = [];
   let previousActionItems: string[] = [];
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
+
+  // Oldest-first so the narrative arc (transcripts are written as a
+  // progression) lines up with real chronological order.
+  const realFlights = transcripts.map(() => nextRealFlight()).sort((a, b) => a.takeoffIso.localeCompare(b.takeoffIso));
+
+  for (let i = 0; i < transcripts.length; i++) {
+    const transcript = transcripts[i];
+    const real = realFlights[i];
     const flightId = `flight-demo-${randomUUID()}`;
     const debriefId = `debrief-demo-${randomUUID()}`;
-    const flightDate = daysAgoIso(entry.daysAgo);
-    const createdAt = new Date(Date.now() - entry.daysAgo * 24 * 60 * 60 * 1000).toISOString();
-    const track = generatePatternTrack(opts.airport, {
-      startTime: new Date(createdAt),
-      durationMinutes: entry.durationMinutes,
-      seed: Math.floor(Math.random() * 1_000_000),
-    });
+    const flightDate = real.takeoffIso.slice(0, 10);
+    const track = withTimestamps(real.track, real.takeoffIso, real.durationMinutes);
 
     await db.query(
       `INSERT INTO flights (
          id, student_id, organization_id, aircraft_id, departure_airport, arrival_airport,
          flight_date, duration_minutes, instructor_id, debrief_status, track, created_at
-       ) VALUES ($1,$2,$3,$4,$5,$5,$6,$7,$8,'complete',$9,$10)`,
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'complete',$10,$11)`,
       [
         flightId,
         opts.studentId,
         opts.organizationId,
         opts.aircraftId,
-        opts.airport,
+        real.departureAirport,
+        real.arrivalAirport,
         flightDate,
-        entry.durationMinutes,
+        real.durationMinutes,
         opts.instructorId,
         JSON.stringify(track),
-        createdAt,
+        real.takeoffIso,
       ],
     );
 
     const result = analyzeMock({
-      transcript: entry.transcript,
+      transcript,
       flightMeta: {
         tailNumber: opts.aircraftTail,
         aircraftType: opts.aircraftType,
-        departureAirport: opts.airport,
-        arrivalAirport: opts.airport,
+        departureAirport: real.departureAirport,
+        arrivalAirport: real.arrivalAirport,
         flightDate,
-        durationMinutes: entry.durationMinutes,
+        durationMinutes: real.durationMinutes,
         instructorName: opts.instructorName,
       },
       previousActionItems,
@@ -123,7 +152,7 @@ async function seedHistoricalFlights(
     await db.query(
       `INSERT INTO debriefs (id, flight_id, transcript, audio_duration_seconds, structured_result, analyzed_with, created_at)
        VALUES ($1,$2,$3,$4,$5,'mock',$6)`,
-      [debriefId, flightId, entry.transcript, Math.round(entry.durationMinutes * 0.6), JSON.stringify(result), createdAt],
+      [debriefId, flightId, transcript, Math.round(real.durationMinutes * 0.6), JSON.stringify(result), real.takeoffIso],
     );
 
     records.push({
@@ -232,16 +261,19 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
       [aircraftId, tail, aircraftType, PILOT_AIRPORT, orgId],
     );
 
-    const historicalRecords = await seedHistoricalFlights(client, DEMO_HISTORY.slice(0, 5), {
-      studentId: userId,
-      organizationId: orgId,
-      aircraftId,
-      aircraftTail: tail,
-      aircraftType,
-      airport: PILOT_AIRPORT,
-      instructorId: null,
-      instructorName: null,
-    });
+    const historicalRecords = await seedHistoricalFlights(
+      client,
+      DEMO_HISTORY.slice(0, 5).map((e) => e.transcript),
+      {
+        studentId: userId,
+        organizationId: orgId,
+        aircraftId,
+        aircraftTail: tail,
+        aircraftType,
+        instructorId: null,
+        instructorName: null,
+      },
+    );
 
     // Freeform mode needs nothing beyond a not-yet-debriefed flight -- no
     // flight_tasks/assessments/cards, confirmed against the resolver at
@@ -354,17 +386,16 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
         [`link-demo-${randomUUID()}`, studentUserId, instructorUserId, orgId],
       );
 
-      // 3-4 historical flights per student, offset by index so their dates
-      // don't collide with each other.
-      const history = DEMO_HISTORY.slice(i, i + 4);
+      // 3-4 historical flights per student, offset by index so their
+      // transcripts (and the real flights paired with them) don't collide.
+      const transcripts = DEMO_HISTORY.slice(i, i + 4).map((e) => e.transcript);
       historicalRecords.push(
-        ...(await seedHistoricalFlights(client, history, {
+        ...(await seedHistoricalFlights(client, transcripts, {
           studentId: studentUserId,
           organizationId: orgId,
           aircraftId,
           aircraftTail: tail,
           aircraftType,
-          airport: SCHOOL_AIRPORT,
           instructorId: instructorUserId,
           instructorName,
         })),
