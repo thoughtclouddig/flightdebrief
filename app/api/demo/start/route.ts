@@ -1,7 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { requestOrigin } from "@/lib/auth/origin";
-import { createSessionJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
 import { cleanupExpiredDemoOrgs, seedCfiSchoolDemo, seedPilotDemo } from "@/lib/demo/live-demo-seed";
+import { createDemoJob, failDemoJob, resolveDemoJob } from "@/lib/demo/live-demo-jobs";
 
 const DEMO_ORG_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
@@ -20,12 +21,17 @@ export const DEMO_HINT_COOKIE = "fb_demo_hint";
  * Public entry point for the marketing site's "try it live" demo -- unlike
  * app/api/auth/dev-login and app/api/demo/enter (both internal-only, gated
  * behind !REPLIT_DEPLOYMENT), this route is meant to run in real production.
- * Provisions a fresh, isolated org+users+data on every visit (see
- * lib/demo/live-demo-seed.ts), mints a real session for the seeded persona,
- * and redirects straight into the product. No rate-limiting/bot-protection
- * in v1 -- the only mitigation is rel="nofollow" on the marketing CTAs; a
- * bot hammering this endpoint would create garbage demo orgs that the lazy
- * cleanup below will still expire and remove on a later visit.
+ *
+ * Deliberately does NOT await seeding before responding. The full seed
+ * (org/users/aircraft, several students' worth of historical flights, each
+ * one a sequential round trip against a remote Postgres, plus a throttled
+ * batch of post-commit training-item/signal/milestone writes -- see
+ * lib/demo/live-demo-seed.ts) genuinely takes several seconds, and making
+ * the visitor's browser sit on a blank tab for all of it read as "broken" in
+ * testing. Instead this kicks the seed off in the background (the Node
+ * process stays alive after the response is sent, same as this file's
+ * existing fire-and-forget TTS pre-warm) and immediately redirects to a
+ * loading page that polls app/api/demo/status/route.ts until it's ready.
  */
 export async function GET(request: NextRequest) {
   const origin = requestOrigin(request);
@@ -34,31 +40,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid persona. Use ?persona=pilot|cfi|school." }, { status: 400 });
   }
 
-  try {
-    await cleanupExpiredDemoOrgs();
+  const token = randomUUID();
+  createDemoJob(token);
 
-    const expiresAt = new Date(Date.now() + DEMO_ORG_TTL_MS);
-    const result = persona === "pilot" ? await seedPilotDemo(expiresAt) : await seedCfiSchoolDemo(persona, expiresAt);
+  void (async () => {
+    try {
+      await cleanupExpiredDemoOrgs();
+      const expiresAt = new Date(Date.now() + DEMO_ORG_TTL_MS);
+      const result = persona === "pilot" ? await seedPilotDemo(expiresAt) : await seedCfiSchoolDemo(persona, expiresAt);
+      resolveDemoJob(token, result);
+    } catch (err) {
+      console.error("Live demo provisioning failed:", err);
+      failDemoJob(token, "Couldn't start the demo. Please try again.");
+    }
+  })();
 
-    const jwt = await createSessionJwt({ sub: result.loginEmail, email: result.loginEmail, name: result.loginName });
-    const response = NextResponse.redirect(`${origin}${result.redirectPath}`);
-    response.cookies.set(SESSION_COOKIE, jwt, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: SESSION_MAX_AGE_SECONDS,
-    });
-    response.cookies.set(DEMO_HINT_COOKIE, result.hint, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: DEMO_ORG_TTL_MS / 1000,
-    });
-    return response;
-  } catch (err) {
-    console.error("Live demo provisioning failed:", err);
-    return NextResponse.json({ error: "Couldn't start the demo. Please try again." }, { status: 500 });
-  }
+  return NextResponse.redirect(`${origin}/demo/preparing?token=${token}&persona=${persona}`);
 }

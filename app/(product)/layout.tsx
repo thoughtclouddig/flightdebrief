@@ -7,7 +7,7 @@ import { getViewer, listMembershipOptions } from "@/lib/viewer";
 import { isMembershipSwitcherEnabled } from "@/lib/auth/membership-switcher";
 import { DemoControlPanel } from "@/components/demo/demo-control-panel";
 import { DEMO_MODE_COOKIE } from "@/app/api/demo/enter/route";
-import { DEMO_HINT_COOKIE } from "@/app/api/demo/start/route";
+import { DEMO_HINT_COOKIE } from "@/lib/demo/live-demo-jobs";
 import { LiveDemoBanner } from "@/components/demo/live-demo-banner";
 
 export default async function ProductLayout({ children }: { children: ReactNode }) {
