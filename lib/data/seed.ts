@@ -30,6 +30,7 @@ export const ORG_FALCON: Organization = {
   subscriptionStatus: null,
   subscriptionPlan: null,
   subscriptionQuantity: 1,
+  demoExpiresAt: null,
   createdAt: new Date().toISOString(),
 };
 
@@ -47,6 +48,7 @@ export const ORG_CFI_KEVIN: Organization = {
   subscriptionStatus: null,
   subscriptionPlan: null,
   subscriptionQuantity: 1,
+  demoExpiresAt: null,
   createdAt: new Date().toISOString(),
 };
 
@@ -60,6 +62,7 @@ export const ORG_INDIVIDUAL_ALEX: Organization = {
   subscriptionStatus: null,
   subscriptionPlan: null,
   subscriptionQuantity: 1,
+  demoExpiresAt: null,
   createdAt: new Date().toISOString(),
 };
 
@@ -73,6 +76,7 @@ export const ORG_MESA: Organization = {
   subscriptionStatus: null,
   subscriptionPlan: null,
   subscriptionQuantity: 1,
+  demoExpiresAt: null,
   createdAt: new Date().toISOString(),
 };
 
@@ -86,6 +90,7 @@ export const ORG_PRESCOTT: Organization = {
   subscriptionStatus: null,
   subscriptionPlan: null,
   subscriptionQuantity: 1,
+  demoExpiresAt: null,
   createdAt: new Date().toISOString(),
 };
 

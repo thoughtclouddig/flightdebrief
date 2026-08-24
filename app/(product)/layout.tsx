@@ -7,6 +7,7 @@ import { getViewer, listMembershipOptions } from "@/lib/viewer";
 import { isMembershipSwitcherEnabled } from "@/lib/auth/membership-switcher";
 import { DemoControlPanel } from "@/components/demo/demo-control-panel";
 import { DEMO_MODE_COOKIE } from "@/app/api/demo/enter/route";
+import { LiveDemoBanner } from "@/components/demo/live-demo-banner";
 
 export default async function ProductLayout({ children }: { children: ReactNode }) {
   const viewer = await getViewer();
@@ -17,6 +18,7 @@ export default async function ProductLayout({ children }: { children: ReactNode 
   const showDemoPanel = !process.env.REPLIT_DEPLOYMENT && (await cookies()).get(DEMO_MODE_COOKIE)?.value === "1";
   return (
     <>
+      {viewer.organization.demoExpiresAt ? <LiveDemoBanner expiresAt={viewer.organization.demoExpiresAt} /> : null}
       <Nav viewer={viewer} memberships={memberships} />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-10 md:pt-8">
         {children}

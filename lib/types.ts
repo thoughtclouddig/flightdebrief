@@ -46,6 +46,8 @@ export interface Organization {
   subscriptionPlan: BillingPlan | null;
   /** Seat/location count for Flight School Pro's adjustable-quantity price; always 1 for Pilot. */
   subscriptionQuantity: number;
+  /** Non-null only for public live-demo orgs (see lib/demo/live-demo-seed.ts) -- the cleanup cutoff, and doubles as the "is this a demo org" flag. Null for every real org. */
+  demoExpiresAt: string | null;
   createdAt: string;
 }
 

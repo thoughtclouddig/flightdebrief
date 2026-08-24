@@ -1227,6 +1227,7 @@ function mapOrganization(row: Row): Organization {
     subscriptionStatus: (row.subscription_status as string | null) ?? null,
     subscriptionPlan: (row.subscription_plan as Organization["subscriptionPlan"]) ?? null,
     subscriptionQuantity: row.subscription_quantity as number,
+    demoExpiresAt: row.demo_expires_at ? iso(row.demo_expires_at) : null,
     createdAt: iso(row.created_at),
   };
 }

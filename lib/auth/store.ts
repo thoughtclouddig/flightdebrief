@@ -143,6 +143,7 @@ function mapOrganizationRow(row: Record<string, unknown>): Organization {
     subscriptionStatus: (row.subscription_status as string | null) ?? null,
     subscriptionPlan: (row.subscription_plan as Organization["subscriptionPlan"]) ?? null,
     subscriptionQuantity: row.subscription_quantity as number,
+    demoExpiresAt: row.demo_expires_at ? new Date(row.demo_expires_at as string).toISOString() : null,
     createdAt: new Date(row.created_at as string).toISOString(),
   };
 }

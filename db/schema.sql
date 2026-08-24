@@ -566,6 +566,14 @@ ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_plan text CHECK 
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_quantity integer NOT NULL DEFAULT 1;
 CREATE UNIQUE INDEX IF NOT EXISTS organizations_stripe_customer_idx ON organizations (stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;
 
+-- Public live-demo orgs (see lib/demo/live-demo-seed.ts): NULL = a real org;
+-- non-null = a per-visitor demo org, doubling as the cleanup cutoff so no
+-- separate boolean flag is needed. Cleanup is lazy, not cron-driven --
+-- app/api/demo/start/route.ts deletes expired rows before provisioning a new
+-- demo on every visit.
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS demo_expires_at timestamptz;
+CREATE INDEX IF NOT EXISTS organizations_demo_expires_at_idx ON organizations (demo_expires_at) WHERE demo_expires_at IS NOT NULL;
+
 -- The default organization every signup joins (see lib/auth/store.ts). This is
 -- real identity data, not demo content; demo users/flights are seeded
 -- separately and only when SEED_DEMO_DATA is set (lib/data/postgres-repository.ts).
