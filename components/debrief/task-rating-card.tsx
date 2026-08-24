@@ -17,8 +17,8 @@ export function TaskRatingCard({
 }) {
   return (
     <Card>
-      <CardContent className="flex flex-col gap-3">
-        <p className="font-medium text-foreground">{label}</p>
+      <CardContent className="flex flex-col gap-3.5 py-1">
+        <p className="text-base font-semibold text-foreground">{label}</p>
         <PerformanceLevelPicker value={value} onChange={onChange} disabled={disabled} />
       </CardContent>
     </Card>
