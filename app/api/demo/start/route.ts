@@ -5,6 +5,9 @@ import { cleanupExpiredDemoOrgs, seedCfiSchoolDemo, seedPilotDemo } from "@/lib/
 
 const DEMO_ORG_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
+/** Carries the persona-specific onboarding line (see LiveDemoResult.hint) to app/(product)/layout.tsx, which renders it in LiveDemoBanner. */
+export const DEMO_HINT_COOKIE = "fb_demo_hint";
+
 /**
  * Public entry point for the marketing site's "try it live" demo -- unlike
  * app/api/auth/dev-login and app/api/demo/enter (both internal-only, gated
@@ -37,6 +40,13 @@ export async function GET(request: NextRequest) {
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_MAX_AGE_SECONDS,
+    });
+    response.cookies.set(DEMO_HINT_COOKIE, result.hint, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: DEMO_ORG_TTL_MS / 1000,
     });
     return response;
   } catch (err) {

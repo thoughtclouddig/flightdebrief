@@ -3,8 +3,10 @@
 -- lib/auth/store.ts) plus flights, debriefs, reservations, and training data
 -- (used by PostgresRepository in lib/data/postgres-repository.ts).
 -- Ids are text so they can match the seeded ids in lib/data/seed.ts.
--- Applied to the development database; production is migrated automatically
--- by Replit's Publish flow.
+-- Applied via scripts/init-db.mjs, run both before the dev server starts and
+-- as part of "npm run build" -- production has its own separate database
+-- from the dev workspace, so the build-time run is what actually migrates it
+-- on every publish.
 
 CREATE TABLE IF NOT EXISTS organizations (
   id text PRIMARY KEY,

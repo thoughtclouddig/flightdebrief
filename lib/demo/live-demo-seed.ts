@@ -1,9 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
+import { getRepository } from "@/lib/data";
 import { localIsoDate } from "@/lib/date";
 import { generatePatternTrack } from "@/lib/geo";
 import { analyzeMock } from "@/lib/ai/mock-analyzer";
+import { classifyTrainingSignals } from "@/lib/taxonomy";
+import { autoResolveActionItems } from "@/lib/action-items-autoresolve";
+import { evaluateAndAwardMilestones } from "@/lib/milestones";
 import { DEMO_HISTORY } from "@/lib/demo/video-demo-data";
+import type { StructuredDebrief } from "@/lib/types";
 
 /**
  * Public "try it live" demo -- distinct from lib/demo/video-demo-seed.ts
@@ -20,6 +25,8 @@ export interface LiveDemoResult {
   loginEmail: string;
   loginName: string;
   redirectPath: "/home" | "/cfi/today" | "/admin/overview";
+  /** One-line, persona-specific orientation shown in the LiveDemoBanner on first landing -- see app/api/demo/start/route.ts. */
+  hint: string;
 }
 
 const PILOT_AIRPORT = "KFFZ";
@@ -29,7 +36,28 @@ function daysAgoIso(daysAgo: number): string {
   return localIsoDate(new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000));
 }
 
-/** Runs `entries` through analyzeMock() and inserts one flight+debrief per entry, same technique lib/demo/video-demo-seed.ts uses -- realistic derived content at zero AI cost. */
+interface HistoricalFlightRecord {
+  flightId: string;
+  debriefId: string;
+  studentId: string;
+  organizationId: string;
+  instructorId: string | null;
+  aircraftId: string;
+  flightDate: string;
+  structured: StructuredDebrief;
+}
+
+/**
+ * Runs `entries` through analyzeMock() and inserts one flight+debrief per
+ * entry, same technique lib/demo/video-demo-seed.ts uses -- realistic
+ * derived content at zero AI cost. Returns one record per entry so the
+ * caller can run the same post-analysis side effects the real
+ * app/api/debrief/analyze/route.ts does (training items, training signals,
+ * milestones) via seedDerivedContent() once these rows are committed --
+ * those side effects go through the Repository layer (a different DB
+ * connection than this function's transactional `db` param), so they can
+ * only safely run after COMMIT, never inline here.
+ */
 async function seedHistoricalFlights(
   db: { query: (text: string, params?: unknown[]) => Promise<unknown> },
   entries: { daysAgo: number; durationMinutes: number; transcript: string }[],
@@ -43,7 +71,8 @@ async function seedHistoricalFlights(
     instructorId: string | null;
     instructorName: string | null;
   },
-): Promise<void> {
+): Promise<HistoricalFlightRecord[]> {
+  const records: HistoricalFlightRecord[] = [];
   let previousActionItems: string[] = [];
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
@@ -96,6 +125,74 @@ async function seedHistoricalFlights(
        VALUES ($1,$2,$3,$4,$5,'mock',$6)`,
       [debriefId, flightId, entry.transcript, Math.round(entry.durationMinutes * 0.6), JSON.stringify(result), createdAt],
     );
+
+    records.push({
+      flightId,
+      debriefId,
+      studentId: opts.studentId,
+      organizationId: opts.organizationId,
+      instructorId: opts.instructorId,
+      aircraftId: opts.aircraftId,
+      flightDate,
+      structured: result,
+    });
+  }
+  return records;
+}
+
+/**
+ * Same post-analysis pipeline app/api/debrief/analyze/route.ts runs for a
+ * real completed debrief -- training items (Action Items), training signals
+ * (skill progression on /progress), and milestone/streak evaluation --
+ * applied here to seeded historical flights so a demo account looks like it
+ * actually has training history behind it, not just a bare flight list.
+ * Must run after the flights/debriefs themselves are committed (see
+ * seedHistoricalFlights's doc comment), and in chronological order so
+ * autoResolveActionItems and evaluateAndAwardMilestones see a realistic
+ * progression rather than everything already existing at once.
+ */
+async function seedDerivedContent(records: HistoricalFlightRecord[]): Promise<void> {
+  const repo = getRepository();
+  for (const record of records) {
+    await autoResolveActionItems(repo, record.studentId, record.structured.wentWell);
+
+    await repo.createTrainingItems([
+      ...record.structured.needsWork.map((description) => ({
+        flightId: record.flightId,
+        debriefId: record.debriefId,
+        category: "keep_working_on" as const,
+        description,
+        done: false,
+        completedAt: null,
+        visibility: "shared" as const,
+      })),
+      ...record.structured.actionItems.map((description) => ({
+        flightId: record.flightId,
+        debriefId: record.debriefId,
+        category: "before_next_flight" as const,
+        description,
+        done: false,
+        completedAt: null,
+        visibility: "shared" as const,
+      })),
+    ]);
+
+    const signalDrafts = classifyTrainingSignals(record.structured);
+    await repo.createTrainingSignals(
+      signalDrafts.map((draft) => ({
+        ...draft,
+        organizationId: record.organizationId,
+        studentId: record.studentId,
+        instructorId: record.instructorId,
+        aircraftId: record.aircraftId,
+        flightId: record.flightId,
+        debriefId: record.debriefId,
+        flightDate: record.flightDate,
+        dismissed: false,
+      })),
+    );
+
+    await evaluateAndAwardMilestones(repo, record.studentId, record.flightId);
   }
 }
 
@@ -135,7 +232,7 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
       [aircraftId, tail, aircraftType, PILOT_AIRPORT, orgId],
     );
 
-    await seedHistoricalFlights(client, DEMO_HISTORY.slice(0, 5), {
+    const historicalRecords = await seedHistoricalFlights(client, DEMO_HISTORY.slice(0, 5), {
       studentId: userId,
       organizationId: orgId,
       aircraftId,
@@ -159,7 +256,15 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
     );
 
     await client.query("COMMIT");
-    return { organizationId: orgId, loginUserId: userId, loginEmail: email, loginName: name, redirectPath: "/home" };
+    await seedDerivedContent(historicalRecords);
+    return {
+      organizationId: orgId,
+      loginUserId: userId,
+      loginEmail: email,
+      loginName: name,
+      redirectPath: "/home",
+      hint: "This is your own account -- log a new flight under Flights and debrief it yourself, no CFI needed.",
+    };
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     throw err;
@@ -227,6 +332,7 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
     );
 
     const studentIds: string[] = [];
+    const historicalRecords: HistoricalFlightRecord[] = [];
     for (let i = 0; i < SCHOOL_STUDENTS.length; i++) {
       const student = SCHOOL_STUDENTS[i];
       const studentUserId = `user-demo-student-${randomUUID()}`;
@@ -251,22 +357,47 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       // 3-4 historical flights per student, offset by index so their dates
       // don't collide with each other.
       const history = DEMO_HISTORY.slice(i, i + 4);
-      await seedHistoricalFlights(client, history, {
-        studentId: studentUserId,
-        organizationId: orgId,
-        aircraftId,
-        aircraftTail: tail,
-        aircraftType,
-        airport: SCHOOL_AIRPORT,
-        instructorId: instructorUserId,
-        instructorName,
-      });
+      historicalRecords.push(
+        ...(await seedHistoricalFlights(client, history, {
+          studentId: studentUserId,
+          organizationId: orgId,
+          aircraftId,
+          aircraftTail: tail,
+          aircraftType,
+          airport: SCHOOL_AIRPORT,
+          instructorId: instructorUserId,
+          instructorName,
+        })),
+      );
     }
 
     // One "today" flight, guided mode, for the first student -- flight_tasks
     // + 3 pending debrief_cards so the CFI persona has a real guided debrief
     // to walk through, same shape as video-demo-seed.ts's seedTodayFlight().
     const primaryStudentId = studentIds[0];
+
+    // A today-scheduled reservation is what actually populates the CFI
+    // Today page's "Today's Students" section (app/(product)/cfi/today/
+    // page.tsx filters reservations by status='scheduled' + today's date) --
+    // without this row the roster below (Debrief In Progress) is the only
+    // thing that shows, and "Today's Students" reads empty.
+    const now = new Date();
+    const scheduledStart = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const scheduledEnd = new Date(now.getTime() - 60 * 60 * 1000);
+    await client.query(
+      `INSERT INTO reservations (id, organization_id, student_id, instructor_id, aircraft_id, scheduled_start, scheduled_end, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'scheduled')`,
+      [
+        `reservation-demo-${randomUUID()}`,
+        orgId,
+        primaryStudentId,
+        instructorUserId,
+        aircraftId,
+        scheduledStart.toISOString(),
+        scheduledEnd.toISOString(),
+      ],
+    );
+
     const todayFlightId = `flight-demo-${randomUUID()}`;
     await client.query(
       `INSERT INTO flights (
@@ -323,6 +454,7 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
     }
 
     await client.query("COMMIT");
+    await seedDerivedContent(historicalRecords);
 
     return persona === "cfi"
       ? {
@@ -331,6 +463,7 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
           loginEmail: instructorEmail,
           loginName: instructorName,
           redirectPath: "/cfi/today",
+          hint: `Riley Student flew this morning and is ready to debrief -- open "Debrief In Progress" to try the guided flow.`,
         }
       : {
           organizationId: orgId,
@@ -338,6 +471,7 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
           loginEmail: adminEmail,
           loginName: adminName,
           redirectPath: "/admin/overview",
+          hint: "This is the same roster as the CFI demo, from the school admin's view -- check Students or Insights.",
         };
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

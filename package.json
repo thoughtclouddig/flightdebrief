@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node scripts/free-port.mjs && npm run db:init && next dev -H 0.0.0.0 -p ${PORT:-3000}",
     "db:init": "node scripts/init-db.mjs",
-    "build": "NEXT_DIST_DIR=.next-build next build",
+    "build": "npm run db:init && NEXT_DIST_DIR=.next-build next build",
     "benchmark:dashboard": "node scripts/benchmark-dashboard-queries.mjs",
     "start": "NEXT_DIST_DIR=.next-build next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",

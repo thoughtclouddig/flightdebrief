@@ -1,8 +1,12 @@
-// Idempotent dev-database initializer: applies db/schema.sql (CREATE TABLE IF
-// NOT EXISTS + ON CONFLICT DO NOTHING seeds) to DATABASE_URL. Runs before the
-// dev server starts (see package.json "dev"). Production schema changes are
-// applied by Replit's Publish flow, which diffs the development schema — this
-// script must only ever run against development.
+// Idempotent database initializer: applies db/schema.sql (CREATE TABLE IF NOT
+// EXISTS + ADD COLUMN IF NOT EXISTS + ON CONFLICT DO NOTHING seeds) to
+// DATABASE_URL. Runs before the dev server starts (see package.json "dev")
+// AND as part of "build" (see package.json "build") -- production has its own
+// separate database from the dev workspace, and nothing else ever applies
+// schema changes to it, so this must run at build/publish time too, not just
+// in dev. Safe to run against any environment: every statement in
+// db/schema.sql is idempotent, so re-running it changes nothing once already
+// applied.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -11,10 +15,6 @@ import pg from "pg";
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   console.error("[init-db] DATABASE_URL is not set; skipping schema init.");
-  process.exit(0);
-}
-if (process.env.REPLIT_DEPLOYMENT) {
-  // Never run DDL inside a deployment — Publish manages the prod schema.
   process.exit(0);
 }
 
