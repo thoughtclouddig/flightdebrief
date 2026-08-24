@@ -299,6 +299,59 @@ async function seedDerivedContent(records: HistoricalFlightRecord[]): Promise<vo
   );
 }
 
+/**
+ * Deterministically forces one student's last 3 historical flights to share
+ * a single recurring skill deficiency -- lib/training-insights.ts's
+ * recurringStudentIssues (same skill NEEDS_COACHING in 3+ of the student's
+ * last 4 debriefs) and objectivesCarriedForward (same item text on 3+
+ * *consecutive* completed flights) both need an exact repeat, which
+ * DEMO_HISTORY's naturally-varying, improving narrative -- paraphrased
+ * slightly differently each flight -- doesn't reliably produce word-for-word
+ * via the mock analyzer. Without this, the School/CFI demo's Insights page
+ * reads 0 for both cards even though Most Common Training Issues (a looser,
+ * latest-signal-only metric) is already populated.
+ */
+async function seedRecurringInsightSignal(records: HistoricalFlightRecord[]): Promise<void> {
+  const target = records.slice(-3);
+  if (target.length < 3) return;
+  const repo = getRepository();
+  const description = "Practice crosswind correction technique on final";
+  await Promise.all(
+    target.map((record) =>
+      Promise.all([
+        repo.createTrainingItems([
+          {
+            flightId: record.flightId,
+            debriefId: record.debriefId,
+            category: "before_next_flight",
+            description,
+            done: false,
+            completedAt: null,
+            visibility: "shared",
+          },
+        ]),
+        repo.createTrainingSignals([
+          {
+            organizationId: record.organizationId,
+            studentId: record.studentId,
+            instructorId: record.instructorId,
+            aircraftId: record.aircraftId,
+            flightId: record.flightId,
+            debriefId: record.debriefId,
+            flightDate: record.flightDate,
+            category: "LANDINGS",
+            skill: "CROSSWIND_LANDING",
+            status: "NEEDS_COACHING",
+            source: "STUDENT_AND_INSTRUCTOR",
+            statement: "Still working on tracking centerline through crosswind landings.",
+            dismissed: false,
+          },
+        ]),
+      ]),
+    ),
+  );
+}
+
 /** Assigns one open (not-yet-completed) radio practice scenario so the demo's Home page/practice section isn't empty -- picks the first RADIO_COMMUNICATIONS scenario, matching the "radio confidence" thread already running through DEMO_HISTORY's transcripts. */
 async function seedRadioPractice(organizationId: string, studentId: string, assignedBy: string | null): Promise<void> {
   const scenario = RADIO_PRACTICE_SCENARIOS.find((s) => s.skill === "RADIO_COMMUNICATIONS");
@@ -608,6 +661,7 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
     await client.query("COMMIT");
     await Promise.all([
       seedDerivedContent(historicalRecords),
+      seedRecurringInsightSignal(historicalRecords.filter((r) => r.studentId === primaryStudentId)),
       ...studentIds.map((studentId) => seedRadioPractice(orgId, studentId, instructorUserId)),
     ]);
 
