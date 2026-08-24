@@ -581,13 +581,24 @@ CREATE INDEX IF NOT EXISTS organizations_demo_expires_at_idx ON organizations (d
 -- separately and only when SEED_DEMO_DATA is set (lib/data/postgres-repository.ts).
 INSERT INTO organizations (id, name, kind) VALUES ('org-falcon','Falcon Aviation','school') ON CONFLICT (id) DO NOTHING;
 -- The real app owner's admin login -- real identity data, not demo
--- content, same category as the org-falcon insert above.
-INSERT INTO users (id, name, email) VALUES
-  ('user-owner','Andy Renk','andyrenk@gmail.com')
-ON CONFLICT (id) DO NOTHING;
-INSERT INTO organization_members (id, organization_id, user_id, role) VALUES
-  ('member-owner','org-falcon','user-owner','admin')
-ON CONFLICT (id) DO NOTHING;
+-- content, same category as the org-falcon insert above. `ON CONFLICT (id)`
+-- alone isn't enough here: a database that's already seen real usage (e.g.
+-- production, once this script started running as part of the build step --
+-- see package.json "build") may already have a users row for this email
+-- under a different id, created via the real magic-link signup flow. The
+-- WHERE NOT EXISTS guard skips the insert in that case instead of hitting
+-- users_email_key's separate UNIQUE constraint. The membership insert below
+-- then looks the id up by email rather than assuming it's 'user-owner', so
+-- it grants admin on org-falcon correctly either way.
+INSERT INTO users (id, name, email)
+SELECT 'user-owner', 'Andy Renk', 'andyrenk@gmail.com'
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'andyrenk@gmail.com');
+
+INSERT INTO organization_members (id, organization_id, user_id, role)
+SELECT 'member-owner', 'org-falcon', u.id, 'admin'
+FROM users u
+WHERE u.email = 'andyrenk@gmail.com'
+ON CONFLICT (organization_id, user_id, role) DO NOTHING;
 
 -- Rewards Phase 1: milestone/streak tracking. `type` is deliberately a free
 -- string, not a CHECK-constrained enum -- future milestone types (first
