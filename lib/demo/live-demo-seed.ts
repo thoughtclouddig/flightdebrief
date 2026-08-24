@@ -277,14 +277,29 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
 
     // Freeform mode needs nothing beyond a not-yet-debriefed flight -- no
     // flight_tasks/assessments/cards, confirmed against the resolver at
-    // app/(product)/flights/[id]/debrief/page.tsx's freeform branch.
+    // app/(product)/flights/[id]/debrief/page.tsx's freeform branch. Still
+    // gets a real route/duration/track (re-dated to today) so the flight
+    // detail page never shows the "no track data available" empty state --
+    // the whole demo should read as fully populated, not partially seeded.
+    const todayReal = nextRealFlight();
     const todayFlightId = `flight-demo-${randomUUID()}`;
+    const todayIso = new Date().toISOString();
     await client.query(
       `INSERT INTO flights (
          id, student_id, organization_id, aircraft_id, departure_airport, arrival_airport,
-         flight_date, duration_minutes, debrief_status
-       ) VALUES ($1,$2,$3,$4,$5,$5,$6,68,'not_started')`,
-      [todayFlightId, userId, orgId, aircraftId, PILOT_AIRPORT, localIsoDate()],
+         flight_date, duration_minutes, debrief_status, track
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'not_started',$9)`,
+      [
+        todayFlightId,
+        userId,
+        orgId,
+        aircraftId,
+        todayReal.departureAirport,
+        todayReal.arrivalAirport,
+        localIsoDate(),
+        todayReal.durationMinutes,
+        JSON.stringify(withTimestamps(todayReal.track, todayIso, todayReal.durationMinutes)),
+      ],
     );
 
     await client.query("COMMIT");
@@ -429,13 +444,29 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       ],
     );
 
+    // Real route/duration/track (re-dated to this morning, matching the
+    // reservation above) so this flight's map never shows the "no track
+    // data available" empty state either -- see the same treatment on the
+    // pilot persona's today flight, above.
+    const todayReal = nextRealFlight();
     const todayFlightId = `flight-demo-${randomUUID()}`;
     await client.query(
       `INSERT INTO flights (
          id, student_id, organization_id, aircraft_id, departure_airport, arrival_airport,
-         flight_date, duration_minutes, instructor_id, debrief_status
-       ) VALUES ($1,$2,$3,$4,$5,$5,$6,72,$7,'not_started')`,
-      [todayFlightId, primaryStudentId, orgId, aircraftId, SCHOOL_AIRPORT, localIsoDate(), instructorUserId],
+         flight_date, duration_minutes, instructor_id, debrief_status, track
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'not_started',$10)`,
+      [
+        todayFlightId,
+        primaryStudentId,
+        orgId,
+        aircraftId,
+        todayReal.departureAirport,
+        todayReal.arrivalAirport,
+        localIsoDate(),
+        todayReal.durationMinutes,
+        instructorUserId,
+        JSON.stringify(withTimestamps(todayReal.track, scheduledStart.toISOString(), todayReal.durationMinutes)),
+      ],
     );
 
     const flightTaskId = `flight-task-demo-${randomUUID()}`;
