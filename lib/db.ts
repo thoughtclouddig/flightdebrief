@@ -12,7 +12,10 @@ export function getDb(): Pool {
     if (!connectionString) {
       throw new Error("DATABASE_URL is not set -- the Replit Postgres database is required for auth.");
     }
-    pool = new Pool({ connectionString, max: 5 });
+    // connectionTimeoutMillis matters: pg's default is to wait forever for a
+    // free connection when the pool (max: 5) is exhausted -- a caller then
+    // just hangs indefinitely with no error at all instead of failing fast.
+    pool = new Pool({ connectionString, max: 5, connectionTimeoutMillis: 8_000 });
   }
   return pool;
 }
