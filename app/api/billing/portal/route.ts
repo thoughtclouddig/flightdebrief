@@ -12,6 +12,9 @@ export async function POST() {
   if (auth.response) return auth.response;
   const { viewer } = auth;
 
+  if (viewer.organization.demoExpiresAt) {
+    return NextResponse.json({ error: "Billing isn't available in the live demo." }, { status: 403 });
+  }
   if (viewer.organization.kind === "school" && viewer.role !== "admin") {
     return NextResponse.json({ error: "Only an admin can manage this school's billing" }, { status: 403 });
   }
