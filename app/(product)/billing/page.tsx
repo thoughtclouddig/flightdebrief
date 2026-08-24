@@ -26,6 +26,22 @@ export default async function BillingPage({
   const flights = org.kind !== "independent_cfi" ? await repo.listFlights({ organizationId: org.id }) : [];
   const usage = org.kind === "school" ? computeSchoolFreeDebriefs(flights) : computeStudentFreeFlights(flights);
 
+  if (org.demoExpiresAt) {
+    return (
+      <div className="mx-auto flex max-w-xl flex-col gap-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Billing</h1>
+          <p className="mt-1 text-sm text-foreground-soft">{org.name}</p>
+        </div>
+        <Card>
+          <CardContent className="py-5 text-sm text-foreground-soft">
+            Billing isn&rsquo;t available in this live demo -- sign up for a real account to subscribe.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <div>

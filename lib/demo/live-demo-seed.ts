@@ -4,7 +4,6 @@ import { getRepository } from "@/lib/data";
 import { localIsoDate } from "@/lib/date";
 import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
-import { autoResolveActionItems } from "@/lib/action-items-autoresolve";
 import { evaluateAndAwardMilestones } from "@/lib/milestones";
 import { DEMO_HISTORY } from "@/lib/demo/video-demo-data";
 import { REAL_DEMO_FLIGHTS } from "@/lib/demo/real-flight-fixtures";
@@ -179,55 +178,84 @@ async function seedHistoricalFlights(
  * real completed debrief -- training items (Action Items), training signals
  * (skill progression on /progress), and milestone/streak evaluation --
  * applied here to seeded historical flights so a demo account looks like it
- * actually has training history behind it, not just a bare flight list.
- * Must run after the flights/debriefs themselves are committed (see
+ * actually has training history behind it, not just a bare flight list. Must
+ * run after the flights/debriefs themselves are committed (see
  * seedHistoricalFlights's doc comment), and in chronological order so
- * autoResolveActionItems and evaluateAndAwardMilestones see a realistic
- * progression rather than everything already existing at once.
+ * evaluateAndAwardMilestones sees a realistic progression rather than
+ * everything already existing at once.
+ *
+ * Deliberately skips autoResolveActionItems, unlike the real analyze route --
+ * DEMO_HISTORY's transcripts are written as one coherent "this used to be a
+ * problem, now it's fixed" narrative arc, so running it here would close out
+ * nearly every earlier flight's open items by the end of the sequence,
+ * leaving the demo's Action Items/Progress pages looking empty. The point of
+ * this seed data is to look actively in-use, not to exactly mirror
+ * production's resolution behavior.
+ *
+ * Runs each record's training-items/training-signals creation in parallel
+ * (they're independent of each other -- there's no cross-record read here
+ * anymore, unlike autoResolveActionItems), and calls
+ * evaluateAndAwardMilestones exactly once per distinct student rather than
+ * once per record: every historical flight is already committed by this
+ * point, so for a given student, milestone/streak evaluation recomputes the
+ * exact same end state whichever of their own flights "triggers" it --
+ * calling it once per flight just repeats the same listFlights()+evaluate
+ * work for no different outcome (CFI/School demo seeds several students at
+ * once, each with several flights, so this still means one call per student,
+ * not one overall). This matters for /api/demo/start's response time, which
+ * is otherwise a long chain of sequential round trips to a remote database.
  */
 async function seedDerivedContent(records: HistoricalFlightRecord[]): Promise<void> {
+  if (records.length === 0) return;
   const repo = getRepository();
-  for (const record of records) {
-    await autoResolveActionItems(repo, record.studentId, record.structured.wentWell);
 
-    await repo.createTrainingItems([
-      ...record.structured.needsWork.map((description) => ({
-        flightId: record.flightId,
-        debriefId: record.debriefId,
-        category: "keep_working_on" as const,
-        description,
-        done: false,
-        completedAt: null,
-        visibility: "shared" as const,
-      })),
-      ...record.structured.actionItems.map((description) => ({
-        flightId: record.flightId,
-        debriefId: record.debriefId,
-        category: "before_next_flight" as const,
-        description,
-        done: false,
-        completedAt: null,
-        visibility: "shared" as const,
-      })),
-    ]);
+  await Promise.all(
+    records.map((record) =>
+      Promise.all([
+        repo.createTrainingItems([
+          ...record.structured.needsWork.map((description) => ({
+            flightId: record.flightId,
+            debriefId: record.debriefId,
+            category: "keep_working_on" as const,
+            description,
+            done: false,
+            completedAt: null,
+            visibility: "shared" as const,
+          })),
+          ...record.structured.actionItems.map((description) => ({
+            flightId: record.flightId,
+            debriefId: record.debriefId,
+            category: "before_next_flight" as const,
+            description,
+            done: false,
+            completedAt: null,
+            visibility: "shared" as const,
+          })),
+        ]),
+        repo.createTrainingSignals(
+          classifyTrainingSignals(record.structured).map((draft) => ({
+            ...draft,
+            organizationId: record.organizationId,
+            studentId: record.studentId,
+            instructorId: record.instructorId,
+            aircraftId: record.aircraftId,
+            flightId: record.flightId,
+            debriefId: record.debriefId,
+            flightDate: record.flightDate,
+            dismissed: false,
+          })),
+        ),
+      ]),
+    ),
+  );
 
-    const signalDrafts = classifyTrainingSignals(record.structured);
-    await repo.createTrainingSignals(
-      signalDrafts.map((draft) => ({
-        ...draft,
-        organizationId: record.organizationId,
-        studentId: record.studentId,
-        instructorId: record.instructorId,
-        aircraftId: record.aircraftId,
-        flightId: record.flightId,
-        debriefId: record.debriefId,
-        flightDate: record.flightDate,
-        dismissed: false,
-      })),
-    );
-
-    await evaluateAndAwardMilestones(repo, record.studentId, record.flightId);
-  }
+  const lastRecordPerStudent = new Map<string, HistoricalFlightRecord>();
+  for (const record of records) lastRecordPerStudent.set(record.studentId, record);
+  await Promise.all(
+    Array.from(lastRecordPerStudent.values()).map((record) =>
+      evaluateAndAwardMilestones(repo, record.studentId, record.flightId),
+    ),
+  );
 }
 
 export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {

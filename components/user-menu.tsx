@@ -112,7 +112,8 @@ export function UserMenu({
             ) : null}
 
             {viewer.organization.kind !== "independent_cfi" &&
-            (viewer.organization.kind !== "school" || viewer.role === "admin") ? (
+            (viewer.organization.kind !== "school" || viewer.role === "admin") &&
+            !viewer.organization.demoExpiresAt ? (
               <a
                 href="/billing"
                 className="flex w-full items-center gap-2 border-t border-hairline px-3 py-2 text-left text-sm text-foreground-soft hover:bg-surface-sunken"

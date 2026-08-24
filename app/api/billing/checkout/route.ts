@@ -22,6 +22,9 @@ export async function POST(request: Request) {
   const { viewer } = auth;
 
   const org = viewer.organization;
+  if (org.demoExpiresAt) {
+    return NextResponse.json({ error: "Billing isn't available in the live demo." }, { status: 403 });
+  }
   let plan: BillingPlan;
   if (org.kind === "individual") {
     plan = "pilot";
