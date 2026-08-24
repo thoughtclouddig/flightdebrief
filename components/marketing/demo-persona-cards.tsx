@@ -1,4 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
+import { LoaderCircle } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 import { TrackedLink } from "@/components/marketing/tracked-link";
 
@@ -37,15 +41,34 @@ const PERSONAS = [
  * demo org and sets a real session cookie.
  */
 export function DemoPersonaCards({ delay = 0 }: { delay?: number }) {
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
   return (
-    <Reveal delay={delay} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <Reveal
+      delay={delay}
+      className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+    >
       {PERSONAS.map((p) => (
         <TrackedLink
           key={p.href}
           href={p.href}
           event={p.event}
           rel="nofollow"
-          className="group overflow-hidden rounded-xl border border-[#E5E8EC] bg-[#f4f5f6] text-center transition-colors hover:border-brand/40"
+          // This GET creates a persona-specific account and sets its session
+          // cookie. Prefetching all three cards races those cookies and can
+          // send a CFI URL to the school-admin session (which correctly 404s).
+          prefetch={false}
+          onClick={(event) => {
+            event.preventDefault();
+            if (pendingHref) return;
+            setPendingHref(p.href);
+            // Give React one paint to show feedback before the full-page API
+            // navigation begins.
+            window.setTimeout(() => window.location.assign(p.href), 50);
+          }}
+          className={`group relative overflow-hidden rounded-xl border border-[#E5E8EC] bg-[#f4f5f6] text-center transition-colors hover:border-brand/40 ${
+            pendingHref && pendingHref !== p.href ? "pointer-events-none opacity-50" : ""
+          }`}
         >
           <div className="relative aspect-[4/3] w-full overflow-hidden">
             <Image
@@ -60,6 +83,17 @@ export function DemoPersonaCards({ delay = 0 }: { delay?: number }) {
             <p className="font-display text-xl font-bold text-[#101727] transition-colors group-hover:text-brand">{p.title}</p>
             <p className="text-pretty text-base text-[#4b545d]">{p.copy}</p>
           </div>
+          {pendingHref === p.href ? (
+            <span
+              className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/95 px-6 text-[#101727]"
+              role="status"
+              aria-live="polite"
+            >
+              <LoaderCircle className="size-7 animate-spin text-brand" aria-hidden="true" />
+              <span className="font-display text-lg font-bold">Preparing your demo…</span>
+              <span className="text-sm text-[#4b545d]">Loading realistic flights and training history.</span>
+            </span>
+          ) : null}
         </TrackedLink>
       ))}
     </Reveal>

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { MouseEventHandler, ReactNode } from "react";
 import Link from "next/link";
 import { trackEvent, type MarketingEvent } from "@/lib/marketing/analytics";
 
@@ -9,6 +9,8 @@ export function TrackedLink({
   event,
   className,
   rel,
+  prefetch,
+  onClick,
   children,
 }: {
   href: string;
@@ -16,10 +18,21 @@ export function TrackedLink({
   className?: string;
   /** For links to non-page destinations (e.g. an API route), e.g. "nofollow". */
   rel?: string;
+  prefetch?: boolean;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
   children: ReactNode;
 }) {
   return (
-    <Link href={href} onClick={() => trackEvent(event)} className={className} rel={rel}>
+    <Link
+      href={href}
+      prefetch={prefetch}
+      onClick={(clickEvent) => {
+        trackEvent(event);
+        onClick?.(clickEvent);
+      }}
+      className={className}
+      rel={rel}
+    >
       {children}
     </Link>
   );

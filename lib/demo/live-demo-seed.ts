@@ -32,9 +32,16 @@ export interface LiveDemoResult {
 const PILOT_AIRPORT = "KFFZ";
 const SCHOOL_AIRPORT = "KCHD";
 
-/** `aircraft.tail_number` is globally unique (aircraft_tail_number_idx) -- a fixed tail across every demo session would collide the moment two sessions overlap within the same ~2h TTL window, which happens constantly under real/repeated testing. */
+/** `aircraft.tail_number` is globally unique, so use a large N-number-shaped namespace instead of the previous 900-number pool. */
 function randomTailNumber(prefix: string): string {
-  return `N${prefix}${Math.floor(100 + Math.random() * 900)}`;
+  const alphabet = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  let entropy = BigInt(`0x${randomUUID().replaceAll("-", "").slice(0, 12)}`);
+  let suffix = "";
+  for (let index = 0; index < 4; index++) {
+    suffix = alphabet[Number(entropy % BigInt(alphabet.length))] + suffix;
+    entropy /= BigInt(alphabet.length);
+  }
+  return `N${prefix}${suffix}`;
 }
 
 interface HistoricalFlightRecord {
@@ -46,6 +53,44 @@ interface HistoricalFlightRecord {
   aircraftId: string;
   flightDate: string;
   structured: StructuredDebrief;
+}
+
+function buildInsertRows(rows: readonly (readonly unknown[])[]): { placeholders: string; values: unknown[] } {
+  const values: unknown[] = [];
+  const placeholders = rows
+    .map((row) => {
+      const start = values.length;
+      values.push(...row);
+      return `(${row.map((_, index) => `$${start + index + 1}`).join(",")})`;
+    })
+    .join(",");
+  return { placeholders, values };
+}
+
+async function insertDemoAircraft(
+  db: { query: (text: string, params?: unknown[]) => Promise<unknown> },
+  opts: {
+    id: string;
+    prefix: string;
+    type: string;
+    make: string;
+    model: string;
+    homeAirport: string;
+    organizationId: string;
+  },
+): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const tail = randomTailNumber(opts.prefix);
+    const result = (await db.query(
+      `INSERT INTO aircraft (id, tail_number, type, make, model, home_airport, organization_id, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'active')
+       ON CONFLICT DO NOTHING
+       RETURNING id`,
+      [opts.id, tail, opts.type, opts.make, opts.model, opts.homeAirport, opts.organizationId],
+    )) as { rowCount: number };
+    if (result.rowCount === 1) return tail;
+  }
+  throw new Error("Could not allocate a unique demo aircraft tail number.");
 }
 
 /**
@@ -105,6 +150,8 @@ async function seedHistoricalFlights(
   },
 ): Promise<HistoricalFlightRecord[]> {
   const records: HistoricalFlightRecord[] = [];
+  const flightRows: unknown[][] = [];
+  const debriefRows: unknown[][] = [];
   let previousActionItems: string[] = [];
 
   // Oldest-first so the narrative arc (transcripts are written as a
@@ -118,26 +165,6 @@ async function seedHistoricalFlights(
     const debriefId = `debrief-demo-${randomUUID()}`;
     const flightDate = real.takeoffIso.slice(0, 10);
     const track = withTimestamps(real.track, real.takeoffIso, real.durationMinutes);
-
-    await db.query(
-      `INSERT INTO flights (
-         id, student_id, organization_id, aircraft_id, departure_airport, arrival_airport,
-         flight_date, duration_minutes, instructor_id, debrief_status, track, created_at
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'complete',$10,$11)`,
-      [
-        flightId,
-        opts.studentId,
-        opts.organizationId,
-        opts.aircraftId,
-        real.departureAirport,
-        real.arrivalAirport,
-        flightDate,
-        real.durationMinutes,
-        opts.instructorId,
-        JSON.stringify(track),
-        real.takeoffIso,
-      ],
-    );
 
     const result = analyzeMock({
       transcript,
@@ -154,11 +181,29 @@ async function seedHistoricalFlights(
     });
     previousActionItems = result.actionItems;
 
-    await db.query(
-      `INSERT INTO debriefs (id, flight_id, transcript, audio_duration_seconds, structured_result, analyzed_with, created_at)
-       VALUES ($1,$2,$3,$4,$5,'mock',$6)`,
-      [debriefId, flightId, transcript, Math.round(real.durationMinutes * 0.6), JSON.stringify(result), real.takeoffIso],
-    );
+    flightRows.push([
+      flightId,
+      opts.studentId,
+      opts.organizationId,
+      opts.aircraftId,
+      real.departureAirport,
+      real.arrivalAirport,
+      flightDate,
+      real.durationMinutes,
+      opts.instructorId,
+      "complete",
+      JSON.stringify(track),
+      real.takeoffIso,
+    ]);
+    debriefRows.push([
+      debriefId,
+      flightId,
+      transcript,
+      Math.round(real.durationMinutes * 0.6),
+      JSON.stringify(result),
+      "mock",
+      real.takeoffIso,
+    ]);
 
     records.push({
       flightId,
@@ -171,6 +216,24 @@ async function seedHistoricalFlights(
       structured: result,
     });
   }
+
+  const flightsInsert = buildInsertRows(flightRows);
+  await db.query(
+    `INSERT INTO flights (
+       id, student_id, organization_id, aircraft_id, departure_airport, arrival_airport,
+       flight_date, duration_minutes, instructor_id, debrief_status, track, created_at
+     ) VALUES ${flightsInsert.placeholders}`,
+    flightsInsert.values,
+  );
+
+  const debriefsInsert = buildInsertRows(debriefRows);
+  await db.query(
+    `INSERT INTO debriefs (
+       id, flight_id, transcript, audio_duration_seconds, structured_result, analyzed_with, created_at
+     ) VALUES ${debriefsInsert.placeholders}`,
+    debriefsInsert.values,
+  );
+
   return records;
 }
 
@@ -210,44 +273,45 @@ async function seedDerivedContent(records: HistoricalFlightRecord[]): Promise<vo
   if (records.length === 0) return;
   const repo = getRepository();
 
+  const trainingItems = records.flatMap((record) => [
+    ...record.structured.needsWork.map((description) => ({
+      flightId: record.flightId,
+      debriefId: record.debriefId,
+      category: "keep_working_on" as const,
+      description,
+      done: false,
+      completedAt: null,
+      visibility: "shared" as const,
+    })),
+    ...record.structured.actionItems.map((description) => ({
+      flightId: record.flightId,
+      debriefId: record.debriefId,
+      category: "before_next_flight" as const,
+      description,
+      done: false,
+      completedAt: null,
+      visibility: "shared" as const,
+    })),
+  ]);
+  const trainingSignals = records.flatMap((record) =>
+    classifyTrainingSignals(record.structured).map((draft) => ({
+      ...draft,
+      organizationId: record.organizationId,
+      studentId: record.studentId,
+      instructorId: record.instructorId,
+      aircraftId: record.aircraftId,
+      flightId: record.flightId,
+      debriefId: record.debriefId,
+      flightDate: record.flightDate,
+      dismissed: false,
+    })),
+  );
+
   await Promise.all(
-    records.map((record) =>
-      Promise.all([
-        repo.createTrainingItems([
-          ...record.structured.needsWork.map((description) => ({
-            flightId: record.flightId,
-            debriefId: record.debriefId,
-            category: "keep_working_on" as const,
-            description,
-            done: false,
-            completedAt: null,
-            visibility: "shared" as const,
-          })),
-          ...record.structured.actionItems.map((description) => ({
-            flightId: record.flightId,
-            debriefId: record.debriefId,
-            category: "before_next_flight" as const,
-            description,
-            done: false,
-            completedAt: null,
-            visibility: "shared" as const,
-          })),
-        ]),
-        repo.createTrainingSignals(
-          classifyTrainingSignals(record.structured).map((draft) => ({
-            ...draft,
-            organizationId: record.organizationId,
-            studentId: record.studentId,
-            instructorId: record.instructorId,
-            aircraftId: record.aircraftId,
-            flightId: record.flightId,
-            debriefId: record.debriefId,
-            flightDate: record.flightDate,
-            dismissed: false,
-          })),
-        ),
-      ]),
-    ),
+    [
+      trainingItems.length > 0 ? repo.createTrainingItems(trainingItems) : Promise.resolve([]),
+      trainingSignals.length > 0 ? repo.createTrainingSignals(trainingSignals) : Promise.resolve([]),
+    ],
   );
 
   const lastRecordPerStudent = new Map<string, HistoricalFlightRecord>();
@@ -276,39 +340,33 @@ async function seedRecurringInsightSignal(records: HistoricalFlightRecord[]): Pr
   if (target.length < 3) return;
   const repo = getRepository();
   const description = "Practice crosswind correction technique on final";
+  const trainingItems = target.map((record) => ({
+    flightId: record.flightId,
+    debriefId: record.debriefId,
+    category: "before_next_flight" as const,
+    description,
+    done: false,
+    completedAt: null,
+    visibility: "shared" as const,
+  }));
+  const trainingSignals = target.map((record) => ({
+    organizationId: record.organizationId,
+    studentId: record.studentId,
+    instructorId: record.instructorId,
+    aircraftId: record.aircraftId,
+    flightId: record.flightId,
+    debriefId: record.debriefId,
+    flightDate: record.flightDate,
+    category: "LANDINGS" as const,
+    skill: "CROSSWIND_LANDING" as const,
+    status: "NEEDS_COACHING" as const,
+    source: "STUDENT_AND_INSTRUCTOR" as const,
+    statement: "Still working on tracking centerline through crosswind landings.",
+    dismissed: false,
+  }));
+
   await Promise.all(
-    target.map((record) =>
-      Promise.all([
-        repo.createTrainingItems([
-          {
-            flightId: record.flightId,
-            debriefId: record.debriefId,
-            category: "before_next_flight",
-            description,
-            done: false,
-            completedAt: null,
-            visibility: "shared",
-          },
-        ]),
-        repo.createTrainingSignals([
-          {
-            organizationId: record.organizationId,
-            studentId: record.studentId,
-            instructorId: record.instructorId,
-            aircraftId: record.aircraftId,
-            flightId: record.flightId,
-            debriefId: record.debriefId,
-            flightDate: record.flightDate,
-            category: "LANDINGS",
-            skill: "CROSSWIND_LANDING",
-            status: "NEEDS_COACHING",
-            source: "STUDENT_AND_INSTRUCTOR",
-            statement: "Still working on tracking centerline through crosswind landings.",
-            dismissed: false,
-          },
-        ]),
-      ]),
-    ),
+    [repo.createTrainingItems(trainingItems), repo.createTrainingSignals(trainingSignals)],
   );
 }
 
@@ -325,7 +383,6 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
   const aircraftId = `aircraft-demo-${randomUUID()}`;
   const email = `${userId}@afterflight.demo`;
   const name = "Jordan Pilot";
-  const tail = randomTailNumber("4");
   const aircraftType = "Cessna 172S";
 
   const client = await getDb().connect();
@@ -349,11 +406,15 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
       [`member-demo-${randomUUID()}`, orgId, userId],
     );
 
-    await client.query(
-      `INSERT INTO aircraft (id, tail_number, type, make, model, home_airport, organization_id, status)
-       VALUES ($1,$2,$3,'Cessna','172S',$4,$5,'active')`,
-      [aircraftId, tail, aircraftType, PILOT_AIRPORT, orgId],
-    );
+    const tail = await insertDemoAircraft(client, {
+      id: aircraftId,
+      prefix: "4",
+      type: aircraftType,
+      make: "Cessna",
+      model: "172S",
+      homeAirport: PILOT_AIRPORT,
+      organizationId: orgId,
+    });
 
     // Last 5, not first 5 -- DEMO_HISTORY's transcripts are a deliberate
     // narrative arc that only converges on one persistent theme (flare/
@@ -436,7 +497,6 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
   const adminEmail = `${adminUserId}@afterflight.demo`;
   const instructorName = "Morgan CFI";
   const adminName = "Taylor Admin";
-  const tail = randomTailNumber("2");
   const aircraftType = "Piper PA-28-181";
 
   const client = await getDb().connect();
@@ -473,34 +533,67 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       orgId,
     ]);
 
+    const tail = await insertDemoAircraft(client, {
+      id: aircraftId,
+      prefix: "2",
+      type: aircraftType,
+      make: "Piper",
+      model: "PA-28-181",
+      homeAirport: SCHOOL_AIRPORT,
+      organizationId: orgId,
+    });
+
+    const students = SCHOOL_STUDENTS.map((student) => {
+      const userId = `user-demo-student-${randomUUID()}`;
+      return {
+        ...student,
+        userId,
+        email: `${userId}@afterflight.demo`,
+      };
+    });
+    const studentIds = students.map((student) => student.userId);
+    const historicalRecords: HistoricalFlightRecord[] = [];
+    const usersInsert = buildInsertRows(
+      students.map((student) => [student.userId, student.name, student.email, student.email, true]),
+    );
     await client.query(
-      `INSERT INTO aircraft (id, tail_number, type, make, model, home_airport, organization_id, status)
-       VALUES ($1,$2,$3,'Piper','PA-28-181',$4,$5,'active')`,
-      [aircraftId, tail, aircraftType, SCHOOL_AIRPORT, orgId],
+      `INSERT INTO users (id, name, email, auth_user_id, profile_completed)
+       VALUES ${usersInsert.placeholders}`,
+      usersInsert.values,
     );
 
-    const studentIds: string[] = [];
-    const historicalRecords: HistoricalFlightRecord[] = [];
-    for (let i = 0; i < SCHOOL_STUDENTS.length; i++) {
-      const student = SCHOOL_STUDENTS[i];
-      const studentUserId = `user-demo-student-${randomUUID()}`;
-      const studentEmail = `${studentUserId}@afterflight.demo`;
-      studentIds.push(studentUserId);
+    const membersInsert = buildInsertRows(
+      students.map((student) => [
+        `member-demo-${randomUUID()}`,
+        orgId,
+        student.userId,
+        "student",
+        student.certificateType,
+      ]),
+    );
+    await client.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role, certificate_type)
+       VALUES ${membersInsert.placeholders}`,
+      membersInsert.values,
+    );
 
-      await client.query(
-        `INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ($1,$2,$3,$3,true)`,
-        [studentUserId, student.name, studentEmail],
-      );
-      await client.query(
-        `INSERT INTO organization_members (id, organization_id, user_id, role, certificate_type)
-         VALUES ($1,$2,$3,'student',$4)`,
-        [`member-demo-${randomUUID()}`, orgId, studentUserId, student.certificateType],
-      );
-      await client.query(
-        `INSERT INTO student_instructors (id, student_id, instructor_id, organization_id, is_primary, status)
-         VALUES ($1,$2,$3,$4,true,'active')`,
-        [`link-demo-${randomUUID()}`, studentUserId, instructorUserId, orgId],
-      );
+    const linksInsert = buildInsertRows(
+      students.map((student) => [
+        `link-demo-${randomUUID()}`,
+        student.userId,
+        instructorUserId,
+        orgId,
+        true,
+        "active",
+      ]),
+    );
+    await client.query(
+      `INSERT INTO student_instructors (id, student_id, instructor_id, organization_id, is_primary, status)
+       VALUES ${linksInsert.placeholders}`,
+      linksInsert.values,
+    );
+
+    for (const student of students) {
 
       // Last 4 entries for every student -- same reasoning as the pilot
       // persona above (see its comment): that's where DEMO_HISTORY's
@@ -509,7 +602,7 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       const transcripts = DEMO_HISTORY.slice(-4).map((e) => e.transcript);
       historicalRecords.push(
         ...(await seedHistoricalFlights(client, transcripts, {
-          studentId: studentUserId,
+          studentId: student.userId,
           organizationId: orgId,
           aircraftId,
           aircraftTail: tail,
@@ -609,14 +702,25 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
         followUps: ["What's one adjustment to hold centerline better through rollout?"],
       },
     ];
-    for (let i = 0; i < cards.length; i++) {
-      const c = cards[i];
-      await client.query(
-        `INSERT INTO debrief_cards (id, flight_id, source, category, title, primary_prompt, follow_up_prompts, sort_order, status)
-         VALUES ($1,$2,'standard',$3,$4,$5,$6,$7,'pending')`,
-        [`card-demo-${randomUUID()}`, todayFlightId, c.category, c.title, c.prompt, c.followUps, i],
-      );
-    }
+    const cardsInsert = buildInsertRows(
+      cards.map((card, index) => [
+        `card-demo-${randomUUID()}`,
+        todayFlightId,
+        "standard",
+        card.category,
+        card.title,
+        card.prompt,
+        card.followUps,
+        index,
+        "pending",
+      ]),
+    );
+    await client.query(
+      `INSERT INTO debrief_cards (
+         id, flight_id, source, category, title, primary_prompt, follow_up_prompts, sort_order, status
+       ) VALUES ${cardsInsert.placeholders}`,
+      cardsInsert.values,
+    );
 
     await client.query("COMMIT");
     await Promise.all([
