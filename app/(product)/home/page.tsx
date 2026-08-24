@@ -87,6 +87,52 @@ export default async function StudentHomePage() {
         <h1 className="text-2xl font-semibold text-foreground">{viewer.user.name.split(" ")[0]}</h1>
       </div>
 
+      {rewardsStats ? (
+        <Card>
+          <CardContent className="flex flex-col gap-3 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">
+              Your training at a glance
+            </p>
+            <div className="grid grid-cols-3 gap-1">
+              {rewardsStats.map((stat, i) => (
+                <div
+                  key={stat.label}
+                  className={
+                    i > 0
+                      ? "flex flex-col items-center gap-1.5 border-l border-hairline py-1"
+                      : "flex flex-col items-center gap-1.5 py-1"
+                  }
+                >
+                  <div className="relative size-11">
+                    <svg viewBox="0 0 44 44" className="-rotate-90">
+                      <circle cx="22" cy="22" r="18" fill="none" stroke="var(--hairline)" strokeWidth="4" />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        fill="none"
+                        stroke={stat.color}
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeDasharray="113"
+                        strokeDashoffset="28"
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-foreground">
+                      {stat.value}
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-foreground-faint">
+              Captured and Streak count your debriefed flights; Milestones mark real progress checkpoints along the way.
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {brief.upcomingReservation ? (
         <Card>
           <CardHeader>
@@ -211,40 +257,6 @@ export default async function StudentHomePage() {
           </CardContent>
         </Card>
       </Link>
-
-      {rewardsStats ? (
-        <div className="grid grid-cols-3 gap-1">
-          {rewardsStats.map((stat, i) => (
-            <div
-              key={stat.label}
-              className={
-                i > 0 ? "flex flex-col items-center gap-1.5 border-l border-hairline py-1" : "flex flex-col items-center gap-1.5 py-1"
-              }
-            >
-              <div className="relative size-11">
-                <svg viewBox="0 0 44 44" className="-rotate-90">
-                  <circle cx="22" cy="22" r="18" fill="none" stroke="var(--hairline)" strokeWidth="4" />
-                  <circle
-                    cx="22"
-                    cy="22"
-                    r="18"
-                    fill="none"
-                    stroke={stat.color}
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    strokeDasharray="113"
-                    strokeDashoffset="28"
-                  />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-foreground">
-                  {stat.value}
-                </span>
-              </div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      ) : null}
 
       {brief.focusAreas.length > 0 ? (
         <Card>

@@ -195,7 +195,10 @@ function NavOverflowMenu({
 export function Nav({ viewer, memberships }: { viewer: Viewer; memberships: MembershipOption[] }) {
   const pathname = usePathname();
   const items = itemsForRole(viewer.role);
-  const homeHref = homeHrefForRole(viewer.role);
+  // In a live demo, the logo goes back to the persona picker (so a visitor
+  // can restart or try a different role) instead of their own dashboard --
+  // there's nowhere else in-product to do that.
+  const homeHref = viewer.organization.demoExpiresAt ? "/demo" : homeHrefForRole(viewer.role);
 
   const visibleItems = items.length > MAX_VISIBLE_DESKTOP_ITEMS ? items.slice(0, MAX_VISIBLE_DESKTOP_ITEMS - 1) : items;
   const overflowItems = items.length > MAX_VISIBLE_DESKTOP_ITEMS ? items.slice(MAX_VISIBLE_DESKTOP_ITEMS - 1) : [];
