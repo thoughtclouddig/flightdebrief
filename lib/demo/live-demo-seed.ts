@@ -32,6 +32,11 @@ export interface LiveDemoResult {
 const PILOT_AIRPORT = "KFFZ";
 const SCHOOL_AIRPORT = "KCHD";
 
+/** `aircraft.tail_number` is globally unique (aircraft_tail_number_idx) -- a fixed tail across every demo session would collide the moment two sessions overlap within the same ~2h TTL window, which happens constantly under real/repeated testing. */
+function randomTailNumber(prefix: string): string {
+  return `N${prefix}${Math.floor(100 + Math.random() * 900)}`;
+}
+
 interface HistoricalFlightRecord {
   flightId: string;
   debriefId: string;
@@ -231,7 +236,7 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
   const aircraftId = `aircraft-demo-${randomUUID()}`;
   const email = `${userId}@afterflight.demo`;
   const name = "Jordan Pilot";
-  const tail = "N412FB";
+  const tail = randomTailNumber("4");
   const aircraftType = "Cessna 172S";
 
   const client = await getDb().connect();
@@ -335,7 +340,7 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
   const adminEmail = `${adminUserId}@afterflight.demo`;
   const instructorName = "Morgan CFI";
   const adminName = "Taylor Admin";
-  const tail = "N287SA";
+  const tail = randomTailNumber("2");
   const aircraftType = "Piper PA-28-181";
 
   const client = await getDb().connect();
