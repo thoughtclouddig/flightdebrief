@@ -6,6 +6,11 @@ import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { evaluateAndAwardMilestones } from "@/lib/milestones";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
+import { buildDebriefNarration } from "@/lib/debrief-narration";
+import { synthesizeSpeech } from "@/lib/deepgram-tts";
+import { toPilotSpeak } from "@/lib/narration";
+import { setCachedAudio } from "@/lib/audio-cache";
+import { DEFAULT_TTS_VOICE } from "@/lib/tts-voices";
 import { DEMO_HISTORY } from "@/lib/demo/video-demo-data";
 import { REAL_DEMO_FLIGHTS } from "@/lib/demo/real-flight-fixtures";
 import type { StructuredDebrief, TrackPosition } from "@/lib/types";
@@ -206,9 +211,44 @@ async function seedHistoricalFlights(
  * not one overall). This matters for /api/demo/start's response time, which
  * is otherwise a long chain of sequential round trips to a remote database.
  */
+/**
+ * Same pre-warm app/api/debrief/analyze/route.ts's prewarmDebriefAudio does
+ * for a real completed debrief -- synthesizes and caches the default-voice
+ * narration ahead of time, so a demo visitor's first "Listen to your
+ * debrief" click on a seeded historical flight is instant instead of paying
+ * the full TTS generation latency live. Deliberately not awaited by its
+ * caller (fire-and-forget, same as the real one) -- it shouldn't add to
+ * /api/demo/start's response time, only needs to finish sometime before the
+ * visitor actually clicks Listen.
+ */
+async function prewarmDemoDebriefAudio(record: HistoricalFlightRecord): Promise<void> {
+  const apiKey = process.env.DEEPGRAM_API_KEY;
+  if (!apiKey) return;
+  try {
+    const student = await getRepository().getUser(record.studentId);
+    const script = toPilotSpeak(
+      buildDebriefNarration({
+        studentFirstName: student?.name.split(" ")[0] ?? "there",
+        whatWeDid: record.structured.whatWeDid,
+        wentWell: record.structured.wentWell,
+        needsWork: record.structured.needsWork,
+        instructorGuidance: record.structured.instructorGuidance,
+        actionItems: record.structured.actionItems,
+        studyReferences: record.structured.studyReferences,
+      }),
+    );
+    const audio = await synthesizeSpeech(script, apiKey, DEFAULT_TTS_VOICE);
+    setCachedAudio(`debrief:${record.flightId}:${DEFAULT_TTS_VOICE}`, audio);
+  } catch (err) {
+    console.error("[demo-seed] audio pre-warm failed:", err instanceof Error ? err.message : err);
+  }
+}
+
 async function seedDerivedContent(records: HistoricalFlightRecord[]): Promise<void> {
   if (records.length === 0) return;
   const repo = getRepository();
+
+  for (const record of records) void prewarmDemoDebriefAudio(record);
 
   await Promise.all(
     records.map((record) =>
@@ -302,9 +342,16 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
       [aircraftId, tail, aircraftType, PILOT_AIRPORT, orgId],
     );
 
+    // Last 5, not first 5 -- DEMO_HISTORY's transcripts are a deliberate
+    // narrative arc that only converges on one persistent theme (flare/
+    // centerline control) toward the end (see lib/demo/video-demo-data.ts's
+    // own doc comment); the early entries each describe a different evolving
+    // issue. Progress's recurring-themes card only surfaces a theme once the
+    // same skill is flagged in 2+ of the last 4 completed flights, so the
+    // early slice never actually triggered it.
     const historicalRecords = await seedHistoricalFlights(
       client,
-      DEMO_HISTORY.slice(0, 5).map((e) => e.transcript),
+      DEMO_HISTORY.slice(-5).map((e) => e.transcript),
       {
         studentId: userId,
         organizationId: orgId,
@@ -442,9 +489,11 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
         [`link-demo-${randomUUID()}`, studentUserId, instructorUserId, orgId],
       );
 
-      // 3-4 historical flights per student, offset by index so their
-      // transcripts (and the real flights paired with them) don't collide.
-      const transcripts = DEMO_HISTORY.slice(i, i + 4).map((e) => e.transcript);
+      // Last 4 entries for every student -- same reasoning as the pilot
+      // persona above (see its comment): that's where DEMO_HISTORY's
+      // narrative actually converges on one repeated skill, which is what
+      // Progress's recurring-themes card needs to ever populate.
+      const transcripts = DEMO_HISTORY.slice(-4).map((e) => e.transcript);
       historicalRecords.push(
         ...(await seedHistoricalFlights(client, transcripts, {
           studentId: studentUserId,
