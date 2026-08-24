@@ -5,6 +5,14 @@ import { cleanupExpiredDemoOrgs, seedCfiSchoolDemo, seedPilotDemo } from "@/lib/
 
 const DEMO_ORG_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
+// Next.js caches GET route handlers by default unless they read a dynamic
+// API (cookies()/headers()) or explicitly opt out -- reading
+// request.nextUrl.searchParams does NOT count as an opt-out. Without this,
+// the very first response (say, for ?persona=cfi) can get served back for
+// every later request regardless of query string, including different
+// personas -- exactly the "clicked Pilot, landed on the CFI account" bug.
+export const dynamic = "force-dynamic";
+
 /** Carries the persona-specific onboarding line (see LiveDemoResult.hint) to app/(product)/layout.tsx, which renders it in LiveDemoBanner. */
 export const DEMO_HINT_COOKIE = "fb_demo_hint";
 
