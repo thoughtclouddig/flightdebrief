@@ -16,6 +16,9 @@ export function hasActiveSubscription(org: Organization): boolean {
  * debrief. Independent CFI orgs are free forever and never gated.
  */
 export async function isBillingBlocked(repo: Repository, org: Organization): Promise<boolean> {
+  // Live-demo orgs (lib/demo/live-demo-seed.ts) must never hit the paywall --
+  // they're expired and deleted lazily, not meant to convert to real usage.
+  if (org.demoExpiresAt != null) return false;
   if (org.kind === "independent_cfi") return false;
   if (hasActiveSubscription(org)) return false;
 

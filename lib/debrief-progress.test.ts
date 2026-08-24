@@ -54,6 +54,7 @@ function org(overrides: Partial<Organization> = {}): Organization {
     subscriptionStatus: null,
     subscriptionPlan: null,
     subscriptionQuantity: 1,
+    demoExpiresAt: null,
     createdAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };

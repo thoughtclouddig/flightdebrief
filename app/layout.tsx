@@ -3,6 +3,18 @@ import { Archivo } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
+// Microsoft Clarity (session recording/heatmaps) -- loaded site-wide, not
+// just on marketing pages, since it needs to cover the actual product app
+// pages the live demo (app/api/demo/start) drops visitors into, not just the
+// /demo landing page itself.
+const CLARITY_SCRIPT = `
+(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "y7f62u4xjr");
+`;
+
 const THEME_INIT_SCRIPT = `
 try {
   var stored = localStorage.getItem("afterflight-theme");
@@ -46,6 +58,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <Script id="theme-init" strategy="beforeInteractive">
           {THEME_INIT_SCRIPT}
+        </Script>
+        <Script id="ms-clarity" strategy="afterInteractive">
+          {CLARITY_SCRIPT}
         </Script>
       </head>
       <body className="min-h-full flex flex-col">{children}</body>

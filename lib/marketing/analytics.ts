@@ -9,6 +9,9 @@
 export type MarketingEvent =
   | "start_free"
   | "watch_overview_video"
+  | "live_demo_pilot"
+  | "live_demo_cfi"
+  | "live_demo_school"
   | "view_pricing"
   | "select_pilot"
   | "select_cfi"
