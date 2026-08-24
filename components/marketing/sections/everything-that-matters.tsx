@@ -1,48 +1,51 @@
 import { Reveal } from "@/components/marketing/reveal";
 import { PhotoVisual } from "@/components/marketing/app-screen";
 
+// Actual chronological sequence of a real debrief, not a topical feature
+// list -- each step is what happens next, in order, so a first-time visitor
+// understands the process before they ever open the app.
 const CARDS = [
   {
-    eyebrow: "Guided Debriefs",
-    headline: "Make every debrief count.",
-    copy: "Structured prompts keep the conversation focused, so nothing important gets lost.",
+    eyebrow: "Step 1",
+    headline: "The CFI rates the flight first.",
+    copy: "Before any conversation happens, the instructor completes their own assessment of the flight.",
+    src: "/images/marketing/debrief-boardroom-screen.webp",
+    alt: "A CFI reviewing a flight assessment on a screen before the debrief conversation begins",
+  },
+  {
+    eyebrow: "Step 2",
+    headline: "The student does the same, independently.",
+    copy: "No peeking at each other's notes -- the student rates their own flight before the debrief starts.",
+    src: "/images/marketing/debrief-lounge-screen.webp",
+    alt: "A student pilot completing their own flight self-assessment separately from the instructor",
+  },
+  {
+    eyebrow: "Step 3",
+    headline: "Then they record the debrief, together.",
+    copy: "The CFI hits record and walks through a structured conversation, guided by where the two assessments agree -- and where they don't.",
     src: "/images/marketing/debrief-conference-room.webp",
     alt: "A CFI and student pilot reviewing a debrief summary together, with the flight's key takeaways and action items shown on a screen behind them",
   },
   {
-    eyebrow: "Flight Summary",
-    headline: "Your whole debrief. Organized.",
-    copy: "What went well, what needs work, and what's next -- all in one flight record.",
+    eyebrow: "Step 4",
+    headline: "AfterFlight turns it into a clear summary.",
+    copy: "What went well, what needs work, rated and organized -- the moment the recording stops.",
     src: "/images/marketing/flight-summary-card.avif",
     alt: "AfterFlight app screen showing a completed flight summary with what went well, areas to improve, action items, and key takeaways",
   },
   {
-    eyebrow: "ACS Connection",
-    headline: "Feedback, connected to the ACS.",
-    copy: "Every note ties back to the FAA standard you're working toward.",
+    eyebrow: "Step 5",
+    headline: "The student gets the recap, plus what to study.",
+    copy: "A recording of the debrief to revisit any time, and every weak area linked straight to the ACS standard and training resource that covers it.",
     src: "/images/marketing/acs-connection-card.webp",
     alt: "AfterFlight app screen showing an Area to Improve card for Steep Turns and Altitude Control, connected to ACS standard PA.V.A.S3",
   },
   {
-    eyebrow: "Study Resources",
-    headline: "Know exactly what to study next.",
-    copy: "Every weak area links straight to the FAA reference, instructor resource, or handbook chapter that covers it.",
-    src: "/images/marketing/student-studying-acs.webp",
-    alt: "A student pilot reviewing FAA Airman Certification Standards on a tablet at a desk with the Airplane Flying Handbook",
-  },
-  {
-    eyebrow: "Next-Flight Briefing",
-    headline: "Show up ready to fly.",
-    copy: "Last debrief becomes this lesson's plan -- what to practice, what to focus on.",
+    eyebrow: "Step 6",
+    headline: "Show up confident for the next lesson.",
+    copy: "Last debrief becomes this lesson's plan -- what to practice, what to focus on, so nobody's guessing.",
     src: "/images/marketing/next-flight-card.avif",
     alt: "AfterFlight app screen showing three focus areas for the next flight: steep turns, short-field landing, and radio calls",
-  },
-  {
-    eyebrow: "Training Progress",
-    headline: "See your training take shape.",
-    copy: "Instructor-reviewed observations across flights show where you're improving.",
-    src: "/images/marketing/training-progress-card.avif",
-    alt: "AfterFlight app screen showing training progress across five skill areas: Aircraft Control, Procedures, Navigation, Communication, and Decision Making",
   },
 ] as const;
 
@@ -51,13 +54,13 @@ export function EverythingThatMatters() {
     <section id="how-it-works" className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-balance text-lg font-bold uppercase tracking-[0.16em] text-brand sm:text-xl">The Solution</p>
+          <p className="text-balance text-lg font-bold uppercase tracking-[0.16em] text-brand sm:text-xl">The Process</p>
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
-            One debrief. Everything you need for the next flight.
+            What actually happens after you land.
           </h2>
           <p className="mt-4 text-balance text-lg text-[#68717D]">
-            AfterFlight turns the conversation you already have after landing into clear takeaways, visible
-            progress, and a plan for what comes next.
+            The same debrief you already do -- rated separately, discussed together, and turned into a clear
+            record and a plan for next time.
           </p>
         </Reveal>
 
