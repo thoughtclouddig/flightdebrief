@@ -1,7 +1,4 @@
-"use client";
-
 import type { CSSProperties } from "react";
-import { useInView } from "@/lib/marketing/use-in-view";
 import type { FlightScoreTone } from "@/components/flight-score/types";
 
 const TONE_GRADIENT: Record<FlightScoreTone, { from: string; to: string }> = {
@@ -10,7 +7,7 @@ const TONE_GRADIENT: Record<FlightScoreTone, { from: string; to: string }> = {
   danger: { from: "#f87171", to: "#a3241c" },
 };
 
-/** Marketing-only responsive gauge that draws its fill in once scrolled into view. */
+/** Marketing-only responsive gauge rendered without client-side hydration. */
 export function MarketingFlightScoreGauge({
   score,
   label,
@@ -22,16 +19,11 @@ export function MarketingFlightScoreGauge({
   tone: FlightScoreTone;
   caption: string;
 }) {
-  const { ref, inView } = useInView<HTMLDivElement>();
   const gradient = TONE_GRADIENT[tone];
   const targetOffset = 1 - Math.max(0, Math.min(100, score)) / 100;
-  // Starts fully undrawn (offset 1) until scrolled into view, then transitions
-  // to the real value -- stroke-dashoffset is natively transitionable, so this
-  // needs no per-frame JS the way CountUp's numeral does.
-  const offset = inView ? targetOffset : 1;
 
   return (
-    <div ref={ref} className="relative inline-flex size-[260px] items-center justify-center sm:size-[440px]">
+    <div className="relative inline-flex size-[260px] items-center justify-center sm:size-[440px]">
       <div
         className="absolute size-[92%] rounded-full opacity-[0.16]"
         style={{ background: `radial-gradient(circle, ${gradient.to} 0%, transparent 72%)` }}
@@ -54,9 +46,8 @@ export function MarketingFlightScoreGauge({
           strokeWidth="9"
           strokeLinecap="round"
           strokeDasharray={1}
-          strokeDashoffset={offset}
-          className="motion-safe:transition-[stroke-dashoffset] motion-safe:duration-[1400ms] motion-safe:ease-out"
-          style={{ "--marketing-gauge-offset": offset } as CSSProperties}
+          strokeDashoffset={targetOffset}
+          style={{ "--marketing-gauge-offset": targetOffset } as CSSProperties}
         />
       </svg>
       <div className="relative flex flex-col items-center justify-center text-center">

@@ -6,11 +6,6 @@ import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { evaluateAndAwardMilestones } from "@/lib/milestones";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
-import { buildDebriefNarration } from "@/lib/debrief-narration";
-import { synthesizeSpeech } from "@/lib/deepgram-tts";
-import { toPilotSpeak } from "@/lib/narration";
-import { setCachedAudio } from "@/lib/audio-cache";
-import { DEFAULT_TTS_VOICE } from "@/lib/tts-voices";
 import { DEMO_HISTORY } from "@/lib/demo/video-demo-data";
 import { REAL_DEMO_FLIGHTS } from "@/lib/demo/real-flight-fixtures";
 import type { StructuredDebrief, TrackPosition } from "@/lib/types";
@@ -211,44 +206,9 @@ async function seedHistoricalFlights(
  * not one overall). This matters for /api/demo/start's response time, which
  * is otherwise a long chain of sequential round trips to a remote database.
  */
-/**
- * Same pre-warm app/api/debrief/analyze/route.ts's prewarmDebriefAudio does
- * for a real completed debrief -- synthesizes and caches the default-voice
- * narration ahead of time, so a demo visitor's first "Listen to your
- * debrief" click on a seeded historical flight is instant instead of paying
- * the full TTS generation latency live. Deliberately not awaited by its
- * caller (fire-and-forget, same as the real one) -- it shouldn't add to
- * /api/demo/start's response time, only needs to finish sometime before the
- * visitor actually clicks Listen.
- */
-async function prewarmDemoDebriefAudio(record: HistoricalFlightRecord): Promise<void> {
-  const apiKey = process.env.DEEPGRAM_API_KEY;
-  if (!apiKey) return;
-  try {
-    const student = await getRepository().getUser(record.studentId);
-    const script = toPilotSpeak(
-      buildDebriefNarration({
-        studentFirstName: student?.name.split(" ")[0] ?? "there",
-        whatWeDid: record.structured.whatWeDid,
-        wentWell: record.structured.wentWell,
-        needsWork: record.structured.needsWork,
-        instructorGuidance: record.structured.instructorGuidance,
-        actionItems: record.structured.actionItems,
-        studyReferences: record.structured.studyReferences,
-      }),
-    );
-    const audio = await synthesizeSpeech(script, apiKey, DEFAULT_TTS_VOICE);
-    setCachedAudio(`debrief:${record.flightId}:${DEFAULT_TTS_VOICE}`, audio);
-  } catch (err) {
-    console.error("[demo-seed] audio pre-warm failed:", err instanceof Error ? err.message : err);
-  }
-}
-
 async function seedDerivedContent(records: HistoricalFlightRecord[]): Promise<void> {
   if (records.length === 0) return;
   const repo = getRepository();
-
-  for (const record of records) void prewarmDemoDebriefAudio(record);
 
   await Promise.all(
     records.map((record) =>
