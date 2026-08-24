@@ -5,6 +5,7 @@ import { localIsoDate } from "@/lib/date";
 import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { evaluateAndAwardMilestones } from "@/lib/milestones";
+import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { DEMO_HISTORY } from "@/lib/demo/video-demo-data";
 import { REAL_DEMO_FLIGHTS } from "@/lib/demo/real-flight-fixtures";
 import type { StructuredDebrief, TrackPosition } from "@/lib/types";
@@ -258,6 +259,13 @@ async function seedDerivedContent(records: HistoricalFlightRecord[]): Promise<vo
   );
 }
 
+/** Assigns one open (not-yet-completed) radio practice scenario so the demo's Home page/practice section isn't empty -- picks the first RADIO_COMMUNICATIONS scenario, matching the "radio confidence" thread already running through DEMO_HISTORY's transcripts. */
+async function seedRadioPractice(organizationId: string, studentId: string, assignedBy: string | null): Promise<void> {
+  const scenario = RADIO_PRACTICE_SCENARIOS.find((s) => s.skill === "RADIO_COMMUNICATIONS");
+  if (!scenario) return;
+  await getRepository().createRadioPracticeAssignment({ organizationId, studentId, assignedBy, scenarioId: scenario.id });
+}
+
 export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
   const orgId = `org-demo-pilot-${randomUUID()}`;
   const userId = `user-demo-pilot-${randomUUID()}`;
@@ -336,7 +344,7 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
     );
 
     await client.query("COMMIT");
-    await seedDerivedContent(historicalRecords);
+    await Promise.all([seedDerivedContent(historicalRecords), seedRadioPractice(orgId, userId, null)]);
     return {
       organizationId: orgId,
       loginUserId: userId,
@@ -549,7 +557,10 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
     }
 
     await client.query("COMMIT");
-    await seedDerivedContent(historicalRecords);
+    await Promise.all([
+      seedDerivedContent(historicalRecords),
+      ...studentIds.map((studentId) => seedRadioPractice(orgId, studentId, instructorUserId)),
+    ]);
 
     return persona === "cfi"
       ? {
