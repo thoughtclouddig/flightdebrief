@@ -1,8 +1,8 @@
+import Link from "next/link";
 import { BarChart3, ClipboardList, Repeat, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AcsBadge } from "@/components/acs-badge";
-import { InsightStatCard } from "@/components/insight-stat-card";
 import { NeedsReviewRow } from "@/components/needs-review-row";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
@@ -28,9 +28,6 @@ export default async function AdminInsightsPage() {
     trainingCoverage(repo, orgId),
     needsReviewQueue(repo, orgId),
   ]);
-
-  const recurringStudentCount = new Set(recurring.map((r) => r.student.id)).size;
-  const carriedStudentCount = new Set(carried.map((c) => c.student.id)).size;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -69,24 +66,68 @@ export default async function AdminInsightsPage() {
         </CardContent>
       </Card>
 
-      <InsightStatCard
-        icon={Repeat}
-        iconClassName="text-amber-500"
-        title="Recurring Student Issues"
-        value={recurringStudentCount}
-        description={`student${recurringStudentCount === 1 ? "" : "s"} have the same deficiency appearing in 3+ recent debriefs.`}
-        linkLabel="View Students"
-        href="/admin/students"
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Repeat className="size-4 text-amber-500" />
+            Recurring Student Issues
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recurring.length === 0 ? (
+            <p className="text-sm text-slate-400">No student has the same deficiency across 3+ recent debriefs.</p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {recurring.slice(0, 8).map((r) => (
+                <li key={`${r.student.id}-${r.skill}`}>
+                  <Link
+                    href={`/admin/students/${r.student.id}`}
+                    className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-white/5"
+                  >
+                    <span className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                      {r.student.name}
+                      <AcsBadge skill={r.skill} certificateType="PRIVATE" />
+                    </span>
+                    <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">
+                      {r.count} of last {r.consideredFlights} debriefs
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
-      <InsightStatCard
-        icon={ClipboardList}
-        title="Objectives Being Carried Forward"
-        value={carriedStudentCount}
-        description={`student${carriedStudentCount === 1 ? "" : "s"} have training objectives carried forward across 3+ lessons.`}
-        linkLabel="Review"
-        href="/admin/students"
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ClipboardList className="size-4 text-brand" />
+            Objectives Being Carried Forward
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {carried.length === 0 ? (
+            <p className="text-sm text-slate-400">No open objective has carried across 3+ consecutive lessons.</p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {carried.slice(0, 8).map((c, i) => (
+                <li key={`${c.student.id}-${i}`}>
+                  <Link
+                    href={`/admin/students/${c.student.id}`}
+                    className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-white/5"
+                  >
+                    <span className="text-slate-700 dark:text-slate-200">
+                      {c.student.name} <span className="text-slate-400">&mdash;</span> &ldquo;{c.description}&rdquo;
+                    </span>
+                    <span className="shrink-0 font-medium text-slate-500 dark:text-slate-400">{c.streak} lessons</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -104,8 +145,9 @@ export default async function AdminInsightsPage() {
               ))}
             </div>
           )}
-          <p className="mt-3 text-xs text-slate-400">
-            Skills that have come up in recent training -- not a measure of syllabus or FAA compliance.
+          <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            How often each skill has come up in the last 60 days of debriefs -- not a syllabus or FAA compliance
+            measure.
           </p>
         </CardContent>
       </Card>
