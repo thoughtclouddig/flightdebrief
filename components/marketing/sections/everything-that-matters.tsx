@@ -7,44 +7,44 @@ import { PhotoVisual } from "@/components/marketing/app-screen";
 const CARDS = [
   {
     eyebrow: "Step 1",
-    headline: "The CFI rates the flight first.",
-    copy: "Before any conversation happens, the instructor completes their own assessment of the flight.",
-    src: "/images/marketing/debrief-boardroom-screen.webp",
-    alt: "A CFI reviewing a flight assessment on a screen before the debrief conversation begins",
+    headline: "The CFI opens AfterFlight and rates the flight.",
+    copy: "Before any conversation happens -- their own take, on their own.",
+    src: "/images/marketing/how-it-works-1.avif",
+    alt: "A CFI reviewing a flight assessment in AfterFlight before the debrief conversation begins",
   },
   {
     eyebrow: "Step 2",
-    headline: "The student does the same, independently.",
-    copy: "No peeking at each other's notes -- the student rates their own flight before the debrief starts.",
-    src: "/images/marketing/debrief-lounge-screen.webp",
-    alt: "A student pilot completing their own flight self-assessment separately from the instructor",
+    headline: "The student opens the app and does the same.",
+    copy: "No peeking at each other's notes -- just their own honest read.",
+    src: "/images/marketing/how-it-works-2.avif",
+    alt: "A student pilot completing their own flight self-assessment in AfterFlight, separately from the instructor",
   },
   {
     eyebrow: "Step 3",
-    headline: "Then they record the debrief, together.",
-    copy: "The CFI hits record and walks through a structured conversation, guided by where the two assessments agree -- and where they don't.",
-    src: "/images/marketing/debrief-conference-room.webp",
-    alt: "A CFI and student pilot reviewing a debrief summary together, with the flight's key takeaways and action items shown on a screen behind them",
+    headline: "The CFI hits Record for the structured debrief.",
+    copy: "Guided by where the two ratings agree -- and where they don't.",
+    src: "/images/marketing/how-it-works-3.avif",
+    alt: "A CFI and student pilot recording a structured debrief in AfterFlight, with the flight's key takeaways shown on a screen behind them",
   },
   {
     eyebrow: "Step 4",
     headline: "AfterFlight turns it into a clear summary.",
-    copy: "What went well, what needs work, rated and organized -- the moment the recording stops.",
-    src: "/images/marketing/flight-summary-card.avif",
+    copy: "Rated and organized -- what went well, what needs work.",
+    src: "/images/marketing/how-it-works-4.avif",
     alt: "AfterFlight app screen showing a completed flight summary with what went well, areas to improve, action items, and key takeaways",
   },
   {
     eyebrow: "Step 5",
     headline: "The student gets the recap, plus what to study.",
-    copy: "A recording of the debrief to revisit any time, and every weak area linked straight to the ACS standard and training resource that covers it.",
-    src: "/images/marketing/acs-connection-card.webp",
+    copy: "A recorded overview, and every weak area linked to the ACS.",
+    src: "/images/marketing/how-it-works-5.avif",
     alt: "AfterFlight app screen showing an Area to Improve card for Steep Turns and Altitude Control, connected to ACS standard PA.V.A.S3",
   },
   {
     eyebrow: "Step 6",
     headline: "Show up confident for the next lesson.",
-    copy: "Last debrief becomes this lesson's plan -- what to practice, what to focus on, so nobody's guessing.",
-    src: "/images/marketing/next-flight-card.avif",
+    copy: "Last debrief becomes this lesson's plan -- no more guessing.",
+    src: "/images/marketing/how-it-works-6.avif",
     alt: "AfterFlight app screen showing three focus areas for the next flight: steep turns, short-field landing, and radio calls",
   },
 ] as const;
@@ -54,7 +54,7 @@ export function EverythingThatMatters() {
     <section id="how-it-works" className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-balance text-lg font-bold uppercase tracking-[0.16em] text-brand sm:text-xl">The Process</p>
+          <p className="text-balance text-lg font-bold uppercase tracking-[0.16em] text-brand sm:text-xl">The Debrief</p>
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             What actually happens after you land.
           </h2>
