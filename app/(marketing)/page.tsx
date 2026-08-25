@@ -6,7 +6,7 @@ import { DebriefDoctrine } from "@/components/marketing/sections/debrief-doctrin
 import { Proof } from "@/components/marketing/sections/proof";
 import { DeferredBrandDeviceLoop } from "@/components/marketing/deferred-brand-device-loop";
 import { EverythingThatMatters } from "@/components/marketing/sections/everything-that-matters";
-import { FeedbackToPlan } from "@/components/marketing/sections/feedback-to-plan";
+import { NextFlightPayoff } from "@/components/marketing/sections/next-flight-payoff";
 import { FlightScoreSection } from "@/components/marketing/sections/flightscore";
 import { TrainingEconomics } from "@/components/marketing/sections/training-economics";
 import { WhoItsFor } from "@/components/marketing/sections/who-its-for";
@@ -27,10 +27,10 @@ export default function MarketingHomePage() {
       <DeferredBrandDeviceLoop />
       <BrandMoment />
       <EverythingThatMatters />
+      <NextFlightPayoff />
       <LearningLoop />
       <DebriefDoctrine />
       <Proof />
-      <FeedbackToPlan />
       <FlightScoreSection />
       <TrainingEconomics />
       <PplPayoff />

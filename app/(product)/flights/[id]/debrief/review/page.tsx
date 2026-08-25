@@ -7,6 +7,7 @@ import { getRepository } from "@/lib/data";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import { computeSkillProgression } from "@/lib/skill-progress";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightContext } from "@/lib/utils";
 
 /**
@@ -82,6 +83,7 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
         flightSkillProgressions={flightSkillProgressions}
         certificateType={certificateType}
         canDismiss={isInstructorViewer}
+        instructorFirstName={resolveCfiFirstName(flight.instructor)}
       />
     </div>
   );

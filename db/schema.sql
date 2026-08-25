@@ -233,6 +233,19 @@ CREATE TABLE IF NOT EXISTS student_notes (
 );
 CREATE INDEX IF NOT EXISTS student_notes_student_idx ON student_notes (student_id);
 
+-- Tracks only whether a student has opened a recommended study resource
+-- (first-click timestamp) -- not scoped to one debrief, since the same FAA
+-- resource can legitimately resurface across multiple debriefs and "have I
+-- already opened this" is the useful question. No duration/read-time field
+-- on purpose -- that data doesn't exist anywhere and shouldn't be invented.
+CREATE TABLE IF NOT EXISTS study_resource_views (
+  id text PRIMARY KEY,
+  student_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  url text NOT NULL,
+  viewed_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS study_resource_views_student_idx ON study_resource_views (student_id);
+
 CREATE TABLE IF NOT EXISTS training_signals (
   id text PRIMARY KEY,
   organization_id text REFERENCES organizations(id) ON DELETE SET NULL,

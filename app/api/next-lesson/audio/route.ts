@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
 import { authorize } from "@/lib/auth/guard";
 import { buildNextLessonNarration } from "@/lib/next-lesson-narration";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
 import { toPilotSpeak } from "@/lib/narration";
 import { getCachedAudio, setCachedAudio } from "@/lib/audio-cache";
@@ -50,6 +51,7 @@ export async function GET(request: Request) {
 
   const script = buildNextLessonNarration({
     studentFirstName: viewer.user.name.split(" ")[0],
+    instructorFirstName: resolveCfiFirstName(lastDebriefed.instructor),
     flightDate: lastDebriefed.flightDate,
     whatWeDid: debrief?.structuredResult.whatWeDid ?? [],
     keepWorkingOn: itemsForFlight.filter((t) => t.category === "keep_working_on").map((t) => t.description),

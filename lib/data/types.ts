@@ -152,6 +152,10 @@ export interface Repository {
   createStudentNote(input: CreateStudentNoteInput): Promise<StudentNote>;
   setStudentNoteDone(id: string, done: boolean): Promise<void>;
 
+  // --- Study-resource "opened" tracking (first-click only, no duration) ---
+  markStudyResourceViewed(input: { studentId: string; url: string }): Promise<void>;
+  listViewedStudyResourceUrls(studentId: string): Promise<string[]>;
+
   // --- Structured, CFI-led debrief: flight tasks ---
   listFlightTasks(flightId: string): Promise<FlightTask[]>;
   /** Replaces the flight's full task list -- the CFI's "Flight Complete" task picker is a single save, not incremental edits. */

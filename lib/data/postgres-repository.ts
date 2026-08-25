@@ -411,6 +411,25 @@ export class PostgresRepository implements Repository {
     );
   }
 
+  // --- Study-resource "opened" tracking (first-click only, no duration) ---
+
+  async markStudyResourceViewed(input: { studentId: string; url: string }): Promise<void> {
+    const db = await this.db();
+    await db.query("INSERT INTO study_resource_views (id, student_id, url) VALUES ($1,$2,$3)", [
+      randomUUID(),
+      input.studentId,
+      input.url,
+    ]);
+  }
+
+  async listViewedStudyResourceUrls(studentId: string): Promise<string[]> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT DISTINCT url FROM study_resource_views WHERE student_id = $1", [
+      studentId,
+    ]);
+    return rows.map((r) => r.url as string);
+  }
+
   // --- Radio-communications practice ---
 
   async createRadioPracticeAssignment(input: {

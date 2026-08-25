@@ -9,6 +9,7 @@ import { autoResolveActionItems } from "@/lib/action-items-autoresolve";
 import { buildTranscriptSegments, type CardBoundary } from "@/lib/debrief-cards/segments";
 import { computeAssessmentDifferences } from "@/lib/debrief-cards/differences";
 import { buildDebriefNarration } from "@/lib/debrief-narration";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
 import { toPilotSpeak } from "@/lib/narration";
 import { setCachedAudio } from "@/lib/audio-cache";
@@ -183,7 +184,7 @@ export async function POST(request: Request) {
     })),
   );
 
-  void prewarmDebriefAudio(flight.id, flight.userId, structured);
+  void prewarmDebriefAudio(flight.id, flight.userId, resolveCfiFirstName(flight.instructor), structured);
 
   return NextResponse.json({ debrief });
 }
@@ -198,7 +199,12 @@ export async function POST(request: Request) {
  * throws -- a failed pre-warm just means the first click falls back to
  * generating on demand, same as before this existed.
  */
-async function prewarmDebriefAudio(flightId: string, studentId: string, structured: StructuredDebrief): Promise<void> {
+async function prewarmDebriefAudio(
+  flightId: string,
+  studentId: string,
+  instructorFirstName: string | null,
+  structured: StructuredDebrief,
+): Promise<void> {
   const apiKey = process.env.DEEPGRAM_API_KEY;
   if (!apiKey) return;
 
@@ -207,6 +213,7 @@ async function prewarmDebriefAudio(flightId: string, studentId: string, structur
     const script = toPilotSpeak(
       buildDebriefNarration({
         studentFirstName: student?.name.split(" ")[0] ?? "there",
+        instructorFirstName,
         whatWeDid: structured.whatWeDid,
         wentWell: structured.wentWell,
         needsWork: structured.needsWork,

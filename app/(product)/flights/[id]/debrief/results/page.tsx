@@ -10,6 +10,7 @@ import { getAuthorizedFlight } from "@/lib/auth/access";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { computeNextLessonBrief } from "@/lib/training-memory";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightContext } from "@/lib/utils";
 
 export default async function DebriefResultsPage(props: PageProps<"/flights/[id]/debrief/results">) {
@@ -55,6 +56,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
     status: discrepancyStatusFor(discrepancyDistance(d.studentLevel, d.instructorLevel)),
   }));
   const displayTrack = simplifyTrackForDisplay(flight.track);
+  const instructorFirstName = resolveCfiFirstName(flight.instructor);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
@@ -82,6 +84,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
           keepWorkingOn: nextLessonBrief.keepWorkingOn,
           beforeFlightItems: nextLessonBrief.beforeFlightItems,
         }}
+        instructorFirstName={instructorFirstName}
       />
 
       <DebriefResultSections
@@ -91,6 +94,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
         ttsEnabled={ttsEnabled}
         flightId={flight.id}
         flightSkillProgressions={flightSkillProgressions}
+        instructorFirstName={instructorFirstName}
         certificateType={certificateType}
         canDismiss={canDismiss}
       />

@@ -1,5 +1,6 @@
 import { Reveal } from "@/components/marketing/reveal";
 import { PhotoVisual } from "@/components/marketing/app-screen";
+import { DebriefRecapDemo } from "@/components/marketing/debrief-recap-demo";
 
 // Actual chronological sequence of a real debrief, not a topical feature
 // list -- each step is what happens next, in order, so a first-time visitor
@@ -42,8 +43,8 @@ const CARDS = [
   },
   {
     eyebrow: "Step 6",
-    headline: "Show up confident for the next lesson.",
-    copy: "Last debrief becomes this lesson's plan -- no more guessing.",
+    headline: "Student and instructor start the next lesson on the same page.",
+    copy: "Last debrief becomes this lesson's plan -- for both of you, no guessing.",
     src: "/images/marketing/how-it-works-6.avif",
     alt: "AfterFlight app screen showing three focus areas for the next flight: steep turns, short-field landing, and radio calls",
   },
@@ -75,6 +76,8 @@ export function EverythingThatMatters() {
             </Reveal>
           ))}
         </div>
+
+        <DebriefRecapDemo />
       </div>
     </section>
   );

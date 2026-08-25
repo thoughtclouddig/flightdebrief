@@ -38,6 +38,7 @@ export function DebriefResultSections({
   flightSkillProgressions,
   certificateType,
   canDismiss,
+  instructorFirstName,
 }: {
   result: StructuredDebrief;
   differenceRows: ComparisonRow[];
@@ -47,9 +48,12 @@ export function DebriefResultSections({
   flightSkillProgressions: SkillProgression[];
   certificateType: CertificateType | null;
   canDismiss: boolean;
+  /** Resolved via lib/instructor-attribution.ts. Null when this flight has no instructor assigned -- falls back to "your instructor". */
+  instructorFirstName: string | null;
 }) {
   return (
     <>
+      <p className="text-sm text-foreground-faint">From your debrief with {instructorFirstName ?? "your instructor"}</p>
       {result.flightSummary ? <p className="text-lg text-foreground-soft">{result.flightSummary}</p> : null}
 
       <Card>

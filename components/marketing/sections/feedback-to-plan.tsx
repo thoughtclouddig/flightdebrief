@@ -36,6 +36,15 @@ function ThreadBlock({
   );
 }
 
+/**
+ * Not currently rendered on the homepage -- retired in favor of the newer
+ * "Training Continuity" section (next-flight-payoff.tsx), which communicates
+ * the same "debrief becomes the next lesson's plan" idea more concisely.
+ * Kept (not deleted) because its ACS-connection / FAA-study-resource /
+ * instructor-feedback thread concept, and the Ian Wilder (AOPA Flight
+ * Training) quote below, are candidates to reuse on How It Works, For
+ * Instructors, For Schools, or a deeper product page.
+ */
 export function FeedbackToPlan() {
   return (
     <section className="bg-white px-6 py-28 sm:py-36">

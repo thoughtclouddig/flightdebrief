@@ -22,7 +22,7 @@ import { DEFAULT_TTS_VOICE, isValidTtsVoice } from "@/lib/tts-voices";
 export async function synthesizeSpeech(text: string, apiKey: string, requestedVoice: string | null): Promise<Buffer> {
   const voice = requestedVoice && isValidTtsVoice(requestedVoice) ? requestedVoice : DEFAULT_TTS_VOICE;
 
-  const response = await fetch(`https://api.deepgram.com/v2/speak?model=${voice}&speed=1`, {
+  const response = await fetch(`https://api.deepgram.com/v2/speak?model=${voice}&speed=0.9&expressivity=1`, {
     method: "POST",
     headers: {
       Authorization: `Token ${apiKey}`,
