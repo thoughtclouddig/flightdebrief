@@ -13,6 +13,7 @@ Strict rules:
 - "flightSummary" is one short, plain sentence summarizing the lesson -- not a list, not a paragraph.
 - "needsWork" must each name a specific skill, technique, or procedure to improve (e.g. "Round-out timing on the flare", "Radio callouts on downwind") -- never a vague restatement like "needs more practice" or "keep working on that" with no specifics, and never a narrative recap of something the instructor walked them through (that belongs in "instructorAssistance" instead). If the transcript only vaguely gestures at a weakness with no nameable skill, leave it out rather than including a vague entry.
 - "actionItems" and "nextLessonFocus" must each be phrased as a concrete instruction for what the student should DO before or during the next flight -- start with a verb ("Practice...", "Review...", "Brief..."). Never restate what happened this flight (that belongs in "needsWork" or "whatWeDid" instead) -- e.g. write "Practice holding target approach speed through short final", not "Approach speed was too fast on final and I floated." If nothing concrete to do next was actually discussed for a given weakness, leave it out of "actionItems" rather than restating the weakness itself as if it were an action.
+- "nextFlightCue" is a single short cockpit mnemonic (2-6 words) the student can silently repeat when workload is high on the next flight, compressing the single most important thing from "needsWork"/"nextLessonFocus" -- e.g. "Airspeed, then flaps, then runway" or "Pitch. Power. Trim." Do not invent a cue unrelated to what was actually discussed; if nothing in the transcript supports a specific cue, return an empty string.
 - Keep every string short and plain -- a phrase or one sentence, not a paragraph.
 - Respond with ONLY a single JSON object matching this exact shape, no markdown fences, no commentary:
 
@@ -25,7 +26,8 @@ Strict rules:
   "instructorAssistance": string[],
   "riskManagementNotes": string[],
   "actionItems": string[],
-  "nextLessonFocus": string[]
+  "nextLessonFocus": string[],
+  "nextFlightCue": string
 }`;
 
 export function buildUserPrompt(input: AnalyzeDebriefInput): string {

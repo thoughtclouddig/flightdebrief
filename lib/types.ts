@@ -168,6 +168,8 @@ export interface StudyReference {
   topic: string;
   source: string;
   url: string;
+  /** The literal debrief sentence that triggered this match -- grounds the recommendation instead of inventing a reason. */
+  why: string;
 }
 
 /** One student/instructor perception gap, surfaced on the results page. Populated deterministically from debrief_assessment_ratings, never trusted from the LLM -- same "don't let the model reconstruct ground truth we already have" rule as studyReferences. */
@@ -193,6 +195,8 @@ export interface StructuredDebrief {
   actionItems: string[];
   nextLessonFocus: string[];
   studyReferences: StudyReference[];
+  /** Short, memorable cockpit mnemonic for the next flight (e.g. "Airspeed → Flaps → Runway"). Editable by the student -- doubles as their "one thing to remember." Empty string for older debriefs analyzed before this field existed. */
+  nextFlightCue: string;
 }
 
 export interface Debrief {

@@ -133,6 +133,8 @@ export interface Repository {
 
   getDebriefByFlight(flightId: string): Promise<Debrief | null>;
   createDebrief(input: CreateDebriefInput): Promise<Debrief>;
+  /** Student-editable "next flight cue" -- lives inside structured_result jsonb, no separate column. */
+  updateDebriefCue(debriefId: string, cue: string): Promise<void>;
 
   /** Upserts -- a re-recording or a resumed analysis attempt overwrites the previous pending row for this flight. */
   savePendingDebriefTranscript(input: Omit<PendingDebriefTranscript, "createdAt">): Promise<PendingDebriefTranscript>;

@@ -278,6 +278,14 @@ export class PostgresRepository implements Repository {
     return mapDebrief(rows[0]);
   }
 
+  async updateDebriefCue(debriefId: string, cue: string): Promise<void> {
+    const db = await this.db();
+    await db.query("UPDATE debriefs SET structured_result = jsonb_set(structured_result, '{nextFlightCue}', $2::jsonb) WHERE id = $1", [
+      debriefId,
+      JSON.stringify(cue),
+    ]);
+  }
+
   async savePendingDebriefTranscript(
     input: Omit<PendingDebriefTranscript, "createdAt">,
   ): Promise<PendingDebriefTranscript> {
@@ -1353,6 +1361,7 @@ function normalizeStructuredResult(result: Partial<Debrief["structuredResult"]> 
     actionItems: r.actionItems ?? [],
     nextLessonFocus: r.nextLessonFocus ?? [],
     studyReferences: r.studyReferences ?? [],
+    nextFlightCue: r.nextFlightCue ?? "",
   };
 }
 

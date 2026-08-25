@@ -272,7 +272,7 @@ export default async function StudentHomePage() {
           </CardHeader>
           <CardContent className="flex flex-wrap gap-1.5">
             {brief.focusAreas.map((f, i) => {
-              const reference = suggestStudyReferences(f)[0] ?? null;
+              const reference = suggestStudyReferences([f])[0] ?? null;
               if (!reference) {
                 return (
                   <Badge key={i} variant="brand">

@@ -4,6 +4,7 @@ export interface StudyReference {
   topic: string;
   source: string;
   url: string;
+  why: string;
 }
 
 // Direct chapter-level links (FAA-H-8083-3C / FAA-H-8083-25C current editions, verified
@@ -193,16 +194,23 @@ export function detectTopics(text: string): string[] {
   return found.length ? found : ["General flight training"];
 }
 
-/** Given weak-area text (needsWork + actionItems), suggest FAA reference material to study. */
-export function suggestStudyReferences(weakAreaText: string): StudyReference[] {
-  const lower = weakAreaText.toLowerCase();
-  const matches = TOPIC_LIBRARY.filter((t) => t.keywords.some((k) => lower.includes(k)));
+/**
+ * Given weak-area sentences (needsWork + actionItems, kept as separate
+ * sentences rather than joined), suggest FAA reference material to study.
+ * `why` is the literal sentence that triggered each match -- grounds the
+ * recommendation instead of the UI having to invent a reason.
+ */
+export function suggestStudyReferences(weakAreaSentences: string[]): StudyReference[] {
   const seen = new Set<string>();
   const references: StudyReference[] = [];
-  for (const m of matches) {
-    if (seen.has(m.source)) continue;
-    seen.add(m.source);
-    references.push({ topic: m.topic, source: m.source, url: m.url });
+  for (const sentence of weakAreaSentences) {
+    const lower = sentence.toLowerCase();
+    const matches = TOPIC_LIBRARY.filter((t) => t.keywords.some((k) => lower.includes(k)));
+    for (const m of matches) {
+      if (seen.has(m.source)) continue;
+      seen.add(m.source);
+      references.push({ topic: m.topic, source: m.source, url: m.url, why: sentence.trim() });
+    }
   }
   return references.slice(0, 5);
 }

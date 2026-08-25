@@ -25,6 +25,11 @@ export const structuredDebriefSchema = z.object({
   riskManagementNotes: z.array(z.string()).default([]),
   actionItems: z.array(z.string()).default([]),
   nextLessonFocus: z.array(z.string()).default([]),
+  // Short, memorable cockpit mnemonic for the next flight -- unlike
+  // studyReferences/assessmentDifferences below, this IS asked of Claude
+  // directly (see the prompt), so it's a plain field, not deterministically
+  // overwritten afterward.
+  nextFlightCue: z.string().default(""),
   studyReferences: z
     .array(
       z.object({
@@ -34,6 +39,10 @@ export const structuredDebriefSchema = z.object({
         // always overwritten with the curated FAA-reference table afterward), so
         // accept its absence here and default to "" rather than failing validation.
         url: z
+          .string()
+          .optional()
+          .transform((v) => v ?? ""),
+        why: z
           .string()
           .optional()
           .transform((v) => v ?? ""),

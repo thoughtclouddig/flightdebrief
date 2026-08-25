@@ -21,20 +21,24 @@ export function analyzeMock(input: AnalyzeDebriefInput): StructuredDebriefResult
   const riskManagementNotes = sentences.filter((s) => matches(s, RISK_CUES));
   const actionItems = buildActionItems(needsWork, whatWeDid, input.previousActionItems);
   const nextLessonFocus = buildNextLessonFocus(whatWeDid, needsWork);
-  const studyReferences = suggestStudyReferences([...needsWork, ...actionItems].join(" "));
+  const studyReferences = suggestStudyReferences([...needsWork, ...actionItems]);
   const flightSummary = buildFlightSummary(input.flightMeta, whatWeDid);
+  const dedupedNeedsWork = dedupe(needsWork).slice(0, 6);
+  const dedupedNextLessonFocus = dedupe(nextLessonFocus).slice(0, 4);
+  const nextFlightCue = buildNextFlightCue(dedupedNeedsWork);
 
   return {
     flightSummary,
     whatWeDid,
     wentWell: dedupe(wentWell).slice(0, 6),
-    needsWork: dedupe(needsWork).slice(0, 6),
+    needsWork: dedupedNeedsWork,
     instructorGuidance,
     instructorAssistance: dedupe(instructorAssistance).slice(0, 4),
     riskManagementNotes: dedupe(riskManagementNotes).slice(0, 4),
     actionItems: dedupe(actionItems).slice(0, 6),
-    nextLessonFocus: dedupe(nextLessonFocus).slice(0, 4),
+    nextLessonFocus: dedupedNextLessonFocus,
     studyReferences,
+    nextFlightCue,
     // Always overwritten by lib/ai/index.ts from debrief_assessment_ratings --
     // this is just to satisfy the return type when called directly (e.g. tests).
     assessmentDifferences: [],
@@ -162,6 +166,27 @@ function toActionItem(sentence: string) {
   if (lower.includes("bounc")) return "Practice smooth control inputs through the landing flare";
   if (lower.includes("behind") || lower.includes("late")) return "Practice staying ahead of the aircraft during the approach";
   return `Work on: ${capitalize(sentence.replace(/^(i|we)\s+/i, "").replace(/,?\s*but\s+.*$/i, "").trim())}`;
+}
+
+/**
+ * Short cockpit mnemonic for the single most-discussed weakness -- same
+ * keyword categories as toActionItem(), just compressed into a repeatable
+ * phrase instead of a full instruction. Deliberately reads only needsWork,
+ * not nextLessonFocus -- that list always has a "General pattern work"
+ * fallback, which isn't a real weakness and shouldn't produce a cue.
+ */
+function buildNextFlightCue(needsWork: string[]): string {
+  const top = needsWork[0];
+  if (!top) return "";
+  const lower = top.toLowerCase();
+  if (lower.includes("speed") || lower.includes("float")) return "Airspeed. Trim. Hold it.";
+  if (lower.includes("radio") || lower.includes("tower") || lower.includes("instruction")) return "Listen. Read back. Confirm.";
+  if (lower.includes("configur")) return "Configure early, every time.";
+  if (lower.includes("short field")) return "Speed. Point. Flare.";
+  if (lower.includes("crosswind") || lower.includes("squirrelly")) return "Aileron into the wind, all the way down.";
+  if (lower.includes("bounc")) return "Ease it down -- don't force it.";
+  if (lower.includes("behind") || lower.includes("late")) return "Stay ahead of the airplane.";
+  return "Slow down. Fly the airplane.";
 }
 
 function buildNextLessonFocus(topics: string[], needsWork: string[]) {

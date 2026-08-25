@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { DebriefResultSections } from "@/components/debrief/debrief-result-sections";
+import { DebriefReplay } from "@/components/debrief/debrief-replay";
 import { type ComparisonRow } from "@/components/debrief/comparison-table";
 import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { getRepository } from "@/lib/data";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import { computeSkillProgression } from "@/lib/skill-progress";
+import { computeNextLessonBrief } from "@/lib/training-memory";
 import { formatFlightContext } from "@/lib/utils";
 
 export default async function DebriefResultsPage(props: PageProps<"/flights/[id]/debrief/results">) {
@@ -22,9 +24,10 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
   const { structuredResult: result } = debrief;
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
 
-  const [allStudentSignals, memberships] = await Promise.all([
+  const [allStudentSignals, memberships, nextLessonBrief] = await Promise.all([
     repo.listTrainingSignals({ studentId: flight.userId }),
     repo.listMembershipsForUser(flight.userId),
+    computeNextLessonBrief(repo, flight.userId),
   ]);
   const certificateType =
     memberships.find((m) => m.organizationId === flight.organizationId)?.certificateType ?? null;
@@ -59,6 +62,18 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
           })}
         </p>
       </div>
+
+      <DebriefReplay
+        flightId={flight.id}
+        result={result}
+        recurringTheme={nextLessonBrief.recurringThemes[0] ?? null}
+        certificateType={certificateType}
+        canEditCue={viewer.user.id === flight.userId}
+        handoff={{
+          keepWorkingOn: nextLessonBrief.keepWorkingOn,
+          beforeFlightItems: nextLessonBrief.beforeFlightItems,
+        }}
+      />
 
       <DebriefResultSections
         result={result}
