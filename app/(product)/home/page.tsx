@@ -103,22 +103,22 @@ export default async function StudentHomePage() {
                       : "flex flex-col items-center gap-1.5 py-1"
                   }
                 >
-                  <div className="relative size-11">
-                    <svg viewBox="0 0 44 44" className="-rotate-90">
-                      <circle cx="22" cy="22" r="18" fill="none" stroke="var(--hairline)" strokeWidth="4" />
+                  <div className="relative size-16">
+                    <svg viewBox="0 0 64 64" className="-rotate-90">
+                      <circle cx="32" cy="32" r="26" fill="none" stroke="var(--hairline)" strokeWidth="6" />
                       <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
+                        cx="32"
+                        cy="32"
+                        r="26"
                         fill="none"
                         stroke={stat.color}
-                        strokeWidth="4"
+                        strokeWidth="6"
                         strokeLinecap="round"
-                        strokeDasharray="113"
-                        strokeDashoffset="28"
+                        strokeDasharray="163"
+                        strokeDashoffset="40"
                       />
                     </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-foreground">
+                    <span className="absolute inset-0 flex items-center justify-center text-lg font-semibold text-foreground">
                       {stat.value}
                     </span>
                   </div>
