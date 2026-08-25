@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { CheckCircle2, Circle, LifeBuoy, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -82,9 +83,10 @@ export function GuideControl({ steps, variant }: { steps: GuideStep[]; variant: 
         ) : null}
       </button>
 
-      {open ? (
-        <>
-          <button
+      {open
+        ? createPortal(
+            <>
+              <button
             type="button"
             aria-label="Close"
             onClick={() => setOpen(false)}
@@ -158,8 +160,10 @@ export function GuideControl({ steps, variant }: { steps: GuideStep[]; variant: 
               </div>
             </div>
           </div>
-        </>
-      ) : null}
+            </>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
