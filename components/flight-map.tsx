@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Map } from "lucide-react";
+import { Map, Maximize2, X } from "lucide-react";
 import { TrackPreview } from "@/components/track-preview";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import type { TrackPosition } from "@/lib/types";
@@ -37,6 +37,7 @@ function DeferredMap({ track }: { track: TrackPosition[] }) {
   const [mapLoadFailed, setMapLoadFailed] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapAttempt, setMapAttempt] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const loadMap = useCallback(() => {
     setMapLoadFailed(false);
     setMapLoaded(false);
@@ -64,30 +65,72 @@ function DeferredMap({ track }: { track: TrackPosition[] }) {
     return () => observer.disconnect();
   }, [loadMap, shouldLoadMap]);
 
+  // Escape closes fullscreen, and the page can't scroll behind it -- same
+  // expectations as any other full-viewport overlay in the app.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isFullscreen]);
+
   return (
-    <div
-      ref={placeholderRef}
-      data-testid="flight-map"
-      aria-busy={shouldLoadMap && !mapLoaded && !mapLoadFailed}
-      className="relative h-64 overflow-hidden rounded-xl border border-hairline bg-slate-50 dark:bg-slate-900/40 sm:h-80"
-    >
-      {!mapLoaded ? (
-        <TrackMapPlaceholder
-          track={track}
-          onLoadMap={loadMap}
-          failed={mapLoadFailed}
-          loading={shouldLoadMap && !mapLoadFailed}
-        />
+    <>
+      <div
+        ref={placeholderRef}
+        data-testid="flight-map"
+        aria-busy={shouldLoadMap && !mapLoaded && !mapLoadFailed}
+        className="relative h-64 overflow-hidden rounded-xl border border-hairline bg-slate-50 dark:bg-slate-900/40 sm:h-80"
+      >
+        {!mapLoaded ? (
+          <TrackMapPlaceholder
+            track={track}
+            onLoadMap={loadMap}
+            failed={mapLoadFailed}
+            loading={shouldLoadMap && !mapLoadFailed}
+          />
+        ) : null}
+        {shouldLoadMap && !mapLoadFailed ? (
+          <MapLibreTrack
+            key={mapAttempt}
+            track={track}
+            onLoad={handleMapLoad}
+            onLoadError={handleMapLoadError}
+          />
+        ) : null}
+        {mapLoaded && !mapLoadFailed ? (
+          <button
+            type="button"
+            onClick={() => setIsFullscreen(true)}
+            aria-label="View flight path fullscreen"
+            className="absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-lg bg-white/90 text-slate-700 shadow-sm ring-1 ring-slate-200 backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand dark:bg-slate-800/90 dark:text-slate-100 dark:ring-white/15 dark:hover:bg-slate-800"
+          >
+            <Maximize2 className="size-4" />
+          </button>
+        ) : null}
+      </div>
+
+      {isFullscreen ? (
+        <div className="fixed inset-0 z-50 bg-black">
+          <MapLibreTrack key={`fullscreen-${mapAttempt}`} track={track} onLoad={() => {}} onLoadError={() => setIsFullscreen(false)} />
+          <button
+            type="button"
+            onClick={() => setIsFullscreen(false)}
+            aria-label="Exit fullscreen"
+            className="absolute right-4 top-4 z-10 flex size-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-lg ring-1 ring-slate-200 backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
       ) : null}
-      {shouldLoadMap && !mapLoadFailed ? (
-        <MapLibreTrack
-          key={mapAttempt}
-          track={track}
-          onLoad={handleMapLoad}
-          onLoadError={handleMapLoadError}
-        />
-      ) : null}
-    </div>
+    </>
   );
 }
 
