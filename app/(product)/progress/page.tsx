@@ -53,8 +53,8 @@ export default async function ProgressPage() {
                 Ongoing ({keepWorkingOn.length})
               </p>
               <p className="mt-1 text-xs text-foreground-faint">
-                Skills flagged across your debriefs. These clear on their own once a later flight shows you&rsquo;ve got
-                it -- or check one off yourself if you feel ready.
+                Skills your instructor called out across debriefs. These clear on their own once a later flight
+                shows you&rsquo;ve got it -- or check one off yourself if you feel ready.
               </p>
               <div className="mt-2">
                 <TrainingItemChecklist items={keepWorkingOn} />

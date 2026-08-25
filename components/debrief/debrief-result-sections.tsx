@@ -63,17 +63,19 @@ export function DebriefResultSections({
 
       {ttsEnabled ? <ListenButton baseSrc={`/api/flights/${flightId}/debrief/audio`} label="Listen to your debrief" /> : null}
 
-      {/* Went Well -- what happened and what worked, framed positively. */}
+      {/* What We Did is a neutral recap, not a positive/negative judgment -- kept outside the Went Well grouping so that heading only ever sits over content that's actually praise. */}
+      <Section icon={ListChecks} title="What We Did" items={result.whatWeDid} empty="Nothing captured yet." />
+
+      {/* Went Well -- what worked, framed positively. */}
       <GroupHeading tone="good">What Went Well</GroupHeading>
       <div className="flex flex-col gap-4">
-        <Section icon={ListChecks} title="What We Did" items={result.whatWeDid} empty="Nothing captured yet." />
-        <Section icon={CheckCircle2} title="Went Well" items={result.wentWell} empty="Nothing flagged." tone="good" />
+        <Section icon={CheckCircle2} title="Went Well" items={result.wentWell} empty="Nothing stood out." tone="good" />
       </div>
 
       {/* Items to Improve -- coaching, corrections, and where perceptions differed. */}
       <GroupHeading tone="amber">Items to Improve</GroupHeading>
       <div className="flex flex-col gap-4">
-        <Section icon={Target} title="Needs Work" items={result.needsWork} empty="Nothing flagged." tone="amber" />
+        <Section icon={Target} title="Needs Work" items={result.needsWork} empty="No issues noted." tone="amber" />
 
         {differenceRows.length > 0 ? (
           <Card>
@@ -115,7 +117,7 @@ export function DebriefResultSections({
           empty="No instructor intervention noted."
           tone="amber"
         />
-        <Section icon={ShieldAlert} title="Risk Management & ADM" items={result.riskManagementNotes} empty="Nothing flagged." tone="amber" />
+        <Section icon={ShieldAlert} title="Risk Management & ADM" items={result.riskManagementNotes} empty="No risk items noted." tone="amber" />
       </div>
 
       {/* Next Steps -- what to carry into the next lesson. */}

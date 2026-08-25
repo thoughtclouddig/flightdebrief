@@ -44,7 +44,7 @@ export default async function AdminInsightsPage() {
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="size-4 text-brand" />
             Most Common Training Issues
-            <InfoTooltip text="Skills currently flagged as needing coaching for the most students, based on each student's most recent debrief." />
+            <InfoTooltip text="Skills currently marked as needing coaching for the most students, based on each student's most recent debrief." />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -73,7 +73,7 @@ export default async function AdminInsightsPage() {
           <CardTitle className="flex items-center gap-2">
             <Repeat className="size-4 text-amber-500" />
             Recurring Student Issues
-            <InfoTooltip text="A student whose same skill has been flagged as needing coaching in 3 or more of their last 4 debriefs -- not a one-off, but a pattern worth a look." />
+            <InfoTooltip text="A student whose same skill has needed coaching in 3 or more of their last 4 debriefs -- not a one-off, but a pattern worth a look." />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -162,7 +162,7 @@ export default async function AdminInsightsPage() {
         </h2>
         {needsReview.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-hairline p-8 text-center text-sm text-foreground-soft">
-            Nothing flagged for review right now.
+            Nothing needs review right now.
           </div>
         ) : (
           <Card>
