@@ -35,11 +35,15 @@ export interface NextLessonBrief {
   lastInstructor: Instructor | null;
   /** The single most recent instructor quote actually captured in a debrief -- never fabricated. */
   lastInstructorNote: InstructorGuidance | null;
+  /** Positive reminders from the last debrief -- capped short, for a "Last Time" briefing beat, not a full recap. */
+  lastWentWell: string[];
   focusAreas: string[];
   keepWorkingOn: string[];
   beforeFlightItems: string[];
   recurringThemes: RecurringTheme[];
   upcomingReservation: Reservation | null;
+  /** Deterministic, not LLM-generated -- templated from the top focus/action item so there's always a concrete, grounded prompt to hand the student, never an invented one. */
+  suggestedQuestion: string | null;
 }
 
 export async function computeNextLessonBrief(repo: Repository, studentId: string): Promise<NextLessonBrief> {
@@ -64,6 +68,8 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
 
   const lastInstructor = lastFlight?.instructor ?? null;
   const lastInstructorNote = lastDebrief?.structuredResult.instructorGuidance[0] ?? null;
+  const lastWentWell = lastDebrief?.structuredResult.wentWell.slice(0, 3) ?? [];
+  const suggestedQuestion = buildSuggestedQuestion(focusAreas, keepWorkingOn);
 
   const recentCompleted = completed.slice(0, 4);
   const recentFlightIds = new Set(recentCompleted.map((f) => f.id));
@@ -83,12 +89,26 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
     lastDebrief,
     lastInstructor,
     lastInstructorNote,
+    lastWentWell,
     focusAreas,
     keepWorkingOn,
     beforeFlightItems,
     recurringThemes,
     upcomingReservation,
+    suggestedQuestion,
   };
+}
+
+/**
+ * Templated, not generated -- the app already has the top thing worth
+ * discussing (the last debrief's own focus item), so asking an LLM to
+ * paraphrase it would just risk drifting from what was actually said.
+ */
+export function buildSuggestedQuestion(focusAreas: string[], keepWorkingOn: string[]): string | null {
+  const topItem = focusAreas[0] ?? keepWorkingOn[0];
+  if (!topItem) return null;
+  const lowered = topItem[0].toLowerCase() + topItem.slice(1);
+  return `Can we spend a few extra minutes on ${lowered} today?`;
 }
 
 /**

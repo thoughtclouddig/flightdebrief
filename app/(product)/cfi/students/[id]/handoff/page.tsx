@@ -1,16 +1,22 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MessageSquareQuote, Repeat, Target, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, BookOpen, CheckCircle2, Eye, MessageSquareQuote, Target, User } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AcsBadge } from "@/components/acs-badge";
 import { getRepository } from "@/lib/data";
 import { getAuthorizedStudent } from "@/lib/auth/access";
 import { computeNextLessonBrief } from "@/lib/training-memory";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Condensed "where this student left off" view for a CFI about to fly with
+ * them again -- built entirely from computeNextLessonBrief, the same data
+ * powering the student's own /next-lesson page. Deliberately short: the goal
+ * is understanding this student's status in seconds, not a full history.
+ */
 export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/students/[id]/handoff">) {
   const { id } = await props.params;
   const repo = getRepository();
@@ -18,10 +24,7 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
   if (!authorized) notFound();
   const { viewer, student, memberships } = authorized;
 
-  const [flights, brief] = await Promise.all([
-    repo.listFlights({ studentId: id }),
-    computeNextLessonBrief(repo, id),
-  ]);
+  const brief = await computeNextLessonBrief(repo, id);
 
   // Marks the CFI's "Prepare for a student's next lesson" Guide step (lib/guide.ts).
   if (!viewer.user.guideProgress?.nextFlight) {
@@ -29,42 +32,52 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
   }
   const certificateType = memberships.find((m) => m.role === "student")?.certificateType ?? null;
 
-  const recentCompleted = [...flights]
-    .filter((f) => f.debriefStatus === "complete")
-    .sort((a, b) => b.flightDate.localeCompare(a.flightDate))
-    .slice(0, 3);
-  const recentDebriefs = await Promise.all(recentCompleted.map((f) => repo.getDebriefByFlight(f.id)));
-  const recentTopics = Array.from(
-    new Set(recentDebriefs.flatMap((d) => d?.structuredResult.whatWeDid ?? [])),
-  );
-
-  const topRecurring = brief.recurringThemes[0] ?? null;
+  const instructorFirstName = resolveCfiFirstName(brief.lastInstructor);
+  const cfi = instructorFirstName ?? "your instructor";
+  const flyingWithDifferentInstructor = Boolean(brief.lastInstructor) && brief.lastInstructor?.id !== viewer.user.id;
+  const watchFor = brief.recurringThemes[0] ?? null;
+  const topNeedsWork = brief.lastDebrief?.structuredResult.needsWork[0] ?? null;
+  const studyReferences = brief.lastDebrief?.structuredResult.studyReferences ?? [];
+  const viewedUrls =
+    studyReferences.length > 0 ? new Set(await repo.listViewedStudyResourceUrls(id)) : new Set<string>();
+  const dateLabel = brief.lastFlight
+    ? new Date(brief.lastFlight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : null;
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
-      <Link href={`/cfi/students/${id}`} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-brand dark:text-slate-400">
+      <Link href={`/cfi/students/${id}`} className="flex items-center gap-1.5 text-sm text-foreground-soft hover:text-brand">
         <ArrowLeft className="size-4" />
         Back to profile
       </Link>
 
       <div>
-        <p className="text-sm font-medium uppercase tracking-wide text-brand">CFI Handoff Brief</p>
-        <h1 className="mt-1 text-2xl font-semibold text-slate-900 dark:text-white">{student.name}</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Everything you need before flying with this student for the first time.
-        </p>
+        <p className="text-sm font-medium uppercase tracking-wide text-brand">Next Flight</p>
+        <h1 className="mt-1 text-2xl font-semibold text-foreground">{student.name}&rsquo;s Next Flight</h1>
+        {dateLabel ? (
+          <p className="mt-1 text-sm text-foreground-soft">
+            Last debrief with {cfi} &middot; {dateLabel}
+          </p>
+        ) : null}
       </div>
 
-      {recentTopics.length > 0 ? (
+      {flyingWithDifferentInstructor ? (
+        <p className="rounded-lg bg-surface-sunken px-3 py-2 text-sm text-foreground-soft">
+          You didn&rsquo;t fly the last lesson -- here&rsquo;s where things stand.
+        </p>
+      ) : null}
+
+      {brief.lastWentWell.length > 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Recent Training</CardTitle>
+            <CardTitle>Last Lesson</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-1.5">
-            {recentTopics.map((t, i) => (
-              <Badge key={i} variant="neutral">
-                {t}
-              </Badge>
+          <CardContent className="flex flex-col gap-2">
+            {brief.lastWentWell.map((item, i) => (
+              <p key={i} className="flex items-start gap-2 text-sm text-foreground-soft">
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-good" />
+                {item}
+              </p>
             ))}
           </CardContent>
         </Card>
@@ -75,13 +88,14 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="size-4 text-brand" />
-              Current Focus
+              Build On Today
             </CardTitle>
+            <CardDescription>From your debrief with {cfi}</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="flex flex-col gap-1.5">
               {brief.focusAreas.map((f, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-slate-800 dark:text-slate-100">
+                <li key={i} className="flex items-start gap-2 text-sm text-foreground">
                   <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
                   {f}
                 </li>
@@ -91,20 +105,49 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
         </Card>
       ) : null}
 
-      {topRecurring ? (
-        <Card className="border-amber-300/60 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10">
+      {watchFor || topNeedsWork ? (
+        <Card className="border-amber/40 bg-amber-soft">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Repeat className="size-4 text-amber-600 dark:text-amber-400" />
-              Recurring Item
+              <Eye className="size-4 text-amber" />
+              Watch For
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-            <p className="text-sm text-slate-700 dark:text-slate-200">
-              <span className="font-semibold text-slate-900 dark:text-white">{topRecurring.theme}</span> has been
-              mentioned in {topRecurring.count} of the last {topRecurring.consideredFlights} debriefs.
-            </p>
-            <AcsBadge skill={topRecurring.skill} certificateType={certificateType} />
+            {watchFor ? (
+              <>
+                <p className="text-sm text-foreground-soft">
+                  <span className="font-semibold text-foreground">{watchFor.theme}</span> has come up in{" "}
+                  {watchFor.count} of the last {watchFor.consideredFlights} debriefs.
+                </p>
+                <AcsBadge skill={watchFor.skill} certificateType={certificateType} />
+              </>
+            ) : (
+              <p className="text-sm text-foreground-soft">{topNeedsWork}</p>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {studyReferences.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="size-4 text-brand" />
+              Student Prep
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {studyReferences.map((ref, i) => (
+              <p key={i} className="flex items-center gap-2 text-sm text-foreground-soft">
+                {viewedUrls.has(ref.url) ? (
+                  <CheckCircle2 className="size-4 shrink-0 text-good" />
+                ) : (
+                  <span className="size-1.5 shrink-0 rounded-full bg-foreground-faint" />
+                )}
+                {viewedUrls.has(ref.url) ? "Reviewed" : "Not yet reviewed"}: {ref.topic}
+              </p>
+            ))}
           </CardContent>
         </Card>
       ) : null}
@@ -118,28 +161,17 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{brief.lastInstructor.name}</p>
+            <p className="text-sm font-medium text-foreground">{brief.lastInstructor.name}</p>
             {brief.lastInstructorNote ? (
               <div>
-                <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
                   <MessageSquareQuote className="size-3.5" /> Last Instructor Note
                 </p>
-                <blockquote className="rounded-lg bg-slate-50 px-3 py-2 text-sm italic text-slate-700 dark:bg-white/5 dark:text-slate-200">
+                <blockquote className="rounded-lg bg-surface-sunken px-3 py-2 text-sm italic text-foreground-soft">
                   &ldquo;{brief.lastInstructorNote.quote}&rdquo;
                 </blockquote>
               </div>
             ) : null}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {brief.focusAreas.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Planned Next Lesson</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-slate-700 dark:text-slate-200">{brief.focusAreas.join(" + ")}.</p>
           </CardContent>
         </Card>
       ) : null}

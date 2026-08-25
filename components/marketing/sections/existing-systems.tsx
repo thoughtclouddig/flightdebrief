@@ -1,6 +1,15 @@
 import { ArrowDown } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 
+/**
+ * Not currently rendered on the homepage -- its scheduling-integration
+ * reassurance ("keep the systems you already use") is a distinct claim from
+ * the training-continuity narrative the homepage now leads with, and adding
+ * it here would just be more page length on the same point. Reserved for a
+ * future integrations-focused page/section instead of deleted, since the
+ * copy is still accurate (Flight Schedule Pro integration is still planned).
+ */
+
 const SCHEDULING_ITEMS = ["Students", "CFIs", "Aircraft", "Reservations"];
 const AFTERFLIGHT_ITEMS = ["Flight Context", "Training History", "CFI Feedback", "Action Items", "Next Flight Brief"];
 

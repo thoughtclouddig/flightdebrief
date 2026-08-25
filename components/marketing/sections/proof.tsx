@@ -33,7 +33,7 @@ export function Proof() {
     <section className="bg-white px-6 py-28 sm:py-40">
       <div className="mx-auto max-w-3xl text-center">
         <RevealUp>
-          <p className="text-balance text-sm font-bold uppercase tracking-[0.16em] text-brand">The Proof</p>
+          <p className="text-balance text-base font-bold uppercase tracking-[0.16em] text-brand sm:text-lg">The Proof</p>
           <p className="font-display mt-6 text-balance text-4xl font-bold sm:text-5xl">
             <span className="text-[#101727]">The</span> <span className="text-brand">proven power</span>{" "}
             <span className="text-[#101727]">of structured debriefing.</span>

@@ -1,35 +1,35 @@
 import Link from "next/link";
-import { BookOpen, ExternalLink, PlaneTakeoff, Repeat, Target, ClipboardCheck } from "lucide-react";
+import { BookOpen, CheckCircle2, ClipboardCheck, HelpCircle, PlaneTakeoff, Target } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AcsBadge } from "@/components/acs-badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChecklistCard } from "@/components/checklist-card";
 import { ListenButton } from "@/components/listen-button";
-import { NextLessonFocusCard } from "@/components/next-lesson-focus-card";
+import { StudyResourceLink } from "@/components/study-resource-link";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
-import { formatDurationShort } from "@/lib/utils";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * A 30-second pre-flight briefing, not a dashboard -- deliberately excludes
+ * cross-flight history (recurring themes) which lives on /progress instead.
+ * See lib/training-memory.ts's computeNextLessonBrief for where every field
+ * here comes from; this page adds no new data beyond study-viewed state.
+ */
 export default async function NextLessonPage() {
   const repo = getRepository();
   const viewer = await getViewer();
-  const [brief, memberships] = await Promise.all([
-    computeNextLessonBrief(repo, viewer.user.id),
-    repo.listMembershipsForUser(viewer.user.id),
-  ]);
-  const certificateType =
-    memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
+  const brief = await computeNextLessonBrief(repo, viewer.user.id);
 
   if (!brief.lastFlight) {
     return (
       <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center">
         <PlaneTakeoff className="size-10 text-foreground-faint" />
-        <h1 className="text-2xl font-semibold text-foreground">Ready to Fly?</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Next Flight</h1>
         <p className="text-foreground-soft">
-          Debrief your first flight and your next-lesson brief will show up here.
+          Your Next Flight brief will appear after your first completed debrief.
         </p>
         <Link href="/dashboard" className={buttonVariants()}>
           Go to flights
@@ -38,9 +38,12 @@ export default async function NextLessonPage() {
     );
   }
 
-  const whatWeDid = brief.lastDebrief?.structuredResult.whatWeDid ?? [];
   const studyReferences = brief.lastDebrief?.structuredResult.studyReferences ?? [];
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
+  const instructorFirstName = resolveCfiFirstName(brief.lastInstructor);
+  const cfi = instructorFirstName ?? "your instructor";
+  const focusToday = brief.focusAreas.slice(0, 2);
+  const viewedUrls = studyReferences.length > 0 ? new Set(await repo.listViewedStudyResourceUrls(viewer.user.id)) : new Set<string>();
 
   // Marks the "Prepare for your next flight" Guide step (lib/guide.ts).
   if (!viewer.user.guideProgress?.nextFlight) {
@@ -50,57 +53,65 @@ export default async function NextLessonPage() {
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <div className="flex flex-col items-center gap-3 text-center">
-        <h1 className="text-3xl font-semibold text-foreground">Ready to Fly?</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Next Flight</h1>
+        <p className="text-sm text-foreground-soft">Based on your debrief with {cfi}</p>
         {ttsEnabled ? <ListenButton baseSrc="/api/next-lesson/audio" label="Listen to your brief" /> : null}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Last Lesson</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <p className="text-sm text-foreground-soft">
-            {new Date(brief.lastFlight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-            })}{" "}
-            · {brief.lastFlight.aircraft.tailNumber} · {formatDurationShort(brief.lastFlight.durationMinutes)}
-          </p>
+      {brief.lastWentWell.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Last Time</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {brief.lastWentWell.map((item, i) => (
+              <p key={i} className="flex items-start gap-2 text-foreground-soft">
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-good" />
+                {item}
+              </p>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
 
-          {whatWeDid.length > 0 ? (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">You worked on</p>
-              <p className="mt-1 text-foreground">{whatWeDid.join(", ")}.</p>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
-
-      {/* Historical context beyond the immediately previous flight -- a skill only shows up here once it's recurred, per computeNextLessonBrief's 4-flight window. */}
-      {brief.recurringThemes.length > 0 ? (
-        <Card className="border-amber/40 bg-amber-soft">
+      {focusToday.length > 0 ? (
+        <Card className="border-brand/30 bg-brand/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Repeat className="size-4 text-amber" />
-              Worth Extra Focus
+              <Target className="size-4 text-brand" />
+              Focus Today
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {brief.recurringThemes.map((theme, i) => (
-              <div key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <p className="text-sm text-foreground-soft">
-                  <span className="font-semibold text-foreground">{theme.theme}</span> has come up in{" "}
-                  {theme.count} of your last {theme.consideredFlights} debriefs.
-                </p>
-                <AcsBadge skill={theme.skill} certificateType={certificateType} />
-              </div>
+          <CardContent className="flex flex-col gap-2">
+            {focusToday.map((item, i) => (
+              <p key={i} className="font-display text-2xl font-bold text-foreground">
+                {item}
+              </p>
             ))}
           </CardContent>
         </Card>
       ) : null}
 
       {brief.keepWorkingOn.length > 0 ? (
-        <ChecklistCard icon={Target} title="Keep working on" items={brief.keepWorkingOn} />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="size-4 text-brand" />
+              Your Instructor Wanted You To Work On
+            </CardTitle>
+            <CardDescription>From your debrief with {cfi}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="flex flex-col gap-2">
+              {brief.keepWorkingOn.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-foreground-soft">
+                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-brand" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       ) : null}
 
       {brief.beforeFlightItems.length > 0 ? (
@@ -112,7 +123,7 @@ export default async function NextLessonPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="size-4 text-brand" />
-              Study up on your weak areas
+              Recommended Study
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -121,17 +132,9 @@ export default async function NextLessonPage() {
                 <li key={i} className="flex flex-col gap-0.5">
                   <span className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">{ref.topic}</span>
                   {ref.url ? (
-                    <a
-                      href={ref.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-brand hover:underline"
-                    >
-                      {ref.source}
-                      <ExternalLink className="size-3 shrink-0" />
-                    </a>
+                    <StudyResourceLink url={ref.url} label={ref.source} initiallyViewed={viewedUrls.has(ref.url)} />
                   ) : (
-                    <span className="text-foreground-soft">{ref.source}</span>
+                    <span className="text-sm text-foreground-soft">{ref.source}</span>
                   )}
                 </li>
               ))}
@@ -140,11 +143,23 @@ export default async function NextLessonPage() {
         </Card>
       ) : null}
 
-      {brief.focusAreas.length > 0 ? <NextLessonFocusCard items={brief.focusAreas} /> : null}
+      {brief.suggestedQuestion ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <HelpCircle className="size-4 text-brand" />
+              Ask Your Instructor
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-foreground">&ldquo;{brief.suggestedQuestion}&rdquo;</p>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="flex flex-col items-center gap-1.5">
         <Link href="/flights/new" className={buttonVariants({ size: "lg", className: "w-full" })}>
-          Log Today&rsquo;s Flight
+          I&rsquo;m Ready to Fly
         </Link>
         <p className="text-xs text-foreground-faint">After you land -- this isn&rsquo;t a pre-flight step.</p>
       </div>

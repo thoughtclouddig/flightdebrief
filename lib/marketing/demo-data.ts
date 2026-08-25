@@ -45,19 +45,6 @@ export const DEMO_FLIGHT: FlightWithRelations = {
   instructor: DEMO_INSTRUCTOR,
 };
 
-export const DEMO_TRANSCRIPT_FRAGMENTS = [
-  "First two approaches were fast.",
-  "Last three were much better.",
-  "Get configured earlier.",
-  "Let's work on tower calls next time.",
-];
-
-export const DEMO_CONVERSATION = [
-  { speaker: "CFI" as const, line: "Your first two approaches were fast. The last three were much better. Next time I want you configured earlier." },
-  { speaker: "Student" as const, line: "I felt like I was chasing the airspeed on final." },
-  { speaker: "CFI" as const, line: "Exactly. Let's work on that and have you handle all the tower calls." },
-];
-
 export const DEMO_STRUCTURED_DEBRIEF = {
   whatWeDid: ["Traffic pattern work", "Five landings", "One go-around", "Tower communications"],
   wentWell: ["Last three approaches were much better", "Radio confidence improved"],
@@ -65,9 +52,6 @@ export const DEMO_STRUCTURED_DEBRIEF = {
   cfiGuidance: "“Last three approaches were much better. Continue getting configured earlier.”",
   actionItems: ["Review approach speeds", "Review short-field procedure", "Practice tower readbacks"],
 };
-
-export const DEMO_NEXT_LESSON_FOCUS = ["Stabilized Approaches", "Earlier Configuration", "Tower Communications"];
-export const DEMO_BEFORE_YOU_FLY = ["Review approach speeds", "Review short-field procedure", "Practice tower readbacks"];
 
 export const DEMO_STUDENT_PROGRESS = {
   improving: ["Radio Communications", "Pattern Consistency"],
@@ -91,13 +75,6 @@ export const DEMO_CFI_STUDENTS = [
     focusAreas: ["Slow flight & maneuvers"],
   },
 ];
-
-export const DEMO_HANDOFF = {
-  recentTraining: ["Pattern work", "Short-field landings", "Go-arounds"],
-  currentFocus: ["Stabilized approaches", "Earlier configuration", "Tower communications"],
-  lastNote: "“Last three approaches were much better. Continue getting configured earlier.”",
-  plannedNextLesson: "Short-field work + student handles tower calls.",
-};
 
 export const DEMO_SCHOOL_STATS = [
   { label: "Active Students", value: 42, suffix: "" },
