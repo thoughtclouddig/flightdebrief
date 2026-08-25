@@ -5,11 +5,18 @@
  * NOT a verbatim readout of the on-screen lists: a narrated brief needs
  * transitions and prioritization a bullet list doesn't, so this is authored
  * as prose rather than concatenating the same strings the page renders.
+ *
+ * Same CFI-attribution principle as lib/debrief-narration.ts: the focus for
+ * today's flight is the instructor's guidance carried forward, not AfterFlight
+ * independently telling the student what to do -- attribute it to the
+ * instructor by first name when known, "your instructor" otherwise.
  */
 import { speakList } from "@/lib/narration";
 
 export interface NextLessonNarrationInput {
   studentFirstName: string;
+  /** Resolved via lib/instructor-attribution.ts's resolveCfiFirstName(). Null when the last debriefed flight had no instructor assigned. */
+  instructorFirstName: string | null;
   flightDate: string;
   whatWeDid: string[];
   keepWorkingOn: string[];
@@ -19,6 +26,7 @@ export interface NextLessonNarrationInput {
 
 export function buildNextLessonNarration(input: NextLessonNarrationInput): string {
   const lines: string[] = [];
+  const cfiOrFallback = input.instructorFirstName ?? "your instructor";
 
   const dateLabel = new Date(input.flightDate + "T12:00:00").toLocaleDateString("en-US", {
     month: "long",
@@ -32,7 +40,7 @@ export function buildNextLessonNarration(input: NextLessonNarrationInput): strin
   lines.push(`Hey ${input.studentFirstName}, quick brief before you fly.`);
 
   if (input.focus.length > 0) {
-    lines.push(`Today's about ${speakList(input.focus)} -- that's your main focus up there.`);
+    lines.push(`${cfiOrFallback === "your instructor" ? "Your instructor" : cfiOrFallback} wants you to focus on ${speakList(input.focus)} today.`);
   }
 
   if (input.whatWeDid.length > 0) {

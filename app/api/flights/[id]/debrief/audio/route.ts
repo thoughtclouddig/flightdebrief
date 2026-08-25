@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 import { buildDebriefNarration } from "@/lib/debrief-narration";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
 import { toPilotSpeak } from "@/lib/narration";
 import { getCachedAudio, setCachedAudio } from "@/lib/audio-cache";
@@ -49,6 +50,7 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
 
   const script = buildDebriefNarration({
     studentFirstName: student?.name.split(" ")[0] ?? "there",
+    instructorFirstName: resolveCfiFirstName(flight.instructor),
     whatWeDid: debrief.structuredResult.whatWeDid,
     wentWell: debrief.structuredResult.wentWell,
     needsWork: debrief.structuredResult.needsWork,

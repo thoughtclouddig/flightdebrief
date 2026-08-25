@@ -6,9 +6,20 @@ import type { InstructorGuidance, StudyReference } from "@/lib/types";
  * (see app/api/flights/[id]/debrief/audio/route.ts) -- for listening back to
  * what happened, e.g. driving home after the lesson. Prose, not a readout of
  * the on-screen bullet lists -- same rationale as lib/next-lesson-narration.ts.
+ *
+ * The CFI teaches; AfterFlight makes sure the lesson sticks. This script is
+ * the "Digital Debriefer" voice, so it must never sound like it's
+ * independently instructing/coaching/evaluating the student -- instructional
+ * content (what to work on, what to do next) is attributed to the instructor
+ * by first name when known, falling back to "your instructor" (never a
+ * guessed name, never a guessed pronoun -- there's no gender data anywhere
+ * in the schema). Ownership doesn't need repeating in every sentence once
+ * it's established.
  */
 export interface DebriefNarrationInput {
   studentFirstName: string;
+  /** Resolved via lib/instructor-attribution.ts's resolveCfiFirstName(). Null when no instructor is assigned to this flight. */
+  instructorFirstName: string | null;
   whatWeDid: string[];
   wentWell: string[];
   needsWork: string[];
@@ -18,6 +29,9 @@ export interface DebriefNarrationInput {
 }
 
 export function buildDebriefNarration(input: DebriefNarrationInput): string {
+  const cfi = input.instructorFirstName;
+  const cfiOrFallback = cfi ?? "your instructor";
+  const cfiOrFallbackCapitalized = cfi ?? "Your instructor";
   const sections: string[] = [`Hey ${input.studentFirstName}, here's your debrief -- let's walk through today's flight together.`];
 
   if (input.whatWeDid.length > 0) {
@@ -25,11 +39,13 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   }
 
   if (input.wentWell.length > 0) {
-    sections.push(`What went well: ${speakList(input.wentWell)}.`);
+    sections.push(`${cfiOrFallbackCapitalized} noted that ${speakList(input.wentWell)}.`);
   }
 
   if (input.needsWork.length > 0) {
-    sections.push(`What needs work: ${speakList(input.needsWork)}.`);
+    sections.push(
+      `The biggest thing you and ${cfiOrFallback} identified during the debrief was ${input.needsWork[0]}.`,
+    );
   }
 
   for (const g of input.instructorGuidance) {
@@ -37,17 +53,25 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   }
 
   if (input.actionItems.length > 0) {
-    sections.push(`Before your next flight: ${speakList(input.actionItems)}.`);
+    sections.push(`For your next flight, ${cfiOrFallback} wants you to focus on ${input.actionItems[0]}.`);
   }
 
   if (input.studyReferences.length > 0) {
-    sections.push("Take a look at the study resources below to dig deeper into today's topics.");
+    sections.push(
+      `AfterFlight has also added a few study resources to your list, based on what you and ${cfiOrFallback} discussed.`,
+    );
   }
 
-  // Short and generic on purpose -- the specifics (needs work, action items)
-  // were already said above, so a close that repeated them again just
-  // restated the same content twice in a row.
-  sections.push("Nice work today. Keep chipping away, and fly safe.");
+  // Short and generic on purpose -- the specifics were already said above,
+  // so a close that repeated them again just restated the same content
+  // twice in a row. Attributed once more when a name is known, since a
+  // closing "felt good about the flight" line reads as an instructor's
+  // assessment, not AfterFlight's own.
+  sections.push(
+    cfi
+      ? `Overall, ${cfi} felt this was a good flight, and you're making progress. Keep chipping away, and fly safe.`
+      : "Nice work today. Keep chipping away, and fly safe.",
+  );
 
   // Blank line between sections (not a single space) -- most TTS engines
   // treat a paragraph break as a longer pause than a mid-sentence period,

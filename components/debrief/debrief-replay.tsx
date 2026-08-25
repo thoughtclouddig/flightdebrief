@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, Check, CheckCircle2, ExternalLink, Pencil, Repeat, Sparkles, Target, X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { AcsBadge } from "@/components/acs-badge";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,7 @@ export function DebriefReplay({
   certificateType,
   canEditCue,
   handoff,
+  instructorFirstName,
 }: {
   flightId: string;
   result: StructuredDebrief;
@@ -37,6 +38,8 @@ export function DebriefReplay({
   canEditCue: boolean;
   /** From computeNextLessonBrief() (lib/training-memory.ts) -- open items not already covered above, so the handoff isn't just a repeat of this same debrief's own sections. */
   handoff: { keepWorkingOn: string[]; beforeFlightItems: string[] };
+  /** Resolved via lib/instructor-attribution.ts. Null when this flight has no instructor assigned -- falls back to "your instructor" wherever attribution is shown. */
+  instructorFirstName: string | null;
 }) {
   // "Work On" is capped to the top items rather than re-ranked -- the
   // analyzer already tends to surface the most-discussed issue first, and a
@@ -45,6 +48,7 @@ export function DebriefReplay({
   const keepDoing = result.wentWell.slice(0, 3);
   const nextFlight = result.nextLessonFocus.slice(0, 3);
   const resources = result.studyReferences.slice(0, 3);
+  const cfi = instructorFirstName ?? "your instructor";
 
   return (
     <div className="flex flex-col gap-4">
@@ -54,6 +58,7 @@ export function DebriefReplay({
             <Sparkles className="size-4 text-brand" />
             Today, In Short
           </CardTitle>
+          <CardDescription>From your debrief with {cfi}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -93,6 +98,7 @@ export function DebriefReplay({
               <BookOpen className="size-4 text-brand" />
               Recommended Before Your Next Lesson
             </CardTitle>
+            <CardDescription>Based on your debrief with {cfi}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {resources.map((ref, i) => (
@@ -124,6 +130,7 @@ export function DebriefReplay({
             <Target className="size-4 text-brand" />
             Before Your Next Flight
           </CardTitle>
+          <CardDescription>Based on your debrief with {cfi}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {handoff.keepWorkingOn.length > 0 ? (
