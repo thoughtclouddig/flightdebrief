@@ -205,6 +205,8 @@ export interface Repository {
 
   // --- Identity / organizations ---
   getUser(id: string): Promise<User | null>;
+  /** Sets one guide_progress key to true for a user -- fire-and-forget from the page that represents that milestone (see lib/guide.ts). */
+  markGuideStepViewed(userId: string, key: string): Promise<void>;
   getUserByAuthId(authUserId: string): Promise<User | null>;
   getUserByEmail(email: string): Promise<User | null>;
   listUsers(): Promise<User[]>;

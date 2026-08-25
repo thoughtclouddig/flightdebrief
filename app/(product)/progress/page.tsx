@@ -28,6 +28,11 @@ export default async function ProgressPage() {
   const certificateType =
     memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
 
+  // Marks the "Track your training over time" Guide step (lib/guide.ts).
+  if (!viewer.user.guideProgress?.progress) {
+    void repo.markGuideStepViewed(viewer.user.id, "progress").catch(() => {});
+  }
+
   const flightIds = new Set(flights.map((f) => f.id));
   const openItems = trainingItems.filter((t) => flightIds.has(t.flightId) && !t.done && t.visibility === "shared");
   const keepWorkingOn = openItems.filter((t) => t.category === "keep_working_on");

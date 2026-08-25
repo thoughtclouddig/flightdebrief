@@ -16,12 +16,17 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
   const repo = getRepository();
   const authorized = await getAuthorizedStudent(id);
   if (!authorized) notFound();
-  const { student, memberships } = authorized;
+  const { viewer, student, memberships } = authorized;
 
   const [flights, brief] = await Promise.all([
     repo.listFlights({ studentId: id }),
     computeNextLessonBrief(repo, id),
   ]);
+
+  // Marks the CFI's "Prepare for a student's next lesson" Guide step (lib/guide.ts).
+  if (!viewer.user.guideProgress?.nextFlight) {
+    void repo.markGuideStepViewed(viewer.user.id, "nextFlight").catch(() => {});
+  }
   const certificateType = memberships.find((m) => m.role === "student")?.certificateType ?? null;
 
   const recentCompleted = [...flights]

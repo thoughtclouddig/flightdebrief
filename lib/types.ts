@@ -62,6 +62,8 @@ export interface User {
   /** Small square photo as a data: URL, or null for the initials fallback. */
   avatarUrl: string | null;
   createdAt: string;
+  /** One-off "have you seen this yet" flags for the AfterFlight Guide (lib/guide.ts) -- optional since most existing User literals (seed/test fixtures) predate this field. */
+  guideProgress?: Record<string, boolean>;
 }
 
 export type OrgRole = "student" | "instructor" | "admin";

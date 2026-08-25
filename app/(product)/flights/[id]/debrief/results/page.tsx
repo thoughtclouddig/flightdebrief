@@ -24,6 +24,15 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
   const { structuredResult: result } = debrief;
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
 
+  // Marks the "Review your Debrief Replay" Guide step (lib/guide.ts) for
+  // whoever's actually looking -- student or CFI/admin alike, since the
+  // Guide tracks each viewer's own progress. Fire-and-forget: this page
+  // shouldn't wait on it, and a failed write just means the step re-marks
+  // on the next visit.
+  if (!viewer.user.guideProgress?.replay) {
+    void repo.markGuideStepViewed(viewer.user.id, "replay").catch(() => {});
+  }
+
   const [allStudentSignals, memberships, nextLessonBrief] = await Promise.all([
     repo.listTrainingSignals({ studentId: flight.userId }),
     repo.listMembershipsForUser(flight.userId),

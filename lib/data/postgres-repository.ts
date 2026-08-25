@@ -678,6 +678,14 @@ export class PostgresRepository implements Repository {
     return rows[0] ? mapUser(rows[0]) : null;
   }
 
+  async markGuideStepViewed(userId: string, key: string): Promise<void> {
+    const db = await this.db();
+    await db.query("UPDATE users SET guide_progress = jsonb_set(guide_progress, ARRAY[$2], 'true'::jsonb) WHERE id = $1", [
+      userId,
+      key,
+    ]);
+  }
+
   async getUserByAuthId(authUserId: string): Promise<User | null> {
     const db = await this.db();
     const { rows } = await db.query("SELECT * FROM users WHERE auth_user_id = $1", [authUserId]);
@@ -1221,6 +1229,7 @@ function mapUser(row: Row): User {
     profileCompleted: Boolean(row.profile_completed),
     avatarUrl: (row.avatar_url as string | null) ?? null,
     createdAt: iso(row.created_at),
+    guideProgress: (row.guide_progress as Record<string, boolean> | null) ?? {},
   };
 }
 

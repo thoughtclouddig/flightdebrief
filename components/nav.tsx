@@ -24,6 +24,8 @@ import {
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
+import { GuideControl } from "@/components/guide/guide-control";
+import type { GuideStep } from "@/lib/guide";
 import type { MembershipOption, Viewer } from "@/lib/viewer";
 
 const STUDENT_ITEMS = [
@@ -192,7 +194,15 @@ function NavOverflowMenu({
   );
 }
 
-export function Nav({ viewer, memberships }: { viewer: Viewer; memberships: MembershipOption[] }) {
+export function Nav({
+  viewer,
+  memberships,
+  guideSteps,
+}: {
+  viewer: Viewer;
+  memberships: MembershipOption[];
+  guideSteps: GuideStep[];
+}) {
   const pathname = usePathname();
   const items = itemsForRole(viewer.role);
   // In a live demo, the logo goes back to the persona picker (so a visitor
@@ -236,6 +246,7 @@ export function Nav({ viewer, memberships }: { viewer: Viewer; memberships: Memb
             {overflowItems.length > 0 ? <NavOverflowMenu items={overflowItems} active={overflowActive} /> : null}
           </nav>
           <div className="flex shrink-0 items-center gap-2">
+            <GuideControl steps={guideSteps} variant="desktop" />
             <ThemeToggle />
             <UserMenu viewer={viewer} memberships={memberships} />
           </div>
@@ -245,6 +256,7 @@ export function Nav({ viewer, memberships }: { viewer: Viewer; memberships: Memb
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-hairline bg-surface/90 px-3 backdrop-blur md:hidden">
         <Wordmark href={homeHref} compact />
         <div className="flex items-center gap-2">
+          <GuideControl steps={guideSteps} variant="mobile" />
           <ThemeToggle compact />
           <UserMenu viewer={viewer} memberships={memberships} compact />
         </div>
