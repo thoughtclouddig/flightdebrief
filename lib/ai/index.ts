@@ -18,9 +18,7 @@ export async function analyzeDebrief(input: AnalyzeDebriefInput): Promise<Analyz
       const structured = await analyzeWithClaude(input, apiKey);
       // Study references always come from our curated FAA-reference table, never
       // from the model, so chapter/handbook citations can't be hallucinated.
-      structured.studyReferences = suggestStudyReferences(
-        [...structured.needsWork, ...structured.actionItems].join(" "),
-      );
+      structured.studyReferences = suggestStudyReferences([...structured.needsWork, ...structured.actionItems]);
       structured.assessmentDifferences = input.assessmentDifferences ?? [];
       return { structured, analyzedWith: "claude" };
     } catch (err) {

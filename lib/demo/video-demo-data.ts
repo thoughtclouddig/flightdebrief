@@ -125,4 +125,5 @@ export const DEMO_CURATED_RESULT: StructuredDebrief = {
   ],
   nextLessonFocus: ["Stabilized approaches", "Sight picture during flare", "Centerline control"],
   studyReferences: [],
+  nextFlightCue: "On-speed by final. Every time.",
 };
