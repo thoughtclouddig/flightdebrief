@@ -618,26 +618,49 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
     // to walk through, same shape as video-demo-seed.ts's seedTodayFlight().
     const primaryStudentId = studentIds[0];
 
-    // A today-scheduled reservation is what actually populates the CFI
+    // Today-scheduled reservations are what actually populate the CFI
     // Today page's "Today's Students" section (app/(product)/cfi/today/
     // page.tsx filters reservations by status='scheduled' + today's date) --
-    // without this row the roster below (Debrief In Progress) is the only
-    // thing that shows, and "Today's Students" reads empty.
+    // without these rows the roster below (Debrief In Progress) is the only
+    // thing that shows, and "Today's Students" reads empty. The primary
+    // student already flew (their reservation is in the past, matching the
+    // "today" flight + guided debrief below); the other two are scheduled
+    // later today so the CFI's day reads as a real, multi-student schedule
+    // instead of one lesson in isolation.
     const now = new Date();
     const scheduledStart = new Date(now.getTime() - 2 * 60 * 60 * 1000);
     const scheduledEnd = new Date(now.getTime() - 60 * 60 * 1000);
-    await client.query(
-      `INSERT INTO reservations (id, organization_id, student_id, instructor_id, aircraft_id, scheduled_start, scheduled_end, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,'scheduled')`,
-      [
+    const laterSlots = [
+      [3, 4],
+      [5, 6],
+    ] as const;
+    const reservationRows: [string, Date, Date][] = [
+      [primaryStudentId, scheduledStart, scheduledEnd],
+      ...studentIds.slice(1).map((studentId, i): [string, Date, Date] => {
+        const [startHours, endHours] = laterSlots[i] ?? laterSlots[laterSlots.length - 1];
+        return [
+          studentId,
+          new Date(now.getTime() + startHours * 60 * 60 * 1000),
+          new Date(now.getTime() + endHours * 60 * 60 * 1000),
+        ];
+      }),
+    ];
+    const reservationsInsert = buildInsertRows(
+      reservationRows.map(([studentId, start, end]) => [
         `reservation-demo-${randomUUID()}`,
         orgId,
-        primaryStudentId,
+        studentId,
         instructorUserId,
         aircraftId,
-        scheduledStart.toISOString(),
-        scheduledEnd.toISOString(),
-      ],
+        start.toISOString(),
+        end.toISOString(),
+        "scheduled",
+      ]),
+    );
+    await client.query(
+      `INSERT INTO reservations (id, organization_id, student_id, instructor_id, aircraft_id, scheduled_start, scheduled_end, status)
+       VALUES ${reservationsInsert.placeholders}`,
+      reservationsInsert.values,
     );
 
     // Real route/duration/track (re-dated to this morning, matching the
