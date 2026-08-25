@@ -42,6 +42,11 @@ export default async function NextLessonPage() {
   const studyReferences = brief.lastDebrief?.structuredResult.studyReferences ?? [];
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
 
+  // Marks the "Prepare for your next flight" Guide step (lib/guide.ts).
+  if (!viewer.user.guideProgress?.nextFlight) {
+    void repo.markGuideStepViewed(viewer.user.id, "nextFlight").catch(() => {});
+  }
+
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <div className="flex flex-col items-center gap-3 text-center">

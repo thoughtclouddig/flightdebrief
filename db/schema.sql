@@ -52,6 +52,15 @@ CREATE TABLE IF NOT EXISTS users (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Tracks which one-off "have you seen this yet" milestones a user has hit
+-- inside the persistent AfterFlight Guide (see lib/guide.ts) -- a flexible
+-- key -> true bag rather than one rigid boolean column per milestone, so
+-- future contextual-help flags don't need another migration. Most Guide
+-- steps derive completion from real data (a debrief exists, a CFI link
+-- exists, etc.); this only covers the handful that can't be derived any
+-- other way ("has the student opened their Debrief Replay yet").
+ALTER TABLE users ADD COLUMN IF NOT EXISTS guide_progress jsonb NOT NULL DEFAULT '{}'::jsonb;
+
 -- Idempotent column additions for existing databases.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed boolean NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text;
