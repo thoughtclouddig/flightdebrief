@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { LegalPage, LegalSection } from "@/components/marketing/legal-page";
+import { appOrigin } from "@/lib/email";
 
 export const metadata: Metadata = {
   title: "Terms of Service — AfterFlight",
   description: "The terms that govern your use of AfterFlight.",
+  alternates: appOrigin() ? { canonical: `${appOrigin()}/terms` } : undefined,
 };
 
 export default function TermsPage() {

@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import type {
   Aircraft,
+  Article,
+  ArticleStatus,
   AssessmentRole,
   CardDefinition,
   ConsentRecord,
@@ -20,8 +22,14 @@ import type {
   OrganizationMember,
   OrgRole,
   RadioPracticeAssignment,
+  ReferralEvent,
+  ReferralSource,
+  ReferralSummary,
+  ResearchReport,
   Reservation,
+  ResourceTopic,
   SkillObservation,
+  Source,
   StudentInstructor,
   StudentNote,
   Subscription,
@@ -33,15 +41,20 @@ import type {
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
 import { buildSeed, DEMO_USER_ID } from "./seed";
 import type {
+  CreateArticleInput,
   CreateDebriefInput,
   CreateFlightInput,
+  CreateReferralEventInput,
   CreateReservationInput,
+  CreateResearchReportInput,
   CreateStudentNoteInput,
   ListFlightsFilter,
   ListReservationsFilter,
   ListTrainingItemsFilter,
   ListTrainingSignalsFilter,
   Repository,
+  UpdateArticleInput,
+  UpdateResearchReportInput,
 } from "./types";
 
 /**
@@ -409,6 +422,235 @@ export class PostgresRepository implements Repository {
       "UPDATE student_notes SET done = $2, completed_at = CASE WHEN $2 THEN now() ELSE NULL END WHERE id = $1",
       [id, done],
     );
+  }
+
+  // --- Content Engine Phase 1: public resources hub ---
+
+  async listResourceTopics(): Promise<ResourceTopic[]> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM resource_topics ORDER BY name");
+    return rows.map(mapResourceTopic);
+  }
+
+  async getResourceTopicBySlug(slug: string): Promise<ResourceTopic | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM resource_topics WHERE slug = $1", [slug]);
+    return rows[0] ? mapResourceTopic(rows[0]) : null;
+  }
+
+  async listArticles(filter: { status?: ArticleStatus; topicId?: string }): Promise<Article[]> {
+    const db = await this.db();
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    if (filter.status) {
+      params.push(filter.status);
+      conditions.push(`status = $${params.length}`);
+    }
+    if (filter.topicId) {
+      params.push(filter.topicId);
+      conditions.push(`topic_id = $${params.length}`);
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const { rows } = await db.query(
+      `SELECT * FROM articles ${where} ORDER BY COALESCE(published_at, created_at) DESC`,
+      params,
+    );
+    return rows.map(mapArticle);
+  }
+
+  async getArticleBySlug(slug: string): Promise<Article | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM articles WHERE slug = $1", [slug]);
+    return rows[0] ? mapArticle(rows[0]) : null;
+  }
+
+  async getArticle(id: string): Promise<Article | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM articles WHERE id = $1", [id]);
+    return rows[0] ? mapArticle(rows[0]) : null;
+  }
+
+  async createArticle(input: CreateArticleInput): Promise<Article> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `INSERT INTO articles (id, slug, topic_id, title, dek, body, author_name, sources)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [
+        randomUUID(),
+        input.slug,
+        input.topicId,
+        input.title,
+        input.dek,
+        input.body,
+        input.authorName,
+        JSON.stringify(input.sources ?? []),
+      ],
+    );
+    return mapArticle(rows[0]);
+  }
+
+  async updateArticle(id: string, input: UpdateArticleInput): Promise<Article> {
+    const db = await this.db();
+    const current = await this.getArticle(id);
+    if (!current) throw new Error(`Article not found: ${id}`);
+
+    const nextStatus = input.status ?? current.status;
+    // publishedAt is set the first time an article transitions to published, and never cleared by an edit.
+    const publishedAt =
+      nextStatus === "published" ? current.publishedAt ?? new Date().toISOString() : current.publishedAt;
+
+    const { rows } = await db.query(
+      `UPDATE articles SET slug = $2, topic_id = $3, title = $4, dek = $5, body = $6, author_name = $7,
+         sources = $8, status = $9, published_at = $10, updated_at = now()
+       WHERE id = $1 RETURNING *`,
+      [
+        id,
+        input.slug ?? current.slug,
+        input.topicId === undefined ? current.topicId : input.topicId,
+        input.title ?? current.title,
+        input.dek ?? current.dek,
+        input.body ?? current.body,
+        input.authorName ?? current.authorName,
+        JSON.stringify(input.sources ?? current.sources),
+        nextStatus,
+        publishedAt,
+      ],
+    );
+    return mapArticle(rows[0]);
+  }
+
+  // --- AI/LLM discoverability layer: original research ---
+
+  async listResearchReports(filter: { status?: ArticleStatus }): Promise<ResearchReport[]> {
+    const db = await this.db();
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    if (filter.status) {
+      params.push(filter.status);
+      conditions.push(`status = $${params.length}`);
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const { rows } = await db.query(
+      `SELECT * FROM research_reports ${where} ORDER BY COALESCE(published_at, created_at) DESC`,
+      params,
+    );
+    return rows.map(mapResearchReport);
+  }
+
+  async getResearchReportBySlug(slug: string): Promise<ResearchReport | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM research_reports WHERE slug = $1", [slug]);
+    return rows[0] ? mapResearchReport(rows[0]) : null;
+  }
+
+  async getResearchReport(id: string): Promise<ResearchReport | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM research_reports WHERE id = $1", [id]);
+    return rows[0] ? mapResearchReport(rows[0]) : null;
+  }
+
+  async createResearchReport(input: CreateResearchReportInput): Promise<ResearchReport> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `INSERT INTO research_reports
+         (id, slug, title, summary, key_findings, methodology, sample_size, date_range, definitions,
+          limitations, anonymization_note, data_source, author_name, reviewer_name, sources)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+      [
+        randomUUID(),
+        input.slug,
+        input.title,
+        input.summary,
+        input.keyFindings ?? null,
+        input.methodology ?? null,
+        input.sampleSize ?? null,
+        input.dateRange ?? null,
+        input.definitions ?? null,
+        input.limitations ?? null,
+        input.anonymizationNote ?? null,
+        input.dataSource ?? null,
+        input.authorName,
+        input.reviewerName ?? null,
+        JSON.stringify(input.sources ?? []),
+      ],
+    );
+    return mapResearchReport(rows[0]);
+  }
+
+  async updateResearchReport(id: string, input: UpdateResearchReportInput): Promise<ResearchReport> {
+    const db = await this.db();
+    const current = await this.getResearchReport(id);
+    if (!current) throw new Error(`Research report not found: ${id}`);
+
+    const nextStatus = input.status ?? current.status;
+    const publishedAt =
+      nextStatus === "published" ? current.publishedAt ?? new Date().toISOString() : current.publishedAt;
+
+    const { rows } = await db.query(
+      `UPDATE research_reports SET slug = $2, title = $3, summary = $4, key_findings = $5, methodology = $6,
+         sample_size = $7, date_range = $8, definitions = $9, limitations = $10, anonymization_note = $11,
+         data_source = $12, author_name = $13, reviewer_name = $14, sources = $15, status = $16,
+         published_at = $17, updated_at = now()
+       WHERE id = $1 RETURNING *`,
+      [
+        id,
+        input.slug ?? current.slug,
+        input.title ?? current.title,
+        input.summary ?? current.summary,
+        input.keyFindings === undefined ? current.keyFindings : input.keyFindings,
+        input.methodology === undefined ? current.methodology : input.methodology,
+        input.sampleSize === undefined ? current.sampleSize : input.sampleSize,
+        input.dateRange === undefined ? current.dateRange : input.dateRange,
+        input.definitions === undefined ? current.definitions : input.definitions,
+        input.limitations === undefined ? current.limitations : input.limitations,
+        input.anonymizationNote === undefined ? current.anonymizationNote : input.anonymizationNote,
+        input.dataSource === undefined ? current.dataSource : input.dataSource,
+        input.authorName ?? current.authorName,
+        input.reviewerName === undefined ? current.reviewerName : input.reviewerName,
+        JSON.stringify(input.sources ?? current.sources),
+        nextStatus,
+        publishedAt,
+      ],
+    );
+    return mapResearchReport(rows[0]);
+  }
+
+  // --- AI/LLM discoverability layer: referral tracking ---
+
+  async createReferralEvent(input: CreateReferralEventInput): Promise<ReferralEvent> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `INSERT INTO referral_events (id, path, referrer_source, referrer_host, raw_referrer)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [randomUUID(), input.path, input.referrerSource, input.referrerHost, input.rawReferrer],
+    );
+    return mapReferralEvent(rows[0]);
+  }
+
+  async getReferralSummary(filter: { days: number }): Promise<ReferralSummary> {
+    const db = await this.db();
+    const [bySource, byPath] = await Promise.all([
+      db.query(
+        `SELECT referrer_source, count(*)::int AS count FROM referral_events
+         WHERE created_at > now() - ($1 || ' days')::interval
+         GROUP BY referrer_source ORDER BY count DESC`,
+        [filter.days],
+      ),
+      db.query(
+        `SELECT path, referrer_source, count(*)::int AS count FROM referral_events
+         WHERE created_at > now() - ($1 || ' days')::interval
+         GROUP BY path, referrer_source ORDER BY count DESC LIMIT 20`,
+        [filter.days],
+      ),
+    ]);
+    return {
+      bySource: bySource.rows.map((r) => ({ source: r.referrer_source as ReferralSource, count: r.count as number })),
+      byPath: byPath.rows.map((r) => ({
+        path: r.path as string,
+        source: r.referrer_source as ReferralSource,
+        count: r.count as number,
+      })),
+    };
   }
 
   // --- Study-resource "opened" tracking (first-click only, no duration) ---
@@ -1536,6 +1778,67 @@ function mapStudentNote(row: Row): StudentNote {
     description: row.description as string,
     done: row.done as boolean,
     completedAt: row.completed_at ? iso(row.completed_at) : null,
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapResourceTopic(row: Row): ResourceTopic {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    name: row.name as string,
+    description: row.description as string,
+  };
+}
+
+function mapArticle(row: Row): Article {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    topicId: (row.topic_id as string | null) ?? null,
+    title: row.title as string,
+    dek: row.dek as string,
+    body: row.body as string,
+    status: row.status as ArticleStatus,
+    authorName: row.author_name as string,
+    sources: (row.sources as Source[] | null) ?? [],
+    publishedAt: row.published_at ? iso(row.published_at) : null,
+    updatedAt: iso(row.updated_at),
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapResearchReport(row: Row): ResearchReport {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    title: row.title as string,
+    summary: row.summary as string,
+    keyFindings: (row.key_findings as string | null) ?? null,
+    methodology: (row.methodology as string | null) ?? null,
+    sampleSize: (row.sample_size as string | null) ?? null,
+    dateRange: (row.date_range as string | null) ?? null,
+    definitions: (row.definitions as string | null) ?? null,
+    limitations: (row.limitations as string | null) ?? null,
+    anonymizationNote: (row.anonymization_note as string | null) ?? null,
+    dataSource: (row.data_source as string | null) ?? null,
+    authorName: row.author_name as string,
+    reviewerName: (row.reviewer_name as string | null) ?? null,
+    sources: (row.sources as Source[] | null) ?? [],
+    status: row.status as ArticleStatus,
+    publishedAt: row.published_at ? iso(row.published_at) : null,
+    updatedAt: iso(row.updated_at),
+    createdAt: iso(row.created_at),
+  };
+}
+
+function mapReferralEvent(row: Row): ReferralEvent {
+  return {
+    id: row.id as string,
+    path: row.path as string,
+    referrerSource: row.referrer_source as ReferralSource,
+    referrerHost: (row.referrer_host as string | null) ?? null,
+    rawReferrer: (row.raw_referrer as string | null) ?? null,
     createdAt: iso(row.created_at),
   };
 }

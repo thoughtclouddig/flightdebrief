@@ -2,6 +2,8 @@ import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { MarketingNav } from "@/components/marketing/nav";
+import { ReferralTracker } from "@/components/marketing/referral-tracker";
+import { appOrigin } from "@/lib/email";
 
 const FOOTER_COLUMNS = [
   {
@@ -9,6 +11,14 @@ const FOOTER_COLUMNS = [
     links: [
       { href: "/#how-it-works", label: "Features" },
       { href: "/#pricing", label: "Pricing" },
+      { href: "/what-is-afterflight", label: "What Is AfterFlight?" },
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      { href: "/resources", label: "Resources" },
+      { href: "/research", label: "Research" },
     ],
   },
   {
@@ -89,8 +99,31 @@ const LIGHT_SCOPE_STYLE = {
 } as CSSProperties;
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
+  const origin = appOrigin() ?? "https://getafterflight.com";
+  const siteJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${origin}/#organization`,
+        name: "AfterFlight",
+        url: origin,
+        logo: `${origin}/brand/afterflight-lockup-dark.svg`,
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${origin}/#website`,
+        name: "AfterFlight",
+        url: origin,
+        publisher: { "@id": `${origin}/#organization` },
+      },
+    ],
+  };
+
   return (
     <div className="bg-white font-medium" style={LIGHT_SCOPE_STYLE}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />
+      <ReferralTracker />
       <MarketingNav />
       {children}
       <footer id="resources" className="border-t border-slate-200 bg-white px-6 pb-8 pt-16 text-sm">

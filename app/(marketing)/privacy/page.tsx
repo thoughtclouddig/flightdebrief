@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { LegalPage, LegalSection } from "@/components/marketing/legal-page";
+import { appOrigin } from "@/lib/email";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — AfterFlight",
   description: "How AfterFlight collects, uses, and protects your information.",
+  alternates: appOrigin() ? { canonical: `${appOrigin()}/privacy` } : undefined,
 };
 
 export default function PrivacyPage() {

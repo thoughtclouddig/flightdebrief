@@ -16,11 +16,13 @@ import {
 import { Reveal } from "@/components/marketing/reveal";
 import { CtaLink } from "@/components/marketing/cta-link";
 import { AppScreen, Pill, PhotoVisual, SummaryRow } from "@/components/marketing/app-screen";
+import { appOrigin } from "@/lib/email";
 
 export const metadata: Metadata = {
   title: "AfterFlight for Flight Schools",
   description:
     "See what's happening between the schedule and the checkride. AfterFlight turns the post-flight debriefs already happening at your school into student continuity and training visibility.",
+  alternates: appOrigin() ? { canonical: `${appOrigin()}/schools` } : undefined,
 };
 
 const SCHEDULING_KNOWS = ["Student", "Instructor", "Aircraft", "Reservation", "Time"] as const;

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Reveal } from "@/components/marketing/reveal";
 import { DemoPersonaCards } from "@/components/marketing/demo-persona-cards";
+import { appOrigin } from "@/lib/email";
 
 export const metadata: Metadata = {
   title: "Try AfterFlight Live",
   description:
     "A real, interactive demo of AfterFlight -- no signup required. Log a flight, complete a debrief, or explore a CFI's roster with realistic data.",
+  alternates: appOrigin() ? { canonical: `${appOrigin()}/demo` } : undefined,
 };
 
 export default function DemoPage() {

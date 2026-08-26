@@ -1,0 +1,9 @@
+/** Lowercase, hyphenated slug suggestion from a title -- editable by the admin before saving, never auto-applied silently. */
+export function slugify(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}

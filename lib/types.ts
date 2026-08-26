@@ -576,3 +576,110 @@ export interface Milestone {
   metadata: Record<string, unknown>;
   createdAt: string;
 }
+
+// --- Content Engine Phase 1: public resources hub --------------------------
+
+export interface ResourceTopic {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+}
+
+export type ArticleStatus = "draft" | "published";
+
+/**
+ * A citation for a factual claim, tagged by what kind of claim it backs --
+ * lets a reader (human or machine) tell an FAA requirement apart from an
+ * AfterFlight recommendation instead of treating every link as equally
+ * authoritative. Never imply an authority (FAA/NTSB/NASA) endorses
+ * AfterFlight unless that's literally true.
+ */
+export type SourceType =
+  | "faa_requirement"
+  | "faa_guidance"
+  | "ntsb"
+  | "nasa"
+  | "peer_reviewed_research"
+  | "industry_standard"
+  | "afterflight_research"
+  | "expert_opinion"
+  | "afterflight_recommendation"
+  | "afterflight_capability";
+
+export interface Source {
+  label: string;
+  url: string;
+  sourceType: SourceType;
+}
+
+/** body is plain text, blank-line-separated paragraphs -- no markdown/MDX pipeline yet (Phase 2 concern). */
+export interface Article {
+  id: string;
+  slug: string;
+  topicId: string | null;
+  title: string;
+  dek: string;
+  body: string;
+  status: ArticleStatus;
+  authorName: string;
+  sources: Source[];
+  publishedAt: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+
+// --- AI/LLM discoverability layer -------------------------------------------
+
+/**
+ * Original AfterFlight research from anonymized aggregate product data.
+ * Narrative fields are nullable and left empty until real data exists --
+ * never populate with fabricated findings.
+ */
+export interface ResearchReport {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  keyFindings: string | null;
+  methodology: string | null;
+  sampleSize: string | null;
+  dateRange: string | null;
+  definitions: string | null;
+  limitations: string | null;
+  anonymizationNote: string | null;
+  dataSource: string | null;
+  authorName: string;
+  reviewerName: string | null;
+  sources: Source[];
+  status: ArticleStatus;
+  publishedAt: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+
+/** Classified source of a marketing-site pageview's referrer -- see lib/ai-discovery/classify-referrer.ts. */
+export type ReferralSource =
+  | "chatgpt"
+  | "perplexity"
+  | "gemini"
+  | "copilot"
+  | "claude"
+  | "bing"
+  | "search_google"
+  | "direct"
+  | "other";
+
+export interface ReferralEvent {
+  id: string;
+  path: string;
+  referrerSource: ReferralSource;
+  referrerHost: string | null;
+  rawReferrer: string | null;
+  createdAt: string;
+}
+
+export interface ReferralSummary {
+  bySource: { source: ReferralSource; count: number }[];
+  byPath: { path: string; source: ReferralSource; count: number }[];
+}

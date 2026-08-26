@@ -643,3 +643,86 @@ CREATE TABLE IF NOT EXISTS milestones (
   UNIQUE (student_id, type)
 );
 CREATE INDEX IF NOT EXISTS milestones_student_idx ON milestones (student_id, achieved_at DESC);
+
+-- Content Engine Phase 1: public /resources hub. Articles are Postgres-backed
+-- (not MDX/files) per product decision; body is plain text rendered as
+-- paragraphs -- no markdown pipeline until Phase 2's AI-writing workflow
+-- exists to produce richer formatting consistently.
+CREATE TABLE IF NOT EXISTS resource_topics (
+  id text PRIMARY KEY,
+  slug text NOT NULL UNIQUE,
+  name text NOT NULL,
+  description text NOT NULL DEFAULT '',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO resource_topics (id, slug, name, description) VALUES
+  ('topic-student-pilot', 'student-pilot', 'Student Pilot', 'Guidance for pilots working toward their first certificate.'),
+  ('topic-flight-training', 'flight-training', 'Flight Training', 'How structured training and debriefing actually work.'),
+  ('topic-checkride-prep', 'checkride-prep', 'Checkride Prep', 'Getting ready for the practical test.'),
+  ('topic-cfi-resources', 'cfi-resources', 'CFI Resources', 'For instructors running a better debrief.'),
+  ('topic-flight-schools', 'flight-schools', 'Flight Schools', 'Running a training program, not just a lesson.'),
+  ('topic-safety-proficiency', 'safety-proficiency', 'Safety & Proficiency', 'Staying sharp between checkrides.'),
+  ('topic-aviation-research', 'aviation-research', 'Aviation Research', 'What the research actually says about training retention.'),
+  ('topic-afterflight', 'afterflight', 'AfterFlight', 'How AfterFlight itself works.')
+ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS articles (
+  id text PRIMARY KEY,
+  slug text NOT NULL UNIQUE,
+  topic_id text REFERENCES resource_topics(id) ON DELETE SET NULL,
+  title text NOT NULL,
+  dek text NOT NULL DEFAULT '',
+  body text NOT NULL DEFAULT '',
+  status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','published')),
+  author_name text NOT NULL DEFAULT 'AfterFlight',
+  -- Citations for factual claims, each tagged with a sourceType so a reader
+  -- (human or machine) can tell an FAA requirement apart from an AfterFlight
+  -- recommendation -- see the Source type in lib/types.ts.
+  sources jsonb NOT NULL DEFAULT '[]'::jsonb,
+  published_at timestamptz,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS articles_status_idx ON articles (status, published_at DESC);
+CREATE INDEX IF NOT EXISTS articles_topic_idx ON articles (topic_id);
+
+-- AI/LLM discoverability layer: original research, published only when real
+-- data exists -- no seed rows, no fabricated findings. See Source/sourceType
+-- above (shared shape) for citation typing.
+CREATE TABLE IF NOT EXISTS research_reports (
+  id text PRIMARY KEY,
+  slug text NOT NULL UNIQUE,
+  title text NOT NULL,
+  summary text NOT NULL DEFAULT '',
+  key_findings text,
+  methodology text,
+  sample_size text,
+  date_range text,
+  definitions text,
+  limitations text,
+  anonymization_note text,
+  data_source text,
+  author_name text NOT NULL DEFAULT 'AfterFlight',
+  reviewer_name text,
+  sources jsonb NOT NULL DEFAULT '[]'::jsonb,
+  status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','published')),
+  published_at timestamptz,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS research_reports_status_idx ON research_reports (status, published_at DESC);
+
+-- AI referral tracking: minimal, privacy-first (no IP, no user agent, no
+-- cookies) -- just enough to see which marketing pages get traffic from
+-- ChatGPT/Perplexity/Gemini/Copilot/etc, classified by referrer host.
+CREATE TABLE IF NOT EXISTS referral_events (
+  id text PRIMARY KEY,
+  path text NOT NULL,
+  referrer_source text NOT NULL,
+  referrer_host text,
+  raw_referrer text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS referral_events_created_idx ON referral_events (created_at DESC);
+CREATE INDEX IF NOT EXISTS referral_events_source_idx ON referral_events (referrer_source);

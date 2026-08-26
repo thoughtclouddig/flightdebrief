@@ -19,11 +19,13 @@ import { Reveal } from "@/components/marketing/reveal";
 import { CtaLink } from "@/components/marketing/cta-link";
 import { AppScreen, Pill, SummaryRow } from "@/components/marketing/app-screen";
 import { ENTERPRISE_PRICING } from "@/lib/marketing/pricing";
+import { appOrigin } from "@/lib/email";
 
 export const metadata: Metadata = {
   title: "AfterFlight Enterprise",
   description:
     "AfterFlight captures the post-flight debrief in a consistent structure, so a large training organization can see patterns across students, instructors, locations, and programs.",
+  alternates: appOrigin() ? { canonical: `${appOrigin()}/enterprise` } : undefined,
 };
 
 const CAPTURED = [

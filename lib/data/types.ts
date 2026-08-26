@@ -1,5 +1,7 @@
 import type {
   Aircraft,
+  Article,
+  ArticleStatus,
   AssessmentRole,
   CardDefinition,
   ConsentRecord,
@@ -21,8 +23,14 @@ import type {
   OrganizationMember,
   OrgRole,
   RadioPracticeAssignment,
+  ReferralEvent,
+  ReferralSource,
+  ReferralSummary,
+  ResearchReport,
   Reservation,
+  ResourceTopic,
   SkillObservation,
+  Source,
   StudentInstructor,
   StudentNote,
   Subscription,
@@ -106,6 +114,55 @@ export interface CreateStudentNoteInput {
   description: string;
 }
 
+export interface CreateArticleInput {
+  slug: string;
+  topicId: string | null;
+  title: string;
+  dek: string;
+  body: string;
+  authorName: string;
+  sources?: Source[];
+}
+
+export interface UpdateArticleInput {
+  slug?: string;
+  topicId?: string | null;
+  title?: string;
+  dek?: string;
+  body?: string;
+  authorName?: string;
+  sources?: Source[];
+  status?: ArticleStatus;
+}
+
+export interface CreateResearchReportInput {
+  slug: string;
+  title: string;
+  summary: string;
+  keyFindings?: string | null;
+  methodology?: string | null;
+  sampleSize?: string | null;
+  dateRange?: string | null;
+  definitions?: string | null;
+  limitations?: string | null;
+  anonymizationNote?: string | null;
+  dataSource?: string | null;
+  authorName: string;
+  reviewerName?: string | null;
+  sources?: Source[];
+}
+
+export interface UpdateResearchReportInput extends Partial<CreateResearchReportInput> {
+  status?: ArticleStatus;
+}
+
+export interface CreateReferralEventInput {
+  path: string;
+  referrerSource: ReferralSource;
+  referrerHost: string | null;
+  rawReferrer: string | null;
+}
+
 /**
  * Data access boundary for the whole app, implemented by PostgresRepository
  * against the Replit Postgres database (DATABASE_URL, schema in
@@ -151,6 +208,26 @@ export interface Repository {
   listStudentNotes(filter: { studentId: string }): Promise<StudentNote[]>;
   createStudentNote(input: CreateStudentNoteInput): Promise<StudentNote>;
   setStudentNoteDone(id: string, done: boolean): Promise<void>;
+
+  // --- Content Engine Phase 1: public resources hub ---
+  listResourceTopics(): Promise<ResourceTopic[]>;
+  getResourceTopicBySlug(slug: string): Promise<ResourceTopic | null>;
+  listArticles(filter: { status?: ArticleStatus; topicId?: string }): Promise<Article[]>;
+  getArticleBySlug(slug: string): Promise<Article | null>;
+  getArticle(id: string): Promise<Article | null>;
+  createArticle(input: CreateArticleInput): Promise<Article>;
+  updateArticle(id: string, input: UpdateArticleInput): Promise<Article>;
+
+  // --- AI/LLM discoverability layer: original research ---
+  listResearchReports(filter: { status?: ArticleStatus }): Promise<ResearchReport[]>;
+  getResearchReportBySlug(slug: string): Promise<ResearchReport | null>;
+  getResearchReport(id: string): Promise<ResearchReport | null>;
+  createResearchReport(input: CreateResearchReportInput): Promise<ResearchReport>;
+  updateResearchReport(id: string, input: UpdateResearchReportInput): Promise<ResearchReport>;
+
+  // --- AI/LLM discoverability layer: referral tracking ---
+  createReferralEvent(input: CreateReferralEventInput): Promise<ReferralEvent>;
+  getReferralSummary(filter: { days: number }): Promise<ReferralSummary>;
 
   // --- Study-resource "opened" tracking (first-click only, no duration) ---
   markStudyResourceViewed(input: { studentId: string; url: string }): Promise<void>;

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { appOrigin } from "@/lib/email";
 import { Hero } from "@/components/marketing/sections/hero";
 import { LearningLoop } from "@/components/marketing/sections/learning-loop";
 import { BrandMoment } from "@/components/marketing/sections/brand-moment";
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
   title: "AfterFlight — Get better every flight.",
   description:
     "AfterFlight turns each flight into the learning plan for the next one. Capture the debrief, connect feedback to the FAA Airman Certification Standards, and know exactly what to work on next.",
+  alternates: appOrigin() ? { canonical: appOrigin()! } : undefined,
 };
 
 export default function MarketingHomePage() {

@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, SITE_GATE_COOKIE, isSiteGateEnabled, verifySessionJwt, verifySiteGateJwt } from "@/lib/auth/session";
 
-const MARKETING_PATHS = new Set(["/", "/instructors", "/schools", "/enterprise", "/privacy", "/terms"]);
+const MARKETING_PATHS = new Set(["/", "/instructors", "/schools", "/enterprise", "/privacy", "/terms", "/what-is-afterflight"]);
+const MARKETING_PREFIXES = ["/resources", "/research"];
 
 /**
  * Route protection, in two unrelated tiers:
@@ -20,7 +21,7 @@ const MARKETING_PATHS = new Set(["/", "/instructors", "/schools", "/enterprise",
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (MARKETING_PATHS.has(pathname)) {
+  if (MARKETING_PATHS.has(pathname) || MARKETING_PREFIXES.some((prefix) => pathname.startsWith(`${prefix}/`) || pathname === prefix)) {
     if (!isSiteGateEnabled()) return NextResponse.next();
     const gateToken = request.cookies.get(SITE_GATE_COOKIE)?.value;
     const passed = gateToken ? await verifySiteGateJwt(gateToken) : false;
@@ -70,5 +71,10 @@ export const config = {
     "/enterprise",
     "/privacy",
     "/terms",
+    "/what-is-afterflight",
+    "/resources",
+    "/resources/:path*",
+    "/research",
+    "/research/:path*",
   ],
 };

@@ -14,10 +14,12 @@ import {
 import { Reveal } from "@/components/marketing/reveal";
 import { CtaLink } from "@/components/marketing/cta-link";
 import { PhotoVisual } from "@/components/marketing/app-screen";
+import { appOrigin } from "@/lib/email";
 
 export const metadata: Metadata = {
   title: "AfterFlight for Flight Instructors",
   description: "Know where you left off with every student, every flight. AfterFlight is free for individual CFIs.",
+  alternates: appOrigin() ? { canonical: `${appOrigin()}/instructors` } : undefined,
 };
 
 const CAPTURED = [
