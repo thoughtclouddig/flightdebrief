@@ -28,7 +28,13 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(options?: Inte
           observer.disconnect();
         }
       },
-      { threshold: 0.2, rootMargin: "-40px", ...options },
+      // threshold is a fraction of the *target's own height* -- a content
+      // block taller than ~5x the viewport (long-form pages like
+      // what-is-afterflight, privacy, terms) could never satisfy 0.2 and
+      // would stay invisible forever. threshold: 0 fires on first overlap
+      // regardless of the target's height; rootMargin still controls how
+      // early/late that counts as "in view".
+      { threshold: 0, rootMargin: "-40px", ...options },
     );
     observer.observe(el);
     return () => observer.disconnect();
