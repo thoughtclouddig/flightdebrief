@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getRepository } from "@/lib/data";
 import { ArticleForm } from "@/components/admin/article-form";
+import { GenerateDraftButton } from "@/components/admin/generate-draft-button";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,12 @@ export default async function AdminArticlesPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Articles</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{articles.length} total</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Articles</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{articles.length} total</p>
+        </div>
+        <GenerateDraftButton />
       </div>
 
       <div className="flex flex-col gap-3">
