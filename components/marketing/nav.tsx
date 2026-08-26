@@ -10,7 +10,9 @@ const NAV_LINKS = [
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/instructors", label: "For Instructors" },
   { href: "/schools", label: "For Schools" },
-  { href: "/resources", label: "Resources" },
+  // "Resources" is deliberately not in the public nav yet -- the hub has no
+  // published articles, so it's crawlable/linkable but not surfaced as a
+  // primary nav item until there's real content worth sending visitors to.
   { href: "/#pricing", label: "Pricing" },
 ];
 
