@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Activity,
+  Building2,
   CalendarClock,
   ChevronDown,
   Compass,
@@ -54,10 +55,11 @@ const ADMIN_ITEMS = [
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
-function itemsForRole(role: Viewer["role"]) {
-  if (role === "instructor") return CFI_ITEMS;
-  if (role === "admin") return ADMIN_ITEMS;
-  return STUDENT_ITEMS;
+const SUPERADMIN_ITEM = { href: "/super-admin", label: "Super Admin", icon: Building2 };
+
+function itemsForRole(role: Viewer["role"], isSuperadmin: boolean) {
+  const base = role === "instructor" ? CFI_ITEMS : role === "admin" ? ADMIN_ITEMS : STUDENT_ITEMS;
+  return isSuperadmin ? [...base, SUPERADMIN_ITEM] : base;
 }
 
 export function homeHrefForRole(role: Viewer["role"]) {
@@ -198,13 +200,15 @@ export function Nav({
   viewer,
   memberships,
   guideSteps,
+  isSuperadmin = false,
 }: {
   viewer: Viewer;
   memberships: MembershipOption[];
   guideSteps: GuideStep[];
+  isSuperadmin?: boolean;
 }) {
   const pathname = usePathname();
-  const items = itemsForRole(viewer.role);
+  const items = itemsForRole(viewer.role, isSuperadmin);
   // In a live demo, the logo goes back to the persona picker (so a visitor
   // can restart or try a different role) instead of their own dashboard --
   // there's nowhere else in-product to do that.

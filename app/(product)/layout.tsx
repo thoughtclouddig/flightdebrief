@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Nav } from "@/components/nav";
 import { getRepository } from "@/lib/data";
 import { getViewer, listMembershipOptions } from "@/lib/viewer";
+import { isSuperadmin } from "@/lib/superadmin";
 import { isMembershipSwitcherEnabled } from "@/lib/auth/membership-switcher";
 import { computeGuideSteps } from "@/lib/guide";
 import { DemoControlPanel } from "@/components/demo/demo-control-panel";
@@ -32,7 +33,7 @@ export default async function ProductLayout({ children }: { children: ReactNode 
       {viewer.organization.demoExpiresAt ? (
         <LiveDemoBanner expiresAt={viewer.organization.demoExpiresAt} hint={demoHint} />
       ) : null}
-      <Nav viewer={viewer} memberships={memberships} guideSteps={guideSteps} />
+      <Nav viewer={viewer} memberships={memberships} guideSteps={guideSteps} isSuperadmin={isSuperadmin(viewer.user.email)} />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:pb-10 md:pt-8">
         {children}
       </main>

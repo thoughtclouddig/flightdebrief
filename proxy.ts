@@ -58,6 +58,7 @@ export const config = {
     "/flights/:path*",
     "/cfi/:path*",
     "/admin/:path*",
+    "/super-admin/:path*",
     "/app",
     "/onboarding",
     /*
