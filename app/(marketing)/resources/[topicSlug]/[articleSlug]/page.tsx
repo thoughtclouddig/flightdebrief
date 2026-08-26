@@ -106,7 +106,8 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
       {breadcrumbJsonLd ? (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       ) : null}
-      <div className="mx-auto max-w-3xl">
+
+      <div className="mx-auto max-w-4xl">
         <Reveal>
           {topic ? (
             <p className="text-balance text-sm font-bold uppercase tracking-[0.16em] text-brand">
@@ -119,13 +120,28 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
           >
             {article.title}
           </h1>
-          {article.dek ? <p className="mt-3 text-pretty text-lg leading-relaxed text-[#68717D]">{article.dek}</p> : null}
-          <p className="mt-4 text-sm text-[#68717D]/70">
-            By {article.authorName}
-            {article.publishedAt ? ` · ${new Date(article.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}` : ""}
-          </p>
+          {article.dek ? <p className="mt-3 max-w-3xl text-pretty text-lg leading-relaxed text-[#68717D]">{article.dek}</p> : null}
+          <div className="mt-5 flex items-center gap-2 text-sm text-[#68717D]">
+            <span className="rounded-full bg-[#f4f5f6] px-3 py-1 font-medium text-[#101727]">{article.authorName}</span>
+            {article.publishedAt ? (
+              <span>{new Date(article.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+            ) : null}
+          </div>
         </Reveal>
 
+        {article.imageUrl ? (
+          <Reveal delay={80}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs; next/image can't optimize data: URLs */}
+            <img
+              src={article.imageUrl}
+              alt=""
+              className="mt-8 aspect-[16/9] w-full rounded-2xl object-cover shadow-sm"
+            />
+          </Reveal>
+        ) : null}
+      </div>
+
+      <div className="mx-auto max-w-3xl">
         <Reveal delay={100} className="mt-10 flex flex-col gap-5">
           {paragraphs.map((p, i) => (
             <p key={i} className="text-pretty text-[17px] leading-relaxed text-[#4b545d]">
@@ -135,7 +151,7 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
         </Reveal>
 
         {article.sources.length ? (
-          <Reveal delay={150} className="mt-10">
+          <Reveal delay={150} className="mt-10 rounded-xl border border-hairline bg-[#fafafb] p-5">
             <h2 className="font-display text-lg font-bold text-[#101727]">Sources</h2>
             <ul className="mt-3 flex flex-col gap-2">
               {article.sources.map((source, i) => (

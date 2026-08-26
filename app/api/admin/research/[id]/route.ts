@@ -18,6 +18,7 @@ interface UpdateResearchBody {
   authorName?: string;
   reviewerName?: string;
   sources?: Source[];
+  imageUrl?: string | null;
   status?: ArticleStatus;
 }
 
@@ -47,6 +48,7 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
     authorName: body.authorName?.trim(),
     reviewerName: body.reviewerName?.trim() || null,
     sources: body.sources,
+    imageUrl: body.imageUrl,
     status: body.status,
   });
 

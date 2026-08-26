@@ -24,6 +24,7 @@ export function ArticleForm({ topics, article }: { topics: ResourceTopic[]; arti
     body: article?.body ?? "",
     authorName: article?.authorName ?? "AfterFlight",
     sources: article?.sources ?? ([] as Source[]),
+    imageUrl: article?.imageUrl ?? "",
     status: (article?.status ?? "draft") as ArticleStatus,
   });
   const [slugTouched, setSlugTouched] = useState(Boolean(article));
@@ -38,7 +39,7 @@ export function ArticleForm({ topics, article }: { topics: ResourceTopic[]; arti
     setSaving(true);
     setError(null);
     try {
-      const payload = { ...form, status: nextStatus ?? form.status };
+      const payload = { ...form, imageUrl: form.imageUrl.trim() || null, status: nextStatus ?? form.status };
       const res = await fetch(article ? `/api/admin/articles/${article.id}` : "/api/admin/articles", {
         method: article ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -132,6 +133,21 @@ export function ArticleForm({ topics, article }: { topics: ResourceTopic[]; arti
           value={form.authorName}
           onChange={(e) => setForm((f) => ({ ...f, authorName: e.target.value }))}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="article-image">Image URL (https:// or data:)</Label>
+        <Input
+          id="article-image"
+          className="mt-1.5"
+          placeholder="https://... or data:image/png;base64,..."
+          value={form.imageUrl}
+          onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
+        />
+        {form.imageUrl.trim() ? (
+          // eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs; next/image can't optimize data: URLs
+          <img src={form.imageUrl.trim()} alt="" className="mt-2 aspect-video w-full max-w-sm rounded-lg object-cover" />
+        ) : null}
       </div>
 
       <SourcesEditor sources={form.sources} onChange={(sources) => setForm((f) => ({ ...f, sources }))} />

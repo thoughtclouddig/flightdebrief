@@ -98,7 +98,7 @@ export default async function ResearchReportPage(props: PageProps<"/research/[sl
       {breadcrumbJsonLd ? (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       ) : null}
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-4xl">
         <Reveal>
           <p className="text-balance text-sm font-bold uppercase tracking-[0.16em] text-brand">
             <Link href="/research" className="hover:underline">Research</Link>
@@ -106,16 +106,25 @@ export default async function ResearchReportPage(props: PageProps<"/research/[sl
           <h1 className="font-display mt-2 text-balance text-4xl font-bold text-[#101727] sm:text-5xl" style={{ textTransform: "none" }}>
             {report.title}
           </h1>
-          {report.summary ? <p className="mt-3 text-pretty text-lg leading-relaxed text-[#68717D]">{report.summary}</p> : null}
-          <p className="mt-4 text-sm text-[#68717D]/70">
-            By {report.authorName}
-            {report.reviewerName ? ` · Reviewed by ${report.reviewerName}` : ""}
-            {report.publishedAt
-              ? ` · ${new Date(report.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
-              : ""}
-          </p>
+          {report.summary ? <p className="mt-3 max-w-3xl text-pretty text-lg leading-relaxed text-[#68717D]">{report.summary}</p> : null}
+          <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-[#68717D]">
+            <span className="rounded-full bg-[#f4f5f6] px-3 py-1 font-medium text-[#101727]">{report.authorName}</span>
+            {report.reviewerName ? <span>Reviewed by {report.reviewerName}</span> : null}
+            {report.publishedAt ? (
+              <span>{new Date(report.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+            ) : null}
+          </div>
         </Reveal>
 
+        {report.imageUrl ? (
+          <Reveal delay={80}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs */}
+            <img src={report.imageUrl} alt="" className="mt-8 aspect-[16/9] w-full rounded-2xl object-cover shadow-sm" />
+          </Reveal>
+        ) : null}
+      </div>
+
+      <div className="mx-auto max-w-3xl">
         <Reveal delay={100} className="mt-10 flex flex-col gap-8">
           {DETAIL_FIELDS.filter((f) => report[f.key]).map((f) => (
             <div key={f.key}>

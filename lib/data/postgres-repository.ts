@@ -473,8 +473,8 @@ export class PostgresRepository implements Repository {
   async createArticle(input: CreateArticleInput): Promise<Article> {
     const db = await this.db();
     const { rows } = await db.query(
-      `INSERT INTO articles (id, slug, topic_id, title, dek, body, author_name, sources)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      `INSERT INTO articles (id, slug, topic_id, title, dek, body, author_name, sources, image_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
       [
         randomUUID(),
         input.slug,
@@ -484,6 +484,7 @@ export class PostgresRepository implements Repository {
         input.body,
         input.authorName,
         JSON.stringify(input.sources ?? []),
+        input.imageUrl ?? null,
       ],
     );
     return mapArticle(rows[0]);
@@ -501,7 +502,7 @@ export class PostgresRepository implements Repository {
 
     const { rows } = await db.query(
       `UPDATE articles SET slug = $2, topic_id = $3, title = $4, dek = $5, body = $6, author_name = $7,
-         sources = $8, status = $9, published_at = $10, updated_at = now()
+         sources = $8, image_url = $9, status = $10, published_at = $11, updated_at = now()
        WHERE id = $1 RETURNING *`,
       [
         id,
@@ -512,6 +513,7 @@ export class PostgresRepository implements Repository {
         input.body ?? current.body,
         input.authorName ?? current.authorName,
         JSON.stringify(input.sources ?? current.sources),
+        input.imageUrl === undefined ? current.imageUrl : input.imageUrl,
         nextStatus,
         publishedAt,
       ],
@@ -554,8 +556,8 @@ export class PostgresRepository implements Repository {
     const { rows } = await db.query(
       `INSERT INTO research_reports
          (id, slug, title, summary, key_findings, methodology, sample_size, date_range, definitions,
-          limitations, anonymization_note, data_source, author_name, reviewer_name, sources)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+          limitations, anonymization_note, data_source, author_name, reviewer_name, sources, image_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
       [
         randomUUID(),
         input.slug,
@@ -572,6 +574,7 @@ export class PostgresRepository implements Repository {
         input.authorName,
         input.reviewerName ?? null,
         JSON.stringify(input.sources ?? []),
+        input.imageUrl ?? null,
       ],
     );
     return mapResearchReport(rows[0]);
@@ -589,8 +592,8 @@ export class PostgresRepository implements Repository {
     const { rows } = await db.query(
       `UPDATE research_reports SET slug = $2, title = $3, summary = $4, key_findings = $5, methodology = $6,
          sample_size = $7, date_range = $8, definitions = $9, limitations = $10, anonymization_note = $11,
-         data_source = $12, author_name = $13, reviewer_name = $14, sources = $15, status = $16,
-         published_at = $17, updated_at = now()
+         data_source = $12, author_name = $13, reviewer_name = $14, sources = $15, image_url = $16, status = $17,
+         published_at = $18, updated_at = now()
        WHERE id = $1 RETURNING *`,
       [
         id,
@@ -608,6 +611,7 @@ export class PostgresRepository implements Repository {
         input.authorName ?? current.authorName,
         input.reviewerName === undefined ? current.reviewerName : input.reviewerName,
         JSON.stringify(input.sources ?? current.sources),
+        input.imageUrl === undefined ? current.imageUrl : input.imageUrl,
         nextStatus,
         publishedAt,
       ],
@@ -1802,6 +1806,7 @@ function mapArticle(row: Row): Article {
     status: row.status as ArticleStatus,
     authorName: row.author_name as string,
     sources: (row.sources as Source[] | null) ?? [],
+    imageUrl: (row.image_url as string | null) ?? null,
     publishedAt: row.published_at ? iso(row.published_at) : null,
     updatedAt: iso(row.updated_at),
     createdAt: iso(row.created_at),
@@ -1825,6 +1830,7 @@ function mapResearchReport(row: Row): ResearchReport {
     authorName: row.author_name as string,
     reviewerName: (row.reviewer_name as string | null) ?? null,
     sources: (row.sources as Source[] | null) ?? [],
+    imageUrl: (row.image_url as string | null) ?? null,
     status: row.status as ArticleStatus,
     publishedAt: row.published_at ? iso(row.published_at) : null,
     updatedAt: iso(row.updated_at),

@@ -11,6 +11,7 @@ interface CreateArticleBody {
   body: string;
   authorName: string;
   sources?: Source[];
+  imageUrl?: string | null;
   status: "draft" | "published";
 }
 
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
     body: body.body ?? "",
     authorName: body.authorName?.trim() || "AfterFlight",
     sources: body.sources ?? [],
+    imageUrl: body.imageUrl ?? null,
   });
 
   if (body.status === "published") {

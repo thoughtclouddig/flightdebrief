@@ -12,6 +12,7 @@ interface UpdateArticleBody {
   body?: string;
   authorName?: string;
   sources?: Source[];
+  imageUrl?: string | null;
   status?: ArticleStatus;
 }
 
@@ -34,6 +35,7 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
     body: body.body,
     authorName: body.authorName?.trim(),
     sources: body.sources,
+    imageUrl: body.imageUrl,
     status: body.status,
   });
 

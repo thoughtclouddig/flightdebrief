@@ -54,6 +54,7 @@ export function ResearchForm({ report }: { report?: ResearchReport }) {
     authorName: report?.authorName ?? "AfterFlight",
     reviewerName: report?.reviewerName ?? "",
     sources: report?.sources ?? ([] as Source[]),
+    imageUrl: report?.imageUrl ?? "",
     status: (report?.status ?? "draft") as ArticleStatus,
   });
   const [slugTouched, setSlugTouched] = useState(Boolean(report));
@@ -68,7 +69,7 @@ export function ResearchForm({ report }: { report?: ResearchReport }) {
     setSaving(true);
     setError(null);
     try {
-      const payload = { ...form, status: nextStatus ?? form.status };
+      const payload = { ...form, imageUrl: form.imageUrl.trim() || null, status: nextStatus ?? form.status };
       const res = await fetch(report ? `/api/admin/research/${report.id}` : "/api/admin/research", {
         method: report ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -156,6 +157,21 @@ export function ResearchForm({ report }: { report?: ResearchReport }) {
           value={form.reviewerName}
           onChange={(e) => setForm((f) => ({ ...f, reviewerName: e.target.value }))}
         />
+      </div>
+
+      <div>
+        <Label htmlFor="research-image">Image URL (https:// or data:)</Label>
+        <Input
+          id="research-image"
+          className="mt-1.5"
+          placeholder="https://... or data:image/png;base64,..."
+          value={form.imageUrl}
+          onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
+        />
+        {form.imageUrl.trim() ? (
+          // eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs; next/image can't optimize data: URLs
+          <img src={form.imageUrl.trim()} alt="" className="mt-2 aspect-video w-full max-w-sm rounded-lg object-cover" />
+        ) : null}
       </div>
 
       <SourcesEditor sources={form.sources} onChange={(sources) => setForm((f) => ({ ...f, sources }))} />

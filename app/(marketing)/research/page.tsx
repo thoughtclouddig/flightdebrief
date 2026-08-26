@@ -41,10 +41,16 @@ export default async function ResearchHubPage() {
               <Link
                 key={report.id}
                 href={`/research/${report.slug}`}
-                className="rounded-lg border border-hairline p-5 transition-colors hover:border-brand/40"
+                className="flex gap-4 rounded-lg border border-hairline p-5 transition-colors hover:border-brand/40"
               >
-                <p className="font-display text-lg font-bold text-[#101727]">{report.title}</p>
-                {report.summary ? <p className="mt-1.5 text-pretty text-[#68717D]">{report.summary}</p> : null}
+                {report.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs
+                  <img src={report.imageUrl} alt="" className="aspect-[4/3] w-28 shrink-0 rounded-lg object-cover sm:w-36" />
+                ) : null}
+                <div>
+                  <p className="font-display text-lg font-bold text-[#101727]">{report.title}</p>
+                  {report.summary ? <p className="mt-1.5 text-pretty text-[#68717D]">{report.summary}</p> : null}
+                </div>
               </Link>
             ))
           )}

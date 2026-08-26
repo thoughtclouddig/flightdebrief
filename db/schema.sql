@@ -713,6 +713,13 @@ CREATE TABLE IF NOT EXISTS research_reports (
 );
 CREATE INDEX IF NOT EXISTS research_reports_status_idx ON research_reports (status, published_at DESC);
 
+-- Hero image, as a plain https:// or data: URL -- reuses the same
+-- storage-free pattern already used by users.avatar_url (no object storage
+-- infra in this app). Populated manually via the admin form, or
+-- automatically by the AI content pipeline (lib/ai/generate-article-image.ts).
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_url text;
+ALTER TABLE research_reports ADD COLUMN IF NOT EXISTS image_url text;
+
 -- AI referral tracking: minimal, privacy-first (no IP, no user agent, no
 -- cookies) -- just enough to see which marketing pages get traffic from
 -- ChatGPT/Perplexity/Gemini/Copilot/etc, classified by referrer host.

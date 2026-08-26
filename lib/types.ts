@@ -624,6 +624,8 @@ export interface Article {
   status: ArticleStatus;
   authorName: string;
   sources: Source[];
+  /** https:// or data: URL -- see db/schema.sql's comment on articles.image_url. */
+  imageUrl: string | null;
   publishedAt: string | null;
   updatedAt: string;
   createdAt: string;
@@ -652,6 +654,7 @@ export interface ResearchReport {
   authorName: string;
   reviewerName: string | null;
   sources: Source[];
+  imageUrl: string | null;
   status: ArticleStatus;
   publishedAt: string | null;
   updatedAt: string;

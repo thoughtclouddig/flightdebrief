@@ -122,6 +122,7 @@ export interface CreateArticleInput {
   body: string;
   authorName: string;
   sources?: Source[];
+  imageUrl?: string | null;
 }
 
 export interface UpdateArticleInput {
@@ -132,6 +133,7 @@ export interface UpdateArticleInput {
   body?: string;
   authorName?: string;
   sources?: Source[];
+  imageUrl?: string | null;
   status?: ArticleStatus;
 }
 
@@ -150,6 +152,7 @@ export interface CreateResearchReportInput {
   authorName: string;
   reviewerName?: string | null;
   sources?: Source[];
+  imageUrl?: string | null;
 }
 
 export interface UpdateResearchReportInput extends Partial<CreateResearchReportInput> {

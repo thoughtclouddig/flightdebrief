@@ -70,9 +70,19 @@ export default async function ResourceTopicPage(props: PageProps<"/resources/[to
             <ul className="flex flex-col gap-6">
               {articles.map((article) => (
                 <li key={article.id}>
-                  <Link href={`/resources/${topic.slug}/${article.slug}`} className="group">
-                    <p className="font-display text-xl font-bold text-[#101727] group-hover:text-brand">{article.title}</p>
-                    {article.dek ? <p className="mt-1 text-[#68717D]">{article.dek}</p> : null}
+                  <Link href={`/resources/${topic.slug}/${article.slug}`} className="group flex gap-4">
+                    {article.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs
+                      <img
+                        src={article.imageUrl}
+                        alt=""
+                        className="aspect-[4/3] w-28 shrink-0 rounded-lg object-cover sm:w-36"
+                      />
+                    ) : null}
+                    <div>
+                      <p className="font-display text-xl font-bold text-[#101727] group-hover:text-brand">{article.title}</p>
+                      {article.dek ? <p className="mt-1 text-[#68717D]">{article.dek}</p> : null}
+                    </div>
                   </Link>
                 </li>
               ))}

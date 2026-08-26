@@ -18,6 +18,7 @@ interface CreateResearchBody {
   authorName: string;
   reviewerName?: string;
   sources?: Source[];
+  imageUrl?: string | null;
   status: "draft" | "published";
 }
 
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
     authorName: body.authorName?.trim() || "AfterFlight",
     reviewerName: body.reviewerName?.trim() || null,
     sources: body.sources ?? [],
+    imageUrl: body.imageUrl ?? null,
   });
 
   if (body.status === "published") {
