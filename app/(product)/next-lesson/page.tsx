@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, CheckCircle2, ClipboardCheck, HelpCircle, PlaneTakeoff, Target } from "lucide-react";
+import { BookOpen, CalendarClock, CheckCircle2, ClipboardCheck, HelpCircle, PlaneTakeoff, Target } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChecklistCard } from "@/components/checklist-card";
@@ -44,6 +44,16 @@ export default async function NextLessonPage() {
   const cfi = instructorFirstName ?? "your instructor";
   const focusToday = brief.focusAreas.slice(0, 2);
   const viewedUrls = studyReferences.length > 0 ? new Set(await repo.listViewedStudyResourceUrls(viewer.user.id)) : new Set<string>();
+  // Same fields the CFI's per-student page shows -- if every one of them is
+  // empty, the page below would otherwise just be a blank stretch under the
+  // header with no explanation of why there's nothing to show.
+  const hasAnyContent =
+    brief.lastWentWell.length > 0 ||
+    focusToday.length > 0 ||
+    brief.keepWorkingOn.length > 0 ||
+    brief.beforeFlightItems.length > 0 ||
+    studyReferences.length > 0 ||
+    Boolean(brief.suggestedQuestion);
 
   // Marks the "Prepare for your next flight" Guide step (lib/guide.ts).
   if (!viewer.user.guideProgress?.nextFlight) {
@@ -57,6 +67,38 @@ export default async function NextLessonPage() {
         <p className="text-sm text-foreground-soft">Based on your debrief with {cfi}</p>
         {ttsEnabled ? <ListenButton baseSrc="/api/next-lesson/audio" label="Listen to your brief" /> : null}
       </div>
+
+      {brief.upcomingReservation ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarClock className="size-4 text-brand" />
+              When
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-foreground">
+              {new Date(brief.upcomingReservation.scheduledStart).toLocaleString("en-US", {
+                weekday: "long",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {!hasAnyContent ? (
+        <Card>
+          <CardContent className="py-6 text-center text-sm text-foreground-soft">
+            {cfi === "your instructor"
+              ? "Nothing to prepare yet -- this fills in once your last debrief is finished."
+              : `${cfi} hasn't flagged anything to focus on from your last debrief yet.`}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {brief.lastWentWell.length > 0 ? (
         <Card>
@@ -159,9 +201,9 @@ export default async function NextLessonPage() {
 
       <div className="flex flex-col items-center gap-1.5">
         <Link href="/flights/new" className={buttonVariants({ size: "lg", className: "w-full" })}>
-          I&rsquo;m Ready to Fly
+          Log This Flight
         </Link>
-        <p className="text-xs text-foreground-faint">After you land -- this isn&rsquo;t a pre-flight step.</p>
+        <p className="text-xs text-foreground-faint">Once you&rsquo;ve landed -- not a pre-flight step.</p>
       </div>
     </div>
   );
