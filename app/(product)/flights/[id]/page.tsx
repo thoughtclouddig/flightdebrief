@@ -48,6 +48,14 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
   });
   const displayTrack = simplifyTrackForDisplay(flight.track);
 
+  // Flight records are org-scoped, not instructor-scoped (see canAccessRecord
+  // in lib/auth/guard.ts) -- deliberately, so any CFI at the school can pick up
+  // a student mid-syllabus. Without saying so, though, another instructor's
+  // flight just looks like it's wrongly showing up in your own account.
+  const student = isInstructorViewer ? await repo.getUser(flight.userId) : null;
+  const flownWithAnotherInstructor =
+    isInstructorViewer && Boolean(flight.instructor) && flight.instructor?.id !== viewer.user.id;
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div>
@@ -59,6 +67,13 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
           {flight.departureAirport} → {flight.arrivalAirport}
         </p>
       </div>
+
+      {flownWithAnotherInstructor ? (
+        <p className="rounded-lg bg-surface-sunken px-3 py-2 text-sm text-foreground-soft">
+          You didn&rsquo;t instruct this flight -- {flight.instructor?.name} flew it with{" "}
+          {student?.name.split(" ")[0] ?? "this student"}. You can still pick up the debrief.
+        </p>
+      ) : null}
 
       <Card>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">

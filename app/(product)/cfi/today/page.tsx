@@ -197,6 +197,12 @@ export default async function CfiTodayPage() {
                   >
                     {entry.student.name}
                   </Link>
+                  {/* Same org-scoped-not-instructor-scoped rule as the flight
+                      detail page -- name the other CFI so a flight you didn't
+                      instruct doesn't read as wrongly landing in your list. */}
+                  {entry.pendingFlight?.instructor && entry.pendingFlight.instructor.id !== instructorId ? (
+                    <p className="text-xs text-foreground-soft">Flown with {entry.pendingFlight.instructor.name}</p>
+                  ) : null}
                   <div className="flex flex-wrap gap-1">
                     {reasons.map((r, i) => {
                       // Each reason with a single obvious fix links straight to it --
