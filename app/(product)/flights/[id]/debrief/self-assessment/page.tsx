@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { AssessmentForm } from "@/components/debrief/assessment-form";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { buttonVariants } from "@/components/ui/button";
 import { formatFlightContext } from "@/lib/utils";
 
 export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]/debrief/self-assessment">) {
@@ -37,6 +39,22 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
 
   const assessment = await repo.getAssessment(id, "student");
   if (assessment?.status === "submitted") {
+    // AutoRefresh polls this same server component every few seconds, so once
+    // the CFI actually finishes the debrief (flight.debriefStatus flips to
+    // "complete" in app/api/flights/[id]/debrief/finish/route.ts) this screen
+    // updates on its own -- the student never has to notice it's stuck and
+    // manually reload.
+    if (flight.debriefStatus === "complete") {
+      return (
+        <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
+          <h1 className="text-2xl font-semibold text-foreground">Debrief complete</h1>
+          <p className="text-sm text-foreground-soft">Your instructor finished walking through it.</p>
+          <Link href={`/flights/${id}/debrief/results`} className={buttonVariants({ size: "lg", className: "mt-3" })}>
+            View Debrief
+          </Link>
+        </div>
+      );
+    }
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
         <AutoRefresh />

@@ -27,9 +27,10 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
   // bounces the student to a "not quite yet" screen.
   let tasksPending = false;
   let hasPendingDebrief = false;
+  let guidanceMode: "freeform" | "guided" | "light" = "freeform";
   if (flight.debriefStatus !== "complete") {
     const org = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
-    const guidanceMode = org?.defaultGuidanceMode ?? "freeform";
+    guidanceMode = org?.defaultGuidanceMode ?? "freeform";
     if (guidanceMode !== "freeform") {
       const tasks = await repo.listFlightTasks(flight.id);
       tasksPending = tasks.length === 0;
@@ -103,7 +104,11 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
           </Button>
         ) : (
           <Link href={`/flights/${flight.id}/debrief`} className={buttonVariants({ size: "lg", className: "flex-1" })}>
-            Start Debrief
+            {/* Only a solo/freeform flight has the student recording their own
+                debrief -- in guided/light mode the CFI is the one who presses
+                record, so this label shouldn't read as an instruction to the
+                student to start anything themselves. */}
+            {!isInstructorViewer && guidanceMode !== "freeform" ? "Continue" : "Start Debrief"}
           </Link>
         )}
         <Link href="/dashboard" className={buttonVariants({ size: "lg", variant: "outline" })}>
