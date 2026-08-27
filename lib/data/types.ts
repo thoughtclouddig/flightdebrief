@@ -206,6 +206,9 @@ export interface Repository {
     items: Omit<TrainingItem, "id" | "createdAt">[],
   ): Promise<TrainingItem[]>;
   setTrainingItemDone(id: string, done: boolean): Promise<void>;
+  /** CFI editing an AI-generated item's wording, or one they added themselves. */
+  updateTrainingItemDescription(id: string, description: string): Promise<void>;
+  deleteTrainingItem(id: string): Promise<void>;
 
   // --- CFI-authored standing student notes (independent of any flight/debrief) ---
   listStudentNotes(filter: { studentId: string }): Promise<StudentNote[]>;

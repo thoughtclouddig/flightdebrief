@@ -2,9 +2,9 @@ import Link from "next/link";
 import { BookOpen, CalendarClock, CheckCircle2, ClipboardCheck, HelpCircle, PlaneTakeoff, Target } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChecklistCard } from "@/components/checklist-card";
 import { ListenButton } from "@/components/listen-button";
 import { StudyResourceLink } from "@/components/study-resource-link";
+import { TrainingItemChecklist } from "@/components/training-item-checklist";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
@@ -156,8 +156,19 @@ export default async function NextLessonPage() {
         </Card>
       ) : null}
 
-      {brief.beforeFlightItems.length > 0 ? (
-        <ChecklistCard icon={ClipboardCheck} title="Before today's flight" items={brief.beforeFlightItems} />
+      {brief.beforeFlightTrainingItems.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardCheck className="size-4 text-brand" />
+              Before today&rsquo;s flight
+            </CardTitle>
+            <CardDescription>Check off what you&rsquo;ve reviewed -- this is for you, nobody else sees it.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TrainingItemChecklist items={brief.beforeFlightTrainingItems} />
+          </CardContent>
+        </Card>
       ) : null}
 
       {studyReferences.length > 0 ? (

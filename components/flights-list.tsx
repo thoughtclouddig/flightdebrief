@@ -2,14 +2,30 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { LayoutGrid, List } from "lucide-react";
+import { CalendarClock, LayoutGrid, List } from "lucide-react";
 import { FlightCard, STATUS_LABEL, STATUS_TONE } from "@/components/flight-card";
 import { formatDurationShort } from "@/lib/utils";
-import type { FlightWithRelations } from "@/lib/types";
+import type { Aircraft, FlightWithRelations, Reservation, User } from "@/lib/types";
 
 type SortKey = "date-desc" | "date-asc";
 type ViewMode = "grid" | "list";
-type StatusFilter = "all" | "pending" | "done";
+type StatusFilter = "all" | "pending" | "done" | "upcoming";
+
+export interface UpcomingReservationSummary {
+  reservation: Reservation;
+  instructor: User | null;
+  aircraft: Aircraft | null;
+}
+
+function formatReservationDateTime(iso: string) {
+  const d = new Date(iso);
+  return {
+    day: d.toLocaleDateString("en-US", { day: "2-digit" }),
+    month: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+    time: d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+    full: `${d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} · ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`,
+  };
+}
 
 function monthKey(flightDate: string): string {
   return flightDate.slice(0, 7); // "YYYY-MM"
@@ -29,10 +45,13 @@ function monthLabel(key: string): string {
 export function FlightsList({
   flights,
   studentNames,
+  upcoming = [],
 }: {
   flights: FlightWithRelations[];
   /** CFI/admin views spanning multiple students -- keyed by flight id, omitted on a single student's own flights page. */
   studentNames?: Record<string, string>;
+  /** Scheduled-but-not-yet-flown reservations -- student's own flights page only. Omit on CFI/admin views spanning multiple students. */
+  upcoming?: UpcomingReservationSummary[];
 }) {
   const [view, setView] = useState<ViewMode>("grid");
   const [sort, setSort] = useState<SortKey>("date-desc");
@@ -68,7 +87,7 @@ export function FlightsList({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex rounded-md border border-hairline bg-surface p-0.5 sm:self-start">
+      <div className="flex flex-wrap gap-1 rounded-md border border-hairline bg-surface p-0.5 sm:self-start">
         {(["all", "pending", "done"] as StatusFilter[]).map((s) => (
           <button
             key={s}
@@ -82,8 +101,55 @@ export function FlightsList({
             {s === "all" ? "All" : s === "pending" ? "Pending" : "Debriefed"}
           </button>
         ))}
+        {upcoming.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => setStatus("upcoming")}
+            aria-pressed={status === "upcoming"}
+            className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors sm:flex-none ${
+              status === "upcoming" ? "text-white" : "text-foreground-faint hover:text-foreground"
+            }`}
+            style={status === "upcoming" ? { background: "var(--amber)" } : undefined}
+          >
+            Upcoming ({upcoming.length})
+          </button>
+        ) : null}
       </div>
 
+      {status === "upcoming" ? (
+        <div className="flex flex-col divide-y divide-hairline overflow-hidden rounded-lg border border-hairline">
+          {upcoming.map(({ reservation, instructor, aircraft }) => {
+            const { day, month, full } = formatReservationDateTime(reservation.scheduledStart);
+            return (
+              <div key={reservation.id} className="flex items-center gap-4 bg-surface px-4 py-3">
+                <div
+                  className="flex size-11 shrink-0 flex-col items-center justify-center rounded tabular-nums"
+                  style={{ background: "var(--amber-soft)", color: "var(--amber-ink)" }}
+                >
+                  <span className="text-sm font-semibold leading-none">{day}</span>
+                  <span className="mt-0.5 text-[8.5px] tracking-wide">{month}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    <CalendarClock className="size-3.5 shrink-0" style={{ color: "var(--amber)" }} />
+                    {full}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-foreground-soft">
+                    {[instructor?.name, aircraft?.tailNumber].filter(Boolean).join(" · ") || "Scheduled"}
+                  </p>
+                </div>
+                <span
+                  className="shrink-0 rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide"
+                  style={{ background: "var(--amber-soft)", color: "var(--amber-ink)" }}
+                >
+                  Scheduled
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <>
       <div className="flex flex-wrap items-center gap-2">
         <select
           value={month}
@@ -158,6 +224,8 @@ export function FlightsList({
             <FlightListRow key={flight.id} flight={flight} studentName={studentNames?.[flight.id]} />
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );

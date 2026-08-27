@@ -68,7 +68,7 @@ export default async function StudentHomePage() {
       ? [
           { value: totalCaptured, label: "Captured", color: "var(--brand)" },
           { value: debriefStreak, label: "Streak", color: "var(--good)" },
-          { value: milestones.length, label: milestones.length === 1 ? "Milestone" : "Milestones", color: "var(--amber)" },
+          { value: milestones.length, label: milestones.length === 1 ? "Badge" : "Badges", color: "var(--amber)" },
         ]
       : null;
 
@@ -127,8 +127,8 @@ export default async function StudentHomePage() {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-foreground-faint">
-              Captured and Streak count your debriefed flights; Milestones mark real progress checkpoints along the way.
+            <p className="text-sm text-foreground-soft">
+              Captured and Streak count your debriefed flights; Badges mark automatic milestones like your first 5 or 10 debriefs -- not training milestones like solo or checkride.
             </p>
           </CardContent>
         </Card>

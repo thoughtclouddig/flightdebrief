@@ -395,6 +395,16 @@ export class PostgresRepository implements Repository {
     );
   }
 
+  async updateTrainingItemDescription(id: string, description: string): Promise<void> {
+    const db = await this.db();
+    await db.query("UPDATE training_items SET description = $2 WHERE id = $1", [id, description]);
+  }
+
+  async deleteTrainingItem(id: string): Promise<void> {
+    const db = await this.db();
+    await db.query("DELETE FROM training_items WHERE id = $1", [id]);
+  }
+
   // --- CFI-authored standing student notes ---
 
   async listStudentNotes(filter: { studentId: string }): Promise<StudentNote[]> {

@@ -57,7 +57,7 @@ export default async function ProgressPage() {
                 <AlertCircle className="size-3.5" />
                 Ongoing ({keepWorkingOn.length})
               </p>
-              <p className="mt-1 text-xs text-foreground-faint">
+              <p className="mt-1 text-sm text-foreground-soft">
                 Skills your instructor called out across debriefs. These clear on their own once a later flight
                 shows you&rsquo;ve got it -- or check one off yourself if you feel ready.
               </p>

@@ -9,6 +9,7 @@ import type {
   Instructor,
   InstructorGuidance,
   Reservation,
+  TrainingItem,
   TrainingSignal,
   TrainingSkill,
   User,
@@ -40,6 +41,8 @@ export interface NextLessonBrief {
   focusAreas: string[];
   keepWorkingOn: string[];
   beforeFlightItems: string[];
+  /** Same items as beforeFlightItems, as live rows -- lets the student's own Next-Lesson page render them as a checkable self-affirmation list instead of static bullets. */
+  beforeFlightTrainingItems: TrainingItem[];
   recurringThemes: RecurringTheme[];
   upcomingReservation: Reservation | null;
   /** Deterministic, not LLM-generated -- templated from the top focus/action item so there's always a concrete, grounded prompt to hand the student, never an invented one. */
@@ -63,7 +66,8 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
     ? trainingItems.filter((t) => t.flightId === lastFlight.id && !t.done && t.visibility !== "instructor_only" && t.visibility !== "admin_only")
     : [];
   const keepWorkingOn = itemsForLastFlight.filter((t) => t.category === "keep_working_on").map((t) => t.description);
-  const beforeFlightItems = itemsForLastFlight.filter((t) => t.category === "before_next_flight").map((t) => t.description);
+  const beforeFlightTrainingItems = itemsForLastFlight.filter((t) => t.category === "before_next_flight");
+  const beforeFlightItems = beforeFlightTrainingItems.map((t) => t.description);
   const focusAreas = lastDebrief?.structuredResult.nextLessonFocus ?? [];
 
   const lastInstructor = lastFlight?.instructor ?? null;
@@ -93,6 +97,7 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
     focusAreas,
     keepWorkingOn,
     beforeFlightItems,
+    beforeFlightTrainingItems,
     recurringThemes,
     upcomingReservation,
     suggestedQuestion,

@@ -10,8 +10,23 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const repo = getRepository();
   const viewer = await getViewer();
-  const flights = await repo.listFlights({ studentId: viewer.user.id });
+  const [flights, reservations] = await Promise.all([
+    repo.listFlights({ studentId: viewer.user.id }),
+    repo.listReservations({ studentId: viewer.user.id }),
+  ]);
   const nextToDebrief = flights.find((f) => f.debriefStatus !== "complete");
+
+  const now = Date.now();
+  const upcomingReservations = reservations
+    .filter((r) => r.status === "scheduled" && new Date(r.scheduledStart).getTime() >= now)
+    .sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart));
+  const upcoming = await Promise.all(
+    upcomingReservations.map(async (reservation) => ({
+      reservation,
+      instructor: await repo.getUser(reservation.instructorId),
+      aircraft: await repo.getAircraft(reservation.aircraftId),
+    })),
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -35,12 +50,12 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {flights.length === 0 ? (
+      {flights.length === 0 && upcoming.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-hairline p-10 text-center text-foreground-soft">
           No flights yet. Add your first training flight to get started.
         </div>
       ) : (
-        <FlightsList flights={flights} />
+        <FlightsList flights={flights} upcoming={upcoming} />
       )}
     </div>
   );
