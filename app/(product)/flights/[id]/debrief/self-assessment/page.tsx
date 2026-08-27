@@ -59,7 +59,7 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
         role="student"
         tasks={tasks.map((t) => ({ id: t.id, label: t.label }))}
         initialRatings={initialRatings}
-        redirectTo={`/flights/${id}`}
+        redirectTo={`/flights/${id}/debrief/self-assessment`}
         title="How do you think it went?"
         helpText="Rate yourself honestly on each task -- your instructor already submitted theirs and won't see this until you submit."
       />
