@@ -277,14 +277,32 @@ export interface FlightWithRelations extends Flight {
 // re-parsing free text. See lib/taxonomy.ts for the classifier and
 // lib/training-insights.ts for school-level aggregation.
 
+/**
+ * Grouping for skills, aligned to the Private Pilot ACS Areas of Operation
+ * (FAA-S-ACS-6) so the debrief vocabulary matches what a student is actually
+ * graded on at the checkride.
+ *
+ * PROCEDURES and AIRSPEED_CONTROL are retained ONLY so training_signals rows
+ * written before this alignment still resolve to a label -- neither is an ACS
+ * Area (airspeed control is an element inside many tasks, not a category of
+ * its own), and no skill maps to them any more. See lib/topics.ts.
+ */
 export type TrainingCategory =
+  | "PREFLIGHT"
+  | "AIRPORT_OPS"
+  | "TAKEOFFS"
   | "LANDINGS"
   | "MANEUVERS"
-  | "COMMUNICATIONS"
-  | "PROCEDURES"
-  | "AIRSPEED_CONTROL"
+  | "SLOW_FLIGHT_STALLS"
   | "NAVIGATION"
-  | "RISK_MANAGEMENT";
+  | "INSTRUMENT"
+  | "EMERGENCY"
+  | "NIGHT"
+  | "POSTFLIGHT"
+  | "COMMUNICATIONS"
+  | "RISK_MANAGEMENT"
+  | "PROCEDURES"
+  | "AIRSPEED_CONTROL";
 
 export type TrainingSkill =
   | "STABILIZED_APPROACH"
@@ -306,6 +324,41 @@ export type TrainingSkill =
   | "RADIO_COMMUNICATIONS"
   | "SITUATIONAL_AWARENESS"
   | "RISK_MANAGEMENT"
+  // Preflight & ground operations (ACS Areas I--III)
+  | "WEATHER_BRIEFING"
+  | "WEIGHT_BALANCE"
+  | "PERFORMANCE_PLANNING"
+  | "PREFLIGHT_INSPECTION"
+  | "FLIGHT_DECK_MANAGEMENT"
+  | "TAXIING"
+  | "BEFORE_TAKEOFF_CHECK"
+  | "AIRPORT_MARKINGS"
+  | "ATC_LIGHT_SIGNALS"
+  // Takeoffs & landings (ACS Area IV)
+  | "FORWARD_SLIP"
+  // Slow flight & stalls (ACS Area VII)
+  | "POWER_OFF_STALLS"
+  | "POWER_ON_STALLS"
+  | "ACCELERATED_STALLS"
+  | "SPIN_AWARENESS"
+  // Navigation (ACS Area VI)
+  | "NAV_SYSTEMS"
+  | "DIVERSION"
+  | "LOST_PROCEDURES"
+  // Basic instrument maneuvers (ACS Area VIII)
+  | "INST_STRAIGHT_LEVEL"
+  | "INST_CLIMBS_DESCENTS"
+  | "INST_TURNS"
+  | "UNUSUAL_ATTITUDES"
+  // Emergency operations (ACS Area IX)
+  | "EMERGENCY_DESCENT"
+  | "EMERGENCY_APPROACH"
+  | "ENGINE_FIRE"
+  | "SYSTEMS_MALFUNCTIONS"
+  | "EMERGENCY_EQUIPMENT"
+  // Night & postflight (ACS Areas X--XI)
+  | "NIGHT_OPERATIONS"
+  | "AFTER_LANDING"
   // Rounding out takeoff/landing pairs and splitting ground reference
   // maneuvers into their individually-taught/graded elements (see
   // lib/topics.ts for why GROUND_REF_MANEUVERS itself stays as a generic

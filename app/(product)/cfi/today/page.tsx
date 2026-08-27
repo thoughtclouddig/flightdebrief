@@ -212,7 +212,7 @@ export default async function CfiTodayPage() {
                         r === "Debrief not started" && entry.pendingFlight
                           ? `/flights/${entry.pendingFlight.id}/debrief/tasks`
                           : r === "Next lesson has no objectives"
-                            ? `/cfi/students/${entry.student.id}/handoff`
+                            ? `/cfi/students/${entry.student.id}/handoff#objectives`
                             : r === "No flight scheduled"
                               ? `/cfi/students/${entry.student.id}#schedule-lesson`
                               : null;

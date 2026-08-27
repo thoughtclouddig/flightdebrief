@@ -66,6 +66,35 @@ const PRIVATE_ACS_AREAS: Partial<Record<TrainingSkill, AcsArea>> = {
   NORMAL_TAKEOFF: { name: "Takeoffs, Landings, and Go-Arounds", url: acsPdfUrl(26) },
   // Area V, Task B "Ground Reference Maneuvers" (printed p.36, same spread as Steep Turns).
   GROUND_REF_MANEUVERS: { name: "Ground Reference Maneuvers", url: acsPdfUrl(44) },
+  // --- Added with the ACS-aligned catalog expansion (lib/topics.ts) --------
+  // These reuse Area-level anchors already verified above rather than new
+  // per-task page numbers, which would mean guessing offsets I haven't
+  // confirmed against the live PDF. Area-level is correct-but-coarse; a
+  // wrong page number would be worse than a slightly broad one.
+  SHORT_FIELD_TAKEOFF: { name: "Takeoffs, Landings, and Go-Arounds", url: acsPdfUrl(26) },
+  SOFT_FIELD_TAKEOFF: { name: "Takeoffs, Landings, and Go-Arounds", url: acsPdfUrl(26) },
+  CROSSWIND_TAKEOFF: { name: "Takeoffs, Landings, and Go-Arounds", url: acsPdfUrl(26) },
+  SOFT_FIELD_LANDING: { name: "Takeoffs, Landings, and Go-Arounds", url: acsPdfUrl(27) },
+  FORWARD_SLIP: { name: "Takeoffs, Landings, and Go-Arounds", url: acsPdfUrl(27) },
+  RECTANGULAR_COURSE: { name: "Ground Reference Maneuvers", url: acsPdfUrl(44) },
+  S_TURNS: { name: "Ground Reference Maneuvers", url: acsPdfUrl(44) },
+  TURNS_AROUND_POINT: { name: "Ground Reference Maneuvers", url: acsPdfUrl(44) },
+  POWER_OFF_STALLS: { name: "Slow Flight and Stalls", url: acsPdfUrl(50) },
+  POWER_ON_STALLS: { name: "Slow Flight and Stalls", url: acsPdfUrl(50) },
+  ACCELERATED_STALLS: { name: "Slow Flight and Stalls", url: acsPdfUrl(50) },
+  SPIN_AWARENESS: { name: "Slow Flight and Stalls", url: acsPdfUrl(50) },
+  NAV_SYSTEMS: { name: "Navigation", url: acsPdfUrl(46) },
+  DIVERSION: { name: "Navigation", url: acsPdfUrl(46) },
+  LOST_PROCEDURES: { name: "Navigation", url: acsPdfUrl(46) },
+  EMERGENCY_DESCENT: { name: "Emergency Operations", url: acsPdfUrl(59) },
+  EMERGENCY_APPROACH: { name: "Emergency Operations", url: acsPdfUrl(59) },
+  ENGINE_FIRE: { name: "Emergency Operations", url: acsPdfUrl(59) },
+  SYSTEMS_MALFUNCTIONS: { name: "Emergency Operations", url: acsPdfUrl(59) },
+  EMERGENCY_EQUIPMENT: { name: "Emergency Operations", url: acsPdfUrl(59) },
+  // Preflight, ground-ops, basic-instrument, night, and postflight skills are
+  // intentionally unmapped for now -- I have no verified page anchors for
+  // ACS Areas I--III and VIII--XI, and acsAreaForSkill returning null just
+  // means no ACS badge renders, which is the honest outcome.
   // RADIO_COMMUNICATIONS, SITUATIONAL_AWARENESS, and RISK_MANAGEMENT are left
   // unmapped, same as CHECKLIST_DISCIPLINE/TOWER_READBACKS/AIRSPEED_CONTROL
   // above -- risk management and situational awareness are Special Emphasis

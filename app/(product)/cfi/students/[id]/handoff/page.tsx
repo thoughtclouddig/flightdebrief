@@ -150,8 +150,12 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
         </Card>
       ) : null}
 
+      {/* Anchor target for the CFI Today "Next lesson has no objectives"
+          badge -- that link used to land at the top of this page, leaving the
+          CFI to scroll past Last Lesson/Build On Today to find the one card
+          they were sent here to edit. */}
       {brief.lastFlight ? (
-        <Card>
+        <Card id="objectives" className="scroll-mt-4">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="size-4 text-brand" />

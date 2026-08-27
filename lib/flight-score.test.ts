@@ -147,7 +147,7 @@ describe("computeFlightScore -- real score", () => {
     ];
     const result = computeFlightScore(observations);
     expect(result.building).toBe(false);
-    const maneuvers = result.gauge?.categories?.find((c) => c.label === "Maneuvers");
+    const maneuvers = result.gauge?.categories?.find((c) => c.label === "Performance & Ground Reference");
     const navigation = result.gauge?.categories?.find((c) => c.label === "Navigation");
     expect(maneuvers?.tone).toBe("good");
     expect(navigation?.tone).toBe("danger");

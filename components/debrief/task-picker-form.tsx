@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { categoryLabel } from "@/lib/topics";
 import { cn } from "@/lib/utils";
 import type { TrainingCategory, TrainingSkill } from "@/lib/types";
 
@@ -12,25 +13,25 @@ interface CustomEntry {
   label: string;
 }
 
-// Display order and label for grouping the picker -- MANEUVERS is split
-// further below since "maneuvers" alone is too broad a bucket to scan
-// quickly once takeoffs/landings/ground-ref all live under it.
-const CATEGORY_LABEL: Record<TrainingCategory, string> = {
-  LANDINGS: "Landings",
-  MANEUVERS: "Maneuvers",
-  PROCEDURES: "Procedures",
-  COMMUNICATIONS: "Communications",
-  AIRSPEED_CONTROL: "Airspeed Control",
-  NAVIGATION: "Navigation",
-  RISK_MANAGEMENT: "Risk Management",
-};
+// Display order for the picker, following the ACS Areas of Operation in
+// sequence (preflight -> airborne -> emergencies -> postflight) so it reads
+// the way a lesson actually runs. Labels come from lib/topics.ts so there's
+// one source of truth rather than a second copy that can drift.
+// PROCEDURES/AIRSPEED_CONTROL are deliberately absent: they're retained as
+// legacy TrainingCategory values for old signals, and no skill maps to them.
 const CATEGORY_ORDER: TrainingCategory[] = [
+  "PREFLIGHT",
+  "AIRPORT_OPS",
+  "TAKEOFFS",
   "LANDINGS",
   "MANEUVERS",
+  "SLOW_FLIGHT_STALLS",
   "NAVIGATION",
-  "PROCEDURES",
+  "INSTRUMENT",
+  "EMERGENCY",
+  "NIGHT",
+  "POSTFLIGHT",
   "COMMUNICATIONS",
-  "AIRSPEED_CONTROL",
   "RISK_MANAGEMENT",
 ];
 
@@ -153,7 +154,7 @@ export function TaskPickerForm({
               aria-expanded={isExpanded}
             >
               <span className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">{CATEGORY_LABEL[category]}</span>
+                <span className="text-sm font-semibold text-foreground">{categoryLabel(category)}</span>
                 {selectedCount > 0 ? (
                   <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand-dark dark:text-brand-light">
                     {selectedCount}
