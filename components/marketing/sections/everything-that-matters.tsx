@@ -59,9 +59,8 @@ const CARDS = [
 // The active slide is centered (not start-aligned) so both neighbors peek --
 // previous on the left, next on the right. Both the track and the controls
 // row below it break out to the full viewport width (matching the active
-// slide's own width, which can exceed the section's max-width container),
-// centering an inner track inside that full-bleed shell.
-const SLIDE_WIDTH = "min(90vw,1400px)";
+// slide's own width, min(90vw,1400px), which can exceed the section's
+// max-width container), centering an inner track inside that full-bleed shell.
 
 export function EverythingThatMatters() {
   const [active, setActive] = useState(0);
