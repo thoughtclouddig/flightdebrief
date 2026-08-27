@@ -34,7 +34,7 @@ export function ResumeDebriefButton({ flightId }: { flightId: string }) {
 
   return (
     <div className="flex w-full flex-col gap-1.5">
-      <Button size="lg" className="w-full" onClick={resume} disabled={loading}>
+      <Button size="lg" className="h-16 w-full text-lg font-semibold" onClick={resume} disabled={loading}>
         {loading ? <Loader2 className="size-4 animate-spin" /> : null}
         {loading ? "Analyzing…" : "Analyze Now"}
       </Button>

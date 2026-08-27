@@ -8,6 +8,10 @@ export const structuredDebriefSchema = z.object({
   // analyzer and Claude prompt both populate it directly, unlike
   // assessmentDifferences below which is always computed, never asked for).
   flightSummary: z.string().default(""),
+  // Spoken narrative for the "Listen to your debrief" audio -- see the
+  // prompt for why this is generated once here (grounded in the same facts
+  // as everything else in this response) rather than templated afterward.
+  narrativeRecap: z.string().default(""),
   whatWeDid: z.array(z.string()).default([]),
   wentWell: z.array(z.string()).default([]),
   needsWork: z.array(z.string()).default([]),

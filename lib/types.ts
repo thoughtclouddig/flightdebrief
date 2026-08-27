@@ -185,6 +185,8 @@ export interface AssessmentDifference {
 export interface StructuredDebrief {
   /** Short summary of the lesson. Empty string for older debriefs analyzed before this field existed. */
   flightSummary: string;
+  /** Claude's natural-language spoken recap for the "Listen to your debrief" audio -- see lib/ai/prompt.ts. Empty string for older debriefs analyzed before this field existed, or a mock-analyzed one (falls back to the templated narration, see lib/debrief-narration.ts). */
+  narrativeRecap: string;
   whatWeDid: string[];
   wentWell: string[];
   needsWork: string[];

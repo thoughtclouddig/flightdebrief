@@ -51,6 +51,7 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
   const script = buildDebriefNarration({
     studentFirstName: student?.name.split(" ")[0] ?? "there",
     instructorFirstName: resolveCfiFirstName(flight.instructor),
+    narrativeRecap: debrief.structuredResult.narrativeRecap,
     whatWeDid: debrief.structuredResult.whatWeDid,
     wentWell: debrief.structuredResult.wentWell,
     needsWork: debrief.structuredResult.needsWork,

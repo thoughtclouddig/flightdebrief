@@ -6,6 +6,7 @@ import { Loader2, Mic, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Waveform } from "@/components/waveform";
 import { QuestionCardStack } from "@/components/debrief/question-card-stack";
+import { SwipeableCard } from "@/components/debrief/swipeable-card";
 import { CardControls } from "@/components/debrief/card-controls";
 import { RecordingConsent } from "@/components/debrief/recording-consent";
 import { useTranscription } from "@/lib/transcription";
@@ -206,7 +207,16 @@ export function GuidedDebriefRecorder({
         </p>
       ) : null}
 
-      <QuestionCardStack card={activeCard} position={activeIndex + 1} total={cards.length} />
+      <SwipeableCard
+        onSwipeLeft={handleNext}
+        onSwipeRight={handleBack}
+        canSwipeLeft={activeIndex < cards.length - 1}
+        canSwipeRight={activeIndex > 0}
+        disabled={phase === "analyzing"}
+      >
+        <QuestionCardStack card={activeCard} position={activeIndex + 1} total={cards.length} />
+      </SwipeableCard>
+      <p className="-mt-2 text-center text-xs text-foreground-faint sm:hidden">Swipe to move between cards</p>
 
       {addingTopic ? (
         <div className="flex flex-col gap-2 rounded-lg border border-hairline p-4">

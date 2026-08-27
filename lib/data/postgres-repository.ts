@@ -1635,6 +1635,7 @@ function normalizeStructuredResult(result: Partial<Debrief["structuredResult"]> 
   const r = result ?? {};
   return {
     flightSummary: r.flightSummary ?? "",
+    narrativeRecap: r.narrativeRecap ?? "",
     whatWeDid: r.whatWeDid ?? [],
     wentWell: r.wentWell ?? [],
     needsWork: r.needsWork ?? [],

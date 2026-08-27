@@ -20,6 +20,17 @@ export interface DebriefNarrationInput {
   studentFirstName: string;
   /** Resolved via lib/instructor-attribution.ts's resolveCfiFirstName(). Null when no instructor is assigned to this flight. */
   instructorFirstName: string | null;
+  /**
+   * Claude's own natural-language recap of the debrief (see lib/ai/prompt.ts),
+   * grounded in the same fields below -- when present, this replaces the
+   * templated middle section entirely so the audio sounds like a real recap
+   * instead of a fixed bullet-by-bullet readout. Still framed by the same
+   * personalized opening/closing, which stay deterministic (never AI text)
+   * on purpose. Falls back to the template below when empty -- older
+   * debriefs analyzed before this field existed, or a transcript too thin
+   * for Claude to build a real narrative from.
+   */
+  narrativeRecap?: string;
   whatWeDid: string[];
   wentWell: string[];
   needsWork: string[];
@@ -32,7 +43,16 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   const cfi = input.instructorFirstName;
   const cfiOrFallback = cfi ?? "your instructor";
   const cfiOrFallbackCapitalized = cfi ?? "Your instructor";
-  const sections: string[] = [`Hey ${input.studentFirstName}, here's your debrief -- let's walk through today's flight together.`];
+  const opening = `Hey ${input.studentFirstName}, here's your debrief -- let's walk through today's flight together.`;
+  const closing = cfi
+    ? `Overall, ${cfi} felt this was a good flight, and you're making progress. Keep chipping away, and fly safe.`
+    : "Nice work today. Keep chipping away, and fly safe.";
+
+  if (input.narrativeRecap?.trim()) {
+    return [opening, input.narrativeRecap.trim(), closing].join("\n\n");
+  }
+
+  const sections: string[] = [opening];
 
   if (input.whatWeDid.length > 0) {
     sections.push(`Today you worked on ${speakList(input.whatWeDid)}.`);
@@ -67,11 +87,7 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   // twice in a row. Attributed once more when a name is known, since a
   // closing "felt good about the flight" line reads as an instructor's
   // assessment, not AfterFlight's own.
-  sections.push(
-    cfi
-      ? `Overall, ${cfi} felt this was a good flight, and you're making progress. Keep chipping away, and fly safe.`
-      : "Nice work today. Keep chipping away, and fly safe.",
-  );
+  sections.push(closing);
 
   // Blank line between sections (not a single space) -- most TTS engines
   // treat a paragraph break as a longer pause than a mid-sentence period,

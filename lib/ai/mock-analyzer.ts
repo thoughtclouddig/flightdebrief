@@ -29,6 +29,10 @@ export function analyzeMock(input: AnalyzeDebriefInput): StructuredDebriefResult
 
   return {
     flightSummary,
+    // Left blank -- the mock analyzer can't write natural prose, and
+    // app/api/flights/[id]/debrief/audio/route.ts falls back to the
+    // templated narration script whenever this is empty.
+    narrativeRecap: "",
     whatWeDid,
     wentWell: dedupe(wentWell).slice(0, 6),
     needsWork: dedupedNeedsWork,

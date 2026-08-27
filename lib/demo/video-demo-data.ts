@@ -99,6 +99,8 @@ export const DEMO_HISTORY: { daysAgo: number; durationMinutes: number; transcrip
  */
 export const DEMO_CURATED_RESULT: StructuredDebrief = {
   flightSummary: "Traffic pattern work at Scottsdale, focused on stabilized approaches and landing technique.",
+  narrativeRecap:
+    "You spent most of today's flight in the pattern at Scottsdale, working normal landings and a couple of go-arounds. Airspeed control was noticeably tighter than last time, and your checklist flow and radio calls both sounded a lot more confident. The flare is where things got interesting -- you kept carrying a little too much speed into the turn to final, which is what led to some ballooning on touchdown and made it harder to hold centerline through the rollout. Getting on-speed earlier, by the time you roll out on final rather than partway down it, should clean that up on its own.",
   whatWeDid: ["Traffic pattern work", "Normal landings", "Go-around practice"],
   wentWell: [
     "Better airspeed control in the pattern",
