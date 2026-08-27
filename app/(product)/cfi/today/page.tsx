@@ -188,19 +188,16 @@ export default async function CfiTodayPage() {
             Students Needing Attention
           </h2>
           <Card>
-            <CardContent className="flex flex-col gap-3">
+            <CardContent className="flex flex-col divide-y divide-hairline p-0">
               {needingAttention.map(({ entry, reasons }) => (
-                <div
-                  key={entry.student.id}
-                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg px-2 py-1.5 -mx-2"
-                >
+                <div key={entry.student.id} className="flex flex-col gap-1.5 px-4 py-3">
                   <Link
                     href={`/cfi/students/${entry.student.id}`}
-                    className="shrink-0 whitespace-nowrap text-sm font-medium text-slate-800 hover:underline dark:text-slate-100"
+                    className="text-sm font-medium text-slate-800 hover:underline dark:text-slate-100"
                   >
                     {entry.student.name}
                   </Link>
-                  <div className="flex flex-wrap justify-end gap-1">
+                  <div className="flex flex-wrap gap-1">
                     {reasons.map((r, i) => {
                       // Each reason with a single obvious fix links straight to it --
                       // never the student's general profile page, which just makes the
