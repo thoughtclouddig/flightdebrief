@@ -210,11 +210,16 @@ export default async function NextLessonPage() {
         </Card>
       ) : null}
 
-      <div className="flex flex-col items-center gap-1.5">
-        <Link href="/flights/new" className={buttonVariants({ size: "lg", className: "w-full" })}>
+      {/* Deliberately secondary, not a primary CTA. This page is a pre-flight
+          read -- the student's actual next step is to go fly, not to press
+          anything here. Logging is the after-landing action, kept available
+          for whoever lands and comes back to this page, but styled so it
+          doesn't read as "do this now." */}
+      <div className="flex flex-col items-center gap-1.5 border-t border-hairline pt-5">
+        <p className="text-sm text-foreground-soft">Already flown it?</p>
+        <Link href="/flights/new" className={buttonVariants({ variant: "outline", className: "w-full" })}>
           Log This Flight
         </Link>
-        <p className="text-xs text-foreground-faint">Once you&rsquo;ve landed -- not a pre-flight step.</p>
       </div>
     </div>
   );
