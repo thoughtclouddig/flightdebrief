@@ -110,7 +110,12 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
           {formatFlightContext(flight)}
         </h1>
       </div>
-      <GuidedDebriefRecorder flightId={flight.id} initialCards={cards} guidanceMode={guidanceMode} />
+      <GuidedDebriefRecorder
+        flightId={flight.id}
+        initialCards={cards}
+        guidanceMode={guidanceMode}
+        taskLabels={tasks.map((t) => t.label)}
+      />
     </div>
   );
 }

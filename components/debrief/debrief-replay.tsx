@@ -63,7 +63,7 @@ export function DebriefReplay({
         <CardContent>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <ReplayColumn label="Keep Doing" tone="good" items={keepDoing} empty="Nothing stood out." />
-            <ReplayColumn label="Work On" tone="amber" items={workOn} empty="Nothing flagged for this flight." />
+            <ReplayColumn label="Work On" tone="amber" items={workOn} empty="Nothing noted for this flight." />
             <ReplayColumn label="Next Flight" tone="brand" items={nextFlight} empty="No focus set yet." />
           </div>
         </CardContent>

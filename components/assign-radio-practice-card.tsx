@@ -72,7 +72,7 @@ export function AssignRadioPracticeCard({
             <Sparkles className="mt-0.5 size-4 shrink-0 text-brand" />
             <div className="flex-1">
               <p className="text-sm text-foreground">
-                Flagged for radio comms -- suggest <span className="font-medium">{suggestedScenario.title}</span>?
+                Radio comms came up in a recent debrief -- suggest <span className="font-medium">{suggestedScenario.title}</span>?
               </p>
               <div className="mt-2 flex gap-2">
                 <Button size="sm" onClick={() => assignScenario(suggestedScenario.id)} disabled={assigning === suggestedScenario.id}>

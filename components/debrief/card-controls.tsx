@@ -1,68 +1,71 @@
-import { ChevronLeft, ChevronRight, Flag, SkipForward, Square } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, SkipForward, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+/**
+ * Navigation for the guided debrief card stack, ordered by how often a CFI
+ * actually reaches for each control rather than as one flat cluster:
+ *   1. Next -- the 90% action, full-width primary.
+ *   2. Back / Skip -- occasional, smaller and side by side.
+ *   3. Add Topic -- rare, a quiet text button.
+ *   4. End Debrief -- terminal, visually separated so it's never a mis-tap
+ *      next to Next (and only becomes primary on the last card).
+ * The "revisit next lesson" toggle deliberately lives ON the card instead of
+ * here -- it marks that card's state, it doesn't move you anywhere.
+ */
 export function CardControls({
   canGoBack,
   isLast,
-  flagged,
   onBack,
   onSkip,
   onNext,
-  onToggleFlag,
+  onAddTopic,
   onEnd,
   disabled,
 }: {
   canGoBack: boolean;
   isLast: boolean;
-  flagged: boolean;
   onBack: () => void;
   onSkip: () => void;
   onNext: () => void;
-  onToggleFlag: () => void;
+  onAddTopic: () => void;
   onEnd: () => void;
   disabled?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          onClick={onBack}
-          disabled={!canGoBack || disabled}
-          className="min-w-[104px] flex-1 basis-[calc(50%-0.25rem)] sm:basis-0"
-        >
+    <div className="flex flex-col gap-3">
+      {!isLast ? (
+        <Button size="lg" onClick={onNext} disabled={disabled} className="h-14 w-full text-base font-semibold">
+          Next <ChevronRight className="size-4" />
+        </Button>
+      ) : null}
+
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={onBack} disabled={!canGoBack || disabled} className="flex-1">
           <ChevronLeft className="size-4" /> Back
         </Button>
-        <Button
-          variant="outline"
-          onClick={onSkip}
-          disabled={disabled}
-          className="min-w-[104px] flex-1 basis-[calc(50%-0.25rem)] sm:basis-0"
-        >
+        <Button variant="outline" size="sm" onClick={onSkip} disabled={disabled || isLast} className="flex-1">
           <SkipForward className="size-4" /> Skip
         </Button>
-        <Button
-          variant={flagged ? "default" : "outline"}
-          onClick={onToggleFlag}
-          disabled={disabled}
-          className="min-w-[104px] flex-1 basis-full sm:basis-0"
-        >
-          <Flag className="size-4" /> {flagged ? "Flagged for next time" : "Flag for next time"}
-        </Button>
       </div>
-      <div className="flex gap-2">
-        {!isLast ? (
-          <Button onClick={onNext} disabled={disabled} className="flex-1">
-            Next <ChevronRight className="size-4" />
-          </Button>
-        ) : null}
-        <Button variant={isLast ? "default" : "outline"} onClick={onEnd} disabled={disabled} className="flex-1">
+
+      <Button variant="ghost" size="sm" onClick={onAddTopic} disabled={disabled} className="w-full text-foreground-soft">
+        <Plus className="size-4" /> Add a topic
+      </Button>
+
+      <div className="border-t border-hairline pt-3">
+        <Button
+          variant={isLast ? "default" : "outline"}
+          size={isLast ? "lg" : "default"}
+          onClick={onEnd}
+          disabled={disabled}
+          className={isLast ? "h-14 w-full text-base font-semibold" : "w-full"}
+        >
           <Square className="size-4" /> End Debrief
         </Button>
+        <p className="mt-2 text-center text-xs text-foreground-faint">
+          Skip when there&rsquo;s nothing to say on a card. Next marks it as discussed.
+        </p>
       </div>
-      <p className="text-center text-xs text-foreground-faint">
-        Skip if there&rsquo;s nothing to say here -- Next marks it as discussed. Flag brings this topic back sooner on a future flight.
-      </p>
     </div>
   );
 }

@@ -95,7 +95,7 @@ export default async function NextLessonPage() {
           <CardContent className="py-6 text-center text-sm text-foreground-soft">
             {cfi === "your instructor"
               ? "Nothing to prepare yet -- this fills in once your last debrief is finished."
-              : `${cfi} hasn't flagged anything to focus on from your last debrief yet.`}
+              : `${cfi} hasn't set anything to focus on from your last debrief yet.`}
           </CardContent>
         </Card>
       ) : null}

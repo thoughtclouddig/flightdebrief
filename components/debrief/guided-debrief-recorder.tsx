@@ -2,11 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Loader2, Mic, Plus } from "lucide-react";
+import { Loader2, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Waveform } from "@/components/waveform";
 import { QuestionCardStack } from "@/components/debrief/question-card-stack";
-import { SwipeableCard } from "@/components/debrief/swipeable-card";
 import { CardControls } from "@/components/debrief/card-controls";
 import { RecordingConsent } from "@/components/debrief/recording-consent";
 import { useTranscription } from "@/lib/transcription";
@@ -19,10 +18,13 @@ export function GuidedDebriefRecorder({
   flightId,
   initialCards,
   guidanceMode,
+  taskLabels = [],
 }: {
   flightId: string;
   initialCards: DebriefCard[];
   guidanceMode: DebriefGuidanceMode;
+  /** The maneuvers the CFI logged as flown -- surfaced on the opening objective card so they aren't recalling the flight cold. */
+  taskLabels?: string[];
 }) {
   const router = useRouter();
   const transcription = useTranscription();
@@ -207,16 +209,14 @@ export function GuidedDebriefRecorder({
         </p>
       ) : null}
 
-      <SwipeableCard
-        onSwipeLeft={handleNext}
-        onSwipeRight={handleBack}
-        canSwipeLeft={activeIndex < cards.length - 1}
-        canSwipeRight={activeIndex > 0}
-        disabled={phase === "analyzing"}
-      >
-        <QuestionCardStack card={activeCard} position={activeIndex + 1} total={cards.length} />
-      </SwipeableCard>
-      <p className="-mt-2 text-center text-xs text-foreground-faint sm:hidden">Swipe to move between cards</p>
+      <QuestionCardStack
+        card={activeCard}
+        position={activeIndex + 1}
+        total={cards.length}
+        taskLabels={taskLabels}
+        onToggleRevisit={handleToggleFlag}
+        revisitDisabled={phase === "analyzing"}
+      />
 
       {addingTopic ? (
         <div className="flex flex-col gap-2 rounded-lg border border-hairline p-4">
@@ -242,20 +242,15 @@ export function GuidedDebriefRecorder({
             </Button>
           </div>
         </div>
-      ) : (
-        <Button variant="outline" onClick={() => setAddingTopic(true)}>
-          <Plus className="size-4" /> Add Topic
-        </Button>
-      )}
+      ) : null}
 
       <CardControls
         canGoBack={activeIndex > 0}
         isLast={activeIndex >= cards.length - 1}
-        flagged={activeCard.flaggedForFollowUp}
         onBack={handleBack}
         onSkip={handleSkip}
         onNext={handleNext}
-        onToggleFlag={handleToggleFlag}
+        onAddTopic={() => setAddingTopic(true)}
         onEnd={handleEnd}
         disabled={phase === "analyzing"}
       />
