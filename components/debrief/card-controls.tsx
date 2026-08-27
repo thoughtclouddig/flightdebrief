@@ -47,7 +47,7 @@ export function CardControls({
           disabled={disabled}
           className="min-w-[104px] flex-1 basis-full sm:basis-0"
         >
-          <Flag className="size-4" /> {flagged ? "Flagged" : "Follow up"}
+          <Flag className="size-4" /> {flagged ? "Flagged for next time" : "Flag for next time"}
         </Button>
       </div>
       <div className="flex gap-2">
@@ -60,6 +60,9 @@ export function CardControls({
           <Square className="size-4" /> End Debrief
         </Button>
       </div>
+      <p className="text-center text-xs text-foreground-faint">
+        Skip if there&rsquo;s nothing to say here -- Next marks it as discussed. Flag brings this topic back sooner on a future flight.
+      </p>
     </div>
   );
 }

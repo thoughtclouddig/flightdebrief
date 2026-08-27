@@ -32,9 +32,12 @@ export function QuestionCardStack({ card, position, total }: { card: DebriefCard
         </div>
 
         {card.followUpPrompts.length > 0 ? (
-          <ul className="flex flex-col gap-1 text-sm text-foreground-soft">
+          <ul className="flex flex-col gap-1.5 text-sm text-foreground-soft">
             {card.followUpPrompts.map((prompt) => (
-              <li key={prompt}>&bull; {prompt}</li>
+              <li key={prompt} className="flex items-start gap-2">
+                <span className="mt-2 size-1 shrink-0 rounded-full bg-foreground-faint" />
+                <span className="min-w-0 flex-1 text-balance">{prompt}</span>
+              </li>
             ))}
           </ul>
         ) : null}
