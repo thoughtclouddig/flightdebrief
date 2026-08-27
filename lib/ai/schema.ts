@@ -91,6 +91,13 @@ export type StructuredDebriefResult = z.infer<typeof structuredDebriefSchema>;
 
 export interface AnalyzeDebriefInput {
   transcript: string;
+  /**
+   * Speaker-labeled version of the same transcript (lib/transcription/diarized-turns.ts).
+   * Null when diarization found fewer than two distinct voices, or for an
+   * older/freeform debrief with no per-word data -- callers must still always
+   * pass `transcript`, which stays the authoritative text.
+   */
+  diarizedTurns?: string | null;
   flightMeta: {
     tailNumber: string;
     aircraftType: string;

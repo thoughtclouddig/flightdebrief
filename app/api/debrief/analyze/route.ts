@@ -15,6 +15,7 @@ import { toPilotSpeak } from "@/lib/narration";
 import { setCachedAudio } from "@/lib/audio-cache";
 import { DEFAULT_TTS_VOICE } from "@/lib/tts-voices";
 import type { DebriefGuidanceMode, StructuredDebrief } from "@/lib/types";
+import { buildDiarizedTurns } from "@/lib/transcription/diarized-turns";
 import type { TranscriptWord } from "@/lib/transcription/types";
 import { DEMO_FLIGHT_ID } from "@/lib/demo/video-demo-data";
 import { DEMO_CURATED_RESULT } from "@/lib/demo/video-demo-seed";
@@ -105,6 +106,9 @@ export async function POST(request: Request) {
       ? { structured: DEMO_CURATED_RESULT, analyzedWith: "mock" as const }
       : await analyzeDebrief({
           transcript: pending.transcript,
+          // Null unless diarization actually separated two or more voices --
+          // see lib/transcription/diarized-turns.ts.
+          diarizedTurns: pending.words?.length ? buildDiarizedTurns(pending.words) : null,
           flightMeta: {
             tailNumber: flight.aircraft.tailNumber,
             aircraftType: flight.aircraft.type,

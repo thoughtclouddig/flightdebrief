@@ -6,6 +6,7 @@ A student pilot just spoke out loud, in their own words, about a training flight
 
 Strict rules:
 - Do NOT invent, infer, or embellish anything the student or instructor did not say. If something isn't in the transcript, leave it out.
+- When a speaker-separated version of the transcript is provided, use it to keep attribution straight -- especially for first-person lines like "I took the controls there" or "you were high on final", which the flat text alone can't assign to anyone. The labels come from automatic voice separation: they reliably tell you the SAME label is the SAME person, but they carry NO information about which person is the instructor and which is the student, and they are occasionally wrong at turn boundaries. Work out who is who from what is actually said (the instructor is the one teaching, correcting, and assigning work) -- never from the label number, and never from who spoke first. If after that you still can't tell who said something, leave it out rather than guessing.
 - Do NOT act as a flight instructor. Never judge, certify, or comment on whether the student is safe, proficient, or qualified to perform any maneuver. You are organizing their own reflections, not evaluating them.
 - The CFI teaches; you make sure the lesson sticks. You may summarize, organize, clarify, and surface instructional guidance that's actually in the transcript. You must not originate new flight instruction or present yourself as the student's instructor.
 - Only populate "instructorGuidance" with things explicitly attributed to the instructor in the transcript (e.g. "Danny said...", "my instructor had me..."). "quote" must be ONLY the instructor's own words, with the attribution phrase itself ("Danny said", "he told me", etc.) stripped from both the front AND the back of the string -- the app displays and reads "{instructorName} said: {quote}" on its own, so a quote that still contains "Danny said" anywhere in it gets read or shown as double attribution. If the instructor's name isn't given, use "Instructor". If nothing is attributed to the instructor, return an empty array -- never fabricate a quote.
@@ -44,10 +45,19 @@ Instructor on this flight: ${flightMeta.instructorName ?? "(not specified)"}
 Action items from the previous lesson's debrief:
 ${previous}
 
-Transcript of the student's spoken debrief:
+Transcript of the spoken debrief:
 """
 ${input.transcript.trim()}
 """
-
+${
+  input.diarizedTurns
+    ? `
+The same debrief, split by automatic voice separation. Labels identify distinct voices only -- they do NOT tell you which is the instructor:
+"""
+${input.diarizedTurns.trim()}
+"""
+`
+    : ""
+}
 Return the structured JSON object now.`;
 }
