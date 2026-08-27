@@ -165,7 +165,7 @@ export function EverythingThatMatters() {
                     {String(i + 1).padStart(2, "0")}
                   </div>
                   <span className="relative z-[1] inline-flex w-fit items-center gap-2 self-start rounded-full bg-brand px-3 py-[7px] text-xs font-extrabold tracking-[0.12em] text-white uppercase">
-                    Step {i + 1} of {CARDS.length}
+                    Step {i + 1}: {card.stepLabel}
                   </span>
                   <p className="relative z-[1] mt-2.5 line-clamp-2 text-pretty text-[22px] leading-[1.22] font-extrabold tracking-[-0.01em] text-[#101727]">
                     {card.headline}
@@ -173,11 +173,6 @@ export function EverythingThatMatters() {
                   <p className="relative z-[1] mt-1.5 line-clamp-2 text-pretty text-base leading-[1.4] text-[#101727]">
                     {card.copy}
                   </p>
-                  <div className="relative z-[1] mt-auto flex items-center justify-between border-t border-[#e3e5e8] pt-2.5">
-                    <span className="text-lg font-bold text-[#101727]">
-                      {i + 1}: {card.stepLabel}
-                    </span>
-                  </div>
                 </div>
               </div>
             ))}
