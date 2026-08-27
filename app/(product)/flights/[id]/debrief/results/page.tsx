@@ -47,7 +47,8 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
   const flightSkillProgressions = computeSkillProgression(allStudentSignals.filter((s) => !s.dismissed)).filter((p) =>
     flightSkills.has(p.skill),
   );
-  const canDismiss = viewer.role === "instructor" || viewer.role === "admin";
+  const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
+  const canDismiss = isInstructorViewer;
 
   const differenceRows: ComparisonRow[] = result.assessmentDifferences.map((d) => ({
     taskLabel: d.taskLabel,
@@ -99,15 +100,22 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
         canDismiss={canDismiss}
       />
 
-      <div className="flex gap-2">
+      {/* Both destinations are role-aware. "/dashboard" is the STUDENT flights
+          list -- sending a CFI there dropped them somewhere that isn't their
+          home at all, under a label ("Dashboard") that doesn't match what
+          either role's nav calls it. */}
+      <div className="flex flex-col gap-2 sm:flex-row">
         <Link
-          href={viewer.role === "instructor" || viewer.role === "admin" ? `/cfi/students/${flight.userId}/handoff` : "/next-lesson"}
-          className={buttonVariants({ size: "lg", className: "flex-1" })}
+          href={isInstructorViewer ? `/cfi/students/${flight.userId}/handoff` : "/next-lesson"}
+          className={buttonVariants({ size: "lg", className: "w-full sm:flex-1" })}
         >
           Go to Next-Lesson Brief
         </Link>
-        <Link href="/dashboard" className={buttonVariants({ size: "lg", variant: "outline" })}>
-          Dashboard
+        <Link
+          href={isInstructorViewer ? "/cfi/today" : "/dashboard"}
+          className={buttonVariants({ size: "lg", variant: "outline", className: "w-full sm:w-auto" })}
+        >
+          {isInstructorViewer ? "Back to Today" : "Back to Flights"}
         </Link>
       </div>
     </div>

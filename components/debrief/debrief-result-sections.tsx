@@ -145,9 +145,10 @@ export function DebriefResultSections({
 
         <Section
           icon={LifeBuoy}
-          title="Instructor Assistance"
+          title="Where Your Instructor Stepped In"
+          description="Moments the instructor took over, prompted, or corrected. Tracked because needing less of this over time is one of the clearest signs of progress."
           items={result.instructorAssistance}
-          empty="No instructor intervention noted."
+          empty="You flew this one without needing a hand -- nothing noted."
           tone="amber"
         />
         <Section icon={ShieldAlert} title="Risk Management & ADM" items={result.riskManagementNotes} empty="No risk items noted." tone="amber" />
@@ -275,6 +276,7 @@ function GroupHeading({ tone, children }: { tone: keyof typeof GROUP_TONE_CLASS;
 function Section({
   icon: Icon,
   title,
+  description,
   items,
   empty,
   tone,
@@ -282,6 +284,8 @@ function Section({
 }: {
   icon: typeof ListChecks;
   title: string;
+  /** One line explaining what a section is for, where the title alone doesn't carry it. */
+  description?: string;
   items: string[];
   empty: string;
   tone?: "good" | "amber";
@@ -295,6 +299,7 @@ function Section({
           <Icon className={cn("size-4", tone === "good" ? "text-good" : tone === "amber" ? "text-amber" : "text-brand")} />
           {title}
         </CardTitle>
+        {description ? <CardDescription>{description}</CardDescription> : null}
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
