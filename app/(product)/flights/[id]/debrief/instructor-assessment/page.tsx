@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { AssessmentForm } from "@/components/debrief/assessment-form";
@@ -18,6 +18,14 @@ export default async function InstructorAssessmentPage(props: PageProps<"/flight
 
   const assessment = await repo.getAssessment(id, "instructor");
   if (assessment?.status === "submitted") {
+    // The student's assessment can land any time while this screen is open
+    // (AutoRefresh below just re-renders this same component) -- without
+    // this check the CFI would sit on "waiting on the student" forever even
+    // after they've submitted, since nothing else here re-evaluates it.
+    const studentAssessment = await repo.getAssessment(id, "student");
+    if (studentAssessment?.status === "submitted") {
+      redirect(`/flights/${id}/debrief`);
+    }
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
         <AutoRefresh />
