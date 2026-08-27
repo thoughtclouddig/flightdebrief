@@ -58,6 +58,24 @@
   --color-danger-soft: var(--danger-soft);
   --font-sans: var(--font-archivo);
   --font-display: var(--font-archivo);
+
+  /*
+   * Type scale, nudged up one step from Tailwind's defaults (12/14/16).
+   * This app is used one-handed on a phone in a hangar or a cockpit, and it
+   * had settled on text-sm -- 14px, a caption size -- as its de-facto body
+   * size, which is why every screen read small no matter how the colors were
+   * tuned. iOS HIG puts body at 17px and Material at 16px; these land in
+   * between rather than restyling ~160 individual usages, so hierarchy is
+   * preserved and only legibility moves. Line heights are raised with them:
+   * bigger type at the old leading reads cramped, which looks like a
+   * different problem than it is.
+   */
+  --text-xs: 0.8125rem;        /* 13px */
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.9375rem;        /* 15px */
+  --text-sm--line-height: 1.4rem;
+  --text-base: 1.0625rem;      /* 17px */
+  --text-base--line-height: 1.65rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -67,7 +85,7 @@
     --surface-sunken: #0c1220;
     --foreground: #eef0f3;
     --foreground-soft: #b3bcc9;
-    --foreground-faint: #97a1b2;
+    --foreground-faint: #aab3c4;
     --hairline: #2a3247;
 
     --brand: #f07621;
@@ -95,7 +113,7 @@
   --surface-sunken: #0c1220;
   --foreground: #eef0f3;
   --foreground-soft: #b3bcc9;
-  --foreground-faint: #97a1b2;
+  --foreground-faint: #aab3c4;
   --hairline: #2a3247;
 
   --brand: #f07621;
