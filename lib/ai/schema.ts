@@ -11,12 +11,29 @@ export const structuredDebriefSchema = z.object({
   whatWeDid: z.array(z.string()).default([]),
   wentWell: z.array(z.string()).default([]),
   needsWork: z.array(z.string()).default([]),
+  // Belt-and-braces against the model echoing its own attribution into the
+  // quote text (e.g. quote: "...winds are, Danny said.") -- the app already
+  // prefixes every quote with "{instructorName} said:" wherever it's shown
+  // (debrief-result-sections.tsx, debrief-narration.ts), so a leftover
+  // attribution phrase inside the quote itself reads/sounds doubled. The
+  // prompt now asks Claude not to include it in the first place; this strips
+  // it if that instruction gets missed.
   instructorGuidance: z
     .array(
-      z.object({
-        instructorName: z.string(),
-        quote: z.string(),
-      }),
+      z
+        .object({
+          instructorName: z.string(),
+          quote: z.string(),
+        })
+        .transform(({ instructorName, quote }) => {
+          const name = instructorName.trim() || "Instructor";
+          const verb = "(?:said(?:\\s+to\\s+me)?|told me|had me|wanted me to)";
+          const namePattern = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const leading = new RegExp(`^\\s*${namePattern}\\s+${verb}[,:]?\\s*`, "i");
+          const trailing = new RegExp(`[,.]?\\s*${namePattern}\\s+${verb}\\.?\\s*$`, "i");
+          const cleaned = quote.replace(leading, "").replace(trailing, "").trim();
+          return { instructorName, quote: cleaned || quote };
+        }),
     )
     .default([]),
   // Factual "CFI intervened/prompted/corrected" observations -- distinct from
