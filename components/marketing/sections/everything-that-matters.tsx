@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
+import { PhotoVisual } from "@/components/marketing/app-screen";
 import { DebriefRecapDemo } from "@/components/marketing/debrief-recap-demo";
 import { cn } from "@/lib/utils";
 
@@ -108,15 +109,30 @@ export function EverythingThatMatters() {
           </p>
         </Reveal>
 
-        <div className="relative mt-16 ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] w-screen">
+        {/* Mobile: the peeking-card slider's density (translucent overlay
+            card, ghost numeral, condensed progress rail) doesn't survive a
+            narrow viewport -- labels and copy collide. Below md, fall back
+            to a plain stacked list instead of fighting the layout. */}
+        <div className="mt-16 grid grid-cols-1 gap-x-8 gap-y-14 md:hidden">
+          {CARDS.map((card, i) => (
+            <Reveal key={card.stepLabel} delay={(i % 3) * 100} className="flex flex-col gap-4">
+              <PhotoVisual src={card.src} alt={card.alt} label={`Step ${i + 1}`} />
+              <div>
+                <p className="font-display text-balance text-xl font-bold text-[#101727]">{card.headline}</p>
+                <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        <div className="relative mt-16 ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] hidden w-screen md:block">
           <div
             ref={trackRef}
             className={cn(
               "flex snap-x snap-mandatory gap-6 overflow-x-auto py-2",
               "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-              "before:block before:w-[calc((100vw-84vw)/2)] before:shrink-0 before:content-['']",
-              "after:block after:w-[calc((100vw-84vw)/2)] after:shrink-0 after:content-['']",
-              "md:before:w-[calc((100vw-min(90vw,1400px))/2)] md:after:w-[calc((100vw-min(90vw,1400px))/2)]",
+              "before:block before:w-[calc((100vw-min(90vw,1400px))/2)] before:shrink-0 before:content-['']",
+              "after:block after:w-[calc((100vw-min(90vw,1400px))/2)] after:shrink-0 after:content-['']",
             )}
           >
             {CARDS.map((card, i) => (
@@ -126,33 +142,25 @@ export function EverythingThatMatters() {
                   slideRefs.current[i] = el;
                 }}
                 className={cn(
-                  "relative flex w-[84vw] shrink-0 snap-center flex-col overflow-hidden rounded-[22px] bg-[#0d1420]",
+                  "relative block aspect-[16/8.4] w-[min(90vw,1400px)] shrink-0 snap-center overflow-hidden rounded-[28px] bg-[#0d1420]",
                   "shadow-[0_30px_60px_-30px_rgba(16,23,39,0.35)] transition-[filter] duration-300 ease-out",
-                  "aspect-[4/5.6] md:aspect-[16/8.4] md:block md:w-[min(90vw,1400px)] md:rounded-[28px]",
                   i === active ? "filter-none" : "brightness-[0.6] saturate-[0.7]",
                 )}
               >
-                <div className="relative h-[58%] w-full shrink-0 md:absolute md:inset-0 md:h-full">
+                <div className="absolute inset-0 h-full w-full">
                   <Image
                     src={card.src}
                     alt={card.alt}
                     fill
                     className="object-cover"
-                    sizes={`(min-width: 1556px) 1400px, (min-width: 768px) 90vw, 84vw`}
+                    sizes="(min-width: 1556px) 1400px, 90vw"
                   />
                 </div>
 
-                <div
-                  className={cn(
-                    "relative z-[1] mx-4 -mt-4 mb-4 flex flex-1 flex-col overflow-hidden rounded-2xl border border-[#e3e5e8] bg-white p-4",
-                    "md:absolute md:inset-x-auto md:bottom-7 md:left-7 md:mx-0 md:mt-0 md:mb-0 md:h-[46%] md:w-[min(380px,44%)]",
-                    "md:rounded-[20px] md:border-white/70 md:bg-white/[0.78] md:p-[18px_22px_14px] md:backdrop-blur-[18px]",
-                    "md:shadow-[0_20px_40px_-20px_rgba(16,23,39,0.45)]",
-                  )}
-                >
+                <div className="absolute bottom-7 left-7 z-[1] flex h-[46%] w-[min(380px,44%)] flex-col overflow-hidden rounded-[20px] border border-white/70 bg-white/[0.78] p-[18px_22px_14px] shadow-[0_20px_40px_-20px_rgba(16,23,39,0.45)] backdrop-blur-[18px]">
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute -right-2 -bottom-[34px] hidden text-[120px] leading-none font-extrabold tracking-[-0.04em] text-[#101727] opacity-[0.05] select-none md:block"
+                    className="pointer-events-none absolute -right-2 -bottom-[34px] text-[120px] leading-none font-extrabold tracking-[-0.04em] text-[#101727] opacity-[0.05] select-none"
                   >
                     {String(i + 1).padStart(2, "0")}
                   </div>
@@ -176,8 +184,8 @@ export function EverythingThatMatters() {
           </div>
         </div>
 
-        <div className="relative ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] mt-7 flex w-screen justify-center">
-          <div className="flex w-[calc(100%-48px)] max-w-[min(90vw,1400px)] flex-wrap items-center gap-8">
+        <div className="relative ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] mt-7 hidden w-screen justify-center md:flex">
+          <div className="flex w-[calc(100%-48px)] max-w-[min(90vw,1400px)] items-center gap-8">
             <div className="flex min-w-0 flex-1 items-center">
               {CARDS.map((card, i) => (
                 <button
