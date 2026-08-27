@@ -6,6 +6,7 @@ export type DebriefStage =
   | "awaiting_instructor_assessment"
   | "awaiting_student_assessment"
   | "ready_to_debrief"
+  | "awaiting_finish"
   | "complete";
 
 export interface DebriefProgress {
@@ -30,6 +31,17 @@ export async function computeDebriefProgress(
 ): Promise<DebriefProgress> {
   if (flight.debriefStatus === "complete") {
     return { stage: "complete", waitingOn: null };
+  }
+
+  // Guided/light mode doesn't flip debriefStatus to "complete" until the CFI
+  // walks the results with the student and clicks "Finish" on /review (see
+  // app/api/flights/[id]/debrief/finish/route.ts) -- recording and analysis
+  // happen well before that. A Debrief row already existing means the
+  // task/assessment checks below, which describe a flight that hasn't even
+  // been recorded yet, would be stale here.
+  const existingDebrief = await repo.getDebriefByFlight(flight.id);
+  if (existingDebrief) {
+    return { stage: "awaiting_finish", waitingOn: "instructor" };
   }
 
   const org = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
@@ -70,6 +82,8 @@ export function debriefStageLabel(progress: DebriefProgress): string {
       return "Waiting on student";
     case "ready_to_debrief":
       return "Ready to debrief";
+    case "awaiting_finish":
+      return "Recorded -- pending your review";
     case "complete":
       return "Complete";
   }

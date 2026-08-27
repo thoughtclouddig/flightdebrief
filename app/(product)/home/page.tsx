@@ -10,6 +10,7 @@ import {
   Radio,
   Sparkles,
 } from "lucide-react";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,6 +189,11 @@ export default async function StudentHomePage() {
 
       {pendingFlight && pendingProgress ? (
         <Link href={`/flights/${pendingFlight.id}/debrief`} className="block">
+          {/* This is the only place on the page that goes stale while someone
+              else is expected to act (the instructor finishing up, mainly) --
+              a longer interval than the narrower single-purpose waiting
+              screens elsewhere, since this refreshes the whole dashboard. */}
+          <AutoRefresh intervalMs={15000} />
           <Card className="transition-colors hover:bg-surface-sunken">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -203,7 +209,9 @@ export default async function StudentHomePage() {
                     ? "Waiting on your instructor."
                     : pendingProgress.stage === "awaiting_student_assessment"
                       ? "Your instructor submitted their assessment -- your turn."
-                      : "Both assessments are in -- your instructor is starting the debrief."}
+                      : pendingProgress.stage === "awaiting_finish"
+                        ? "Recorded -- your instructor still needs to finish reviewing it with you."
+                        : "Both assessments are in -- your instructor is starting the debrief."}
                 </p>
               </div>
               {pendingProgress.stage === "awaiting_student_assessment" ? (

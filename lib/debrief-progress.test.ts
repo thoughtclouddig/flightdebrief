@@ -79,12 +79,14 @@ function fakeRepo(opts: {
   tasks?: FlightTask[];
   instructorAssessment?: DebriefAssessment | null;
   studentAssessment?: DebriefAssessment | null;
+  debriefExists?: boolean;
 }): Repository {
   return {
     getOrganization: async () => opts.organization ?? null,
     listFlightTasks: async () => opts.tasks ?? [],
     getAssessment: async (_flightId: string, role: "student" | "instructor") =>
       role === "instructor" ? (opts.instructorAssessment ?? null) : (opts.studentAssessment ?? null),
+    getDebriefByFlight: async () => (opts.debriefExists ? ({} as never) : null),
   } as unknown as Repository;
 }
 
@@ -137,6 +139,12 @@ describe("computeDebriefProgress", () => {
     });
     const result = await computeDebriefProgress(repo, flight());
     expect(result).toEqual({ stage: "ready_to_debrief", waitingOn: "instructor" });
+  });
+
+  it("is awaiting_finish once a Debrief row exists, even if assessments would otherwise look incomplete", async () => {
+    const repo = fakeRepo({ organization: org(), tasks: [], debriefExists: true });
+    const result = await computeDebriefProgress(repo, flight());
+    expect(result).toEqual({ stage: "awaiting_finish", waitingOn: "instructor" });
   });
 
   it("does not let an instructor assessment still in_progress count as submitted", async () => {
