@@ -246,9 +246,13 @@ export async function StudentTrainingDetail({
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{student.name}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Student Pilot</p>
         </div>
+        {/* Labeled to match the destination page's own title ("<Name>'s Next
+            Flight"). It used to say "Handoff Brief", which named the internal
+            concept rather than anything the CFI sees when they land there --
+            so the one route back to that page was effectively invisible. */}
         {handoffHref ? (
           <Link href={handoffHref} className={buttonVariants({ size: "sm", variant: "outline" })}>
-            Handoff Brief
+            Next Flight Brief
           </Link>
         ) : null}
       </div>
@@ -303,22 +307,23 @@ export async function StudentTrainingDetail({
             ) : (
               <div>
                 <p className="text-sm text-slate-400">
-                  Not set yet -- this comes from finishing the last debrief, not from scheduling.
+                  Not set yet -- these are drafted from the last debrief, and you can add your own any time.
                 </p>
                 {pendingFlight ? (
                   <Link href={`/flights/${pendingFlight.id}`} className="mt-1 inline-block text-sm font-medium text-brand hover:underline">
                     Debrief {formatFlightContext(pendingFlight)} to set it →
                   </Link>
-                ) : (
-                  <Link
-                    href={`/flights/new?studentId=${student.id}`}
-                    className="mt-1 inline-block text-sm font-medium text-brand hover:underline"
-                  >
-                    Log a flight to get started →
-                  </Link>
-                )}
+                ) : null}
               </div>
             )}
+            {/* The one place a CFI can actually add/edit these lives on the
+                Next Flight brief -- without a link, "what to work on" was
+                read-only with no visible way to change it. */}
+            {handoffHref ? (
+              <Link href={handoffHref} className="mt-2 inline-block text-sm font-medium text-brand hover:underline">
+                {brief.focusAreas.length > 0 ? "Edit what to work on" : "Set what to work on"} →
+              </Link>
+            ) : null}
           </div>
 
           {brief.beforeFlightItems.length > 0 ? (

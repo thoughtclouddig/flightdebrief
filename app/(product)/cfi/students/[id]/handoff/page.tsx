@@ -103,9 +103,13 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
           </CardContent>
         </Card>
       ) : (
-        <p className="rounded-lg bg-surface-sunken px-3 py-2 text-sm text-foreground-soft">
-          No flight scheduled with {student.name.split(" ")[0]} yet.
-        </p>
+        <Link
+          href={`/cfi/students/${id}#schedule-lesson`}
+          className="flex items-center justify-between gap-3 rounded-lg bg-surface-sunken px-3 py-2.5 text-sm text-foreground-soft transition-colors hover:bg-hairline/40 hover:text-foreground"
+        >
+          <span>No flight scheduled with {student.name.split(" ")[0]} yet.</span>
+          <span className="shrink-0 font-medium text-brand">Schedule &rarr;</span>
+        </Link>
       )}
 
       {brief.lastWentWell.length > 0 ? (
@@ -257,8 +261,13 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
         </Card>
       ) : null}
 
+      {/* Links to /flights/new -- i.e. logging a flight that already happened,
+          which is where a debrief starts. "Start Flight With X" made it sound
+          like the flight is ahead of you, when the whole point of this app is
+          what comes after landing. Same wording as the student profile page's
+          equivalent button, so the two don't look like different actions. */}
       <Link href={`/flights/new`} className={buttonVariants({ size: "lg" })}>
-        Start Flight With {student.name.split(" ")[0]}
+        Log a Flight for {student.name.split(" ")[0]}
       </Link>
     </div>
   );
