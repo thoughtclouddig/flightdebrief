@@ -100,7 +100,10 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
       />
 
       <div className="flex gap-2">
-        <Link href="/next-lesson" className={buttonVariants({ size: "lg", className: "flex-1" })}>
+        <Link
+          href={viewer.role === "instructor" || viewer.role === "admin" ? `/cfi/students/${flight.userId}/handoff` : "/next-lesson"}
+          className={buttonVariants({ size: "lg", className: "flex-1" })}
+        >
           Go to Next-Lesson Brief
         </Link>
         <Link href="/dashboard" className={buttonVariants({ size: "lg", variant: "outline" })}>
