@@ -157,20 +157,20 @@ export function EverythingThatMatters() {
                   />
                 </div>
 
-                <div className="absolute bottom-7 left-7 z-[1] flex h-[46%] w-[min(380px,44%)] flex-col overflow-hidden rounded-[20px] border border-white/70 bg-white/[0.78] p-[18px_22px_14px] shadow-[0_20px_40px_-20px_rgba(16,23,39,0.45)] backdrop-blur-[18px]">
+                <div className="absolute bottom-7 left-7 z-[1] flex w-[min(380px,44%)] flex-col overflow-hidden rounded-[20px] border border-white/70 bg-white/[0.78] p-[20px_22px] shadow-[0_20px_40px_-20px_rgba(16,23,39,0.45)] backdrop-blur-[18px]">
                   <div
                     aria-hidden="true"
-                    className="pointer-events-none absolute -right-2 -bottom-[34px] text-[120px] leading-none font-extrabold tracking-[-0.04em] text-[#101727] opacity-[0.05] select-none"
+                    className="pointer-events-none absolute -right-2 -bottom-5 text-[90px] leading-none font-extrabold tracking-[-0.04em] text-[#101727] opacity-[0.05] select-none"
                   >
                     {String(i + 1).padStart(2, "0")}
                   </div>
                   <span className="relative z-[1] inline-flex w-fit items-center gap-2 self-start rounded-full bg-brand px-3 py-[7px] text-xs font-extrabold tracking-[0.12em] text-white uppercase">
                     Step {i + 1}: {card.stepLabel}
                   </span>
-                  <p className="relative z-[1] mt-2.5 line-clamp-2 text-pretty text-[22px] leading-[1.22] font-extrabold tracking-[-0.01em] text-[#101727]">
+                  <p className="relative z-[1] mt-3 line-clamp-2 text-balance text-[22px] leading-[1.25] font-extrabold tracking-[-0.01em] text-[#101727]">
                     {card.headline}
                   </p>
-                  <p className="relative z-[1] mt-1.5 line-clamp-2 text-pretty text-base leading-[1.4] text-[#101727]">
+                  <p className="relative z-[1] mt-2 line-clamp-2 text-pretty text-base leading-[1.4] text-[#101727]">
                     {card.copy}
                   </p>
                 </div>
