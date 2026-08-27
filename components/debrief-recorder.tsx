@@ -38,10 +38,13 @@ export function DebriefRecorder({ flightId }: { flightId: string }) {
         router.push("/billing");
         return;
       }
-      if (!res.ok) throw new Error("Analysis failed");
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || "Something went wrong analyzing your debrief. Please try again.");
+      }
       router.push(`/flights/${flightId}/debrief/results`);
-    } catch {
-      setSubmitError("Something went wrong analyzing your debrief. Please try again.");
+    } catch (err) {
+      setSubmitError(err instanceof Error && err.message ? err.message : "Something went wrong analyzing your debrief. Please try again.");
       setPhase("ready");
     }
   }
@@ -93,6 +96,12 @@ export function DebriefRecorder({ flightId }: { flightId: string }) {
           </div>
 
           <Waveform amplitude={transcription.amplitude} active={transcription.status === "recording"} />
+
+          {transcription.status === "recording" && transcription.lowAudioWarning ? (
+            <p className="text-center text-sm font-medium text-red-600">
+              We are not picking up any sound -- check that the right microphone is selected.
+            </p>
+          ) : null}
 
           <button
             onClick={handleFinish}

@@ -8,6 +8,8 @@ export interface TranscriptionState {
   amplitude: number;
   elapsedSeconds: number;
   error: string | null;
+  /** True once the mic has stayed silent for long enough that the wrong device is likely selected. Never set in mock mode. */
+  lowAudioWarning: boolean;
 }
 
 /** One recognized word with its offset (in seconds) from recording start -- used to build per-card transcript segments in Guided/Light mode. Freeform mode ignores this. */

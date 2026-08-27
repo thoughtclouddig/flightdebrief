@@ -4,6 +4,14 @@ import { useCallback, useRef, useState } from "react";
 import type { ListenLiveClient } from "@deepgram/sdk";
 import type { FinishedTranscription, TranscriptionState, TranscriptWord, UseTranscription } from "./types";
 
+// Amplitude below this reads as room noise, not speech (same 0-1 scale as
+// the waveform's own amplitude prop). Below it for SILENCE_WARNING_MS straight
+// -- after an initial grace period so the first breath/pause doesn't trip it --
+// most likely means the wrong input device is selected, not just a quiet room.
+const SILENCE_AMPLITUDE_THRESHOLD = 0.03;
+const SILENCE_GRACE_SECONDS = 4;
+const SILENCE_WARNING_MS = 6000;
+
 /**
  * Live browser mic -> Deepgram streaming STT. Uses Deepgram's documented
  * client-side streaming pattern (NEXT_PUBLIC_DEEPGRAM_API_KEY). For a real
@@ -19,6 +27,7 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
     amplitude: 0,
     elapsedSeconds: 0,
     error: null,
+    lowAudioWarning: false,
   });
 
   const connectionRef = useRef<ListenLiveClient | null>(null);
@@ -30,6 +39,10 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
   const finalChunksRef = useRef<string[]>([]);
   const wordsRef = useRef<TranscriptWord[]>([]);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Tracks how long amplitude has stayed near-zero so the recorder can warn
+  // the CFI mid-session -- e.g. the wrong input device is selected -- instead
+  // of only finding out after submitting to an empty transcript.
+  const silentSinceRef = useRef<number | null>(null);
 
   const teardown = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -44,7 +57,8 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
     finalChunksRef.current = [];
     wordsRef.current = [];
     startedAt.current = Date.now();
-    setState((s) => ({ ...s, status: "connecting", transcript: "", interimTranscript: "", error: null }));
+    silentSinceRef.current = null;
+    setState((s) => ({ ...s, status: "connecting", transcript: "", interimTranscript: "", error: null, lowAudioWarning: false }));
 
     try {
       // Deferred until recording actually starts, not loaded just for the
@@ -68,7 +82,17 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
         let sum = 0;
         for (const v of dataArray) sum += Math.abs(v - 128);
         const amplitude = Math.min(1, (sum / dataArray.length / 128) * 4);
-        setState((s) => ({ ...s, amplitude, elapsedSeconds: Math.round((Date.now() - startedAt.current) / 1000) }));
+        const elapsedSeconds = Math.round((Date.now() - startedAt.current) / 1000);
+
+        if (amplitude > SILENCE_AMPLITUDE_THRESHOLD) {
+          silentSinceRef.current = null;
+        } else if (silentSinceRef.current === null) {
+          silentSinceRef.current = Date.now();
+        }
+        const silentForMs = silentSinceRef.current ? Date.now() - silentSinceRef.current : 0;
+        const lowAudioWarning = elapsedSeconds >= SILENCE_GRACE_SECONDS && silentForMs >= SILENCE_WARNING_MS;
+
+        setState((s) => ({ ...s, amplitude, elapsedSeconds, lowAudioWarning }));
       }, 100);
 
       const deepgram = createClient(apiKey);

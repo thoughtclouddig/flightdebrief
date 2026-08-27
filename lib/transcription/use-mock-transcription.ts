@@ -20,6 +20,7 @@ export function useMockTranscription(scriptedTranscript?: string): UseTranscript
     amplitude: 0,
     elapsedSeconds: 0,
     error: null,
+    lowAudioWarning: false,
   });
 
   const timers = useRef<ReturnType<typeof setInterval>[]>([]);

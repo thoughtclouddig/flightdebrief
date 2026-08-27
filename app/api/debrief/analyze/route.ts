@@ -67,7 +67,19 @@ export async function POST(request: Request) {
   } else {
     pending = await repo.getPendingDebriefTranscript(flight.id);
     if (!pending) {
-      return NextResponse.json({ error: "Missing transcript, and no saved recording to resume" }, { status: 400 });
+      // A real recording session with nothing in the transcript almost always
+      // means the wrong mic was selected, not a transient network hiccup --
+      // give the CFI/student something actionable instead of a generic retry.
+      const noAudioCaptured = typeof body.audioDurationSeconds === "number" && body.audioDurationSeconds > 3;
+      return NextResponse.json(
+        {
+          error: noAudioCaptured ? "no_audio_detected" : "missing_transcript",
+          message: noAudioCaptured
+            ? "We didn't hear anything during that recording. Check that the right microphone is selected and try again."
+            : "Missing transcript, and no saved recording to resume",
+        },
+        { status: 400 },
+      );
     }
   }
   const guidanceMode = pending.guidanceMode;

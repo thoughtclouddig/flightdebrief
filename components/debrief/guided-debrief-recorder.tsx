@@ -149,10 +149,13 @@ export function GuidedDebriefRecorder({
         router.push("/billing");
         return;
       }
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || "Something went wrong analyzing your debrief. Please try again.");
+      }
       router.push(`/flights/${flightId}/debrief/review`);
-    } catch {
-      setError("Something went wrong analyzing your debrief. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : "Something went wrong analyzing your debrief. Please try again.");
       setPhase("recording");
     }
   }
@@ -196,6 +199,12 @@ export function GuidedDebriefRecorder({
         </span>
       </div>
       <Waveform amplitude={transcription.amplitude} active={phase === "recording"} />
+
+      {phase === "recording" && transcription.lowAudioWarning ? (
+        <p className="rounded-lg bg-danger/10 px-3 py-2 text-center text-sm font-medium text-danger">
+          We are not picking up any sound -- check that the right microphone is selected.
+        </p>
+      ) : null}
 
       <QuestionCardStack card={activeCard} position={activeIndex + 1} total={cards.length} />
 
