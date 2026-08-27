@@ -29,10 +29,11 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
   const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
 
-  const [allStudentSignals, memberships, aircraft] = await Promise.all([
+  const [allStudentSignals, memberships, aircraft, flightTrainingItems] = await Promise.all([
     repo.listTrainingSignals({ studentId: flight.userId }),
     repo.listMembershipsForUser(flight.userId),
     isInstructorViewer ? repo.listAircraft(viewer.organization.id) : Promise.resolve([]),
+    isInstructorViewer ? repo.listTrainingItems({ flightId: flight.id }) : Promise.resolve([]),
   ]);
   const certificateType =
     memberships.find((m) => m.organizationId === flight.organizationId)?.certificateType ?? null;
@@ -84,6 +85,14 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
         certificateType={certificateType}
         canDismiss={isInstructorViewer}
         instructorFirstName={resolveCfiFirstName(flight.instructor)}
+        editableTrainingItems={
+          isInstructorViewer
+            ? {
+                keepWorkingOn: flightTrainingItems.filter((t) => t.category === "keep_working_on"),
+                beforeNextFlight: flightTrainingItems.filter((t) => t.category === "before_next_flight"),
+              }
+            : undefined
+        }
       />
     </div>
   );

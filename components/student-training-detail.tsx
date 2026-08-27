@@ -262,7 +262,7 @@ export async function StudentTrainingDetail({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {canScheduleLessons || brief.upcomingReservation ? (
-            <div>
+            <div id="schedule-lesson">
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
                 <CalendarClock className="size-3.5" /> When
               </p>

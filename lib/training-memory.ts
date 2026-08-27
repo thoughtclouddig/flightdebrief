@@ -41,10 +41,12 @@ export interface NextLessonBrief {
   focusAreas: string[];
   keepWorkingOn: string[];
   beforeFlightItems: string[];
-  /** Same items as beforeFlightItems, as live rows -- lets the student's own Next-Lesson page render them as a checkable self-affirmation list instead of static bullets. */
+  /** Same items as keepWorkingOn/beforeFlightItems, as live rows with ids -- lets the student's own Next-Lesson page render a checkable self-affirmation list, and lets a CFI's handoff brief render an editable one, instead of static bullets. */
+  keepWorkingOnTrainingItems: TrainingItem[];
   beforeFlightTrainingItems: TrainingItem[];
   recurringThemes: RecurringTheme[];
   upcomingReservation: Reservation | null;
+  upcomingReservationInstructor: User | null;
   /** Deterministic, not LLM-generated -- templated from the top focus/action item so there's always a concrete, grounded prompt to hand the student, never an invented one. */
   suggestedQuestion: string | null;
 }
@@ -65,7 +67,8 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
   const itemsForLastFlight = lastFlight
     ? trainingItems.filter((t) => t.flightId === lastFlight.id && !t.done && t.visibility !== "instructor_only" && t.visibility !== "admin_only")
     : [];
-  const keepWorkingOn = itemsForLastFlight.filter((t) => t.category === "keep_working_on").map((t) => t.description);
+  const keepWorkingOnTrainingItems = itemsForLastFlight.filter((t) => t.category === "keep_working_on");
+  const keepWorkingOn = keepWorkingOnTrainingItems.map((t) => t.description);
   const beforeFlightTrainingItems = itemsForLastFlight.filter((t) => t.category === "before_next_flight");
   const beforeFlightItems = beforeFlightTrainingItems.map((t) => t.description);
   const focusAreas = lastDebrief?.structuredResult.nextLessonFocus ?? [];
@@ -86,6 +89,11 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
     reservations
       .filter((r) => r.status === "scheduled" && new Date(r.scheduledStart).getTime() >= now)
       .sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart))[0] ?? null;
+  // The reservation's own instructor, NOT lastInstructor -- a rescheduled or
+  // reassigned flight can easily have a different CFI than the last debrief,
+  // and conflating the two showed the wrong instructor name on the student's
+  // Next Flight card.
+  const upcomingReservationInstructor = upcomingReservation ? await repo.getUser(upcomingReservation.instructorId) : null;
 
   return {
     studentId,
@@ -97,9 +105,11 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
     focusAreas,
     keepWorkingOn,
     beforeFlightItems,
+    keepWorkingOnTrainingItems,
     beforeFlightTrainingItems,
     recurringThemes,
     upcomingReservation,
+    upcomingReservationInstructor,
     suggestedQuestion,
   };
 }
@@ -161,6 +171,8 @@ export interface StudentRosterEntry {
   lastDebriefStatus: DebriefStatus | null;
   nextReservation: Reservation | null;
   currentFocus: string[];
+  /** Whether there's anything in Keep Working On / Before Next Flight -- these are auto-drafted from the transcript and reviewed by the CFI on /review, so this is only false for a debrief thin enough that nothing came out of it. */
+  hasNextLessonItems: boolean;
 }
 
 export async function computeInstructorRoster(
@@ -201,6 +213,7 @@ export async function computeInstructorRoster(
         lastDebriefStatus: mostRecentFlight?.debriefStatus ?? null,
         nextReservation,
         currentFocus: brief.focusAreas,
+        hasNextLessonItems: brief.keepWorkingOnTrainingItems.length > 0 || brief.beforeFlightTrainingItems.length > 0,
       };
     }),
   );
@@ -220,8 +233,13 @@ export function attentionReasons(entry: StudentRosterEntry, progress?: DebriefPr
   if (entry.pendingFlight) {
     reasons.push(progress ? debriefStageLabel(progress) : "Debrief not completed");
   }
-  if (!entry.pendingFlight && entry.mostRecentFlight?.debriefStatus === "complete" && entry.currentFocus.length === 0) {
-    reasons.push("Next lesson has no objectives");
+  if (!entry.pendingFlight && entry.mostRecentFlight?.debriefStatus === "complete") {
+    if (!entry.hasNextLessonItems) {
+      reasons.push("Next lesson has no objectives");
+    }
+    if (!entry.nextReservation) {
+      reasons.push("No flight scheduled");
+    }
   }
   if (!entry.mostRecentFlight) {
     reasons.push("No recent training activity");

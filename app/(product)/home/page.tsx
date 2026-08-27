@@ -148,7 +148,7 @@ export default async function StudentHomePage() {
                 {formatDateTime(brief.upcomingReservation.scheduledStart)}
               </p>
               <p className="text-sm text-foreground-soft">
-                Instructor: {brief.lastInstructor?.name ?? "TBD"}
+                Instructor: {brief.upcomingReservationInstructor?.name ?? "TBD"}
               </p>
             </div>
 

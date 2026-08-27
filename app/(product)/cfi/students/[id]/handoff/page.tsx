@@ -1,9 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BookOpen, CheckCircle2, Eye, MessageSquareQuote, Target, User } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  CalendarClock,
+  CheckCircle2,
+  ClipboardList,
+  Eye,
+  MessageSquareQuote,
+  Target,
+  User,
+} from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AcsBadge } from "@/components/acs-badge";
+import { EditableTrainingItemList } from "@/components/debrief/editable-training-item-list";
 import { getRepository } from "@/lib/data";
 import { getAuthorizedStudent } from "@/lib/auth/access";
 import { computeNextLessonBrief } from "@/lib/training-memory";
@@ -67,6 +79,35 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
         </p>
       ) : null}
 
+      {brief.upcomingReservation ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarClock className="size-4 text-brand" />
+              When
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-foreground">
+              {new Date(brief.upcomingReservation.scheduledStart).toLocaleString("en-US", {
+                weekday: "long",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </p>
+            {brief.upcomingReservationInstructor ? (
+              <p className="mt-0.5 text-sm text-foreground-soft">With {brief.upcomingReservationInstructor.name}</p>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : (
+        <p className="rounded-lg bg-surface-sunken px-3 py-2 text-sm text-foreground-soft">
+          No flight scheduled with {student.name.split(" ")[0]} yet.
+        </p>
+      )}
+
       {brief.lastWentWell.length > 0 ? (
         <Card>
           <CardHeader>
@@ -101,6 +142,46 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
                 </li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {brief.lastFlight ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="size-4 text-brand" />
+              Keep Working On
+            </CardTitle>
+            <CardDescription>From the transcript, or add your own -- edit or remove anything.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <EditableTrainingItemList
+              flightId={brief.lastFlight.id}
+              category="keep_working_on"
+              initialItems={brief.keepWorkingOnTrainingItems}
+              addPlaceholder="Add something to keep working on..."
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {brief.lastFlight ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList className="size-4 text-brand" />
+              Before Next Flight
+            </CardTitle>
+            <CardDescription>What {student.name.split(" ")[0]} should do before showing up.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <EditableTrainingItemList
+              flightId={brief.lastFlight.id}
+              category="before_next_flight"
+              initialItems={brief.beforeFlightTrainingItems}
+              addPlaceholder="Add something to prep before the flight..."
+            />
           </CardContent>
         </Card>
       ) : null}

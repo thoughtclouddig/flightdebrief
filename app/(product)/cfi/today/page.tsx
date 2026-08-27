@@ -190,20 +190,43 @@ export default async function CfiTodayPage() {
           <Card>
             <CardContent className="flex flex-col gap-3">
               {needingAttention.map(({ entry, reasons }) => (
-                <Link
+                <div
                   key={entry.student.id}
-                  href={`/cfi/students/${entry.student.id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 -mx-2 hover:bg-slate-50 dark:hover:bg-white/5"
+                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 -mx-2"
                 >
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{entry.student.name}</span>
+                  <Link
+                    href={`/cfi/students/${entry.student.id}`}
+                    className="text-sm font-medium text-slate-800 hover:underline dark:text-slate-100"
+                  >
+                    {entry.student.name}
+                  </Link>
                   <div className="flex flex-wrap justify-end gap-1">
-                    {reasons.map((r, i) => (
-                      <Badge key={i} variant="outline">
-                        {r}
-                      </Badge>
-                    ))}
+                    {reasons.map((r, i) => {
+                      // Each reason with a single obvious fix links straight to it --
+                      // never the student's general profile page, which just makes the
+                      // CFI go hunting for the actual thing to do.
+                      const href =
+                        r === "Needs tasks picked" && entry.pendingFlight
+                          ? `/flights/${entry.pendingFlight.id}/debrief/tasks`
+                          : r === "Next lesson has no objectives"
+                            ? `/cfi/students/${entry.student.id}/handoff`
+                            : r === "No flight scheduled"
+                              ? `/cfi/students/${entry.student.id}#schedule-lesson`
+                              : null;
+                      return href ? (
+                        <Link key={i} href={href}>
+                          <Badge variant="outline" className="transition-colors hover:bg-brand hover:text-white">
+                            {r}
+                          </Badge>
+                        </Link>
+                      ) : (
+                        <Badge key={i} variant="outline">
+                          {r}
+                        </Badge>
+                      );
+                    })}
                   </div>
-                </Link>
+                </div>
               ))}
             </CardContent>
           </Card>

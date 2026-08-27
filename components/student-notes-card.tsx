@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2, NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { StudentNote } from "@/lib/types";
 
 /**
@@ -50,6 +50,7 @@ export function StudentNotesCard({ studentId, initialNotes }: { studentId: strin
           <NotebookPen className="size-4 text-brand" />
           Notes for Next Debrief
         </CardTitle>
+        <CardDescription>Anything you jot down here gets brought up automatically next time you debrief this student.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex gap-2">

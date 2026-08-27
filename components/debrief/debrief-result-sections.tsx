@@ -11,14 +11,15 @@ import {
   Target,
 } from "lucide-react";
 import { AcsBadge } from "@/components/acs-badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
 import { ComparisonTable, type ComparisonRow } from "@/components/debrief/comparison-table";
 import { FlightMap } from "@/components/flight-map";
 import { SkillProgressList } from "@/components/skill-progress-list";
+import { EditableTrainingItemList } from "@/components/debrief/editable-training-item-list";
 import { matchSkills } from "@/lib/topics";
 import { cn } from "@/lib/utils";
-import type { CertificateType, StructuredDebrief, TrackPosition } from "@/lib/types";
+import type { CertificateType, StructuredDebrief, TrackPosition, TrainingItem } from "@/lib/types";
 import type { SkillProgression } from "@/lib/skill-progress";
 
 /**
@@ -39,6 +40,7 @@ export function DebriefResultSections({
   certificateType,
   canDismiss,
   instructorFirstName,
+  editableTrainingItems,
 }: {
   result: StructuredDebrief;
   differenceRows: ComparisonRow[];
@@ -50,6 +52,14 @@ export function DebriefResultSections({
   canDismiss: boolean;
   /** Resolved via lib/instructor-attribution.ts. Null when this flight has no instructor assigned -- falls back to "your instructor". */
   instructorFirstName: string | null;
+  /**
+   * CFI-only, /review-only: swaps "Needs Work"/"Action Items" from the frozen
+   * result strings to their live, editable TrainingItem rows -- the CFI is
+   * confirming/editing an auto-draft as part of finishing the debrief, not
+   * starting from a blank page. Omitted (undefined) on /results and for
+   * student viewers, which keep the static read-only rendering.
+   */
+  editableTrainingItems?: { keepWorkingOn: TrainingItem[]; beforeNextFlight: TrainingItem[] };
 }) {
   return (
     <>
@@ -79,7 +89,26 @@ export function DebriefResultSections({
       {/* Items to Improve -- coaching, corrections, and where perceptions differed. */}
       <GroupHeading tone="amber">Items to Improve</GroupHeading>
       <div className="flex flex-col gap-4">
-        <Section icon={Target} title="Needs Work" items={result.needsWork} empty="No issues noted." tone="amber" />
+        {editableTrainingItems ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="size-4 text-amber" />
+                Needs Work
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <EditableTrainingItemList
+                flightId={flightId}
+                category="keep_working_on"
+                initialItems={editableTrainingItems.keepWorkingOn}
+                addPlaceholder="Add something to keep working on..."
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <Section icon={Target} title="Needs Work" items={result.needsWork} empty="No issues noted." tone="amber" />
+        )}
 
         {differenceRows.length > 0 ? (
           <Card>
@@ -127,16 +156,36 @@ export function DebriefResultSections({
       {/* Next Steps -- what to carry into the next lesson. */}
       <GroupHeading tone="brand">Next Steps</GroupHeading>
       <div className="flex flex-col gap-4">
-        <Section
-          icon={ClipboardList}
-          title="Action Items"
-          items={result.actionItems}
-          empty="No action items."
-          renderBadge={(item) => {
-            const skill = matchSkills(item)[0]?.skill;
-            return skill ? <AcsBadge skill={skill} certificateType={certificateType} /> : null;
-          }}
-        />
+        {editableTrainingItems ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardList className="size-4 text-brand" />
+                Action Items
+              </CardTitle>
+              <CardDescription>What to prep before the next flight -- edit or remove anything, or add your own.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EditableTrainingItemList
+                flightId={flightId}
+                category="before_next_flight"
+                initialItems={editableTrainingItems.beforeNextFlight}
+                addPlaceholder="Add an action item..."
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <Section
+            icon={ClipboardList}
+            title="Action Items"
+            items={result.actionItems}
+            empty="No action items."
+            renderBadge={(item) => {
+              const skill = matchSkills(item)[0]?.skill;
+              return skill ? <AcsBadge skill={skill} certificateType={certificateType} /> : null;
+            }}
+          />
+        )}
 
         {result.studyReferences.length > 0 ? (
           <Card>

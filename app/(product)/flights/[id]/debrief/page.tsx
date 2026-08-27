@@ -47,7 +47,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
   const tasks = await repo.listFlightTasks(id);
   if (tasks.length === 0) {
     if (isInstructorViewer) redirect(`/flights/${id}/debrief/tasks`);
-    return <WaitingMessage flight={flight} text="Your instructor hasn't picked today's tasks yet." />;
+    return <WaitingMessage flight={flight} text="Your instructor needs to log what you worked on this flight before the debrief can start." />;
   }
 
   const [studentAssessment, instructorAssessment] = await Promise.all([
