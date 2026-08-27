@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Loader2, Plus, X } from "lucide-react";
+import { ChevronDown, Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { TrainingCategory, TrainingSkill } from "@/lib/types";
@@ -55,6 +55,25 @@ export function TaskPickerForm({
   const [customLabel, setCustomLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Start with only the categories that already have something picked open
+  // (resuming a partially-filled list), or just the first one for a fresh
+  // start -- seven fully-open sections is exactly the "page gets really
+  // long" problem this accordion exists to fix.
+  const [expanded, setExpanded] = useState<Set<TrainingCategory>>(() => {
+    const withSelection = CATEGORY_ORDER.filter((category) =>
+      allSkills.some((s) => s.category === category && selected.has(s.skill)),
+    );
+    return new Set(withSelection.length > 0 ? withSelection : CATEGORY_ORDER.slice(0, 1));
+  });
+
+  function toggleCategory(category: TrainingCategory) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  }
 
   function toggle(taskCode: string) {
     setSelected((prev) => {
@@ -110,34 +129,61 @@ export function TaskPickerForm({
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-end gap-3 text-xs font-medium text-foreground-soft">
+        <button type="button" onClick={() => setExpanded(new Set(CATEGORY_ORDER))} className="hover:text-brand">
+          Expand all
+        </button>
+        <span className="text-foreground-faint">·</span>
+        <button type="button" onClick={() => setExpanded(new Set())} className="hover:text-brand">
+          Collapse all
+        </button>
+      </div>
+
       {CATEGORY_ORDER.map((category) => {
         const skillsInCategory = allSkills.filter((s) => s.category === category);
         if (skillsInCategory.length === 0) return null;
+        const selectedCount = skillsInCategory.filter((s) => selected.has(s.skill)).length;
+        const isExpanded = expanded.has(category);
         return (
-          <div key={category}>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
-              {CATEGORY_LABEL[category]}
-            </p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {skillsInCategory.map(({ skill, label }) => {
-                const active = selected.has(skill);
-                return (
-                  <button
-                    key={skill}
-                    type="button"
-                    onClick={() => toggle(skill)}
-                    className={cn(
-                      "rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors",
-                      active
-                        ? "border-brand bg-brand/10 text-brand-dark dark:text-brand-light"
-                        : "border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
-                    )}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
+          <div key={category} className="rounded-lg border border-hairline">
+            <button
+              type="button"
+              onClick={() => toggleCategory(category)}
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+              aria-expanded={isExpanded}
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">{CATEGORY_LABEL[category]}</span>
+                {selectedCount > 0 ? (
+                  <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand-dark dark:text-brand-light">
+                    {selectedCount}
+                  </span>
+                ) : null}
+              </span>
+              <ChevronDown className={cn("size-4 shrink-0 text-foreground-faint transition-transform", isExpanded && "rotate-180")} />
+            </button>
+            {isExpanded ? (
+              <div className="grid grid-cols-1 gap-2 border-t border-hairline p-3 sm:grid-cols-2">
+                {skillsInCategory.map(({ skill, label }) => {
+                  const active = selected.has(skill);
+                  return (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => toggle(skill)}
+                      className={cn(
+                        "rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors",
+                        active
+                          ? "border-brand bg-brand/10 text-brand-dark dark:text-brand-light"
+                          : "border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
         );
       })}

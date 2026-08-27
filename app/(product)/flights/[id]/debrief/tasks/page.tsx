@@ -17,13 +17,14 @@ export default async function FlightTasksPage(props: PageProps<"/flights/[id]/de
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div>
-        <p className="text-sm font-medium uppercase tracking-wide text-brand">{formatFlightContext(flight)}</p>
+        <p className="text-sm font-medium uppercase tracking-wide text-brand">Starting the Debrief</p>
         <h1 className="mt-1 text-2xl font-semibold text-foreground">
           What did you work on today, {flight.aircraft.tailNumber}?
         </h1>
-        <p className="mt-1 text-sm text-foreground-soft">
-          Pick the maneuvers and tasks flown this flight. This drives what shows up on both of your
-          self-assessments -- no need to cover the full syllabus every time.
+        <p className="mt-1 text-sm text-foreground-soft">{formatFlightContext(flight)}</p>
+        <p className="mt-2 text-sm text-foreground-soft">
+          Pick the maneuvers and tasks actually flown -- this is step one of the debrief itself, and it drives
+          what shows up on both of your self-assessments next. No need to cover the full syllabus every time.
         </p>
       </div>
 

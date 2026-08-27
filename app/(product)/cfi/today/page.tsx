@@ -9,7 +9,7 @@ import { getViewer } from "@/lib/viewer";
 import { attentionReasons, computeInstructorRoster, computeNextLessonBrief } from "@/lib/training-memory";
 import { computeDebriefProgress, debriefStageLabel } from "@/lib/debrief-progress";
 import { localIsoDate } from "@/lib/date";
-import { formatFlightContext } from "@/lib/utils";
+import { formatFlightContext, formatFlightDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -203,17 +203,24 @@ export default async function CfiTodayPage() {
                       // never the student's general profile page, which just makes the
                       // CFI go hunting for the actual thing to do.
                       const href =
-                        r === "Needs tasks picked" && entry.pendingFlight
+                        r === "Debrief not started" && entry.pendingFlight
                           ? `/flights/${entry.pendingFlight.id}/debrief/tasks`
                           : r === "Next lesson has no objectives"
                             ? `/cfi/students/${entry.student.id}/handoff`
                             : r === "No flight scheduled"
                               ? `/cfi/students/${entry.student.id}#schedule-lesson`
                               : null;
+                      // "Debrief not started" alone gives no sense of which flight or how
+                      // stale it is -- the date is what actually tells a CFI whether this
+                      // is today's flight or one that's been sitting for a week.
+                      const label =
+                        r === "Debrief not started" && entry.pendingFlight
+                          ? `${r} · ${formatFlightDate(entry.pendingFlight.flightDate)}`
+                          : r;
                       return href ? (
                         <Link key={i} href={href}>
                           <Badge variant="outline" className="transition-colors hover:bg-brand hover:text-white">
-                            {r}
+                            {label}
                           </Badge>
                         </Link>
                       ) : (
