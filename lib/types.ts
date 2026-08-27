@@ -303,7 +303,18 @@ export type TrainingSkill =
   | "GROUND_REF_MANEUVERS"
   | "RADIO_COMMUNICATIONS"
   | "SITUATIONAL_AWARENESS"
-  | "RISK_MANAGEMENT";
+  | "RISK_MANAGEMENT"
+  // Rounding out takeoff/landing pairs and splitting ground reference
+  // maneuvers into their individually-taught/graded elements (see
+  // lib/topics.ts for why GROUND_REF_MANEUVERS itself stays as a generic
+  // catch-all rather than being removed).
+  | "SOFT_FIELD_LANDING"
+  | "SOFT_FIELD_TAKEOFF"
+  | "SHORT_FIELD_TAKEOFF"
+  | "CROSSWIND_TAKEOFF"
+  | "RECTANGULAR_COURSE"
+  | "S_TURNS"
+  | "TURNS_AROUND_POINT";
 
 export type TrainingSignalStatus = "NEEDS_COACHING" | "IMPROVING";
 

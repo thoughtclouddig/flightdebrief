@@ -192,11 +192,11 @@ export default async function CfiTodayPage() {
               {needingAttention.map(({ entry, reasons }) => (
                 <div
                   key={entry.student.id}
-                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 -mx-2"
+                  className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg px-2 py-1.5 -mx-2"
                 >
                   <Link
                     href={`/cfi/students/${entry.student.id}`}
-                    className="text-sm font-medium text-slate-800 hover:underline dark:text-slate-100"
+                    className="shrink-0 whitespace-nowrap text-sm font-medium text-slate-800 hover:underline dark:text-slate-100"
                   >
                     {entry.student.name}
                   </Link>

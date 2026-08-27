@@ -5,12 +5,34 @@ import { useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { TrainingSkill } from "@/lib/types";
+import type { TrainingCategory, TrainingSkill } from "@/lib/types";
 
 interface CustomEntry {
   taskCode: string;
   label: string;
 }
+
+// Display order and label for grouping the picker -- MANEUVERS is split
+// further below since "maneuvers" alone is too broad a bucket to scan
+// quickly once takeoffs/landings/ground-ref all live under it.
+const CATEGORY_LABEL: Record<TrainingCategory, string> = {
+  LANDINGS: "Landings",
+  MANEUVERS: "Maneuvers",
+  PROCEDURES: "Procedures",
+  COMMUNICATIONS: "Communications",
+  AIRSPEED_CONTROL: "Airspeed Control",
+  NAVIGATION: "Navigation",
+  RISK_MANAGEMENT: "Risk Management",
+};
+const CATEGORY_ORDER: TrainingCategory[] = [
+  "LANDINGS",
+  "MANEUVERS",
+  "NAVIGATION",
+  "PROCEDURES",
+  "COMMUNICATIONS",
+  "AIRSPEED_CONTROL",
+  "RISK_MANAGEMENT",
+];
 
 export function TaskPickerForm({
   flightId,
@@ -19,7 +41,7 @@ export function TaskPickerForm({
   redirectTo,
 }: {
   flightId: string;
-  allSkills: { skill: TrainingSkill; label: string }[];
+  allSkills: { skill: TrainingSkill; label: string; category: TrainingCategory }[];
   /** Every task already saved for this flight -- both catalog and custom, since a custom entry needs its label to render its tile. */
   initialTasks: { taskCode: string; label: string }[];
   redirectTo: string;
@@ -88,52 +110,71 @@ export function TaskPickerForm({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {allSkills.map(({ skill, label }) => {
-          const active = selected.has(skill);
-          return (
-            <button
-              key={skill}
-              type="button"
-              onClick={() => toggle(skill)}
-              className={cn(
-                "rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors",
-                active
-                  ? "border-brand bg-brand/10 text-brand-dark dark:text-brand-light"
-                  : "border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
-              )}
-            >
-              {label}
-            </button>
-          );
-        })}
-        {customEntries.map(({ taskCode, label }) => {
-          const active = selected.has(taskCode);
-          return (
-            <div
-              key={taskCode}
-              className={cn(
-                "flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium transition-colors",
-                active
-                  ? "border-brand bg-brand/10 text-brand-dark dark:text-brand-light"
-                  : "border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
-              )}
-            >
-              <button type="button" onClick={() => toggle(taskCode)} className="flex-1 text-left">
-                {label}
-              </button>
-              <button
-                type="button"
-                onClick={() => removeCustom(taskCode)}
-                aria-label={`Remove ${label}`}
-                className="shrink-0 rounded-full p-1 text-foreground-faint hover:bg-surface-sunken hover:text-danger"
-              >
-                <X className="size-3.5" />
-              </button>
+      {CATEGORY_ORDER.map((category) => {
+        const skillsInCategory = allSkills.filter((s) => s.category === category);
+        if (skillsInCategory.length === 0) return null;
+        return (
+          <div key={category}>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
+              {CATEGORY_LABEL[category]}
+            </p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {skillsInCategory.map(({ skill, label }) => {
+                const active = selected.has(skill);
+                return (
+                  <button
+                    key={skill}
+                    type="button"
+                    onClick={() => toggle(skill)}
+                    className={cn(
+                      "rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors",
+                      active
+                        ? "border-brand bg-brand/10 text-brand-dark dark:text-brand-light"
+                        : "border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
+
+      {customEntries.length > 0 ? (
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-foreground-faint">Your Additions</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {customEntries.map(({ taskCode, label }) => {
+              const active = selected.has(taskCode);
+              return (
+                <div
+                  key={taskCode}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium transition-colors",
+                    active
+                      ? "border-brand bg-brand/10 text-brand-dark dark:text-brand-light"
+                      : "border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
+                  )}
+                >
+                  <button type="button" onClick={() => toggle(taskCode)} className="flex-1 text-left">
+                    {label}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeCustom(taskCode)}
+                    aria-label={`Remove ${label}`}
+                    className="shrink-0 rounded-full p-1 text-foreground-faint hover:bg-surface-sunken hover:text-danger"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       {addingCustom ? (
         <div className="flex flex-col gap-2 rounded-lg border border-dashed border-hairline p-3 sm:flex-row sm:items-center">

@@ -67,11 +67,19 @@ const TOPIC_LIBRARY: {
   },
   {
     topic: "Short-field landings",
-    keywords: ["short field", "short-field"],
+    keywords: ["short field landing", "short-field landing", "short field approach"],
     source: "Airplane Flying Handbook, Ch. 9 — Short-Field Approach and Landing",
     url: AFH_CH9_URL,
     category: "LANDINGS",
     skill: "SHORT_FIELD_LANDING",
+  },
+  {
+    topic: "Soft-field landings",
+    keywords: ["soft field landing", "soft-field landing", "soft field approach"],
+    source: "Airplane Flying Handbook, Ch. 9 — Soft-Field Approach and Landing",
+    url: AFH_CH9_URL,
+    category: "LANDINGS",
+    skill: "SOFT_FIELD_LANDING",
   },
   {
     topic: "Crosswind landings",
@@ -148,19 +156,72 @@ const TOPIC_LIBRARY: {
   // --- Added for the structured/guided debrief's flight-task catalog -------
   {
     topic: "Normal takeoff",
-    keywords: ["takeoff", "take off", "departure climb", "rotation"],
+    keywords: ["normal takeoff", "takeoff", "take off", "departure climb", "rotation"],
     source: "Airplane Flying Handbook, Ch. 6 — Takeoffs and Departure Climbs",
     url: AFH_CH6_URL,
     category: "MANEUVERS",
     skill: "NORMAL_TAKEOFF",
   },
   {
+    topic: "Short-field takeoffs",
+    keywords: ["short field takeoff", "short-field takeoff"],
+    source: "Airplane Flying Handbook, Ch. 6 — Short-Field Takeoff and Climb",
+    url: AFH_CH6_URL,
+    category: "MANEUVERS",
+    skill: "SHORT_FIELD_TAKEOFF",
+  },
+  {
+    topic: "Soft-field takeoffs",
+    keywords: ["soft field takeoff", "soft-field takeoff"],
+    source: "Airplane Flying Handbook, Ch. 6 — Soft-Field Takeoff and Climb",
+    url: AFH_CH6_URL,
+    category: "MANEUVERS",
+    skill: "SOFT_FIELD_TAKEOFF",
+  },
+  {
+    topic: "Crosswind takeoffs",
+    keywords: ["crosswind takeoff"],
+    source: "Airplane Flying Handbook, Ch. 6 — Crosswind Takeoff and Climb",
+    url: AFH_CH6_URL,
+    category: "MANEUVERS",
+    skill: "CROSSWIND_TAKEOFF",
+  },
+  {
+    // Kept as a generic catch-all for a debrief that just says "ground
+    // reference work" without naming a specific maneuver -- the three
+    // specific maneuvers below get their own skill when actually named, so
+    // this entry's keywords stay narrow to avoid double-classifying the same
+    // sentence under both.
     topic: "Ground reference maneuvers",
-    keywords: ["ground reference", "s-turn", "s-turns", "turns around a point", "rectangular course"],
+    keywords: ["ground reference maneuver", "ground reference work"],
     source: "Airplane Flying Handbook, Ch. 7 — Ground Reference Maneuvers",
     url: AFH_CH7_URL,
     category: "MANEUVERS",
     skill: "GROUND_REF_MANEUVERS",
+  },
+  {
+    topic: "Rectangular course",
+    keywords: ["rectangular course"],
+    source: "Airplane Flying Handbook, Ch. 7 — Rectangular Course",
+    url: AFH_CH7_URL,
+    category: "MANEUVERS",
+    skill: "RECTANGULAR_COURSE",
+  },
+  {
+    topic: "S-turns",
+    keywords: ["s-turn", "s-turns", "s turns across a road"],
+    source: "Airplane Flying Handbook, Ch. 7 — S-Turns",
+    url: AFH_CH7_URL,
+    category: "MANEUVERS",
+    skill: "S_TURNS",
+  },
+  {
+    topic: "Turns around a point",
+    keywords: ["turns around a point", "turn around a point"],
+    source: "Airplane Flying Handbook, Ch. 7 — Turns Around a Point",
+    url: AFH_CH7_URL,
+    category: "MANEUVERS",
+    skill: "TURNS_AROUND_POINT",
   },
   {
     topic: "Radio communications",
@@ -229,9 +290,9 @@ export function matchSkills(text: string): { category: TrainingCategory; skill: 
   return results;
 }
 
-/** Every catalogued skill/label pair, in TOPIC_LIBRARY order -- backs the CFI's "Flight Complete" task picker. */
-export function allTrainingSkills(): { skill: TrainingSkill; label: string }[] {
-  return TOPIC_LIBRARY.map((t) => ({ skill: t.skill, label: t.topic }));
+/** Every catalogued skill/label/category triple, in TOPIC_LIBRARY order -- backs the CFI's "Flight Complete" task picker, grouped by category there. */
+export function allTrainingSkills(): { skill: TrainingSkill; label: string; category: TrainingCategory }[] {
+  return TOPIC_LIBRARY.map((t) => ({ skill: t.skill, label: t.topic, category: t.category }));
 }
 
 /** Human-readable label for a normalized skill code, e.g. "STABILIZED_APPROACH" -> "Landings". Falls back to the code itself for a code outside the fixed catalog (e.g. a CFI-authored custom FlightTask). */
