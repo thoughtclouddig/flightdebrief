@@ -87,23 +87,23 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
 
       <div className="flex flex-col gap-2 sm:flex-row">
         {flight.debriefStatus === "complete" ? (
-          <Link href={`/flights/${flight.id}/debrief/results`} className={buttonVariants({ size: "lg", className: "h-16 flex-1 text-lg font-semibold" })}>
+          <Link href={`/flights/${flight.id}/debrief/results`} className={buttonVariants({ size: "lg", className: "h-16 w-full text-lg font-semibold sm:flex-1" })}>
             View Debrief
           </Link>
         ) : hasPendingDebrief ? (
-          <div className="flex-1">
+          <div className="w-full sm:flex-1">
             <ResumeDebriefButton flightId={flight.id} />
           </div>
         ) : tasksPending && isInstructorViewer ? (
-          <Link href={`/flights/${flight.id}/debrief/tasks`} className={buttonVariants({ size: "lg", className: "h-16 flex-1 text-lg font-semibold" })}>
+          <Link href={`/flights/${flight.id}/debrief/tasks`} className={buttonVariants({ size: "lg", className: "h-16 w-full text-lg font-semibold sm:flex-1" })}>
             Pick Today&rsquo;s Tasks
           </Link>
         ) : tasksPending ? (
-          <Button size="lg" className="h-16 flex-1 text-lg font-semibold" disabled>
+          <Button size="lg" className="h-16 w-full text-lg font-semibold sm:flex-1" disabled>
             Waiting on your CFI
           </Button>
         ) : (
-          <Link href={`/flights/${flight.id}/debrief`} className={buttonVariants({ size: "lg", className: "h-16 flex-1 text-lg font-semibold" })}>
+          <Link href={`/flights/${flight.id}/debrief`} className={buttonVariants({ size: "lg", className: "h-16 w-full text-lg font-semibold sm:flex-1" })}>
             {/* Only a solo/freeform flight has the student recording their own
                 debrief -- in guided/light mode the CFI is the one who presses
                 record, so this label shouldn't read as an instruction to the
