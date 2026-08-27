@@ -146,7 +146,7 @@ export function DebriefResultSections({
         <Section
           icon={LifeBuoy}
           title="Where Your Instructor Stepped In"
-          description="Moments the instructor took over, prompted, or corrected. Tracked because needing less of this over time is one of the clearest signs of progress."
+          description="Moments the instructor took over, prompted, or corrected -- captured only when it came up in the debrief, never assumed."
           items={result.instructorAssistance}
           empty="You flew this one without needing a hand -- nothing noted."
           tone="amber"
