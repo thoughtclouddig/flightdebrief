@@ -46,6 +46,7 @@ import type {
   CreateFlightInput,
   CreateReferralEventInput,
   CreateReservationInput,
+  UpdateReservationInput,
   CreateResearchReportInput,
   CreateStudentNoteInput,
   ListFlightsFilter,
@@ -1187,6 +1188,35 @@ export class PostgresRepository implements Repository {
       ],
     );
     return mapReservation(rows[0]);
+  }
+
+  async updateReservation(id: string, input: UpdateReservationInput): Promise<Reservation | null> {
+    // Built dynamically so an unspecified field keeps its current value rather
+    // than being overwritten with null by a fixed column list.
+    const sets: string[] = [];
+    const values: unknown[] = [];
+    const push = (column: string, value: unknown) => {
+      values.push(value);
+      sets.push(`${column} = $${values.length}`);
+    };
+    if (input.scheduledStart !== undefined) push("scheduled_start", input.scheduledStart);
+    if (input.scheduledEnd !== undefined) push("scheduled_end", input.scheduledEnd);
+    if (input.aircraftId !== undefined) push("aircraft_id", input.aircraftId);
+    if (input.instructorId !== undefined) push("instructor_id", input.instructorId);
+    if (sets.length === 0) return this.getReservation(id);
+
+    values.push(id);
+    const db = await this.db();
+    const { rows } = await db.query(
+      `UPDATE reservations SET ${sets.join(", ")} WHERE id = $${values.length} RETURNING *`,
+      values,
+    );
+    return rows[0] ? mapReservation(rows[0]) : null;
+  }
+
+  async cancelReservation(id: string): Promise<void> {
+    const db = await this.db();
+    await db.query(`UPDATE reservations SET status = 'cancelled' WHERE id = $1`, [id]);
   }
 
   // --- Structured training signals ---

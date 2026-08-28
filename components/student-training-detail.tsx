@@ -10,6 +10,7 @@ import {
   Target,
 } from "lucide-react";
 import { AssignRadioPracticeCard } from "@/components/assign-radio-practice-card";
+import { RescheduleLessonForm } from "@/components/reschedule-lesson-form";
 import { ScheduleLessonForm } from "@/components/schedule-lesson-form";
 import { StudentNotesCard } from "@/components/student-notes-card";
 import { Badge } from "@/components/ui/badge";
@@ -301,7 +302,17 @@ export async function StudentTrainingDetail({
               ) : (
                 <p className="text-sm text-slate-400">Nothing scheduled yet.</p>
               )}
-              {canScheduleLessons ? (
+              {/* With a lesson on the books the action is to change it, not to
+                  stack a second one -- booking again is still reachable, just
+                  not the default when one already exists. */}
+              {canScheduleLessons && brief.upcomingReservation ? (
+                <RescheduleLessonForm
+                  reservation={brief.upcomingReservation}
+                  aircraft={aircraft}
+                  instructors={instructors}
+                />
+              ) : null}
+              {canScheduleLessons && !brief.upcomingReservation ? (
                 <div className="mt-2">
                   <ScheduleLessonForm
                     studentId={student.id}
@@ -312,7 +323,7 @@ export async function StudentTrainingDetail({
                     // Expanded by default when nothing is on the books: this
                     // section is the one place a CFI comes to fix exactly that,
                     // so hiding the fields behind a button was pure friction.
-                    autoOpen={!brief.upcomingReservation}
+                    autoOpen
                   />
                 </div>
               ) : null}

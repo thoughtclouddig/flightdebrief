@@ -84,6 +84,13 @@ export interface ListReservationsFilter {
   instructorId?: string;
 }
 
+export interface UpdateReservationInput {
+  scheduledStart?: string;
+  scheduledEnd?: string;
+  aircraftId?: string;
+  instructorId?: string;
+}
+
 export interface ListTrainingSignalsFilter {
   organizationId?: string;
   studentId?: string;
@@ -341,6 +348,15 @@ export interface Repository {
   listReservations(filter?: ListReservationsFilter): Promise<Reservation[]>;
   getReservation(id: string): Promise<Reservation | null>;
   createReservation(input: CreateReservationInput): Promise<Reservation>;
+  /** Reschedule an existing lesson -- time, aircraft, and/or instructor. Partial: omitted fields keep their current value. */
+  updateReservation(id: string, input: UpdateReservationInput): Promise<Reservation | null>;
+  /**
+   * Cancels rather than deletes: the row stays with status "cancelled" so a
+   * flight already linked to it (Flight.reservationId) doesn't end up pointing
+   * at nothing, and so a school can still see that a slot was booked and
+   * dropped rather than never existing.
+   */
+  cancelReservation(id: string): Promise<void>;
 
   // --- Structured training signals (see lib/taxonomy.ts) ---
   createTrainingSignals(items: Omit<TrainingSignal, "id" | "createdAt">[]): Promise<TrainingSignal[]>;
