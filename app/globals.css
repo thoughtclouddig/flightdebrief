@@ -376,3 +376,15 @@ h1 {
     transform: translateY(0);
   }
 }
+
+/* Reveal (components/marketing/reveal.tsx) hides its children until an
+   IntersectionObserver fires. With scripting off that never happens, so the
+   page renders empty -- content, correctly served, that nobody can read.
+   Search engines run scripts; readers with an extension blocking them, or a
+   text browser, do not. */
+@media (scripting: none) {
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

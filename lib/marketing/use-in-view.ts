@@ -21,9 +21,18 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(options?: Inte
     const el = ref.current;
     if (!el) return;
 
+    // Safety net. Everything wrapped in Reveal starts at opacity-0 and is
+    // only made visible by this observer, so anything that stops it firing --
+    // a browser that mis-handles the observer inside an iframe, a hidden tab
+    // at load, an extension -- renders a page of nothing. A page that fails
+    // to animate is a small problem; a page that fails to appear is not, and
+    // the cost of insuring against it is one timer.
+    const failsafe = setTimeout(() => setObservedInView(true), 1200);
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
+          clearTimeout(failsafe);
           setObservedInView(true);
           observer.disconnect();
         }
@@ -37,7 +46,10 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(options?: Inte
       { threshold: 0, rootMargin: "-40px", ...options },
     );
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(failsafe);
+      observer.disconnect();
+    };
   }, [options, reduced]);
 
   return { ref, inView: reduced ? true : observedInView };

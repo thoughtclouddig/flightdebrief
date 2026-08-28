@@ -30,7 +30,7 @@ export function Reveal({
     <div
       ref={ref}
       className={cn(
-        "transition-[opacity,transform] duration-700 ease-out",
+        "reveal transition-[opacity,transform] duration-700 ease-out",
         inView ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
         className,
       )}
