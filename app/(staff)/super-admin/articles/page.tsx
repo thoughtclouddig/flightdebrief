@@ -36,6 +36,7 @@ export default async function ContentDeskPage(props: PageProps<"/super-admin/art
         href: "/super-admin/ideas",
         previewHref: null,
         liveHref: null,
+        draftableIdeaId: idea.status === "approved" ? idea.id : null,
       })),
     ...articles.map((article) => {
       const topic = article.topicId ? topicById.get(article.topicId) ?? null : null;

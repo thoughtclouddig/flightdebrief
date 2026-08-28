@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { DraftIdeaButton } from "./draft-idea-button";
 
 /**
  * The content desk: everything AfterFlight is writing, in one table.
@@ -32,6 +33,8 @@ export interface ContentRow {
   /** Present once there's something renderable to look at. */
   previewHref: string | null;
   liveHref: string | null;
+  /** Set on queued rows: the idea this row can be drafted from, right here. */
+  draftableIdeaId?: string | null;
 }
 
 const ARTICLE_STAGES: { key: Stage | "all"; label: string }[] = [
@@ -174,6 +177,7 @@ export function ContentDesk({
                     <td className="hidden px-4 py-3 text-sm tabular-nums text-white/40 md:table-cell">{row.dateLabel}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-3 text-sm">
+                        {row.draftableIdeaId ? <DraftIdeaButton ideaId={row.draftableIdeaId} /> : null}
                         {row.previewHref ? (
                           <Link href={row.previewHref} className="font-medium text-white/60 hover:text-white">
                             Preview

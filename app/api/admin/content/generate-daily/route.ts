@@ -26,9 +26,30 @@ export async function POST(request: Request) {
 
   const repo = getRepository();
 
-  // Oldest first, so an approved idea can't sit behind newer ones forever.
-  const approved = (await repo.listArticleIdeas({ status: "approved" })).reverse();
-  const idea = approved[0] ?? null;
+  // An explicit ideaId drafts that one. Without it the pipeline takes the
+  // oldest, which is right for a scheduled run and wrong for a person looking
+  // at a queue: "draft this one" is the action they mean, and picking
+  // something else on their behalf reads as the button doing nothing.
+  let requestedIdeaId: string | null = null;
+  try {
+    const body = (await request.json()) as { ideaId?: unknown };
+    if (typeof body?.ideaId === "string") requestedIdeaId = body.ideaId;
+  } catch {
+    // No body at all is the scheduled case.
+  }
+
+  let idea = null;
+  if (requestedIdeaId) {
+    const requested = await repo.getArticleIdea(requestedIdeaId);
+    if (!requested || requested.status !== "approved") {
+      return NextResponse.json({ error: "That idea isn't waiting to be drafted." }, { status: 400 });
+    }
+    idea = requested;
+  } else {
+    // Oldest first, so an approved idea can't sit behind newer ones forever.
+    const approved = (await repo.listArticleIdeas({ status: "approved" })).reverse();
+    idea = approved[0] ?? null;
+  }
 
   const topics = await repo.listResourceTopics();
   const topic = idea?.topicId ? topics.find((t) => t.id === idea.topicId) ?? (await pickNextTopic()) : await pickNextTopic();
