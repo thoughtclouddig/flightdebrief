@@ -28,6 +28,9 @@ Return the article as parts, not prose. Each part has a job:
 - sections: 4 to 6 of them. Each has:
     heading: phrased as the question a reader would actually ask, in their words. "Why does my student balloon the flare?" not "Flare Technique Considerations".
     body: 100 to 200 words that answer that heading and nothing else.
+    steps: OPTIONAL. Only when the section describes a genuine procedure where the order matters, and only with 2 or more steps. A numbered list of unordered points is a paragraph wearing a costume. Most sections have none. Each step is one short imperative sentence.
+    tip: OPTIONAL. At most one section in the whole article gets one, and many articles get none. It is a single sentence of practical instructor advice that the body does not already say. A tip restating the section is worse than no tip, because a reader who is burned once stops reading them.
+    subsections: OPTIONAL. Only when a section genuinely covers two named sub-topics, each needing 60 to 120 words. Never use one to split a section in half arbitrarily. Each has a short heading (a phrase, not a question -- the question belongs to the H2 above it) and a body.
 - faq: 3 to 5 further questions with 40 to 80 word answers. Genuine questions the article raised but did not fully cover -- not the section headings restated.
 
 THE SELF-CONTAINMENT RULE
@@ -43,7 +46,7 @@ Respond with ONLY a single JSON object, no markdown fences, no commentary:
   "dek": string,
   "answer": string,
   "keyFacts": string[],
-  "sections": [{ "heading": string, "body": string }],
+  "sections": [{ "heading": string, "body": string, "steps": string[], "tip": string | null, "subsections": [{ "heading": string, "body": string }] }],
   "faq": [{ "question": string, "answer": string }]
 }`;
 

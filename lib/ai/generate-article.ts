@@ -88,7 +88,17 @@ export async function generateArticleDraft(
   const bodyBlocks: ArticleBody = {
     answer: parsed.answer.trim(),
     keyFacts: parsed.keyFacts.map((f) => f.trim()).filter(Boolean),
-    sections: sections.map((s) => ({ heading: s.heading.trim(), body: s.body.trim() })),
+    sections: sections.map((s) => ({
+      heading: s.heading.trim(),
+      body: s.body.trim(),
+      steps: (s.steps ?? []).map((step) => step.trim()).filter(Boolean),
+      // A one-item list isn't a procedure. Dropping it keeps a paragraph from
+      // being promoted to a numbered step for the look of it.
+      tip: s.tip?.trim() || null,
+      subsections: (s.subsections ?? [])
+        .map((sub) => ({ heading: sub.heading.trim(), body: sub.body.trim() }))
+        .filter((sub) => sub.heading && sub.body),
+    })).map((s) => ({ ...s, steps: s.steps.length > 1 ? s.steps : [] })),
     faq: parsed.faq
       .filter((f) => f.question.trim() && f.answer.trim())
       .map((f) => ({ question: f.question.trim(), answer: f.answer.trim() })),

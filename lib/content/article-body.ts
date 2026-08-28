@@ -22,11 +22,38 @@
  * simple to read -- see toPlainText().
  */
 
+export interface ArticleSubsection {
+  heading: string;
+  body: string;
+}
+
 export interface ArticleSection {
   /** Phrased as the question a reader would actually ask, not a topic label. */
   heading: string;
   /** 100-200 words. Must stand alone if quoted with no surrounding context. */
   body: string;
+  /**
+   * A genuine ordered procedure, rendered as an <ol>. Only when order is
+   * load-bearing -- a numbered list of unordered points is a paragraph
+   * wearing a costume, and answer engines quote ordered lists as procedures.
+   *
+   * Optional, like tip and subsections: body_blocks is untyped JSON, and rows
+   * written before these fields existed have none. Declaring them required
+   * would be a claim about stored data that isn't true.
+   */
+  steps?: string[];
+  /**
+   * One aside from an instructor's point of view. Null far more often than
+   * not: a tip that restates the section is noise, and a page where every
+   * section has one has taught the reader to skip them.
+   */
+  tip?: string | null;
+  /**
+   * Breaks a long section up without a second H2. Kept separate from
+   * sections because only H2s carry the one-question-per-heading pattern
+   * that search and answer engines key off.
+   */
+  subsections?: ArticleSubsection[];
 }
 
 export interface ArticleFaq {
@@ -56,7 +83,12 @@ export interface ArticleBody {
 export function toPlainText(body: ArticleBody): string {
   const parts: string[] = [body.answer];
   if (body.keyFacts.length > 0) parts.push(body.keyFacts.join("\n"));
-  for (const section of body.sections) parts.push(`${section.heading}\n\n${section.body}`);
+  for (const section of body.sections) {
+    parts.push(`${section.heading}\n\n${section.body}`);
+    if (section.steps?.length) parts.push(section.steps.map((step, i) => `${i + 1}. ${step}`).join("\n"));
+    if (section.tip) parts.push(section.tip);
+    for (const sub of section.subsections ?? []) parts.push(`${sub.heading}\n\n${sub.body}`);
+  }
   for (const item of body.faq) parts.push(`${item.question}\n\n${item.answer}`);
   return parts.filter((p) => p.trim()).join("\n\n");
 }

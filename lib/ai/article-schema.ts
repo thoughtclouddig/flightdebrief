@@ -19,6 +19,14 @@ export const generatedArticleSchema = z.object({
       z.object({
         heading: z.string().default(""),
         body: z.string().default(""),
+        // Optional enrichments. Defaulted rather than required so a model
+        // that returns none still produces a valid article -- most sections
+        // should have none.
+        steps: z.array(z.string()).default([]),
+        tip: z.string().nullable().default(null),
+        subsections: z
+          .array(z.object({ heading: z.string().default(""), body: z.string().default("") }))
+          .default([]),
       }),
     )
     .default([]),

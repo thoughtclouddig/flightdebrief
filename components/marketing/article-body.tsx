@@ -97,6 +97,44 @@ export function ArticleBody({
             {section.heading}
           </h2>
           <Paragraphs text={section.body} className="mt-4" />
+
+          {/* A real <ol>: a procedure should be marked up as one, both for a
+              reader skimming and for an answer engine lifting it as steps. */}
+          {section.steps && section.steps.length > 0 ? (
+            <ol className={`mt-5 flex flex-col gap-3 ${MEASURE}`}>
+              {section.steps.map((step, j) => (
+                <li key={j} className="flex gap-3.5 text-pretty text-[17px] leading-[1.7] text-[#3f474f]">
+                  <span
+                    aria-hidden
+                    className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[#f4f5f6] text-[13px] font-bold text-[#101727]"
+                  >
+                    {j + 1}
+                  </span>
+                  <span className="pt-0.5">{step}</span>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+
+          {/* No fill. Everything orange on this page is structure or something
+              to click, and the page already spends its one panel treatment on
+              key facts and the CTA -- a third use would make the device
+              decoration rather than meaning. */}
+          {section.tip ? (
+            <aside className={`mt-6 border-l-[3px] border-brand py-0.5 pl-5 ${MEASURE}`}>
+              <p className="text-[11px] font-bold uppercase tracking-[0.11em] text-[#68717D]">Instructor tip</p>
+              <p className="mt-1.5 text-pretty text-[16.5px] leading-[1.7] text-[#3f474f]">{section.tip}</p>
+            </aside>
+          ) : null}
+
+          {/* H3, so a long section can break up without diluting the
+              one-question-per-H2 pattern search keys off. */}
+          {section.subsections?.map((sub, j) => (
+            <div key={j} className="mt-7">
+              <h3 className={`font-display text-[19px] font-bold text-[#101727] ${MEASURE}`}>{sub.heading}</h3>
+              <Paragraphs text={sub.body} className="mt-3" />
+            </div>
+          ))}
         </section>
       ))}
 

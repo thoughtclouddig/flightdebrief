@@ -4,7 +4,15 @@ import { hasStructuredBody, toPlainText, type ArticleBody } from "./article-body
 const full: ArticleBody = {
   answer: "A good debrief takes about ten minutes.",
   keyFacts: ["Ten minutes is enough", "One priority beats five"],
-  sections: [{ heading: "Why does it matter?", body: "The specifics fade first." }],
+  sections: [
+    {
+      heading: "Why does it matter?",
+      body: "The specifics fade first.",
+      steps: ["Open the recording", "Name one priority"],
+      tip: "Do it on the ramp, not at home.",
+      subsections: [{ heading: "What fades first", body: "Sequencing, not stick and rudder." }],
+    },
+  ],
   faq: [{ question: "How long?", answer: "Ten to fifteen minutes." }],
 };
 
@@ -34,6 +42,21 @@ describe("toPlainText", () => {
     expect(text).toContain("Why does it matter?");
     expect(text).toContain("The specifics fade first.");
     expect(text).toContain("Ten to fifteen minutes.");
+  });
+
+  it("includes steps, the tip, and subsections, so excerpts and search see them too", () => {
+    const text = toPlainText(full);
+    expect(text).toContain("1. Open the recording");
+    expect(text).toContain("2. Name one priority");
+    expect(text).toContain("Do it on the ramp, not at home.");
+    expect(text).toContain("What fades first");
+    expect(text).toContain("Sequencing, not stick and rudder.");
+  });
+
+  it("handles a section written before steps/tip/subsections existed", () => {
+    const legacy: ArticleBody = { ...full, sections: [{ heading: "Old", body: "Prose only." }] };
+    expect(() => toPlainText(legacy)).not.toThrow();
+    expect(toPlainText(legacy)).toContain("Prose only.");
   });
 
   it("leads with the answer", () => {
