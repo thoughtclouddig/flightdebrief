@@ -81,7 +81,7 @@ export function StudentRosterList({ roster }: { roster: StudentRosterEntry[] }) 
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">
+        <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">
           No students match.
         </div>
       ) : (

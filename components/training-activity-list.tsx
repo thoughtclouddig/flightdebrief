@@ -40,7 +40,7 @@ export function TrainingActivityList({ rows }: { rows: TrainingActivityRow[] }) 
 
   if (rows.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-500 dark:border-white/15 dark:text-slate-400">
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-slate-300 p-10 text-center text-slate-500 dark:border-white/15 dark:text-slate-400">
         <History className="size-8 text-slate-300" />
         No debriefs yet.
       </div>
@@ -63,7 +63,7 @@ export function TrainingActivityList({ rows }: { rows: TrainingActivityRow[] }) 
       </select>
 
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">
+        <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500 dark:border-white/15 dark:text-slate-400">
           No debriefs match.
         </div>
       ) : (

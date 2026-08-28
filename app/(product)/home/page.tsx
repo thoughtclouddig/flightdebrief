@@ -398,7 +398,7 @@ export default async function StudentHomePage() {
       )}
 
       {!brief.lastFlight && !brief.upcomingReservation && !pendingFlight ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-hairline p-10 text-center text-foreground-soft">
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-hairline p-10 text-center text-foreground-soft">
           <BookOpen className="size-8 text-foreground-faint" />
           No flights yet. Add your first training flight to get started.
           <Link href="/flights/new" className={buttonVariants({ size: "sm" })}>

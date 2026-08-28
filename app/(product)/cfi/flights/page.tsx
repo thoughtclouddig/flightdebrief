@@ -30,7 +30,7 @@ export default async function CfiFlightsPage() {
       </div>
 
       {flights.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-500 dark:border-white/15 dark:text-slate-400">
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-slate-300 p-10 text-center text-slate-500 dark:border-white/15 dark:text-slate-400">
           <p>No flights yet.</p>
           <Link href="/flights/new" className={buttonVariants({ variant: "outline", size: "sm" })}>
             Add a flight

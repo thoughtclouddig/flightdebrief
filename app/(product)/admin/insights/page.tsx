@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BarChart3, ClipboardList, Repeat, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InsightBars } from "@/components/admin/insight-bars";
 import { AcsBadge } from "@/components/acs-badge";
 import { InfoTooltip } from "@/components/info-tooltip";
 import { NeedsReviewRow } from "@/components/needs-review-row";
@@ -51,19 +52,15 @@ export default async function AdminInsightsPage() {
           {common.length === 0 ? (
             <p className="text-sm text-foreground-faint">No issues currently outstanding.</p>
           ) : (
-            <ul className="flex flex-col gap-2.5">
-              {common.slice(0, 8).map((issue) => (
-                <li key={issue.skill} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="flex items-center gap-2 text-foreground">
-                    {issue.label}
-                    <AcsBadge skill={issue.skill} certificateType="PRIVATE" />
-                  </span>
-                  <span className="shrink-0 font-medium text-foreground-soft">
-                    {issue.studentCount} student{issue.studentCount === 1 ? "" : "s"}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <InsightBars
+              data={common.slice(0, 8).map((issue) => ({
+                key: issue.skill,
+                label: issue.label,
+                value: issue.studentCount,
+                valueLabel: `${issue.studentCount} student${issue.studentCount === 1 ? "" : "s"}`,
+                adornment: <AcsBadge skill={issue.skill} certificateType="PRIVATE" />,
+              }))}
+            />
           )}
         </CardContent>
       </Card>
@@ -144,13 +141,11 @@ export default async function AdminInsightsPage() {
           {coverage.length === 0 ? (
             <p className="text-sm text-foreground-faint">No training activity in the last 60 days.</p>
           ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {coverage.map((c) => (
-                <Badge key={c.skill} variant="neutral">
-                  {c.label} · {c.occurrences}
-                </Badge>
-              ))}
-            </div>
+            <InsightBars
+              data={[...coverage]
+                .sort((a, b) => b.occurrences - a.occurrences)
+                .map((c) => ({ key: c.skill, label: c.label, value: c.occurrences }))}
+            />
           )}
         </CardContent>
       </Card>
@@ -161,19 +156,22 @@ export default async function AdminInsightsPage() {
           Needs Review
         </h2>
         {needsReview.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-hairline p-8 text-center text-sm text-foreground-soft">
+          <div className="rounded-lg border border-dashed border-hairline p-8 text-center text-sm text-foreground-soft">
             Nothing needs review right now.
           </div>
         ) : (
           <Card>
             <CardContent className="flex flex-col gap-3">
+              {/* /admin, not /cfi: app/(product)/cfi/layout.tsx 404s anyone whose
+                  role isn't instructor, and only admins reach this page -- so the
+                  CFI link this used to point at was a guaranteed 404. */}
               {needsReview.map((entry, i) => (
                 <NeedsReviewRow
                   key={i}
                   studentName={entry.student.name}
                   detail={entry.detail}
                   reason={entry.reason}
-                  href={`/cfi/students/${entry.student.id}`}
+                  href={`/admin/students/${entry.student.id}`}
                 />
               ))}
             </CardContent>

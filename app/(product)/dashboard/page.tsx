@@ -53,7 +53,7 @@ export default async function DashboardPage() {
       </div>
 
       {flights.length === 0 && upcoming.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-hairline p-10 text-center text-foreground-soft">
+        <div className="rounded-lg border border-dashed border-hairline p-10 text-center text-foreground-soft">
           No flights yet. Add your first training flight to get started.
         </div>
       ) : (
