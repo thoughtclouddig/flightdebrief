@@ -35,3 +35,37 @@ describe("buildDebriefNarration", () => {
     expect(script).toContain("based on what you and Jake discussed");
   });
 });
+
+describe("spoken instructor guidance is capped", () => {
+  const base = {
+    studentFirstName: "Danny",
+    instructorFirstName: "Maria",
+    whatWeDid: ["Landings"],
+    wentWell: ["you held the centerline"],
+    needsWork: ["flare timing"],
+    actionItems: ["approach speed"],
+    studyReferences: [],
+  };
+
+  it("reads at most four quotes aloud, in order", () => {
+    const script = buildDebriefNarration({
+      ...base,
+      instructorGuidance: Array.from({ length: 14 }, (_, i) => ({
+        instructorName: "Maria",
+        quote: `quote number ${i + 1}`,
+      })),
+    });
+    expect(script).toContain("quote number 1");
+    expect(script).toContain("quote number 4");
+    expect(script).not.toContain("quote number 5");
+    expect(script).not.toContain("quote number 14");
+  });
+
+  it("leaves a short list untouched", () => {
+    const script = buildDebriefNarration({
+      ...base,
+      instructorGuidance: [{ instructorName: "Maria", quote: "only quote" }],
+    });
+    expect(script).toContain("only quote");
+  });
+});

@@ -39,6 +39,9 @@ export interface DebriefNarrationInput {
   studyReferences: StudyReference[];
 }
 
+/** Instructor quotes read aloud. The rest stay on the results page. */
+const MAX_SPOKEN_GUIDANCE = 4;
+
 export function buildDebriefNarration(input: DebriefNarrationInput): string {
   const cfi = input.instructorFirstName;
   const cfiOrFallback = cfi ?? "your instructor";
@@ -68,7 +71,12 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
     );
   }
 
-  for (const g of input.instructorGuidance) {
+  // Capped, and this is the field that made scripts long: it was the only one
+  // read out verbatim with no limit, so a talkative lesson could put a dozen
+  // quotes into the audio. Beyond the first few this stops being a recap and
+  // becomes a transcript read aloud -- the full set is still on screen, where
+  // skimming works. This also keeps most scripts inside one TTS request.
+  for (const g of input.instructorGuidance.slice(0, MAX_SPOKEN_GUIDANCE)) {
     sections.push(`${g.instructorName} said: ${g.quote}`);
   }
 

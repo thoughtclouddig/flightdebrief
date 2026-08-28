@@ -20,6 +20,9 @@ import { splitForTts } from "@/lib/tts-chunks";
  * environments (Replit's shell pane) while the browser Network tab's
  * response body has not.
  */
+/** How many chunks to render at once. See the pool below for why it isn't 1 or Infinity. */
+const MAX_CONCURRENT = 3;
+
 export async function synthesizeSpeech(text: string, apiKey: string, requestedVoice: string | null): Promise<Buffer> {
   const voice = requestedVoice && isValidTtsVoice(requestedVoice) ? requestedVoice : DEFAULT_TTS_VOICE;
 
@@ -31,11 +34,7 @@ export async function synthesizeSpeech(text: string, apiKey: string, requestedVo
     throw new Error("Deepgram TTS failed: nothing to synthesize.");
   }
 
-  // Sequential, not Promise.all: these are large responses and firing a dozen
-  // at once is how you find the account's rate limit. A debrief is a handful
-  // of chunks, and the result is cached per (flight, voice) afterward.
-  const parts: Buffer[] = [];
-  for (const [index, chunk] of chunks.entries()) {
+  async function renderChunk(chunk: string, index: number): Promise<Buffer> {
     const response = await fetch(`https://api.deepgram.com/v2/speak?model=${voice}&speed=0.9&expressivity=1`, {
       method: "POST",
       headers: {
@@ -51,8 +50,28 @@ export async function synthesizeSpeech(text: string, apiKey: string, requestedVo
       throw new Error(`Deepgram TTS failed (${response.status})${where}: ${detail || "no response body"}`);
     }
 
-    parts.push(Buffer.from(await response.arrayBuffer()));
+    return Buffer.from(await response.arrayBuffer());
   }
+
+  // Rendering is ~50s per chunk server-side, so doing these one after another
+  // put a three-chunk script at about two and a half minutes -- invisible when
+  // the pre-warm wins the race, painful on a cache miss when someone taps
+  // Listen and just waits.
+  //
+  // Capped at MAX_CONCURRENT rather than a bare Promise.all: the original
+  // concern (don't fire a dozen large requests at once and find the account's
+  // rate limit) is still real, it just didn't justify a pool size of one.
+  // Results are collected by index, so the parts stay in script order no
+  // matter what order they finish in.
+  const parts: Buffer[] = new Array<Buffer>(chunks.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(MAX_CONCURRENT, chunks.length) }, async () => {
+    while (next < chunks.length) {
+      const index = next++;
+      parts[index] = await renderChunk(chunks[index]!, index);
+    }
+  });
+  await Promise.all(workers);
 
   // MP3 is a sequence of self-contained frames, so concatenating the responses
   // yields one continuous stream every browser decoder plays start to finish.

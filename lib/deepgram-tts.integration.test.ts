@@ -54,12 +54,16 @@ describe.skipIf(!KEY)("Deepgram TTS against the live API", () => {
   }, 120_000);
 
   it("synthesizes a script well past the 2000-char limit and joins it", async () => {
-    // The templated fallback branch. Most of it is already bounded --
-    // needsWork and actionItems use only [0], and studyReferences collapses to
-    // one fixed sentence no matter how many there are. The parts that actually
-    // grow without limit are whatWeDid, wentWell, and above all
-    // instructorGuidance, which emits every quote verbatim. So that's what a
-    // worst case has to load up; padding the capped fields does nothing.
+    // The templated fallback branch, loaded past anything realistic on purpose
+    // so the multi-chunk path is actually exercised against the live API.
+    //
+    // Most of this branch is bounded: needsWork and actionItems use only [0],
+    // studyReferences collapses to one fixed sentence, and instructorGuidance
+    // is now capped at MAX_SPOKEN_GUIDANCE (the 14 quotes below become 4).
+    // Padding those does nothing. What's left growing is whatWeDid and
+    // wentWell, and it takes eight of each to clear 2000 -- roughly 2300 chars
+    // across 2 chunks, versus 4233 across 3 before the quote cap. A real
+    // debrief should now fit in a single request.
     const script = buildDebriefNarration({
       studentFirstName: "Danny",
       instructorFirstName: "Maria",
