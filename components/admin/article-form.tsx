@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ArticleImageField } from "./article-image-field";
 import { slugify } from "@/lib/slugify";
 import { SourcesEditor } from "@/components/admin/sources-editor";
 import type { Article, ArticleStatus, ResourceTopic, Source } from "@/lib/types";
@@ -135,20 +136,11 @@ export function ArticleForm({ topics, article }: { topics: ResourceTopic[]; arti
         />
       </div>
 
-      <div>
-        <Label htmlFor="article-image">Image URL (https:// or data:)</Label>
-        <Input
-          id="article-image"
-          className="mt-1.5"
-          placeholder="https://... or data:image/png;base64,..."
-          value={form.imageUrl}
-          onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-        />
-        {form.imageUrl.trim() ? (
-          // eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs; next/image can't optimize data: URLs
-          <img src={form.imageUrl.trim()} alt="" className="mt-2 aspect-video w-full max-w-sm rounded-lg object-cover" />
-        ) : null}
-      </div>
+      <ArticleImageField
+        articleId={article?.id ?? null}
+        value={form.imageUrl}
+        onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+      />
 
       <SourcesEditor sources={form.sources} onChange={(sources) => setForm((f) => ({ ...f, sources }))} />
 

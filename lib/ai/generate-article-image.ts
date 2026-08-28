@@ -10,12 +10,20 @@ import { encodeHeroImage } from "@/lib/content/images";
  * OPENAI_API_KEY is unset, callers should treat the article as image-less
  * rather than inventing a placeholder.
  */
-export async function generateArticleImage(input: { title: string; topicName: string }): Promise<string> {
+export async function generateArticleImage(input: {
+  title: string;
+  topicName: string;
+  /** Free-text steer from a human who didn't like the last one. */
+  direction?: string;
+}): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not set -- cannot generate an article image");
 
   const client = new OpenAI({ apiKey });
-  const prompt = `Editorial hero photo for a flight-training article titled "${input.title}" (topic: ${input.topicName}). Realistic, high-end aviation photography -- a general aviation cockpit, ramp, or training environment. No text, no logos, no people's faces in close-up.`;
+  const base = `Editorial hero photo for a flight-training article titled "${input.title}" (topic: ${input.topicName}). Realistic, high-end aviation photography -- a general aviation cockpit, ramp, or training environment. No text, no logos, no people's faces in close-up.`;
+  // The steer goes last so it overrides the generic description rather than
+  // being averaged with it.
+  const prompt = input.direction ? `${base}\n\nSpecific direction: ${input.direction}` : base;
 
   const response = await client.images.generate({
     model: "gpt-image-1",
