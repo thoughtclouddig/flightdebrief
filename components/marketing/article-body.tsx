@@ -16,7 +16,7 @@ import { hasStructuredBody } from "@/lib/content/article-body";
  * in `ch` so it stays correct if the type scale changes.
  */
 
-const MEASURE = "max-w-[68ch]";
+const MEASURE = "max-w-[66ch]";
 
 function Paragraphs({ text, className }: { text: string; className?: string }) {
   const paragraphs = text
@@ -25,9 +25,9 @@ function Paragraphs({ text, className }: { text: string; className?: string }) {
     .filter(Boolean);
 
   return (
-    <div className={`flex flex-col gap-5 ${className ?? ""}`}>
+    <div className={`flex flex-col gap-6 ${className ?? ""}`}>
       {paragraphs.map((p, i) => (
-        <p key={i} className={`text-pretty text-[17px] leading-[1.75] text-[#3f474f] ${MEASURE}`}>
+        <p key={i} className={`text-pretty text-[17.5px] leading-[1.8] text-[#3f474f] ${MEASURE}`}>
           {p}
         </p>
       ))}

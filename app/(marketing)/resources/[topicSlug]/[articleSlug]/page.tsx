@@ -131,7 +131,12 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       ) : null}
 
-      <div className="mx-auto max-w-4xl">
+      {/* One column for everything. Two centred containers of different widths
+          share a centre line but not a left edge, which is why the headline
+          used to start outside the text it belonged to. Anything that should
+          be wider than the measure breaks out of this column symmetrically
+          (see the hero below) rather than living in a second container. */}
+      <div className="mx-auto max-w-3xl">
         <Reveal>
           {topic ? (
             <p className="text-balance text-sm font-bold uppercase tracking-[0.16em] text-brand">
@@ -166,21 +171,24 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
         </Reveal>
 
 
-      </div>
-
-      <div className="mx-auto max-w-3xl">
         <Reveal delay={100} className="mt-10">
           <ArticleBody
             body={article.bodyBlocks}
             plainText={article.body}
             hero={
               article.imageUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs; next/image can't optimize data: URLs */
-                <img
-                  src={heroImageSrc("articles", article.id, article.imageUrl)!}
-                  alt=""
-                  className="aspect-[16/9] w-full rounded-lg object-cover"
-                />
+                /* Wider than the text, on the same centre line. A hero
+                   constrained to the measure reads as an illustration inside
+                   the article; at full bleed past it, it reads as the
+                   article's opening image, which is what it is. */
+                <div className="sm:-mx-10 lg:-mx-28">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- served from /api/media, already sized and encoded */}
+                  <img
+                    src={heroImageSrc("articles", article.id, article.imageUrl)!}
+                    alt=""
+                    className="aspect-[16/9] w-full rounded-xl object-cover"
+                  />
+                </div>
               ) : null
             }
           />
