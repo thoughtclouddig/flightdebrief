@@ -102,7 +102,11 @@ export function UserMenu({
                       disabled={switching === m.membershipId}
                       className={cn(
                         "flex w-full flex-col items-start px-3 py-2 text-left text-sm hover:bg-surface-sunken disabled:opacity-60",
-                        isCurrent ? "bg-brand/5" : "text-foreground-soft",
+                        // Neutral, not a brand tint: --brand at 5% over white is
+                        // peach, and it's the same orange-behind-text problem
+                        // retired everywhere else. The bold label and "current"
+                        // already say which one you're on.
+                        isCurrent ? "bg-surface-sunken" : "text-foreground-soft",
                       )}
                     >
                       {/* w-full so truncate has a width to work against -- without
