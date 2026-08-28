@@ -1677,6 +1677,7 @@ function normalizeStructuredResult(result: Partial<Debrief["structuredResult"]> 
     nextLessonFocus: r.nextLessonFocus ?? [],
     studyReferences: r.studyReferences ?? [],
     nextFlightCue: r.nextFlightCue ?? "",
+    nextFlightCueContext: r.nextFlightCueContext ?? "",
   };
 }
 

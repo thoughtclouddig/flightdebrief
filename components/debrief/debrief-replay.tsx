@@ -69,7 +69,12 @@ export function DebriefReplay({
         </CardContent>
       </Card>
 
-      <NextFlightCueCard flightId={flightId} initialCue={result.nextFlightCue} editable={canEditCue} />
+      <NextFlightCueCard
+        flightId={flightId}
+        initialCue={result.nextFlightCue}
+        context={result.nextFlightCueContext}
+        editable={canEditCue}
+      />
 
       {recurringTheme ? (
         <Card className="border-amber/40 bg-amber-soft">
@@ -198,10 +203,13 @@ function ReplayColumn({
 function NextFlightCueCard({
   flightId,
   initialCue,
+  context,
   editable,
 }: {
   flightId: string;
   initialCue: string;
+  /** What the cue is for. Empty on debriefs analyzed before this existed -- the card just omits the line. */
+  context: string;
   editable: boolean;
 }) {
   const [cue, setCue] = useState(initialCue);
@@ -271,9 +279,16 @@ function NextFlightCueCard({
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3">
-            <p className="text-lg font-semibold text-foreground">
-              {cue || "What's the one thing to remember for next time?"}
-            </p>
+            <div className="min-w-0">
+              {/* Names the maneuver, so a cue like "Full power. Hold brakes."
+                  isn't left to be decoded a week later. */}
+              {cue && context ? (
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-foreground-faint">{context}</p>
+              ) : null}
+              <p className="text-lg font-semibold text-foreground">
+                {cue || "What's the one thing to remember for next time?"}
+              </p>
+            </div>
             {editable ? (
               <button
                 type="button"

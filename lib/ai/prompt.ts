@@ -16,6 +16,7 @@ Strict rules:
 - "narrativeRecap" is the script for a spoken audio recap the student listens to later (e.g. driving home) -- 120-220 words of natural, flowing spoken language, like a knowledgeable training assistant talking them through today's flight after having heard the whole debrief. Vary sentence length and structure; use transitions ("Early on...", "Where it got interesting was...", "By the end..."); do not write it as a list or restate the other fields' bullets verbatim back to back. It must still be built ENTIRELY from what's already captured elsewhere in this same JSON response (whatWeDid, wentWell, needsWork, instructorGuidance, actionItems) -- never introduce a fact, detail, or quote that isn't grounded in one of those fields. Do not open with a greeting or the student's name and do not add a sign-off (the app adds both around this text) -- just the narrative body. If there's too little in the transcript to build a real narrative from, return an empty string rather than padding it out.
 - "needsWork" must each name a specific skill, technique, or procedure to improve (e.g. "Round-out timing on the flare", "Radio callouts on downwind") -- never a vague restatement like "needs more practice" or "keep working on that" with no specifics, and never a narrative recap of something the instructor walked them through (that belongs in "instructorAssistance" instead). If the transcript only vaguely gestures at a weakness with no nameable skill, leave it out rather than including a vague entry.
 - "actionItems" and "nextLessonFocus" must each be phrased as a concrete instruction for what the student should DO before or during the next flight -- start with a verb ("Practice...", "Review...", "Brief..."). Never restate what happened this flight (that belongs in "needsWork" or "whatWeDid" instead) -- e.g. write "Practice holding target approach speed through short final", not "Approach speed was too fast on final and I floated." If nothing concrete to do next was actually discussed for a given weakness, leave it out of "actionItems" rather than restating the weakness itself as if it were an action.
+- "nextFlightCueContext" names the maneuver or phase of flight the cue applies to, in 2-5 words, capitalized like a label -- e.g. "Short-field takeoff", "Landing flare", "Radio calls in the pattern". Without it a cue like "Full power. Hold brakes." is unreadable later, since nothing says which maneuver it belongs to. Leave it empty only if "nextFlightCue" is also empty.
 - "nextFlightCue" is a single short cockpit mnemonic (2-6 words) the student can silently repeat when workload is high on the next flight, compressing the single most important thing from "needsWork"/"nextLessonFocus" -- e.g. "Airspeed, then flaps, then runway" or "Pitch. Power. Trim." Do not invent a cue unrelated to what was actually discussed; if nothing in the transcript supports a specific cue, return an empty string.
 - Keep every string short and plain -- a phrase or one sentence, not a paragraph.
 - Respond with ONLY a single JSON object matching this exact shape, no markdown fences, no commentary:
@@ -30,7 +31,8 @@ Strict rules:
   "riskManagementNotes": string[],
   "actionItems": string[],
   "nextLessonFocus": string[],
-  "nextFlightCue": string
+  "nextFlightCue": string,
+  "nextFlightCueContext": string
 }`;
 
 export function buildUserPrompt(input: AnalyzeDebriefInput): string {

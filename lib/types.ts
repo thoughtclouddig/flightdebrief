@@ -201,6 +201,8 @@ export interface StructuredDebrief {
   studyReferences: StudyReference[];
   /** Short, memorable cockpit mnemonic for the next flight (e.g. "Airspeed → Flaps → Runway"). Editable by the student -- doubles as their "one thing to remember." Empty string for older debriefs analyzed before this field existed. */
   nextFlightCue: string;
+  /** The maneuver or phase the cue belongs to (e.g. "Short-field takeoff"), so "Full power. Hold brakes." isn't context-free. Empty string for debriefs analyzed before this field existed. */
+  nextFlightCueContext: string;
 }
 
 export interface Debrief {

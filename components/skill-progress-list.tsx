@@ -77,7 +77,7 @@ function SkillProgressRow({
 
   return (
     <div className="flex flex-wrap items-center gap-3 py-3">
-      <div className="min-w-0 flex-1">
+      <div className="w-full min-w-0 sm:flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium text-foreground">{progression.label}</span>
           <AcsBadge skill={progression.skill} certificateType={certificateType} />
@@ -93,7 +93,9 @@ function SkillProgressRow({
       </div>
       {trendingUp ? <TrendingUp className="size-4 shrink-0 text-good" /> : null}
       {trendingDown ? <TrendingDown className="size-4 shrink-0 text-danger" /> : null}
-      <Badge variant={STATUS_VARIANT[progression.status]}>{progression.status}</Badge>
+      <Badge variant={STATUS_VARIANT[progression.status]} className="shrink-0">
+        {progression.status}
+      </Badge>
       {dismissible ? (
         <button
           onClick={handleDismiss}

@@ -26,6 +26,7 @@ export function analyzeMock(input: AnalyzeDebriefInput): StructuredDebriefResult
   const dedupedNeedsWork = dedupe(needsWork).slice(0, 6);
   const dedupedNextLessonFocus = dedupe(nextLessonFocus).slice(0, 4);
   const nextFlightCue = buildNextFlightCue(dedupedNeedsWork);
+  const nextFlightCueContext = buildNextFlightCueContext(dedupedNeedsWork, nextFlightCue);
 
   return {
     flightSummary,
@@ -43,6 +44,7 @@ export function analyzeMock(input: AnalyzeDebriefInput): StructuredDebriefResult
     nextLessonFocus: dedupedNextLessonFocus,
     studyReferences,
     nextFlightCue,
+    nextFlightCueContext,
     // Always overwritten by lib/ai/index.ts from debrief_assessment_ratings --
     // this is just to satisfy the return type when called directly (e.g. tests).
     assessmentDifferences: [],
@@ -191,6 +193,25 @@ function buildNextFlightCue(needsWork: string[]): string {
   if (lower.includes("bounc")) return "Ease it down -- don't force it.";
   if (lower.includes("behind") || lower.includes("late")) return "Stay ahead of the airplane.";
   return "Slow down. Fly the airplane.";
+}
+
+/**
+ * Labels what the cue is for. Keyed off the same weakness the cue came from,
+ * so the pair always agrees. Falls back to the weakness text itself rather
+ * than guessing a maneuver name that wasn't discussed.
+ */
+function buildNextFlightCueContext(needsWork: string[], cue: string): string {
+  const top = needsWork[0];
+  if (!top || !cue) return "";
+  const lower = top.toLowerCase();
+  if (lower.includes("speed") || lower.includes("float")) return "Airspeed on approach";
+  if (lower.includes("radio") || lower.includes("tower") || lower.includes("instruction")) return "Radio calls";
+  if (lower.includes("configur")) return "Configuring for landing";
+  if (lower.includes("short field")) return "Short-field landing";
+  if (lower.includes("crosswind") || lower.includes("squirrelly")) return "Crosswind landing";
+  if (lower.includes("bounc")) return "Landing flare";
+  if (lower.includes("behind") || lower.includes("late")) return "Staying ahead of the airplane";
+  return top;
 }
 
 function buildNextLessonFocus(topics: string[], needsWork: string[]) {

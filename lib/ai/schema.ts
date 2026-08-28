@@ -51,6 +51,10 @@ export const structuredDebriefSchema = z.object({
   // directly (see the prompt), so it's a plain field, not deterministically
   // overwritten afterward.
   nextFlightCue: z.string().default(""),
+  // What the cue is FOR. Without it a cue like "Full power. Hold brakes."
+  // is unreadable a week later -- correct, but with no way to tell which
+  // maneuver it belongs to. Empty for debriefs analyzed before this existed.
+  nextFlightCueContext: z.string().default(""),
   studyReferences: z
     .array(
       z.object({

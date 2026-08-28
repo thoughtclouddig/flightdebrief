@@ -91,21 +91,32 @@ export function MarketingNav() {
           />
         </Link>
 
-        <nav className="hidden items-center gap-7 text-sm font-medium text-[#68717D] lg:flex">
-          {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="hover:text-[#101727]">
-              {link.label}
-            </Link>
-          ))}
+        <nav className="hidden items-center gap-7 text-[15px] font-medium text-[#68717D] lg:flex">
+          {NAV_LINKS.map((link) => {
+            const active = !link.href.includes("#") && pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={
+                  "border-b-2 pb-0.5 transition-colors hover:border-brand hover:text-[#101727] " +
+                  (active ? "border-brand text-[#101727]" : "border-transparent")
+                }
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <Link href="/login" className="hidden text-sm font-medium text-[#68717D] hover:text-[#101727] sm:block">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4 lg:gap-5">
+          <Link href="/login" className="hidden text-[15px] font-medium text-[#68717D] transition-colors hover:text-[#101727] sm:block">
             Log in
           </Link>
           <Link
             href="/signup"
-            className="whitespace-nowrap rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white hover:bg-brand-dark sm:px-4 sm:text-sm"
+            className="whitespace-nowrap rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-bright sm:px-4 sm:text-sm"
           >
             Start Free
           </Link>
@@ -133,16 +144,23 @@ export function MarketingNav() {
           />
           <nav className="fixed inset-x-0 top-16 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-slate-200 bg-white shadow-lg lg:hidden">
             <div className="flex flex-col px-6 py-2">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                  className="flex min-h-[52px] items-center border-b border-slate-100 text-base font-semibold text-[#101727] last:border-b-0"
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {NAV_LINKS.map((link) => {
+                const active = !link.href.includes("#") && pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    aria-current={active ? "page" : undefined}
+                    className={
+                      "flex min-h-[52px] items-center border-b border-slate-100 pl-3 text-base font-semibold text-[#101727] last:border-b-0 " +
+                      (active ? "border-l-2 border-l-brand" : "border-l-2 border-l-transparent")
+                    }
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
