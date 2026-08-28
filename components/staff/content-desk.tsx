@@ -156,7 +156,7 @@ export function ContentDesk({
                 <th className="hidden px-4 py-2.5 font-semibold sm:table-cell">Topic</th>
                 <th className="px-4 py-2.5 font-semibold">Stage</th>
                 <th className="hidden px-4 py-2.5 font-semibold md:table-cell">Updated</th>
-                <th className="px-4 py-2.5 text-right font-semibold">
+                <th className="w-[210px] px-4 py-2.5 font-semibold">
                   <span className="sr-only">Actions</span>
                 </th>
               </tr>
@@ -178,8 +178,12 @@ export function ContentDesk({
                       </span>
                     </td>
                     <td className="hidden px-4 py-3 text-sm tabular-nums text-white/40 md:table-cell">{row.dateLabel}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-3 text-sm">
+                    <td className="w-[210px] px-4 py-3 align-top">
+                      {/* Left-aligned in a fixed column rather than pushed
+                          right. Rows carry different numbers of actions, so
+                          right-aligning made every row start at a different
+                          x and nothing lined up down the table. */}
+                      <div className="flex gap-4 whitespace-nowrap text-sm">
                         {row.draftableIdeaId ? <DraftIdeaButton ideaId={row.draftableIdeaId} /> : null}
                         {row.redraftableId ? <RedraftArticleButton articleId={row.redraftableId} /> : null}
                         {row.previewHref ? (
