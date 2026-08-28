@@ -115,7 +115,12 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
       {/* Both destinations are role-aware. "/dashboard" is the STUDENT flights
           list -- sending a CFI there dropped them somewhere that isn't their
           home at all, under a label ("Dashboard") that doesn't match what
-          either role's nav calls it. */}
+          either role's nav calls it.
+
+          Named for where they go, not "Back to": you can reach this page from
+          Home, from a link, or straight from finishing a debrief, so claiming
+          to return somewhere is usually wrong. The labels match what each
+          role's nav calls the destination. */}
       <div className="flex flex-col gap-2 sm:flex-row">
         <Link
           href={isInstructorViewer ? `/cfi/students/${flight.userId}/handoff` : "/next-lesson"}
@@ -127,7 +132,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
           href={isInstructorViewer ? "/cfi/today" : "/dashboard"}
           className={buttonVariants({ size: "lg", variant: "outline", className: "w-full sm:w-auto" })}
         >
-          {isInstructorViewer ? "Back to Today" : "Back to Flights"}
+          {isInstructorViewer ? "Today" : "All Flights"}
         </Link>
       </div>
     </div>
