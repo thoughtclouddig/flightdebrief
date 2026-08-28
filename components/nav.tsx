@@ -37,6 +37,20 @@ const STUDENT_ITEMS = [
   { href: "/profile", label: "Profile", icon: Users },
 ];
 
+/**
+ * Same destinations as STUDENT_ITEMS, relabelled for someone who already
+ * holds a certificate: they aren't "in training" and aren't progressing
+ * toward a checkride, they're maintaining proficiency. Deliberately not
+ * "Logbook" -- that promises hours and endorsements this app doesn't keep.
+ */
+const SOLO_PILOT_ITEMS = [
+  { href: "/home", label: "Home", icon: Compass },
+  { href: "/dashboard", label: "Flights", icon: LayoutList },
+  { href: "/history", label: "Skills", icon: History },
+  { href: "/progress", label: "Proficiency", icon: TrendingUp },
+  { href: "/profile", label: "Profile", icon: Users },
+];
+
 const CFI_ITEMS = [
   { href: "/cfi/today", label: "Today", icon: CalendarClock },
   { href: "/cfi/students", label: "Students", icon: Users },
@@ -57,8 +71,9 @@ const ADMIN_ITEMS = [
 
 const SUPERADMIN_ITEM = { href: "/super-admin", label: "Super Admin", icon: Building2 };
 
-function itemsForRole(role: Viewer["role"], isSuperadmin: boolean) {
-  const base = role === "instructor" ? CFI_ITEMS : role === "admin" ? ADMIN_ITEMS : STUDENT_ITEMS;
+function itemsForRole(role: Viewer["role"], isSuperadmin: boolean, solo: boolean) {
+  const studentItems = solo ? SOLO_PILOT_ITEMS : STUDENT_ITEMS;
+  const base = role === "instructor" ? CFI_ITEMS : role === "admin" ? ADMIN_ITEMS : studentItems;
   return isSuperadmin ? [...base, SUPERADMIN_ITEM] : base;
 }
 
@@ -210,7 +225,9 @@ export function Nav({
   isSuperadmin?: boolean;
 }) {
   const pathname = usePathname();
-  const items = itemsForRole(viewer.role, isSuperadmin);
+  // Derived here rather than passed in -- Nav already has the viewer, and
+  // every other consumer of "is this a solo pilot" uses the same test.
+  const items = itemsForRole(viewer.role, isSuperadmin, viewer.organization.kind === "individual");
   // In a live demo, the logo goes back to the persona picker (so a visitor
   // can restart or try a different role) instead of their own dashboard --
   // there's nowhere else in-product to do that.

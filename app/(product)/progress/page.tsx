@@ -16,6 +16,8 @@ export const dynamic = "force-dynamic";
 export default async function ProgressPage() {
   const repo = getRepository();
   const viewer = await getViewer();
+  /** Certificated pilot flying without a CFI on the account -- see components/nav.tsx. */
+  const solo = viewer.organization.kind === "individual";
   const studentId = viewer.user.id;
 
   const [flights, trainingItems, brief, memberships, signals] = await Promise.all([
@@ -58,8 +60,9 @@ export default async function ProgressPage() {
                 Ongoing ({keepWorkingOn.length})
               </p>
               <p className="mt-1 text-sm text-foreground-soft">
-                Skills your instructor called out across debriefs. These clear on their own once a later flight
-                shows you&rsquo;ve got it -- or check one off yourself if you feel ready.
+                {solo ? "Skills that came out of your own debriefs." : "Skills your instructor called out across debriefs."} These
+                clear on their own once a later flight shows you&rsquo;ve got it -- or check one off yourself if you feel
+                ready.
               </p>
               <div className="mt-2">
                 <TrainingItemChecklist items={keepWorkingOn} />
@@ -136,7 +139,7 @@ export default async function ProgressPage() {
         <CardTitle>Training Progress</CardTitle>
       </CardHeader>
       <CardContent>
-        <SkillProgressList progressions={skillProgressions} certificateType={certificateType} />
+        <SkillProgressList progressions={skillProgressions} certificateType={certificateType} solo={solo} />
       </CardContent>
     </Card>
   );
@@ -144,7 +147,7 @@ export default async function ProgressPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Your progress</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{solo ? "Your proficiency" : "Your progress"}</h1>
         <p className="mt-1 text-sm text-foreground-soft">
           Patterns across your training -- conservative on purpose. Nothing here is a trend until it&rsquo;s shown up more than once.
         </p>

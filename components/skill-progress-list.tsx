@@ -7,6 +7,16 @@ import { AcsBadge } from "@/components/acs-badge";
 import type { SkillProgression } from "@/lib/skill-progress";
 import type { CertificateType } from "@/lib/types";
 
+/**
+ * "Needs Coaching" is the one rung of the ladder that names a person. A solo
+ * pilot has no coach, so it reads as a broken reference the same way
+ * "waiting on your instructor" did. Display-only -- SkillProgressionStatus is
+ * computed, never stored, so nothing in the data changes.
+ */
+const SOLO_STATUS_LABEL: Partial<Record<SkillProgression["status"], string>> = {
+  "Needs Coaching": "Needs Work",
+};
+
 const STATUS_VARIANT: Record<SkillProgression["status"], "success" | "neutral" | "outline" | "warning"> = {
   Demonstrated: "success",
   Improving: "neutral",
@@ -25,10 +35,13 @@ export function SkillProgressList({
   progressions,
   certificateType,
   dismissible = false,
+  solo = false,
 }: {
   progressions: SkillProgression[];
   certificateType: CertificateType | null;
   dismissible?: boolean;
+  /** Relabels the one status that names a coach -- see SOLO_STATUS_LABEL. */
+  solo?: boolean;
 }) {
   if (progressions.length === 0) {
     return <p className="text-sm text-foreground-faint">Nothing tracked yet -- keep flying.</p>;
@@ -37,7 +50,7 @@ export function SkillProgressList({
   return (
     <div className="flex flex-col divide-y divide-hairline">
       {progressions.map((p) => (
-        <SkillProgressRow key={p.skill} progression={p} certificateType={certificateType} dismissible={dismissible} />
+        <SkillProgressRow key={p.skill} progression={p} certificateType={certificateType} dismissible={dismissible} solo={solo} />
       ))}
     </div>
   );
@@ -47,10 +60,12 @@ function SkillProgressRow({
   progression,
   certificateType,
   dismissible,
+  solo,
 }: {
   progression: SkillProgression;
   certificateType: CertificateType | null;
   dismissible: boolean;
+  solo: boolean;
 }) {
   const [dismissed, setDismissed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -94,7 +109,7 @@ function SkillProgressRow({
       {trendingUp ? <TrendingUp className="size-4 shrink-0 text-good" /> : null}
       {trendingDown ? <TrendingDown className="size-4 shrink-0 text-danger" /> : null}
       <Badge variant={STATUS_VARIANT[progression.status]} className="shrink-0">
-        {progression.status}
+        {(solo ? SOLO_STATUS_LABEL[progression.status] : undefined) ?? progression.status}
       </Badge>
       {dismissible ? (
         <button

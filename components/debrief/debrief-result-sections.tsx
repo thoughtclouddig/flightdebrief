@@ -258,6 +258,7 @@ export function DebriefResultSections({
             </CardHeader>
             <CardContent>
               <SkillProgressList
+                solo={!instructorFirstName}
                 progressions={flightSkillProgressions}
                 certificateType={certificateType}
                 dismissible={canDismiss}
