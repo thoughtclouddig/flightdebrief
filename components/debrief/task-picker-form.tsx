@@ -156,7 +156,7 @@ export function TaskPickerForm({
               <span className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-foreground">{categoryLabel(category)}</span>
                 {selectedCount > 0 ? (
-                  <span className="rounded-full bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand-dark dark:text-brand-light">
+                  <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-xs font-semibold text-foreground">
                     {selectedCount}
                   </span>
                 ) : null}
@@ -175,7 +175,7 @@ export function TaskPickerForm({
                       className={cn(
                         "rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors",
                         active
-                          ? "border-brand bg-brand/10 text-brand-dark dark:text-brand-light"
+                          ? "border-brand bg-surface-sunken text-foreground"
                           : "border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
                       )}
                     >
@@ -201,7 +201,7 @@ export function TaskPickerForm({
                   className={cn(
                     "flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium transition-colors",
                     active
-                      ? "border-brand bg-brand/10 text-brand-dark dark:text-brand-light"
+                      ? "border-brand bg-surface-sunken text-foreground"
                       : "border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
                   )}
                 >

@@ -114,8 +114,10 @@ function MobileNavOverflow({ items, active }: { items: NavItem[]; active: boolea
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium",
-          active ? "text-brand" : "text-foreground-faint",
+          "flex flex-1 flex-col items-center gap-1 border-t-2 py-2.5 text-xs",
+          active
+            ? "border-brand font-semibold text-foreground"
+            : "border-transparent font-medium text-foreground-faint",
         )}
       >
         <MoreHorizontal className="size-5" strokeWidth={active ? 2.5 : 2} />
@@ -165,10 +167,10 @@ function NavOverflowMenu({
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
+          "flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-t-md border-b-2 px-2.5 pb-1.5 pt-2 text-sm transition-colors",
           active
-            ? "bg-brand/10 text-brand-dark dark:bg-brand/20 dark:text-brand-light"
-            : "text-foreground-soft hover:bg-surface-sunken",
+            ? "border-brand font-semibold text-foreground"
+            : "border-transparent font-medium text-foreground-soft hover:bg-surface-sunken hover:text-foreground",
         )}
       >
         More
@@ -237,10 +239,10 @@ export function Nav({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "shrink-0 whitespace-nowrap rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
+                    "shrink-0 whitespace-nowrap rounded-t-md border-b-2 px-2.5 pb-1.5 pt-2 text-sm transition-colors",
                     active
-                      ? "bg-brand/10 text-brand-dark dark:bg-brand/20 dark:text-brand-light"
-                      : "text-foreground-soft hover:bg-surface-sunken",
+                      ? "border-brand font-semibold text-foreground"
+                      : "border-transparent font-medium text-foreground-soft hover:bg-surface-sunken hover:text-foreground",
                   )}
                 >
                   {item.label}
@@ -266,7 +268,7 @@ export function Nav({
         </div>
       </header>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-hairline bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex bg-surface/95 backdrop-blur pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_var(--hairline)] md:hidden">
         {mobileVisibleItems.map((item) => {
           const active = pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -275,8 +277,10 @@ export function Nav({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium",
-                active ? "text-brand" : "text-foreground-faint",
+                "flex flex-1 flex-col items-center gap-1 border-t-2 py-2.5 text-xs",
+                active
+                  ? "border-brand font-semibold text-foreground"
+                  : "border-transparent font-medium text-foreground-faint",
               )}
             >
               <Icon className="size-5" strokeWidth={active ? 2.5 : 2} />

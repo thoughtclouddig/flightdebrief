@@ -32,7 +32,7 @@ export default async function AdminSettingsPage(props: PageProps<"/admin/setting
           className={
             noticeIsError
               ? "rounded-lg border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger"
-              : "rounded-lg border border-brand/30 bg-brand/10 px-4 py-2.5 text-sm text-brand-dark dark:text-brand-light"
+              : "rounded-lg border border-hairline bg-surface-sunken px-4 py-2.5 text-sm text-foreground"
           }
         >
           {notice}
@@ -66,7 +66,7 @@ export default async function AdminSettingsPage(props: PageProps<"/admin/setting
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Workspace type</p>
-            <Badge variant="brand" className="mt-1.5 capitalize">
+            <Badge variant="neutral" className="mt-1.5 capitalize">
               {viewer.organization.kind.replace("_", " ")}
             </Badge>
           </div>

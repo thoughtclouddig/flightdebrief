@@ -287,7 +287,7 @@ export default async function StudentHomePage() {
               const reference = suggestStudyReferences([f])[0] ?? null;
               if (!reference) {
                 return (
-                  <Badge key={i} variant="brand">
+                  <Badge key={i} variant="neutral">
                     {f}
                   </Badge>
                 );
@@ -298,7 +298,7 @@ export default async function StudentHomePage() {
                   href={reference.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-md bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand-dark hover:bg-brand/20 dark:bg-brand/20 dark:text-brand-light dark:hover:bg-brand/30"
+                  className="inline-flex items-center gap-1 rounded-md bg-surface-sunken px-2.5 py-1 text-xs font-semibold text-foreground-soft transition-colors hover:text-brand"
                 >
                   {f}
                   <ExternalLink className="size-3 shrink-0" />

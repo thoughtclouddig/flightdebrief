@@ -91,7 +91,7 @@ export function AvatarUpload({ name, avatarUrl }: { name: string; avatarUrl: str
           // eslint-disable-next-line @next/next/no-img-element -- data: URL, not an optimizable remote asset
           <img src={avatarUrl} alt="" className="size-12 rounded-full object-cover" />
         ) : (
-          <div className="flex size-12 items-center justify-center rounded-full bg-brand/10 text-lg font-semibold text-brand-dark dark:bg-brand/20 dark:text-brand-light">
+          <div className="flex size-12 items-center justify-center rounded-full bg-surface-sunken text-lg font-semibold text-foreground">
             {initials(name)}
           </div>
         )}

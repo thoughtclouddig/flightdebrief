@@ -156,6 +156,19 @@
 }
 
 /*
+ * Focus ring. Without this the browser supplies its own -- Chrome's accent
+ * blue, which is the one color on screen that isn't in this palette and which
+ * clashed badly with anything brand-colored underneath it. :focus-visible
+ * rather than :focus, so it appears for keyboard users and not on every mouse
+ * click. Components that already declare their own focus-visible ring (Button,
+ * Input, the map controls) keep theirs -- a class beats a bare selector.
+ */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/*
  * Zero orphans, enforced once rather than per-string.
  *
  * text-wrap: pretty tells the browser to avoid leaving a single word alone on

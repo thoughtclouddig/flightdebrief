@@ -68,7 +68,7 @@ export default async function AdminStudentsPage() {
                 <Link href={`/admin/students/${student.id}`} className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-2 font-medium text-slate-900 dark:text-white">
                     {student.name}
-                    {member.certificateType === "PRIVATE" ? <Badge variant="brand">Private Pilot</Badge> : null}
+                    {member.certificateType === "PRIVATE" ? <Badge variant="neutral">Private Pilot</Badge> : null}
                     {member.status === "inactive" ? <Badge variant="outline">Inactive</Badge> : null}
                     {debriefComplete ? <Badge variant="success">Debrief Complete</Badge> : null}
                     {debriefPending ? <Badge variant="warning">Debrief Pending</Badge> : null}

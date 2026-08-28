@@ -78,7 +78,7 @@ export function TrainingHistoryList({ rows }: { rows: TrainingHistoryRow[] }) {
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {(debrief?.structuredResult.whatWeDid ?? []).map((t, i) => (
-                    <Badge key={i} variant={t === topic ? "brand" : "neutral"}>
+                    <Badge key={i} variant="neutral" className={t === topic ? "ring-1 ring-brand" : undefined}>
                       {t}
                     </Badge>
                   ))}

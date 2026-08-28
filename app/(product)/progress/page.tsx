@@ -91,7 +91,7 @@ export default async function ProgressPage() {
           </CardHeader>
           <CardContent className="flex flex-wrap gap-1.5">
             {brief.focusAreas.map((f, i) => (
-              <Badge key={i} variant="brand">
+              <Badge key={i} variant="neutral">
                 {f}
               </Badge>
             ))}

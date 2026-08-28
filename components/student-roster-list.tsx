@@ -93,7 +93,7 @@ export function StudentRosterList({ roster }: { roster: StudentRosterEntry[] }) 
                   <div>
                     <p className="flex items-center gap-2 font-medium text-slate-900 dark:text-white">
                       {entry.student.name}
-                      {entry.isPrimary ? <Badge variant="brand">Primary</Badge> : null}
+                      {entry.isPrimary ? <Badge variant="neutral">Primary</Badge> : null}
                     </p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       {entry.mostRecentFlight

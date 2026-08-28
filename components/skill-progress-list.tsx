@@ -7,10 +7,10 @@ import { AcsBadge } from "@/components/acs-badge";
 import type { SkillProgression } from "@/lib/skill-progress";
 import type { CertificateType } from "@/lib/types";
 
-const STATUS_VARIANT: Record<SkillProgression["status"], "success" | "brand" | "outline" | "warning"> = {
+const STATUS_VARIANT: Record<SkillProgression["status"], "success" | "neutral" | "outline" | "warning"> = {
   Demonstrated: "success",
-  Improving: "brand",
-  Developing: "brand",
+  Improving: "neutral",
+  Developing: "neutral",
   Introduced: "outline",
   "Needs Coaching": "warning",
 };

@@ -39,7 +39,7 @@ export function QuestionCardStack({
     <Card>
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <Badge variant="brand">{CATEGORY_LABELS[card.category]}</Badge>
+          <Badge variant="neutral">{CATEGORY_LABELS[card.category]}</Badge>
           <span className="text-xs font-medium text-foreground-soft">
             {position} of {total}
           </span>
@@ -83,7 +83,7 @@ export function QuestionCardStack({
             className={cn(
               "flex items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50",
               card.flaggedForFollowUp
-                ? "border-brand bg-brand/10 text-brand-dark dark:text-brand-light"
+                ? "border-brand bg-surface-sunken text-foreground"
                 : "border-hairline text-foreground-soft hover:border-brand hover:text-brand",
             )}
           >

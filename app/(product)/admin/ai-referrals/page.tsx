@@ -43,7 +43,7 @@ export default async function AdminAiReferralsPage() {
               <Card key={row.source}>
                 <CardContent className="flex items-center justify-between gap-4 py-4">
                   <div className="flex items-center gap-2">
-                    {AI_SOURCES.has(row.source) ? <Badge variant="brand">AI</Badge> : null}
+                    {AI_SOURCES.has(row.source) ? <Badge variant="neutral">AI</Badge> : null}
                     <p className="font-medium text-slate-900 dark:text-white">{SOURCE_LABEL[row.source] ?? row.source}</p>
                   </div>
                   <p className="tabular-nums text-slate-500 dark:text-slate-400">{row.count}</p>
