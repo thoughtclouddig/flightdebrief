@@ -58,6 +58,11 @@ export const config = {
     "/flights/:path*",
     "/cfi/:path*",
     "/admin/:path*",
+    // Both entries: ":path*" does not match the bare parent, so listing only
+    // the child pattern let an unauthenticated visit to /super-admin skip the
+    // session check and render -- which then 404s from the staff gate,
+    // reporting "no such page" when the truth was "you aren't signed in".
+    "/super-admin",
     "/super-admin/:path*",
     "/app",
     "/onboarding",
