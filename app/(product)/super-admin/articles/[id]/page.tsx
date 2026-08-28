@@ -4,7 +4,7 @@ import { ArticleForm } from "@/components/admin/article-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminEditArticlePage(props: PageProps<"/admin/articles/[id]">) {
+export default async function AdminEditArticlePage(props: PageProps<"/super-admin/articles/[id]">) {
   const { id } = await props.params;
   const repo = getRepository();
   const [article, topics] = await Promise.all([repo.getArticle(id), repo.listResourceTopics()]);

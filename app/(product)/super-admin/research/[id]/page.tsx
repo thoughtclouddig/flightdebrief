@@ -4,7 +4,7 @@ import { ResearchForm } from "@/components/admin/research-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminEditResearchPage(props: PageProps<"/admin/research/[id]">) {
+export default async function AdminEditResearchPage(props: PageProps<"/super-admin/research/[id]">) {
   const { id } = await props.params;
   const repo = getRepository();
   const report = await repo.getResearchReport(id);

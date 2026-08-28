@@ -50,7 +50,7 @@ export function ArticleForm({ topics, article }: { topics: ResourceTopic[]; arti
         setError(body?.error ?? "Something went wrong.");
         return;
       }
-      router.push("/admin/articles");
+      router.push("/super-admin/articles");
       router.refresh();
     } finally {
       setSaving(false);

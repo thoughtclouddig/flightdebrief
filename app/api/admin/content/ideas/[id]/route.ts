@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authorize } from "@/lib/auth/guard";
+import { authorizeSuperadmin } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 
 /**
@@ -8,7 +8,7 @@ import { getRepository } from "@/lib/data";
  * one-click action rather than a wait.
  */
 export async function PATCH(request: Request, { params }: RouteContext<"/api/admin/content/ideas/[id]">) {
-  const auth = await authorize("admin");
+  const auth = await authorizeSuperadmin();
   if (auth.response) return auth.response;
 
   const { id } = await params;

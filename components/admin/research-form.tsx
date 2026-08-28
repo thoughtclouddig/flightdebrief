@@ -80,7 +80,7 @@ export function ResearchForm({ report }: { report?: ResearchReport }) {
         setError(body?.error ?? "Something went wrong.");
         return;
       }
-      router.push("/admin/research");
+      router.push("/super-admin/research");
       router.refresh();
     } finally {
       setSaving(false);

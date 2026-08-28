@@ -19,7 +19,7 @@ export default async function AdminResearchPage() {
 
       <div className="flex flex-col gap-3">
         {reports.map((report) => (
-          <Link key={report.id} href={`/admin/research/${report.id}`}>
+          <Link key={report.id} href={`/super-admin/research/${report.id}`}>
             <Card>
               <CardContent className="flex items-center justify-between gap-4 py-4">
                 <div>

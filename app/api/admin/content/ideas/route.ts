@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authorize } from "@/lib/auth/guard";
+import { authorizeSuperadmin } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 import { generateArticleIdeas } from "@/lib/ai/generate-article-ideas";
 import { hasContentPipelineSecret } from "@/lib/content/pipeline-auth";
@@ -15,7 +15,7 @@ import { pickNextTopic } from "@/lib/ai/generate-article";
  */
 export async function POST(request: Request) {
   if (!hasContentPipelineSecret(request)) {
-    const auth = await authorize("admin");
+    const auth = await authorizeSuperadmin();
     if (auth.response) return auth.response;
   }
 

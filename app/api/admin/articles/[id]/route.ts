@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
-import { authorize } from "@/lib/auth/guard";
+import { authorizeSuperadmin } from "@/lib/auth/guard";
 import { recordNotFound } from "@/lib/auth/guard";
 import type { ArticleStatus, Source } from "@/lib/types";
 
@@ -20,7 +20,7 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
   const { id } = await context.params;
   const body = (await request.json()) as UpdateArticleBody;
 
-  const auth = await authorize("admin");
+  const auth = await authorizeSuperadmin();
   if (auth.response) return auth.response;
 
   const repo = getRepository();

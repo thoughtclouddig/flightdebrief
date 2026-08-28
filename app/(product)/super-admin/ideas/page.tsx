@@ -53,7 +53,7 @@ export default async function AdminIdeasPage() {
                 <CardContent className="flex items-center justify-between gap-3 py-3">
                   <p className="text-sm text-foreground">{idea.title}</p>
                   {idea.articleId ? (
-                    <Link href={`/admin/articles/${idea.articleId}`} className="text-sm font-medium text-brand hover:underline">
+                    <Link href={`/super-admin/articles/${idea.articleId}`} className="text-sm font-medium text-brand hover:underline">
                       Open draft
                     </Link>
                   ) : null}

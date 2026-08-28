@@ -24,7 +24,7 @@ export default async function AdminArticlesPage() {
 
       <div className="flex flex-col gap-3">
         {articles.map((article) => (
-          <Link key={article.id} href={`/admin/articles/${article.id}`}>
+          <Link key={article.id} href={`/super-admin/articles/${article.id}`}>
             <Card>
               <CardContent className="flex items-center justify-between gap-4 py-4">
                 <div>

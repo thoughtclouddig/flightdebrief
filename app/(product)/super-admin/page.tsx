@@ -70,7 +70,7 @@ export default async function SuperAdminOverviewPage() {
       <div className="flex gap-4 text-sm">
         <Link href="/super-admin/schools" className="text-brand hover:underline">All Schools &rarr;</Link>
         <Link href="/super-admin/subscribers" className="text-brand hover:underline">All Subscribers &rarr;</Link>
-        <Link href="/admin/articles" className="text-brand hover:underline">Content &rarr;</Link>
+        <Link href="/super-admin/articles" className="text-brand hover:underline">Content &rarr;</Link>
       </div>
     </div>
   );

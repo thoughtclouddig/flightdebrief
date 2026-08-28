@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
-import { authorize } from "@/lib/auth/guard";
+import { authorizeSuperadmin } from "@/lib/auth/guard";
 import type { Source } from "@/lib/types";
 
 interface CreateArticleBody {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Title and slug are required" }, { status: 400 });
   }
 
-  const auth = await authorize("admin");
+  const auth = await authorizeSuperadmin();
   if (auth.response) return auth.response;
 
   const repo = getRepository();
