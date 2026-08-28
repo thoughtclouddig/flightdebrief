@@ -757,7 +757,12 @@ export function buildSeed(): SeedBundle {
 
   const organizationMembers: OrganizationMember[] = [
     member("member-andy", USER_ANDY.id, "student"),
+    // Danny also teaches at Mesa -- the multi-school CFI case, which is common
+    // in practice and which nothing in the seed covered. Deliberately Danny
+    // rather than Maria: his address is a real inbox, so the switch can be
+    // tested through a live magic-link sign-in, not only via /dev/login.
     member("member-danny", USER_DANNY.id, "instructor"),
+    member("member-danny-mesa", USER_DANNY.id, "instructor", ORG_MESA.id),
     member("member-maria", USER_MARIA.id, "instructor"),
     member("member-sarah", USER_SARAH.id, "student"),
     // Admin of all three locations -- the multi-org case the comment by
