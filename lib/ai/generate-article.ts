@@ -6,6 +6,7 @@ import { extractJson } from "./extract-json";
 import { getRepository } from "@/lib/data";
 import { slugify } from "@/lib/slugify";
 import type { ArticleIdea, ResourceTopic } from "@/lib/types";
+import { reviewArticle, type EditorialNote } from "./editorial";
 
 /**
  * Picks the resource topic with the fewest existing articles, so daily
@@ -38,6 +39,8 @@ export interface ArticleDraft {
   body: string;
   bodyBlocks: ArticleBody;
   slug: string;
+  /** What the fact-check, copy-edit, and design passes changed. */
+  reviewNotes: EditorialNote[];
 }
 
 export async function generateArticleDraft(
@@ -98,19 +101,67 @@ export async function generateArticleDraft(
       subsections: (s.subsections ?? [])
         .map((sub) => ({ heading: sub.heading.trim(), body: sub.body.trim() }))
         .filter((sub) => sub.heading && sub.body),
-    })).map((s) => ({ ...s, steps: s.steps.length > 1 ? s.steps : [] })),
+      // Verbatim or nothing. A pull quote that paraphrases is new copy
+      // dressed as emphasis: it lengthens the page instead of making it
+      // scannable, and a reader who spots the difference stops trusting the
+      // device. Compared loosely because the model tends to re-punctuate.
+      pullQuote: verbatimQuote(s.pullQuote, s.body),
+      comparison:
+        s.comparison && s.comparison.left.trim() && s.comparison.right.trim()
+          ? {
+              leftLabel: s.comparison.leftLabel.trim() || "This",
+              left: s.comparison.left.trim(),
+              rightLabel: s.comparison.rightLabel.trim() || "Not this",
+              right: s.comparison.right.trim(),
+            }
+          : null,
+      checklist: (s.checklist ?? []).map((c) => c.trim()).filter(Boolean),
+    })).map((s) => ({
+      ...s,
+      // A one-item list is not a procedure, and a one-item checklist is a
+      // sentence. Both get dropped rather than rendered as a list of one.
+      steps: s.steps.length > 1 ? s.steps : [],
+      checklist: s.checklist.length > 1 ? s.checklist : [],
+    })),
     faq: parsed.faq
       .filter((f) => f.question.trim() && f.answer.trim())
       .map((f) => ({ question: f.question.trim(), answer: f.answer.trim() })),
   };
 
+  // The writer's draft now goes through fact-check, copy-edit, and design.
+  // Separate passes because one model writing once has no incentive to catch
+  // its own invented statistic -- a fabricated number makes the article more
+  // persuasive, which is what the writer is optimising for.
+  const reviewed = await reviewArticle(bodyBlocks);
+
   return {
     title: parsed.title.trim(),
     dek: parsed.dek.trim(),
-    bodyBlocks,
+    bodyBlocks: reviewed.body,
     // Flat copy for articles.body -- excerpts, search, and anything that
     // predates the structure.
-    body: toPlainText(bodyBlocks),
+    body: toPlainText(reviewed.body),
     slug: slugify(parsed.title),
+    reviewNotes: reviewed.notes,
   };
+}
+
+
+/**
+ * Returns the quote only if it actually appears in the body it claims to come
+ * from. Normalised for punctuation and whitespace, because a model will
+ * happily return the same sentence with different quote marks or a dash
+ * swapped for a comma, and that is still the writer's line.
+ */
+function verbatimQuote(quote: string | null | undefined, body: string): string | null {
+  const trimmed = quote?.trim();
+  if (!trimmed) return null;
+  const normalise = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/[\u2018\u2019\u201c\u201d"']/g, "")
+      .replace(/[\u2014\u2013,;:.!?]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  return normalise(body).includes(normalise(trimmed)) ? trimmed : null;
 }

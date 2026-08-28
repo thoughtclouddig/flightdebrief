@@ -135,6 +135,67 @@ export function ArticleBody({
             </aside>
           ) : null}
 
+          {/* A line from this section's own body, set large. It repeats text
+              deliberately: the job is to give the eye somewhere to land while
+              scanning, not to add information. aria-hidden because a screen
+              reader has already read it in the paragraph above. */}
+          {section.pullQuote ? (
+            <p
+              aria-hidden
+              className="font-display mt-7 max-w-[34ch] border-l-[3px] border-brand pl-6 text-pretty text-[22px] font-bold leading-[1.35] text-[#101727]"
+            >
+              {section.pullQuote}
+            </p>
+          ) : null}
+
+          {section.comparison ? (
+            <div className={`mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 ${MEASURE}`}>
+              {[
+                { label: section.comparison.leftLabel, text: section.comparison.left },
+                { label: section.comparison.rightLabel, text: section.comparison.right },
+              ].map((side, j) => (
+                <div key={j} className="rounded-lg border border-[#e4e7ea] px-5 py-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-[#68717D]">{side.label}</p>
+                  <p className="mt-2 text-pretty text-[15.5px] leading-[1.65] text-[#3f474f]">{side.text}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {/* Checklist, not steps: these are things to confirm, in any order.
+              Rendering them as numbered steps would claim a sequence that
+              isn't there. */}
+          {section.checklist && section.checklist.length > 0 ? (
+            <ul className={`mt-5 flex flex-col gap-2.5 ${MEASURE}`}>
+              {section.checklist.map((item, j) => (
+                <li key={j} className="flex gap-3 text-pretty text-[17px] leading-[1.7] text-[#3f474f]">
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    className="mt-1 size-[18px] shrink-0 text-brand"
+                  >
+                    <rect x="1.5" y="1.5" width="17" height="17" rx="4" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M5.5 10.2l3 3 6-6.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {section.image ? (
+            <figure className="mt-7">
+              {/* eslint-disable-next-line @next/next/no-img-element -- served from /api/media */}
+              <img src={section.image.url} alt="" loading="lazy" className="aspect-[16/9] w-full rounded-xl object-cover" />
+              {section.image.caption ? (
+                <figcaption className="mt-2.5 text-[13.5px] leading-relaxed text-[#8c97a2]">
+                  {section.image.caption}
+                </figcaption>
+              ) : null}
+            </figure>
+          ) : null}
+
           {/* H3, so a long section can break up without diluting the
               one-question-per-H2 pattern search keys off. */}
           {section.subsections?.map((sub, j) => (

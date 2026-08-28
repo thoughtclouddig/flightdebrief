@@ -27,6 +27,17 @@ export const generatedArticleSchema = z.object({
         subsections: z
           .array(z.object({ heading: z.string().default(""), body: z.string().default("") }))
           .default([]),
+        pullQuote: z.string().nullable().default(null),
+        comparison: z
+          .object({
+            leftLabel: z.string().default(""),
+            left: z.string().default(""),
+            rightLabel: z.string().default(""),
+            right: z.string().default(""),
+          })
+          .nullable()
+          .default(null),
+        checklist: z.array(z.string()).default([]),
       }),
     )
     .default([]),

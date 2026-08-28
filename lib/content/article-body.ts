@@ -27,6 +27,14 @@ export interface ArticleSubsection {
   body: string;
 }
 
+/** Two-column contrast: the useful distinction an article keeps circling. */
+export interface ArticleComparison {
+  leftLabel: string;
+  left: string;
+  rightLabel: string;
+  right: string;
+}
+
 export interface ArticleSection {
   /** Phrased as the question a reader would actually ask, not a topic label. */
   heading: string;
@@ -54,6 +62,20 @@ export interface ArticleSection {
    * that search and answer engines key off.
    */
   subsections?: ArticleSubsection[];
+  /**
+   * A sentence lifted verbatim from this section's own body, set large.
+   *
+   * Verbatim matters: a pull quote that paraphrases is new copy pretending to
+   * be emphasis, and it makes the page longer rather than more scannable. The
+   * generator drops any quote it can't find in the body.
+   */
+  pullQuote?: string | null;
+  /** For the distinction a section turns on. Null unless there are two real sides. */
+  comparison?: ArticleComparison | null;
+  /** Things to do or check, unordered. Distinct from steps, which are sequential. */
+  checklist?: string[];
+  /** A section-level image, with a caption that says something the body doesn't. */
+  image?: { url: string; caption: string } | null;
 }
 
 export interface ArticleFaq {
@@ -87,6 +109,13 @@ export function toPlainText(body: ArticleBody): string {
     parts.push(`${section.heading}\n\n${section.body}`);
     if (section.steps?.length) parts.push(section.steps.map((step, i) => `${i + 1}. ${step}`).join("\n"));
     if (section.tip) parts.push(section.tip);
+    if (section.checklist?.length) parts.push(section.checklist.join("\n"));
+    if (section.comparison) {
+      const c = section.comparison;
+      parts.push(`${c.leftLabel}: ${c.left}\n${c.rightLabel}: ${c.right}`);
+    }
+    // pullQuote is deliberately not included: it's a verbatim repeat of body
+    // text, and doubling it would skew excerpts and read time.
     for (const sub of section.subsections ?? []) parts.push(`${sub.heading}\n\n${sub.body}`);
   }
   for (const item of body.faq) parts.push(`${item.question}\n\n${item.answer}`);
