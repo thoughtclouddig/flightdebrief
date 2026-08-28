@@ -10,7 +10,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-brand text-white hover:bg-brand-dark focus-visible:ring-brand shadow-sm",
+        // Brightens on hover rather than darkening. Darkening reads as
+        // "pressed"/disabled on an already-saturated orange; lifting toward
+        // --brand-bright reads as responsive. Every other primary orange
+        // button in the app matches this.
+        default: "bg-brand text-white hover:bg-brand-bright focus-visible:ring-brand shadow-sm",
         secondary: "bg-surface-sunken text-foreground hover:bg-hairline/40",
         outline: "border border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
         ghost: "hover:bg-surface-sunken",

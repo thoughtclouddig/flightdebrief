@@ -39,7 +39,7 @@ export default async function GatePage({
           {error ? <p className="text-sm font-medium text-[#c0362b]">That code isn&rsquo;t right. Try again.</p> : null}
           <button
             type="submit"
-            className="rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand-dark"
+            className="rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand-bright"
           >
             Enter
           </button>

@@ -71,7 +71,7 @@ export function Pricing() {
                   className={cn(
                     "mt-9 rounded-xl px-6 py-3.5 text-center text-base font-bold transition-transform hover:scale-[1.02]",
                     tier.featured
-                      ? "bg-brand text-white shadow-lg shadow-brand/25 hover:bg-brand-dark"
+                      ? "bg-brand text-white shadow-lg shadow-brand/25 hover:bg-brand-bright"
                       : "border border-slate-300 text-[#101727] hover:border-[#101727]",
                   )}
                 >
