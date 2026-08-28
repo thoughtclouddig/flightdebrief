@@ -118,10 +118,16 @@ export default async function AdminInsightsPage() {
                     href={`/admin/students/${c.student.id}`}
                     className="-mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-surface-sunken"
                   >
-                    <span className="text-foreground">
+                    <span className="min-w-0 text-foreground">
                       {c.student.name} <span className="text-foreground-faint">&mdash;</span> &ldquo;{c.description}&rdquo;
+                      {/* Who last flew it. A chief instructor's lever here is the
+                          CFI, not the objective, so naming them is the point of
+                          the row. */}
+                      {c.instructorName ? (
+                        <span className="text-foreground-faint"> &middot; with {c.instructorName}</span>
+                      ) : null}
                     </span>
-                    <span className="shrink-0 font-medium text-foreground-soft">{c.streak} lessons</span>
+                    <span className="shrink-0 whitespace-nowrap font-medium text-foreground-soft">{c.streak} lessons</span>
                   </Link>
                 </li>
               ))}

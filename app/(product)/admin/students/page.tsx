@@ -9,7 +9,7 @@ import { MemberStatusButton } from "@/components/admin/member-status-button";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminStudentsPage() {
+export default async function AdminStudentsPage(props: PageProps<"/admin/students">) {
   const repo = getRepository();
   const viewer = await getViewer();
   const orgId = viewer.organization.id;
@@ -44,14 +44,30 @@ export default async function AdminStudentsPage() {
       return { member, student, mostRecentFlight, lastDebriefedFlight, primaryInstructor, brief };
     }),
   );
-  const validRows = rows.filter((r): r is NonNullable<typeof r> => r !== null);
+  const allRows = rows.filter((r): r is NonNullable<typeof r> => r !== null);
+
+  // ?instructor=<id> gives a CFI's name somewhere to lead. Filtered on the
+  // primary instructor link, which is the same relationship the row already
+  // displays -- an unknown or stale id simply matches nothing rather than
+  // erroring.
+  const { instructor: instructorFilter } = await props.searchParams;
+  const filterId = typeof instructorFilter === "string" ? instructorFilter : null;
+  const filteredInstructor = filterId ? instructors.find((i) => i?.id === filterId) ?? null : null;
+  const validRows = filterId ? allRows.filter((r) => r.primaryInstructor?.id === filterId) : allRows;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Students</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{validRows.length} total</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {validRows.length} {filterId ? `with ${filteredInstructor?.name ?? "this instructor"}` : "total"}
+          </p>
+          {filterId ? (
+            <Link href="/admin/students" className="mt-1 inline-block text-sm font-medium text-brand hover:underline">
+              Show all students
+            </Link>
+          ) : null}
         </div>
         <InviteStudentForm
           instructors={instructors.filter((i): i is NonNullable<typeof i> => i !== null).map((i) => ({ id: i.id, name: i.name }))}

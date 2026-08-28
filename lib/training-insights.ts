@@ -92,6 +92,13 @@ export interface CarriedForwardObjective {
   student: User;
   description: string;
   streak: number;
+  /**
+   * Whoever flew the most recent flight in the streak. A chief instructor
+   * can't fix the objective themselves -- their lever is the conversation
+   * with the CFI -- so without this the card named a problem but not who
+   * owns it. Null when the flight has no instructor recorded.
+   */
+  instructorName: string | null;
 }
 
 /**
@@ -129,6 +136,9 @@ export async function objectivesCarriedForward(
 
     const currentStreak = new Map<string, number>();
     const maxStreak = new Map<string, number>();
+    // Recorded on the flight that extended the streak furthest, so the name
+    // shown is whoever last flew it rather than whoever started it.
+    const instructorAtPeak = new Map<string, string | null>();
     for (const flight of completed) {
       const descriptions = descriptionsByFlight.get(flight.id) ?? new Set();
       for (const desc of Array.from(currentStreak.keys())) {
@@ -137,6 +147,9 @@ export async function objectivesCarriedForward(
       for (const desc of descriptions) {
         const next = (currentStreak.get(desc) ?? 0) + 1;
         currentStreak.set(desc, next);
+        if (next >= (maxStreak.get(desc) ?? 0)) {
+          instructorAtPeak.set(desc, flight.instructor?.name ?? null);
+        }
         maxStreak.set(desc, Math.max(maxStreak.get(desc) ?? 0, next));
       }
     }
@@ -144,7 +157,9 @@ export async function objectivesCarriedForward(
     const student = await repo.getUser(member.userId);
     if (!student) continue;
     for (const [description, streak] of maxStreak) {
-      if (streak >= threshold) results.push({ student, description, streak });
+      if (streak >= threshold) {
+        results.push({ student, description, streak, instructorName: instructorAtPeak.get(description) ?? null });
+      }
     }
   }
   return results.sort((a, b) => b.streak - a.streak);

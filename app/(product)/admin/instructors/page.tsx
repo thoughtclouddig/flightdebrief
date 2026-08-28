@@ -43,7 +43,7 @@ export default async function AdminInstructorsPage() {
         {validRows.map(({ member, user, activeStudents, recentFlight }) => (
           <Card key={member.id}>
             <CardContent className="flex items-center justify-between gap-4 py-4">
-              <Link href="/admin/students" className="group">
+              <Link href={`/admin/students?instructor=${user.id}`} className="group">
                 <p className="flex items-center gap-2 font-medium text-slate-900 group-hover:text-brand dark:text-white">
                   {user.name}
                   {member.status === "inactive" ? <Badge variant="outline">Inactive</Badge> : null}
