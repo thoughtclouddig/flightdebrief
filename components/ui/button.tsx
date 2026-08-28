@@ -14,7 +14,13 @@ const buttonVariants = cva(
         // "pressed"/disabled on an already-saturated orange; lifting toward
         // --brand-bright reads as responsive. Every other primary orange
         // button in the app matches this.
-        default: "bg-brand text-white hover:bg-brand-bright focus-visible:ring-brand shadow-sm",
+        //
+        // The label goes dark on hover because white on --brand-bright is
+        // 2.27:1 -- below white on the resting orange (2.87:1), and well under
+        // the 4.5:1 this label size needs. #101727 on the same background is
+        // 7.88:1. Hardcoded rather than --foreground, which flips to near-white
+        // in dark mode and would undo the whole point.
+        default: "bg-brand text-white hover:bg-brand-bright hover:text-[#101727] focus-visible:ring-brand shadow-sm",
         secondary: "bg-surface-sunken text-foreground hover:bg-hairline/40",
         outline: "border border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
         ghost: "hover:bg-surface-sunken",

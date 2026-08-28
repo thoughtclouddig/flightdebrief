@@ -116,7 +116,7 @@ export function MarketingNav() {
           </Link>
           <Link
             href="/signup"
-            className="whitespace-nowrap rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-bright sm:px-4 sm:text-sm"
+            className="whitespace-nowrap rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-bright hover:text-[#101727] sm:px-4 sm:text-sm"
           >
             Start Free
           </Link>

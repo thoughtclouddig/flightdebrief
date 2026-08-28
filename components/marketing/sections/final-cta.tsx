@@ -33,7 +33,7 @@ export function FinalCta() {
           <TrackedLink
             href="/signup"
             event="start_free"
-            className="rounded-lg bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-bright"
+            className="rounded-lg bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-bright hover:text-[#101727]"
           >
             Start Free
           </TrackedLink>

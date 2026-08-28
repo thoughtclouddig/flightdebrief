@@ -234,6 +234,12 @@ async function prewarmDebriefAudio(
       buildDebriefNarration({
         studentFirstName: student?.name.split(" ")[0] ?? "there",
         instructorFirstName,
+        // Must match what GET /api/flights/[id]/debrief/audio builds, because
+        // this writes to the same cache key that route reads first. Omitting
+        // it here meant the pre-warm cached the templated bullet-by-bullet
+        // readout, and the natural recap was never heard -- the cache hit
+        // beat the route that actually passes it.
+        narrativeRecap: structured.narrativeRecap,
         whatWeDid: structured.whatWeDid,
         wentWell: structured.wentWell,
         needsWork: structured.needsWork,
