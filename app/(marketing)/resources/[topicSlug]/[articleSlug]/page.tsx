@@ -189,7 +189,11 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
                    constrained to the measure reads as an illustration inside
                    the article; at full bleed past it, it reads as the
                    article's opening image, which is what it is. */
-                <div className="sm:-mx-10 lg:-mx-28">
+                {/* A modest breakout, not a bleed. -mx-28 put the hero 224px
+                    wider than the text and it stopped reading as part of the
+                    article. Enough to sit outside the measure, not enough to
+                    become a banner. */}
+                <div className="lg:-mx-12">
                   {/* eslint-disable-next-line @next/next/no-img-element -- served from /api/media, already sized and encoded */}
                   <img
                     src={heroImageSrc("articles", article.id, article.imageUrl)!}
