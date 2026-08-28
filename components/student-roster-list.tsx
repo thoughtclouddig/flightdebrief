@@ -58,13 +58,18 @@ export function StudentRosterList({ roster }: { roster: StudentRosterEntry[] }) 
         />
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      {/* One scrolling row rather than wrapping to a second line: a filter set
+          reads as a single control, and a lone orphaned pill underneath looks
+          like a different thing. The negative margin + matching padding let
+          pills bleed to the screen edge so it's obvious there's more to
+          scroll, and scrollbar-none keeps that invisible on desktop. */}
+      <div className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {FILTERS.map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={cn(
-              "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
+              "shrink-0 snap-start whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
               filter === f.key
                 ? "bg-brand text-white"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/15",

@@ -1,6 +1,24 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+/*
+ * The dark variant has to agree with how the tokens below are actually
+ * defined: OS preference by default, overridden only when the theme toggle
+ * explicitly stamps data-theme. Keying it solely to [data-theme="dark"] made
+ * every dark: utility depend on an attribute set by a pre-hydration script --
+ * so anything that dropped that attribute (a hydration mismatch regenerating
+ * the tree, JS failing to run) left `dark:text-white` inert while the CSS
+ * variables stayed dark, i.e. dark text on a dark background, logo included.
+ */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
 
 :root {
   /* Paper -- Hangar Gray */
