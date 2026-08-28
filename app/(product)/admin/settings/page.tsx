@@ -2,6 +2,7 @@ import { Mail } from "lucide-react";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { ChangeEmailForm } from "@/components/change-email-form";
 import { Badge } from "@/components/ui/badge";
+import { RenameOrganization } from "@/components/admin/rename-organization";
 import { Card, CardContent } from "@/components/ui/card";
 import { getViewer } from "@/lib/viewer";
 
@@ -62,7 +63,10 @@ export default async function AdminSettingsPage(props: PageProps<"/admin/setting
         <CardContent className="flex flex-col gap-4 py-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Organization</p>
-            <p className="mt-1 text-lg font-medium text-slate-900 dark:text-white">{viewer.organization.name}</p>
+            <RenameOrganization
+              name={viewer.organization.name}
+              label={viewer.organization.kind === "school" ? "School" : "Organization"}
+            />
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Workspace type</p>

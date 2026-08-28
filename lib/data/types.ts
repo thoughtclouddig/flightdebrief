@@ -331,6 +331,12 @@ export interface Repository {
   getOrganization(id: string): Promise<Organization | null>;
   createOrganization(input: { id?: string; name: string; kind: OrganizationKind }): Promise<Organization>;
   getOrganizationByStripeCustomerId(stripeCustomerId: string): Promise<Organization | null>;
+  /**
+   * Display name only. Nothing joins on it -- organizations.id is the identity
+   * key -- so a rename is safe and takes effect everywhere the name is read,
+   * including future invite emails.
+   */
+  renameOrganization(id: string, name: string): Promise<Organization | null>;
   /** Stripe is the source of truth for all of these -- only the webhook handler should call this. */
   updateOrganizationBilling(
     id: string,

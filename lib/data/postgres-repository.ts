@@ -1075,6 +1075,12 @@ export class PostgresRepository implements Repository {
     return rows[0] ? mapOrganization(rows[0]) : null;
   }
 
+  async renameOrganization(id: string, name: string): Promise<Organization | null> {
+    const db = await this.db();
+    const { rows } = await db.query("UPDATE organizations SET name = $2 WHERE id = $1 RETURNING *", [id, name.trim()]);
+    return rows[0] ? mapOrganization(rows[0]) : null;
+  }
+
   async updateOrganizationBilling(
     id: string,
     billing: {
