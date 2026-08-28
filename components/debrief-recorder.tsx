@@ -9,14 +9,14 @@ import { Waveform } from "@/components/waveform";
 import { useTranscription } from "@/lib/transcription";
 import { cn } from "@/lib/utils";
 
-export function DebriefRecorder({ flightId }: { flightId: string }) {
+export function DebriefRecorder({ flightId, solo = false }: { flightId: string; solo?: boolean }) {
   const router = useRouter();
   const transcription = useTranscription();
   const [phase, setPhase] = useState<"consent" | "ready" | "recording" | "analyzing">("consent");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   if (phase === "consent") {
-    return <RecordingConsent flightId={flightId} onGranted={() => setPhase("ready")} />;
+    return <RecordingConsent flightId={flightId} solo={solo} onGranted={() => setPhase("ready")} />;
   }
 
   async function handleStart() {
@@ -53,8 +53,9 @@ export function DebriefRecorder({ flightId }: { flightId: string }) {
     return (
       <div className="flex flex-col items-center gap-6 py-10 text-center">
         <p className="max-w-sm text-slate-500 dark:text-slate-400">
-          Talk through the flight naturally, like you would with your instructor. No
-          questionnaire -- just start talking.
+          {solo
+            ? "Talk through the flight the way you'd replay it in your head on the drive home. No questionnaire -- just start talking."
+            : "Talk through the flight naturally, like you would with your instructor. No questionnaire -- just start talking."}
         </p>
         <button
           onClick={handleStart}
@@ -121,7 +122,10 @@ export function DebriefRecorder({ flightId }: { flightId: string }) {
         </CardContent>
       </Card>
 
-      <div className="min-h-[8rem] rounded-xl border border-slate-200 bg-white p-4 text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200">
+      {/* Fixed height, scrolled to the end: previously min-h with no max, so
+          this grew for as long as you talked and walked the Finish button down
+          the page. The last few lines are the only ones anyone reads. */}
+      <div className="flex h-32 flex-col-reverse overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200">
         {transcription.transcript || transcription.interimTranscript ? (
           <p className="leading-relaxed">
             {transcription.transcript}{" "}

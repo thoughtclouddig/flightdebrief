@@ -40,6 +40,8 @@ function formatDateTime(iso: string) {
 export default async function StudentHomePage() {
   const repo = getRepository();
   const viewer = await getViewer();
+  /** No CFI on the account at all -- see lib/auth/store.ts createOrganization. */
+  const solo = viewer.organization.kind === "individual";
   const studentId = viewer.user.id;
 
   const [flights, trainingItems, brief, radioPractice, milestones] = await Promise.all([
@@ -197,28 +199,43 @@ export default async function StudentHomePage() {
               else is expected to act (the instructor finishing up, mainly) --
               a longer interval than the narrower single-purpose waiting
               screens elsewhere, since this refreshes the whole dashboard. */}
-          <AutoRefresh intervalMs={15000} />
+          {/* Nothing here goes stale for a solo pilot -- there's no second
+              person whose turn it might become -- so only poll when someone
+              else is actually expected to act. */}
+          {solo ? null : <AutoRefresh intervalMs={15000} />}
           <Card className="transition-colors hover:bg-surface-sunken">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PlaneTakeoff className="size-4 text-brand" />
-                {pendingProgress.stage === "awaiting_student_assessment" ? "Needs Your Input" : "Debrief In Progress"}
+                {solo
+                  ? "Ready to Debrief"
+                  : pendingProgress.stage === "awaiting_student_assessment"
+                    ? "Needs Your Input"
+                    : "Debrief In Progress"}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-medium text-foreground">{formatFlightContext(pendingFlight)}</p>
                 <p className="text-sm text-foreground-soft">
-                  {pendingProgress.stage === "awaiting_tasks" || pendingProgress.stage === "awaiting_instructor_assessment"
-                    ? "Waiting on your instructor."
-                    : pendingProgress.stage === "awaiting_student_assessment"
-                      ? "Your instructor submitted their assessment -- your turn."
-                      : pendingProgress.stage === "awaiting_finish"
-                        ? "Recorded -- your instructor still needs to finish reviewing it with you."
-                        : "Both assessments are in -- your instructor is starting the debrief."}
+                  {/* A solo pilot's org runs freeform, so none of the guided
+                      hand-off stages below ever apply -- they'd describe a
+                      queue of steps waiting on an instructor who doesn't
+                      exist. There is exactly one state: not recorded yet. */}
+                  {solo
+                    ? "Talk through this one whenever you're ready."
+                    : pendingProgress.stage === "awaiting_tasks" || pendingProgress.stage === "awaiting_instructor_assessment"
+                      ? "Waiting on your instructor."
+                      : pendingProgress.stage === "awaiting_student_assessment"
+                        ? "Your instructor submitted their assessment -- your turn."
+                        : pendingProgress.stage === "awaiting_finish"
+                          ? "Recorded -- your instructor still needs to finish reviewing it with you."
+                          : "Both assessments are in -- your instructor is starting the debrief."}
                 </p>
               </div>
-              {pendingProgress.stage === "awaiting_student_assessment" ? (
+              {solo ? (
+                <span className={buttonVariants({ size: "sm" })}>Start</span>
+              ) : pendingProgress.stage === "awaiting_student_assessment" ? (
                 <span className={buttonVariants({ size: "sm" })}>Do it now</span>
               ) : null}
             </CardContent>

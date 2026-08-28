@@ -66,7 +66,11 @@ export function DebriefResultSections({
 }) {
   return (
     <>
-      <p className="text-sm text-foreground-faint">From your debrief with {instructorFirstName ?? "your instructor"}</p>
+      {/* The null fallback used to read "with your instructor" -- but null IS
+          the no-instructor case, so it named someone who doesn't exist. */}
+      <p className="text-sm text-foreground-faint">
+        {instructorFirstName ? `From your debrief with ${instructorFirstName}` : "From your debrief"}
+      </p>
       {result.flightSummary ? <p className="text-lg text-foreground-soft">{result.flightSummary}</p> : null}
 
       <Card>
@@ -146,14 +150,16 @@ export function DebriefResultSections({
           </Card>
         ) : null}
 
-        <Section
-          icon={LifeBuoy}
-          title="Where Your Instructor Stepped In"
-          description="Moments the instructor took over, prompted, or corrected -- captured only when it came up in the debrief, never assumed."
-          items={result.instructorAssistance}
-          empty="You flew this one without needing a hand -- nothing noted."
-          tone="amber"
-        />
+        {instructorFirstName ? (
+          <Section
+            icon={LifeBuoy}
+            title="Where Your Instructor Stepped In"
+            description="Moments the instructor took over, prompted, or corrected -- captured only when it came up in the debrief, never assumed."
+            items={result.instructorAssistance}
+            empty="You flew this one without needing a hand -- nothing noted."
+            tone="amber"
+          />
+        ) : null}
         <Section icon={ShieldAlert} title="Risk Management & ADM" items={result.riskManagementNotes} empty="No risk items noted." tone="amber" />
       </div>
 

@@ -37,7 +37,10 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
             {formatFlightContext(flight)}
           </h1>
         </div>
-        <DebriefRecorder flightId={flight.id} />
+        {/* "Solo" is org kind, not guidance mode: a school can run freeform
+            debriefs and still have a CFI in the room. Only an individual org
+            has genuinely nobody else. */}
+        <DebriefRecorder flightId={flight.id} solo={org?.kind === "individual"} />
       </div>
     );
   }

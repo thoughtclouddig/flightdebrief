@@ -90,7 +90,7 @@ export default async function BillingPage({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>{org.kind === "school" ? "Flight School Pro" : "Pilot"}</CardTitle>
+            <CardTitle>{org.kind === "school" ? "Flight School Pro" : "Pilot Plan"}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-sm text-foreground-soft">
@@ -105,12 +105,17 @@ export default async function BillingPage({
                 <p className="text-sm text-foreground-faint">Ask a school admin to subscribe.</p>
               )
             ) : (
-              <div className="flex flex-col gap-2 sm:flex-row">
+              /* flex-wrap because buttonVariants sets whitespace-nowrap:
+                 side by side at sm, two lg buttons couldn't shrink and the
+                 annual one overflowed the card's padding. Wrapping to a
+                 second line is the correct fallback; shorter labels mean it
+                 usually doesn't have to. */
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <SubscribeButton billingPeriod="monthly" size="lg">
-                  Subscribe Monthly -- $9.99/mo
+                  Monthly -- $9.99/mo
                 </SubscribeButton>
                 <SubscribeButton billingPeriod="annual" size="lg" variant="outline">
-                  Subscribe Annually -- $99/yr
+                  Annual -- $99/yr
                 </SubscribeButton>
               </div>
             )}
