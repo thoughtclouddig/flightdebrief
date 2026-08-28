@@ -78,7 +78,7 @@ export function VoicePreferencePicker() {
               key={v.id}
               className={cn(
                 "flex items-center gap-0.5 rounded-full border p-0.5 transition-colors",
-                isSelected ? "border-brand bg-brand/10" : "border-hairline bg-surface",
+                isSelected ? "border-brand bg-surface-sunken" : "border-hairline bg-surface",
               )}
             >
               <button

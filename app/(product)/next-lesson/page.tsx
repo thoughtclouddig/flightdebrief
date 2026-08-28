@@ -115,7 +115,7 @@ export default async function NextLessonPage() {
       ) : null}
 
       {focusToday.length > 0 ? (
-        <Card className="border-brand/30 bg-brand/5">
+        <Card className="border-brand/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="size-4 text-brand" />

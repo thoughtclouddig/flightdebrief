@@ -204,7 +204,7 @@ export function GuidedDebriefRecorder({
       <Waveform amplitude={transcription.amplitude} active={phase === "recording"} />
 
       {phase === "recording" && transcription.lowAudioWarning ? (
-        <p className="rounded-lg bg-danger/10 px-3 py-2 text-center text-sm font-medium text-danger">
+        <p className="rounded-lg border border-danger/40 px-3 py-2 text-center text-sm font-medium text-danger">
           We are not picking up any sound -- check that the right microphone is selected.
         </p>
       ) : null}

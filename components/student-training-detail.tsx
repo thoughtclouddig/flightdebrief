@@ -142,7 +142,7 @@ export async function StudentTrainingDetail({
                   <MessageSquareQuote className="size-3.5" /> Instructor Guidance
                 </p>
                 {result.instructorGuidance.map((g, i) => (
-                  <blockquote key={i} className="rounded-lg bg-brand/5 px-3 py-2 text-sm italic text-slate-700 dark:bg-brand/10 dark:text-slate-200">
+                  <blockquote key={i} className="rounded-lg bg-surface-sunken px-3 py-2 text-sm italic text-foreground-soft">
                     &ldquo;{g.quote}&rdquo;
                   </blockquote>
                 ))}

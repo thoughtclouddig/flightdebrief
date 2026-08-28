@@ -254,7 +254,7 @@ export default function EnterprisePage() {
                 </ul>
               </div>
 
-              <div className="flex flex-col gap-4 border-brand bg-brand/5 p-10 sm:border-l-2">
+              <div className="flex flex-col gap-4 border-brand p-10 sm:border-l-2">
                 <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand/15">
                   <Check className="size-6 text-brand" strokeWidth={2.5} />
                 </span>

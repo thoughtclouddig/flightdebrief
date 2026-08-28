@@ -35,7 +35,7 @@ export function ExistingSystems() {
 
           <ArrowDown className="size-5 text-foreground-faint" />
 
-          <div className="w-full rounded-lg border border-brand bg-brand/5 p-5 text-center">
+          <div className="w-full rounded-lg border border-brand p-5 text-center">
             <p className="font-display text-sm font-extrabold uppercase tracking-wide text-brand">AfterFlight</p>
             <p className="text-pretty mt-2 text-sm text-foreground-soft">{AFTERFLIGHT_ITEMS.join(" · ")}</p>
           </div>

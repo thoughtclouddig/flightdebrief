@@ -50,7 +50,7 @@ export default async function BillingPage({
       </div>
 
       {checkout === "success" ? (
-        <Card className="border-good/40 bg-good/5">
+        <Card className="border-good/40">
           <CardContent className="flex items-center gap-2 py-4 text-sm font-medium text-good">
             <CheckCircle2 className="size-4 shrink-0" />
             Subscription active -- thanks for subscribing.

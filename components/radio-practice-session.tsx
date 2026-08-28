@@ -197,7 +197,7 @@ export function RadioPracticeSession({
       ) : null}
 
       {result ? (
-        <Card className={cn(result.correct ? "border-good/40 bg-good/5" : "border-danger/30 bg-danger/5")}>
+        <Card className={cn(result.correct ? "border-good/40" : "border-danger/30")}>
           <CardContent className="flex flex-col gap-2 py-5">
             <p className={cn("font-semibold", result.correct ? "text-good" : "text-danger")}>
               {result.correct ? "Nailed it." : "Not quite -- here's a model readback:"}

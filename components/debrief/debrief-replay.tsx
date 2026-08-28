@@ -238,7 +238,7 @@ function NextFlightCueCard({
   if (!cue && !editable) return null;
 
   return (
-    <Card className="border-brand/30 bg-brand/5">
+    <Card className="border-brand/30">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="size-4 text-brand" />
