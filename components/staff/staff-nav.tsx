@@ -17,9 +17,10 @@ const SECTIONS = [
   { href: "/super-admin", label: "Overview" },
   { href: "/super-admin/schools", label: "Schools" },
   { href: "/super-admin/subscribers", label: "Subscribers" },
-  { href: "/super-admin/ideas", label: "Ideas" },
-  { href: "/super-admin/articles", label: "Articles" },
-  { href: "/super-admin/research", label: "Research" },
+  // One entry, not three. Ideas, articles, and research were separate
+  // destinations for stages of the same job, which is what made it unclear
+  // where an approved idea ended up. The desk holds all of them.
+  { href: "/super-admin/articles", label: "Content" },
   { href: "/super-admin/ai-referrals", label: "AI Referrals" },
 ];
 

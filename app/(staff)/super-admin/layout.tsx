@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getStaffViewer } from "@/lib/auth/staff";
 import { StaffNav } from "@/components/staff/staff-nav";
