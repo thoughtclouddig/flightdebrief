@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { ARTICLE_SYSTEM_PROMPT, buildArticleUserPrompt } from "./article-prompt";
-import { generatedArticleSchema, type GeneratedArticle } from "./article-schema";
+import { generatedArticleSchema } from "./article-schema";
+import { toPlainText, type ArticleBody } from "@/lib/content/article-body";
 import { extractJson } from "./extract-json";
 import { getRepository } from "@/lib/data";
 import { slugify } from "@/lib/slugify";
@@ -31,10 +32,18 @@ export async function pickNextTopic(): Promise<ResourceTopic> {
  * content, which this pipeline explicitly must not produce. Callers should
  * surface the error rather than silently degrading.
  */
+export interface ArticleDraft {
+  title: string;
+  dek: string;
+  body: string;
+  bodyBlocks: ArticleBody;
+  slug: string;
+}
+
 export async function generateArticleDraft(
   topic: ResourceTopic,
   idea?: ArticleIdea | null,
-): Promise<GeneratedArticle & { slug: string }> {
+): Promise<ArticleDraft> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set -- cannot generate an article");
 
@@ -44,7 +53,9 @@ export async function generateArticleDraft(
   const client = new Anthropic({ apiKey });
   const response = await client.messages.create({
     model: "claude-sonnet-4-5",
-    max_tokens: 2000,
+    // Structured output across 4-6 sections plus an FAQ needs more room than
+    // the flat-prose version did.
+    max_tokens: 4000,
     system: ARTICLE_SYSTEM_PROMPT,
     messages: [
       {
@@ -65,9 +76,31 @@ export async function generateArticleDraft(
   }
 
   const parsed = generatedArticleSchema.parse(JSON.parse(extractJson(textBlock.text)));
-  if (!parsed.title.trim() || !parsed.body.trim()) {
-    throw new Error("Claude returned an incomplete article");
-  }
 
-  return { ...parsed, slug: slugify(parsed.title) };
+  // The parts that can't be missing. A draft with no answer or no sections
+  // isn't a draft a human can finish -- it's a blank page with a headline,
+  // and saving it would just put the work back on the reviewer.
+  if (!parsed.title.trim()) throw new Error("Claude returned an article with no title");
+  if (!parsed.answer.trim()) throw new Error("Claude returned an article with no lead answer");
+  const sections = parsed.sections.filter((s) => s.heading.trim() && s.body.trim());
+  if (sections.length === 0) throw new Error("Claude returned an article with no sections");
+
+  const bodyBlocks: ArticleBody = {
+    answer: parsed.answer.trim(),
+    keyFacts: parsed.keyFacts.map((f) => f.trim()).filter(Boolean),
+    sections: sections.map((s) => ({ heading: s.heading.trim(), body: s.body.trim() })),
+    faq: parsed.faq
+      .filter((f) => f.question.trim() && f.answer.trim())
+      .map((f) => ({ question: f.question.trim(), answer: f.answer.trim() })),
+  };
+
+  return {
+    title: parsed.title.trim(),
+    dek: parsed.dek.trim(),
+    bodyBlocks,
+    // Flat copy for articles.body -- excerpts, search, and anything that
+    // predates the structure.
+    body: toPlainText(bodyBlocks),
+    slug: slugify(parsed.title),
+  };
 }

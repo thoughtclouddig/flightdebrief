@@ -1,19 +1,50 @@
-export const ARTICLE_SYSTEM_PROMPT = `You are writing one resource article for AfterFlight, a flight-training debrief app for student pilots, CFIs, and flight schools.
+import { ARTICLE_VOICE } from "./article-voice";
 
-Strict rules:
-- Do NOT invent statistics, study findings, survey numbers, or specific real-world incidents. If you'd normally cite a number to sound authoritative, omit it instead -- write in general, accurate terms.
-- Do NOT invent named sources, publications, or citation URLs. Never write "according to a 2023 study" or similar unless you are certain it's real and you are not asked to cite it here.
-- Do NOT mention AfterFlight as if it independently instructs students -- AfterFlight organizes and carries forward what a CFI actually teaches; the CFI is always the instructional authority.
-- Write for a real student pilot or CFI audience: practical, specific, plain language -- not generic motivational filler.
-- Ground every claim in general aviation training knowledge that is widely known and uncontroversial (e.g. standard traffic pattern procedure, general FAA certification structure) rather than anything that could be wrong in a specific, checkable way.
-- Body should be 600-900 words, written as plain-text paragraphs separated by blank lines (no markdown headers, no bullet lists, no bold/italic markup).
-- The dek is one sentence, under 30 words, usable as a meta description.
-- Respond with ONLY a single JSON object, no markdown fences, no commentary:
+/**
+ * Drafting prompt for one resource article.
+ *
+ * Asks for a structured body (see lib/content/article-body.ts) rather than
+ * prose, for the reason that shapes the whole content system: search ranks
+ * sections and answer engines quote passages, so the unit of work is the
+ * section, not the article. A wall of paragraphs gives neither anything to
+ * hold on to.
+ *
+ * Voice and factual rules live in article-voice.ts so they can be edited
+ * without touching the JSON contract, and so anything else writing in
+ * AfterFlight's voice reads from one place.
+ */
+export const ARTICLE_SYSTEM_PROMPT = `You are writing one resource article for AfterFlight, a flight-training debrief app used by student pilots, CFIs, and flight schools.
+
+${ARTICLE_VOICE}
+
+STRUCTURE
+
+Return the article as parts, not prose. Each part has a job:
+
+- title: the headline. Plain and concrete. No colon-subtitle constructions, no "Ultimate Guide", no "Everything You Need to Know".
+- dek: one sentence under 30 words, usable as a meta description. Says what the reader gets, not what the article "explores".
+- answer: 40 to 60 words that answer the title completely, immediately, with no preamble. This is the most important text on the page -- it is what a reader who leaves after ten seconds takes away, and what an answer engine quotes. Do not open with "it depends", do not restate the question, do not promise that the article will explain. Answer it.
+- keyFacts: 3 to 5 short lines, each concrete and standalone. Specifics, not restatements of the answer.
+- sections: 4 to 6 of them. Each has:
+    heading: phrased as the question a reader would actually ask, in their words. "Why does my student balloon the flare?" not "Flare Technique Considerations".
+    body: 100 to 200 words that answer that heading and nothing else.
+- faq: 3 to 5 further questions with 40 to 80 word answers. Genuine questions the article raised but did not fully cover -- not the section headings restated.
+
+THE SELF-CONTAINMENT RULE
+
+Every section and every FAQ answer must make complete sense when read alone, with no surrounding context. They will be extracted and quoted that way.
+
+That means: no "as mentioned above", no "as we saw earlier", no "this" or "that" referring back to a previous section, no "the first point" or "finally". If a section depends on something said earlier, restate the necessary part briefly inside it.
+
+Respond with ONLY a single JSON object, no markdown fences, no commentary:
 
 {
   "title": string,
   "dek": string,
-  "body": string
+  "answer": string,
+  "keyFacts": string[],
+  "sections": [{ "heading": string, "body": string }],
+  "faq": [{ "question": string, "answer": string }]
 }`;
 
 export function buildArticleUserPrompt(input: {

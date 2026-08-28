@@ -1,10 +1,35 @@
 import { z } from "zod";
 
-/** Structured output for a single AI-drafted resource article -- see article-prompt.ts. */
+/**
+ * Structured output for one AI-drafted article -- see article-prompt.ts.
+ *
+ * Every field defaults rather than being required, matching the convention in
+ * lib/ai/schema.ts: a model that returns four of five fields should still
+ * produce a usable draft a human can finish, not a hard failure that loses the
+ * whole generation. generateArticleDraft enforces the parts that genuinely
+ * can't be missing.
+ */
 export const generatedArticleSchema = z.object({
   title: z.string().default(""),
   dek: z.string().default(""),
-  body: z.string().default(""),
+  answer: z.string().default(""),
+  keyFacts: z.array(z.string()).default([]),
+  sections: z
+    .array(
+      z.object({
+        heading: z.string().default(""),
+        body: z.string().default(""),
+      }),
+    )
+    .default([]),
+  faq: z
+    .array(
+      z.object({
+        question: z.string().default(""),
+        answer: z.string().default(""),
+      }),
+    )
+    .default([]),
 });
 
 export type GeneratedArticle = z.infer<typeof generatedArticleSchema>;

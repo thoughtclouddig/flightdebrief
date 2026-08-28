@@ -52,6 +52,7 @@ export async function POST(request: Request) {
     authorName: "AfterFlight",
     sources: [],
     imageUrl,
+    bodyBlocks: draft.bodyBlocks,
   });
 
   // Link the idea to what it became, so the queue reflects reality and the
