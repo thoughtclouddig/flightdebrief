@@ -134,6 +134,15 @@ function LoginContent() {
         </Link>
         .
       </p>
+      {/* Sign-in trouble is the one support case where the in-app help link is
+          unreachable by definition -- a magic link that didn't arrive, expired,
+          or belongs to an uninvited address all leave you here, logged out. */}
+      <p className="text-center text-xs text-foreground-faint">
+        Trouble signing in?{" "}
+        <a href="mailto:support@getafterflight.com" className="text-brand hover:underline">
+          support@getafterflight.com
+        </a>
+      </p>
       <Link href="/" className="text-center text-xs text-foreground-faint hover:underline">
         &larr; Back to afterflight.com
       </Link>

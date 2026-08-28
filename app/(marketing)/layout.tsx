@@ -34,6 +34,10 @@ const FOOTER_COLUMNS = [
     links: [
       { href: "/login", label: "Log In" },
       { href: "/signup", label: "Sign Up" },
+      // A visible way to reach a human. Someone weighing a $990/yr plan checks
+      // whether there's a real company behind it, and every other support
+      // address on the site is buried in the legal pages.
+      { href: "mailto:support@getafterflight.com", label: "Contact" },
     ],
   },
   {
