@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, CreditCard, LogOut } from "lucide-react";
+import { ChevronDown, CreditCard, LogOut, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { homeHrefForRole } from "@/components/nav";
+import { accountHrefForRole, homeHrefForRole } from "@/components/nav";
 import type { MembershipOption, Viewer } from "@/lib/viewer";
 
 const ROLE_LABELS: Record<Viewer["role"], string> = {
@@ -124,6 +124,18 @@ export function UserMenu({
                 })}
               </div>
             ) : null}
+
+            {/* The menu offered Billing and Sign out and nothing else, so the
+                one place people look for account settings didn't have them --
+                worst for an admin, whose settings sit behind the nav's More
+                overflow. */}
+            <a
+              href={accountHrefForRole(viewer.role)}
+              className="flex w-full items-center gap-2 border-t border-hairline px-3 py-2 text-left text-sm text-foreground-soft hover:bg-surface-sunken"
+            >
+              <UserCog className="size-3.5" />
+              Account
+            </a>
 
             {viewer.organization.kind !== "independent_cfi" &&
             (viewer.organization.kind !== "school" || viewer.role === "admin") &&

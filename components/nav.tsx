@@ -88,6 +88,17 @@ function itemsForRole(
   return isSuperadmin ? [...base, SUPERADMIN_ITEM] : base;
 }
 
+/**
+ * Where "Account" goes for each role. Admins keep theirs on /admin/settings --
+ * that page already holds their name, email and the organization, so a
+ * separate profile page would just split one screen in two.
+ */
+export function accountHrefForRole(role: Viewer["role"]) {
+  if (role === "instructor") return "/cfi/profile";
+  if (role === "admin") return "/admin/settings";
+  return "/profile";
+}
+
 export function homeHrefForRole(role: Viewer["role"]) {
   if (role === "instructor") return "/cfi/today";
   if (role === "admin") return "/admin/overview";

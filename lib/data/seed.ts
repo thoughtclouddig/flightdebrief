@@ -760,7 +760,12 @@ export function buildSeed(): SeedBundle {
     member("member-danny", USER_DANNY.id, "instructor"),
     member("member-maria", USER_MARIA.id, "instructor"),
     member("member-sarah", USER_SARAH.id, "student"),
+    // Admin of all three locations -- the multi-org case the comment by
+    // ORG_MESA already claimed. Only the Falcon row existed, so nothing in the
+    // seed actually exercised switching between organizations.
     member("member-jordan", USER_JORDAN.id, "admin"),
+    member("member-jordan-mesa", USER_JORDAN.id, "admin", ORG_MESA.id),
+    member("member-jordan-prescott", USER_JORDAN.id, "admin", ORG_PRESCOTT.id),
     member("member-marcus", USER_MARCUS.id, "student"),
     member("member-priya", USER_PRIYA.id, "student"),
     member("member-tom", USER_TOM.id, "student"),
