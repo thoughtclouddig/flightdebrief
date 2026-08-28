@@ -46,3 +46,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .next-e2e/
+
+# integration-test audio artifact (lib/deepgram-tts.integration.test.ts)
+tts-check.mp3
