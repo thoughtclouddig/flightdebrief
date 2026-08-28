@@ -159,9 +159,12 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="size-4 text-brand" />
-              Keep Working On
+              Objectives &mdash; In the Air
             </CardTitle>
-            <CardDescription>From the transcript, or add your own -- edit or remove anything.</CardDescription>
+            <CardDescription>
+              What {student.name.split(" ")[0]} works on during the next flight. Drafted from the last debrief; edit,
+              remove, or add your own.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <EditableTrainingItemList
@@ -179,9 +182,9 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ClipboardList className="size-4 text-brand" />
-              Before Next Flight
+              Objectives &mdash; On the Ground
             </CardTitle>
-            <CardDescription>What {student.name.split(" ")[0]} should do before showing up.</CardDescription>
+            <CardDescription>What {student.name.split(" ")[0]} should study or prep before showing up.</CardDescription>
           </CardHeader>
           <CardContent>
             <EditableTrainingItemList

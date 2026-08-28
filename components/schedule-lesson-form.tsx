@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CalendarPlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { localIsoDate } from "@/lib/date";
-import type { Aircraft } from "@/lib/types";
+import type { Aircraft, User } from "@/lib/types";
 
 /** Tomorrow, not today -- a CFI scheduling from the wrap-up flow is planning the *next* lesson, not repeating today's. */
 function defaultLessonDate(): string {
@@ -16,6 +16,8 @@ function defaultLessonDate(): string {
 export function ScheduleLessonForm({
   studentId,
   aircraft,
+  instructors = [],
+  defaultInstructorId,
   autoOpen,
   caption,
   onScheduled,
@@ -23,6 +25,10 @@ export function ScheduleLessonForm({
 }: {
   studentId: string;
   aircraft: Aircraft[];
+  /** Active instructors in the org. A picker only renders when there's more than one -- a solo CFI shouldn't have to answer a question with one possible answer. */
+  instructors?: Pick<User, "id" | "name">[];
+  /** The student's primary CFI, so a school defaults to whoever normally teaches them rather than whoever happens to be logged in. */
+  defaultInstructorId?: string;
   /** Render already expanded -- used by the post-debrief wrap-up step, where there's no reason to make the CFI click to open it. */
   autoOpen?: boolean;
   /** Optional disclosure line shown above the fields, e.g. the FSP-sync caption for school orgs. */
@@ -35,6 +41,7 @@ export function ScheduleLessonForm({
   const router = useRouter();
   const [open, setOpen] = useState(Boolean(autoOpen));
   const [aircraftId, setAircraftId] = useState(aircraft[0]?.id ?? "");
+  const [instructorId, setInstructorId] = useState(defaultInstructorId ?? instructors[0]?.id ?? "");
   const [date, setDate] = useState(defaultLessonDate);
   const [startTime, setStartTime] = useState("09:00");
   const [durationMinutes, setDurationMinutes] = useState(90);
@@ -68,6 +75,7 @@ export function ScheduleLessonForm({
           aircraftId,
           scheduledStart: scheduledStart.toISOString(),
           scheduledEnd: scheduledEnd.toISOString(),
+          ...(instructorId ? { instructorId } : {}),
         }),
       });
       const data = await res.json().catch(() => null);
@@ -123,6 +131,22 @@ export function ScheduleLessonForm({
           <option value={120}>2.0 hr</option>
         </select>
       </div>
+      {instructors.length > 1 ? (
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Instructor</span>
+          <select
+            value={instructorId}
+            onChange={(e) => setInstructorId(e.target.value)}
+            className="min-h-11 rounded-lg border border-slate-200 bg-transparent px-3 py-2 text-sm dark:border-white/10"
+          >
+            {instructors.map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       {error ? <p className="text-xs text-danger">{error}</p> : null}
       <div className="flex gap-2">
         <Button

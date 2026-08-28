@@ -7,13 +7,17 @@ interface CreateReservationBody {
   aircraftId: string;
   scheduledStart: string;
   scheduledEnd: string;
+  /** Optional -- defaults to the calling CFI. Lets a school schedule a lesson for whoever is actually teaching it. */
+  instructorId?: string;
 }
 
 /**
  * App-originated reservation scheduling -- see the doc comment on
- * Repository.createReservation. Instructor/admin only; the calling CFI is
- * always the reservation's instructor (scheduling on behalf of a colleague
- * is out of scope for this pass). Available for every org kind, including
+ * Repository.createReservation. Instructor/admin only. The reservation's
+ * instructor defaults to the caller but can be any active instructor in the
+ * same org -- at a school the person scheduling often isn't the person
+ * teaching, and silently assigning the caller was producing reservations
+ * credited to the wrong CFI. Available for every org kind, including
  * schools -- see components/student-training-detail.tsx's canScheduleLessons
  * doc comment for why the earlier school-org block was lifted.
  */
@@ -38,6 +42,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // Any active instructor in the caller's own org, or the caller. Never a
+  // bare trust of the submitted id -- that would let one org schedule onto
+  // another org's instructor.
+  let instructorId = viewer.user.id;
+  if (body.instructorId && body.instructorId !== viewer.user.id) {
+    const orgInstructors = await repo.listMembers(viewer.organization.id, "instructor");
+    const match = orgInstructors.find((m) => m.userId === body.instructorId && m.status === "active");
+    if (!match) return NextResponse.json({ error: "Unknown instructor" }, { status: 400 });
+    instructorId = match.userId;
+  }
+
   const aircraft = await repo.getAircraft(body.aircraftId);
   if (!aircraft || aircraft.organizationId !== viewer.organization.id) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -46,7 +61,7 @@ export async function POST(request: Request) {
   const reservation = await repo.createReservation({
     organizationId: viewer.organization.id,
     studentId: student.id,
-    instructorId: viewer.user.id,
+    instructorId,
     aircraftId: aircraft.id,
     scheduledStart: body.scheduledStart,
     scheduledEnd: body.scheduledEnd,

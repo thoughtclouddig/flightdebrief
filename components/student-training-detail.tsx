@@ -63,6 +63,26 @@ export async function StudentTrainingDetail({
     canScheduleLessons ? repo.listAircraft(viewer.organization.id) : Promise.resolve([]),
   ]);
 
+  // Who's teaching often isn't who's scheduling (a school admin books for the
+  // whole roster), so offer every active instructor and default to this
+  // student's primary CFI rather than silently crediting the caller.
+  const [orgInstructorMembers, instructorLinks] = canScheduleLessons
+    ? await Promise.all([
+        repo.listMembers(viewer.organization.id, "instructor"),
+        repo.listInstructorLinksForStudent(student.id),
+      ])
+    : [[], []];
+  const instructors = (
+    await Promise.all(
+      orgInstructorMembers.filter((m) => m.status === "active").map((m) => repo.getUser(m.userId)),
+    )
+  )
+    .filter((u): u is NonNullable<typeof u> => u !== null)
+    .map((u) => ({ id: u.id, name: u.name }));
+  const defaultInstructorId =
+    instructorLinks.find((l) => l.isPrimary && l.status === "active")?.instructorId ??
+    instructorLinks.find((l) => l.status === "active")?.instructorId;
+
   const flightIds = new Set(flights.map((f) => f.id));
   const relevantItems = trainingItems.filter((t) => flightIds.has(t.flightId) && t.visibility === "shared");
   const openItems = relevantItems.filter((t) => !t.done);
@@ -285,14 +305,24 @@ export async function StudentTrainingDetail({
               )}
               {canScheduleLessons ? (
                 <div className="mt-2">
-                  <ScheduleLessonForm studentId={student.id} aircraft={aircraft} caption={scheduleCaption} />
+                  <ScheduleLessonForm
+                    studentId={student.id}
+                    aircraft={aircraft}
+                    instructors={instructors}
+                    defaultInstructorId={defaultInstructorId}
+                    caption={scheduleCaption}
+                    // Expanded by default when nothing is on the books: this
+                    // section is the one place a CFI comes to fix exactly that,
+                    // so hiding the fields behind a button was pure friction.
+                    autoOpen={!brief.upcomingReservation}
+                  />
                 </div>
               ) : null}
             </div>
           ) : null}
 
           <div className="border-t border-hairline pt-3">
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">What to work on</p>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">Next lesson objectives</p>
             {brief.focusAreas.length > 0 ? (
               <ol className="flex flex-col gap-1.5">
                 {brief.focusAreas.map((f, i) => (
@@ -321,7 +351,7 @@ export async function StudentTrainingDetail({
                 read-only with no visible way to change it. */}
             {handoffHref ? (
               <Link href={handoffHref} className="mt-2 inline-block text-sm font-medium text-brand hover:underline">
-                {brief.focusAreas.length > 0 ? "Edit what to work on" : "Set what to work on"} →
+                {brief.focusAreas.length > 0 ? "Edit objectives" : "Set objectives"} →
               </Link>
             ) : null}
           </div>
