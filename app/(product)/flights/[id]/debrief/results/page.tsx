@@ -112,29 +112,21 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
         canDismiss={canDismiss}
       />
 
-      {/* Both destinations are role-aware. "/dashboard" is the STUDENT flights
-          list -- sending a CFI there dropped them somewhere that isn't their
-          home at all, under a label ("Dashboard") that doesn't match what
-          either role's nav calls it.
+      {/* One button, not two. The second one pointed at the flights list for
+          a student and Today for a CFI, both of which are already sitting in
+          the nav at the top of the same screen -- a button whose only job is
+          to duplicate a nav item makes the real next step look like one of
+          two equal options.
 
-          Named for where they go, not "Back to": you can reach this page from
+          Named for where it goes, not "Back to": you can reach this page from
           Home, from a link, or straight from finishing a debrief, so claiming
-          to return somewhere is usually wrong. The labels match what each
-          role's nav calls the destination. */}
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Link
-          href={isInstructorViewer ? `/cfi/students/${flight.userId}/handoff` : "/next-lesson"}
-          className={buttonVariants({ size: "lg", className: "w-full sm:flex-1" })}
-        >
-          Go to Next-Lesson Brief
-        </Link>
-        <Link
-          href={isInstructorViewer ? "/cfi/today" : "/dashboard"}
-          className={buttonVariants({ size: "lg", variant: "outline", className: "w-full sm:w-auto" })}
-        >
-          {isInstructorViewer ? "Today" : "All Flights"}
-        </Link>
-      </div>
+          to return somewhere is usually wrong. */}
+      <Link
+        href={isInstructorViewer ? `/cfi/students/${flight.userId}/handoff` : "/next-lesson"}
+        className={buttonVariants({ size: "lg", className: "w-full" })}
+      >
+        Go to Next-Lesson Brief
+      </Link>
     </div>
   );
 }

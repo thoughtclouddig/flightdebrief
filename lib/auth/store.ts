@@ -1,3 +1,4 @@
+import { isSuperadmin } from "@/lib/superadmin";
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 import type { Organization, OrganizationKind, OrganizationMember, OrgRole, User } from "@/lib/types";
@@ -218,6 +219,20 @@ export async function resolveUserOnLogin(claims: SessionClaims): Promise<User | 
       await getDb().query("UPDATE users SET auth_user_id = $1 WHERE id = $2", [claims.sub, byEmail.id]);
       return { ...byEmail, authUserId: claims.sub };
     }
+  }
+
+  // AfterFlight staff: an allow-listed email gets a user row with no
+  // organization membership at all. They aren't a customer, so putting them
+  // in someone's flight school to satisfy a foreign key would be a lie the
+  // rest of the app then has to read. getStaffViewer (lib/auth/staff.ts)
+  // reads these; getViewer deliberately still won't.
+  if (claims.email && isSuperadmin(claims.email)) {
+    const id = `user-${randomUUID()}`;
+    const { rows } = await getDb().query<UserRow>(
+      "INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ($1, $2, $3, $4, true) RETURNING *",
+      [id, claims.name ?? claims.email, claims.email, claims.sub],
+    );
+    return toUser(rows[0]);
   }
 
   // First-ever login bootstraps the app owner as admin. Run under an
