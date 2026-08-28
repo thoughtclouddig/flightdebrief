@@ -27,6 +27,8 @@ export function UserMenu({
   compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  /** Same org twice (an independent CFI's admin + instructor) isn't two organizations. */
+  const distinctOrgCount = new Set(memberships.map((m) => m.organizationId)).size;
   const [signingOut, setSigningOut] = useState(false);
   const [switching, setSwitching] = useState<string | null>(null);
 
@@ -75,7 +77,7 @@ export function UserMenu({
       {open ? (
         <>
           <button aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-40 mt-2 w-48 overflow-hidden rounded-xl border border-hairline bg-surface py-1 shadow-lg">
+          <div className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-xl border border-hairline bg-surface py-1 shadow-lg">
             <div className="px-3 py-2">
               <p className="truncate text-sm font-medium text-foreground">{viewer.user.name}</p>
               <p className="truncate text-xs capitalize text-foreground-faint">{viewer.role}</p>
@@ -83,8 +85,13 @@ export function UserMenu({
 
             {memberships.length > 1 ? (
               <div className="border-t border-hairline py-1">
+                {/* These are memberships, not organizations. An independent CFI
+                    holds two in the SAME org (admin + instructor), so heading
+                    them "Organizations" and printing the org name twice reads
+                    as two businesses. Only call it that when they really are
+                    different orgs -- otherwise it's a role switch. */}
                 <p className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-foreground-faint">
-                  Organizations
+                  {distinctOrgCount > 1 ? "Organizations" : "Switch role"}
                 </p>
                 {memberships.map((m) => {
                   const isCurrent = m.organizationId === viewer.organization.id && m.role === viewer.role;
@@ -98,11 +105,14 @@ export function UserMenu({
                         isCurrent ? "bg-brand/5" : "text-foreground-soft",
                       )}
                     >
-                      <span className={cn("truncate", isCurrent && "font-medium text-foreground")}>
-                        {m.organizationName}
+                      {/* w-full so truncate has a width to work against -- without
+                          it the name just overflowed and got clipped by the
+                          menu's overflow-hidden. */}
+                      <span className={cn("w-full truncate", isCurrent && "font-medium text-foreground")}>
+                        {distinctOrgCount > 1 ? m.organizationName : ROLE_LABELS[m.role]}
                       </span>
-                      <span className="text-xs text-foreground-faint">
-                        {ROLE_LABELS[m.role]}
+                      <span className="w-full truncate text-xs text-foreground-faint">
+                        {distinctOrgCount > 1 ? ROLE_LABELS[m.role] : m.organizationName}
                         {isCurrent ? " · current" : ""}
                       </span>
                     </button>
