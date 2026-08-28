@@ -35,18 +35,45 @@ function Paragraphs({ text, className }: { text: string; className?: string }) {
   );
 }
 
-export function ArticleBody({ body, plainText }: { body: ArticleBodyShape | null; plainText: string }) {
+export function ArticleBody({
+  body,
+  plainText,
+  hero,
+}: {
+  body: ArticleBodyShape | null;
+  plainText: string;
+  /** Rendered after the lead answer -- see the note at its usage below. */
+  hero?: React.ReactNode;
+}) {
   if (!hasStructuredBody(body)) {
-    return <Paragraphs text={plainText} />;
+    // Nothing to lead with, so the image goes back to the top where it's the
+    // only thing giving the page a shape.
+    return (
+      <div className="flex flex-col gap-8">
+        {hero}
+        <Paragraphs text={plainText} />
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col gap-10">
-      {/* The lead answer. Set larger and in full-strength ink because it's the
+      {/* The lead answer. Set large and in full-strength ink because it's the
           passage an answer engine lifts, and the one a reader who bounces
-          after ten seconds actually reads. Not a pull-quote -- no rule, no
-          tint; the size does the work. */}
-      <p className={`text-pretty text-xl leading-[1.6] text-[#101727] ${MEASURE}`}>{body.answer}</p>
+          after ten seconds actually reads.
+          No panel or tint: a boxed answer looks deliberate on one article and
+          like a template on a hundred. A single brand rule and the size carry
+          it. */}
+      <p
+        className={`border-t-[3px] border-brand pt-6 text-pretty text-[23px] font-medium leading-[1.5] text-[#101727] ${MEASURE}`}
+      >
+        {body.answer}
+      </p>
+
+      {/* Hero sits after the answer, not above it. Putting it first pushes the
+          answer below the fold on a phone, which is the one thing this layout
+          exists to prevent. */}
+      {hero}
 
       {body.keyFacts.length > 0 ? (
         <div className={`rounded-lg border border-[#e4e7ea] bg-[#fafafb] px-6 py-5 ${MEASURE}`}>

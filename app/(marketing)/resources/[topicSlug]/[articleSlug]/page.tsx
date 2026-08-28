@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { ArticleBody } from "@/components/marketing/article-body";
+import { ArticleCta } from "@/components/marketing/article-cta";
 import { Reveal } from "@/components/marketing/reveal";
 import { getRepository } from "@/lib/data";
 import { appOrigin } from "@/lib/email";
@@ -151,21 +152,26 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
           </div>
         </Reveal>
 
-        {article.imageUrl ? (
-          <Reveal delay={80}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs; next/image can't optimize data: URLs */}
-            <img
-              src={article.imageUrl}
-              alt=""
-              className="mt-8 aspect-[16/9] w-full rounded-2xl object-cover shadow-sm"
-            />
-          </Reveal>
-        ) : null}
+
       </div>
 
       <div className="mx-auto max-w-3xl">
         <Reveal delay={100} className="mt-10">
-          <ArticleBody body={article.bodyBlocks} plainText={article.body} />
+          <ArticleBody
+            body={article.bodyBlocks}
+            plainText={article.body}
+            hero={
+              article.imageUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs; next/image can't optimize data: URLs */
+                <img
+                  src={article.imageUrl}
+                  alt=""
+                  className="aspect-[16/9] w-full rounded-lg object-cover"
+                />
+              ) : null
+            }
+          />
+          <ArticleCta topicSlug={topic?.slug ?? null} />
         </Reveal>
 
         {article.sources.length ? (
