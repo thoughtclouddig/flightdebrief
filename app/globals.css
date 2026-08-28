@@ -156,6 +156,39 @@
 }
 
 /*
+ * Zero orphans, enforced once rather than per-string.
+ *
+ * text-wrap: pretty tells the browser to avoid leaving a single word alone on
+ * the last line -- it reflows the preceding line to pull a word down, which
+ * is exactly the "start." / "anything." dangling-word problem, and it does it
+ * at every viewport width instead of only the ones anyone happened to test.
+ * Headings get `balance` instead, which evens out line lengths across the
+ * whole block -- the right behavior for short, large type.
+ *
+ * Both degrade silently to normal wrapping on browsers that don't support
+ * them, so this is never worse than the previous behavior. Element selectors
+ * on purpose: any Tailwind text-balance/text-pretty utility still wins on a
+ * specific element, since a class outranks a bare tag.
+ */
+p,
+li,
+dd,
+figcaption,
+blockquote,
+label {
+  text-wrap: pretty;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+/*
  * iOS Safari auto-zooms the viewport whenever a focused form control's
  * font-size is under 16px, and it does NOT zoom back out on blur -- which is
  * the "it zooms in and then the page slides around left to right" behavior
