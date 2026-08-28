@@ -54,26 +54,38 @@ describe.skipIf(!KEY)("Deepgram TTS against the live API", () => {
   }, 120_000);
 
   it("synthesizes a script well past the 2000-char limit and joins it", async () => {
-    // The templated fallback branch: no word budget, grows with how many
-    // action items and references the debrief produced. This is the shape
-    // that was returning 413.
+    // The templated fallback branch. Most of it is already bounded --
+    // needsWork and actionItems use only [0], and studyReferences collapses to
+    // one fixed sentence no matter how many there are. The parts that actually
+    // grow without limit are whatWeDid, wentWell, and above all
+    // instructorGuidance, which emits every quote verbatim. So that's what a
+    // worst case has to load up; padding the capped fields does nothing.
     const script = buildDebriefNarration({
       studentFirstName: "Danny",
       instructorFirstName: "Maria",
-      whatWeDid: ["Normal takeoffs", "Short field takeoffs", "Soft field takeoffs", "Go-arounds", "Radio communications"],
-      wentWell: Array.from({ length: 6 }, (_, i) => `Held the centerline through the rollout on circuit ${i + 1}`),
-      needsWork: Array.from({ length: 6 }, (_, i) => `Round-out timing on the flare, attempt ${i + 1}, still ballooning slightly`),
-      instructorGuidance: Array.from({ length: 5 }, (_, i) => ({
+      whatWeDid: [
+        "Normal takeoffs and landings", "Short field takeoffs", "Soft field landings",
+        "Go-arounds from short final", "Radio communications in the pattern",
+        "Slow flight", "Power-off stalls", "Steep turns",
+      ],
+      wentWell: Array.from({ length: 8 }, (_, i) =>
+        `you held the centerline through the rollout on circuit ${i + 1} without over-controlling the rudder`),
+      needsWork: ["round-out timing on the flare, where you're still ballooning slightly"],
+      instructorGuidance: Array.from({ length: 14 }, (_, i) => ({
         instructorName: "Maria",
-        quote: `Keep that nose on the horizon as we turn, and let the airplane settle before you add anything, call ${i + 1}`,
+        quote:
+          `Keep that nose on the horizon as we come around, and let the airplane settle before you add ` +
+          `anything else -- you're fixing the picture before it's had a chance to develop, call ${i + 1}.`,
       })),
-      actionItems: Array.from({ length: 8 }, (_, i) => `Practice holding target approach speed through short final, item ${i + 1}`),
-      studyReferences: Array.from({ length: 5 }, (_, i) => ({
-        topic: `Takeoffs and landings, part ${i + 1}`,
-        source: "Airplane Flying Handbook Chapter 9",
-        url: "https://www.faa.gov/training_testing/testing/acs",
-        why: "Covers the round-out and flare sequence.",
-      })),
+      actionItems: ["holding your target approach speed all the way through short final"],
+      studyReferences: [
+        {
+          topic: "Takeoffs and landings",
+          source: "Airplane Flying Handbook Chapter 9",
+          url: "https://www.faa.gov/training_testing/testing/acs",
+          why: "Covers the round-out and flare sequence.",
+        },
+      ],
     });
 
     const chunks = splitForTts(script);
@@ -84,7 +96,7 @@ describe.skipIf(!KEY)("Deepgram TTS against the live API", () => {
     expect(chunks.length).toBeGreaterThan(1);
     for (const chunk of chunks) expect(chunk.length).toBeLessThanOrEqual(1800);
 
-    // The whole point: this exact input used to 413.
+    // The whole point: a script this size used to come back 413.
     const audio = await synthesizeSpeech(script, KEY!, null);
     expect(audio.byteLength).toBeGreaterThan(50_000);
 
