@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AfterFlight — 60s Ad Brief</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100,400..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#101727; --body:#68717D; --faint:#8c97a2;
+    --bg:#ffffff; --alt-bg:#f4f5f6; --brand:#f07621; --brand-dark:#c05a17;
+    --border:#e2e6ea; --good:#16803d; --amber:#b45309; --danger:#c0362b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Archivo',sans-serif; color:var(--ink); background:var(--bg);
+    line-height:1.5;
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:0 24px;}
+  .font-display{font-stretch:125%; letter-spacing:-0.02em;}
+  h1,h2,h3{font-family:'Archivo',sans-serif;}
+  h1{font-size:clamp(2rem,4vw,3rem); font-weight:800; margin:0 0 8px;}
+  h2{font-size:1.8rem; font-weight:800; margin:0 0 4px;}
+  .eyebrow{font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.16em; color:var(--brand); margin-bottom:6px;}
+  .sub{color:var(--body); font-size:1rem; max-width:640px;}
+
+  header.hero{
+    padding:56px 0 40px; border-bottom:1px solid var(--border);
+  }
+
+  nav.progress{
+    position:sticky; top:0; z-index:20; background:rgba(255,255,255,.92); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--border); padding:12px 0;
+  }
+  nav.progress .wrap{display:flex; gap:4px; flex-wrap:wrap; align-items:center;}
+  nav.progress a{
+    font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--faint); text-decoration:none; padding:6px 10px; border-radius:99px; border:1px solid transparent;
+  }
+  nav.progress a.done{color:var(--good); background:#16803d1a;}
+  nav.progress a.live{color:var(--brand); background:#f076211a; border-color:var(--brand);}
+  nav.progress a.todo{color:var(--faint);}
+  nav.progress span.sep{color:var(--border);}
+
+  section{padding:48px 0;}
+  section.alt{background:var(--alt-bg);}
+  section.dark{
+    background:#101727; color:#fff; position:relative; overflow:hidden;
+  }
+  section.dark .radial{
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at center, #171f33 0%, #0c1220 75%);
+  }
+  section.dark .wrap{position:relative;}
+  section.dark .sub{color:#c3c9d4;}
+
+  .badge{
+    display:inline-block; font-size:.68rem; font-weight:800; text-transform:uppercase;
+    letter-spacing:.1em; padding:3px 10px; border-radius:99px; margin-left:10px; vertical-align:middle;
+  }
+  .badge.locked{background:#16803d1a; color:var(--good);}
+  .badge.live{background:#f076211a; color:var(--brand);}
+
+  .swatches{display:flex; gap:10px; flex-wrap:wrap; margin:18px 0;}
+  .swatch{width:120px; border-radius:12px; overflow:hidden; border:1px solid var(--border); background:#fff;}
+  .swatch .chip{height:56px;}
+  .swatch .label{padding:8px 10px; font-size:.68rem;}
+  .swatch .label b{display:block; font-size:.75rem;}
+  .swatch .label span{color:var(--faint);}
+
+  .motif-note{
+    display:flex; gap:16px; align-items:center; background:#fff; border:1px solid var(--border);
+    border-radius:14px; padding:16px 20px; margin-top:16px;
+  }
+  .ring{width:56px;height:56px;border-radius:50%;border:6px solid #e2e6ea;border-top-color:var(--brand);border-right-color:var(--brand);flex:none;}
+
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-top:20px;}
+  .card{
+    background:#fff; border:1px solid var(--border); border-radius:14px; padding:18px 20px;
+    position:relative;
+  }
+  .card.pick{border-color:var(--brand); box-shadow:0 0 0 1px var(--brand), 0 8px 24px #f0762126;}
+  .card h3{font-size:1.05rem; margin:0 0 6px; text-transform:none;}
+  .card p{font-size:.85rem; color:var(--body); margin:6px 0;}
+  .card p b{color:var(--ink);}
+  .card .tag{
+    display:inline-block; font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em;
+    color:#fff; background:var(--brand); border-radius:6px; padding:3px 8px; margin-bottom:10px;
+  }
+  .card.dim{opacity:.55; filter:grayscale(.4);}
+  .card.dim:hover{opacity:.9; filter:grayscale(0); transition:.2s;}
+  .why{
+    margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); font-size:.82rem;
+  }
+  .why b{color:var(--brand);}
+
+  .spine{background:#fff; border:1px solid var(--border); border-radius:14px; padding:18px 20px; margin-top:16px;}
+  .spine ol{margin:8px 0 0; padding-left:20px; font-size:.88rem; color:var(--ink);}
+  .spine li{margin-bottom:6px;}
+
+  .footer-note{
+    margin-top:22px; padding:14px 18px; border:1px dashed var(--faint); border-radius:12px;
+    font-size:.82rem; color:var(--body); background:#fff;
+  }
+
+  code.line{
+    display:block; background:#101727; color:#e7ebf1; padding:4px 10px; border-radius:6px;
+    font-size:.78rem; margin:4px 0; font-family:ui-monospace,Menlo,monospace;
+  }
+
+  img.zoomable{cursor:zoom-in;}
+  #lightbox{
+    position:fixed; inset:0; background:rgba(8,10,16,.92); display:none; align-items:center; justify-content:center;
+    z-index:999; padding:32px;
+  }
+  #lightbox.open{display:flex;}
+  #lightbox img{max-width:92vw; max-height:92vh; border-radius:8px;}
+
+  @media (prefers-color-scheme: dark){
+    body{background:#0b0d12; color:#e7ebf1;}
+    .card, .swatch, .motif-note, .spine, .footer-note{background:#12141b; border-color:#242832;}
+    section.alt{background:#0f1117;}
+    nav.progress{background:rgba(11,13,18,.9); border-color:#242832;}
+    .sub{color:#a7adb8;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="progress">
+  <div class="wrap">
+    <a href="#research" class="done">1 Research ✓</a><span class="sep">→</span>
+    <a href="#concept" class="done">2 Concept ✓</a><span class="sep">→</span>
+    <a href="#casting" class="done">3 Casting ✓</a><span class="sep">→</span>
+    <a href="#dna" class="done">4 Visual DNA ✓</a><span class="sep">→</span>
+    <a href="#storyboard" class="done">5 Storyboard ✓</a><span class="sep">→</span>
+    <a href="#final" class="live">6 Final 60s film</a>
+  </div>
+</nav>
+
+<section id="storyboard" class="alt">
+  <div class="wrap">
+    <div class="eyebrow">Phase 5 · Check-in 3<span class="badge locked">LOCKED</span></div>
+    <h2>Storyboard — 22 shots across 4×15s segments</h2>
+    <p class="sub">Aircraft livery updated mid-shoot to the charcoal/orange "show-plane" look (tail NAV8RX) — every aircraft-visible frame below already reflects it. This is the last gate: after approval, Phase 6 renders four unattended Seedance videos from these boards.</p>
+
+    <h3 style="margin-top:8px;font-size:1rem;text-transform:none;">Segment A · 0:00–0:15 · The Flight → Mental Saturation</h3>
+    <div class="cards">
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">A1</span><img class="zoomable" src="storyboard/A1.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>A1</b> 0:00–0:02 · hand on throttle</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">A2</span><img class="zoomable" src="storyboard/A2.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>A2</b> 0:02–0:04 · eyes scanning instruments</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">A3</span><img class="zoomable" src="storyboard/A3.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>A3</b> 0:04–0:06 · airspeed insert</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">A4</span><img class="zoomable" src="storyboard/A4.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>A4</b> 0:06–0:08 · POV windscreen, Dave gestures</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">A5</span><img class="zoomable" src="storyboard/A5.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>A5</b> 0:08–0:11 · base to final, correction</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">A6</span><img class="zoomable" src="storyboard/A6.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>A6</b> 0:11–0:15 · shutdown, sudden quiet</p></div>
+    </div>
+
+    <h3 style="margin-top:24px;font-size:1rem;text-transform:none;">Segment B · 0:15–0:30 · The Debrief → Problem starts</h3>
+    <div class="cards">
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">B1</span><img class="zoomable" src="storyboard/B1.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>B1</b> 0:15–0:17 · walking in together</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">B2</span><img class="zoomable" src="storyboard/B2.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>B2</b> 0:17–0:19 · water bottle, headset off</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">B3</span><img class="zoomable" src="storyboard/B3.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>B3</b> 0:19–0:23 · 2-shot debrief, no UI yet</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">B4</span><img class="zoomable" src="storyboard/B4.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>B4</b> 0:23–0:26 · CU Mia listening, tired</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">B5</span><img class="zoomable" src="storyboard/B5.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>B5</b> 0:26–0:30 · softening → parking lot</p></div>
+    </div>
+
+    <h3 style="margin-top:24px;font-size:1rem;text-transform:none;">Segment C · 0:30–0:45 · Problem finishes → AfterFlight reveal</h3>
+    <div class="cards">
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">C1</span><img class="zoomable" src="storyboard/C1.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>C1</b> 0:30–0:32 · car, beat of stillness</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">C2</span><img class="zoomable" src="storyboard/C2.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>C2</b> 0:32–0:35 · that night, app opens</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">C3</span><img class="zoomable" src="storyboard/C3.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>C3</b> 0:35–0:38 · "what went well / needs work"</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">C4</span><img class="zoomable" src="storyboard/C4.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>C4</b> 0:38–0:41 · progress-over-time chart</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">C5</span><img class="zoomable" src="storyboard/C5.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>C5</b> 0:41–0:45 · relieved, screen-lit face</p></div>
+    </div>
+
+    <h3 style="margin-top:24px;font-size:1rem;text-transform:none;">Segment D · 0:45–1:00 · The Next Flight → Payoff</h3>
+    <div class="cards">
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">D1</span><img class="zoomable" src="storyboard/D1.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>D1</b> 0:45–0:47 · morning ramp approach</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">D2</span><img class="zoomable" src="storyboard/D2.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>D2</b> 0:47–0:50 · "NEXT FLIGHT" card insert</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">D3</span><img class="zoomable" src="storyboard/D3.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>D3</b> 0:50–0:52 · phone away, preflight begins</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">D4</span><img class="zoomable" src="storyboard/D4.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>D4</b> 0:52–0:55 · engine start, 2-shot</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">D5</span><img class="zoomable" src="storyboard/D5.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>D5</b> 0:55–0:58 · turn onto runway</p></div>
+      <div class="card" style="position:relative;"><span style="position:absolute;top:8px;left:8px;z-index:2;background:var(--brand);color:#fff;font-weight:800;font-size:.72rem;padding:2px 8px;border-radius:6px;letter-spacing:.03em;">D6</span><img class="zoomable" src="storyboard/D6.png" style="width:100%;border-radius:8px;margin-bottom:6px;"><p><b>D6</b> 0:58–1:00 · climb into morning light → logo card</p></div>
+    </div>
+
+    <div class="footer-note">Approved. Full gallery with every revision round: <a href="storyboard-gallery.html" target="_blank">storyboard-gallery.html</a>.</div>
+  </div>
+</section>
+
+<section id="final" class="dark">
+  <div class="radial"></div>
+  <div class="wrap">
+    <div class="eyebrow" style="color:var(--brand)">Phase 6–7<span class="badge locked" style="background:#ffffff22;color:#fff;">COMPLETE</span></div>
+    <h2 class="font-display" style="color:#fff;">The final film — "Every Flight Builds"</h2>
+    <p class="sub" style="max-width:720px;">26 individually-rendered Seedance clips (one per shot, plus added cutaways for workload/coaching and a two-part touchdown), each anchored to its own approved storyboard frame for maximum control, trimmed to its intended beat length and concatenated into one continuous ~65-second film, scored with an original instrumental track.</p>
+
+    <video controls preload="metadata" style="width:100%;max-width:900px;border-radius:16px;margin-top:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);" poster="storyboard/A1.png?v=13">
+      <source src="ad-final.mp4" type="video/mp4">
+    </video>
+
+    <div class="spine" style="margin-top:28px;background:#12141b;border-color:#2a2f3b;">
+      <b style="color:#fff;">Music prompt (Sonilo Music, 60s instrumental):</b>
+      <p style="color:#c3c9d4;font-size:.85rem;white-space:pre-line;margin-top:8px;">Minimal cinematic score tracking the arc: tense propulsive pulse (0:00–0:15) → warm intimate piano/strings that thin out at the parking-lot beat (0:15–0:30) → a clean hopeful motif entering at the AfterFlight reveal (0:30–0:45) → full warm strings swelling to a settled final chord under the logo card (0:45–1:00). Full text: <code>music-prompt.txt</code>.</p>
+    </div>
+
+    <div class="footer-note" style="background:#12141b;border-color:#3a3f4b;color:#c3c9d4;">
+      Deliverables: <code>ad-final.mp4</code> (~65s, scored) · <code>clips/</code> (26 individual shot renders) · <code>clips/trimmed/</code> (trimmed-to-length, concat-ready) ·
+      <code>storyboard/</code> (22 approved frames) · <code>research.md</code>, <code>concepts.md</code>, <code>dna.md</code>, <code>shotlist.md</code>, <code>music-prompt.txt</code>.
+    </div>
+  </div>
+</section>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Ad Studio — Living Brief</div>
+    <h1 class="font-display">AfterFlight · 60-second product overview</h1>
+    <p class="sub">Chained from 4×15s segments, one concept, one hero, one visual DNA, so it plays as a single continuous film — built from <code>public/images/marketing/score-phone-hangar.webp</code>.</p>
+  </div>
+</header>
+
+<section id="research">
+  <div class="wrap">
+    <div class="eyebrow">Phase 1<span class="badge locked">LOCKED</span></div>
+    <h2>Research summary</h2>
+    <p class="sub">Full detail in <code>research.md</code>. Design system below is sampled directly from the product photo, not brand-guideline memory.</p>
+
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:#101727"></div><div class="label"><b>#101727</b><span>Ink / dominant dark</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#000000"></div><div class="label"><b>#000000</b><span>Phone-screen black</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#907860"></div><div class="label"><b>#907860</b><span>Warm hangar/skin mid-tone</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#f07621"></div><div class="label"><b>#f07621</b><span>Accent — small area, only saturated color</span></div></div>
+      <div class="swatch"><div class="chip" style="background:#f4f5f6"></div><div class="label"><b>#f4f5f6</b><span>Alt section bg</span></div></div>
+    </div>
+
+    <div class="motif-note">
+      <div class="ring"></div>
+      <div>
+        <b>Motif: the closing flight-score ring.</b> Sampled straight off the product screen in the source photo — this is the one shape AfterFlight visually owns, reused site-wide as a section divider/accent and here as the ad's through-line device.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="concept" class="alt">
+  <div class="wrap">
+    <div class="eyebrow">Phase 2 · Check-in 1<span class="badge locked">LOCKED — user-authored</span></div>
+    <h2>Concept: "Every Flight Builds"</h2>
+    <p class="sub">The user wrote the concept directly, superseding the studio's shortlist. Core insight: the emotional center isn't "CFIs don't debrief well" — it's what happens to a student's brain after a demanding training flight. You land mentally saturated at the exact moment you're given the most valuable feedback of the lesson. <b>The flight pushes you. The debrief makes sense of it. AfterFlight makes sure it stays with you.</b></p>
+
+    <div class="cards">
+      <div class="card pick">
+        <span class="tag">Locked</span>
+        <h3>Full timed script</h3>
+        <p><b>0:00–0:08 The Flight</b> — visceral cockpit shots, workload, quick handheld cuts.</p>
+        <p><b>0:08–0:16 Mental Saturation</b> — landing, taxi, engine shutdown, sudden quiet on the student's face.</p>
+        <p><b>0:16–0:26 The Debrief</b> — inside together, headset off, a genuinely good conversation.</p>
+        <p><b>0:26–0:33 The Problem</b> — instructor's voice softens under the music; parking lot, already forgetting.</p>
+        <p><b>0:33–0:45 AfterFlight</b> — enters at the midpoint, UI woven into the story, not a demo insert.</p>
+        <p><b>0:45–0:54 The Next Flight</b> — morning light, phone glance, three focus items, purposeful energy.</p>
+        <p><b>0:54–1:00 Payoff</b> — engine start, climb into morning light, logo, "Every flight builds on the one before it."</p>
+      </div>
+    </div>
+
+    <div class="spine">
+      <b>Concept spine — non-negotiable in every frame:</b>
+      <ol>
+        <li>The CFI reads as excellent and engaged, never rushed or negligent — that contrast is what makes the memory-saturation insight land.</li>
+        <li>AfterFlight's product/UI does not appear before ~0:33 — the first half is pure recognition, no branding.</li>
+        <li>No talking-head testimonials, no conventional screen-recording demo insert — UI beats are woven into the story's own camera language.</li>
+        <li>One consistent student + one consistent CFI throughout — same two people, same wardrobe, same aircraft.</li>
+        <li>Warm → cool → warm light arc: workload tension → quiet lamp-lit debrief → morning golden hour for the next flight and payoff.</li>
+      </ol>
+    </div>
+
+    <div class="footer-note">Render segmentation for the 4×15s pipeline: <b>A</b> 0:00–0:15 (Flight → Saturation) · <b>B</b> 0:15–0:30 (Debrief → Problem starts) · <b>C</b> 0:30–0:45 (Problem finish → AfterFlight reveal) · <b>D</b> 0:45–0:60 (Next Flight → Payoff).</div>
+
+    <div class="cards" style="margin-top:20px;">
+      <div class="card dim">
+        <span class="tag">Not chosen</span>
+        <h3>Ten Minutes Back <span style="font-weight:400;color:var(--faint)">(studio's original rec.)</span></h3>
+        <p>Multi-setting, rushed-debrief angle — superseded because making the CFI look rushed undercuts the real insight (it's memory, not negligence).</p>
+      </div>
+      <div class="card dim">
+        <span class="tag">Not chosen</span>
+        <h3>The Debrief Chain</h3>
+        <p>Single relationship to a checkride pass — thin on the flight-school angle.</p>
+      </div>
+      <div class="card dim">
+        <span class="tag">Not chosen</span>
+        <h3>Every Flight Makes You Better</h3>
+        <p>Closest in spirit, but single-buyer and without the "product enters at the midpoint" structure.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="casting">
+  <div class="wrap">
+    <div class="eyebrow">Phase 3 · Check-in 2<span class="badge locked">LOCKED</span></div>
+    <h2>Hero casting</h2>
+    <p class="sub">One student, one CFI, one exact aircraft — locked with verbatim consistency tokens pasted into every prompt. Hero reference: AfterFlight's own <code>debrief-lounge-screen.webp</code>.</p>
+
+    <div class="spine">
+      <b>Consistency tokens (verbatim, every prompt):</b>
+      <code class="line">Student "Mia": woman, mid-20s, athletic build, light olive skin, dark brown hair in a low ponytail, small stud earrings, navy quarter-zip fleece pullover, no visible logo, calm focused expression</code>
+      <code class="line">CFI "Dave": man, mid-50s, fit build, light skin, short salt-and-pepper hair, clean-shaven, navy polo with small orange-and-white AfterFlight wordmark on left chest, plain wristwatch, warm engaged expression</code>
+      <code class="line">Aircraft: the Cirrus TRAC — cuffed NASA wing, wingtip halo lighting, matte charcoal-gray body with a sharp angular orange (#f07621) sweep and pinstripe, AfterFlight triangle logomark on the tail fin, tail number NAV8RX, Perspective Touch+ by Garmin glass panel, side-stick controls, CAPS handle overhead</code>
+    </div>
+
+    <h3 style="margin-top:24px;font-size:1rem;text-transform:none;">Aircraft — canonical reference (real Cirrus TRAC, custom AfterFlight show livery)</h3>
+    <div class="cards">
+      <div class="card pick"><img class="zoomable" src="casting/aircraft-exterior-canonical.png" style="width:100%;border-radius:8px;margin-bottom:8px;"><p><b>Exterior — NAV8RX.</b> Charcoal body, angular orange sweep, cuffed wing, wingtip halo lights, AfterFlight tail logo.</p></div>
+      <div class="card pick"><img class="zoomable" src="casting/aircraft-interior-canonical.png" style="width:100%;border-radius:8px;margin-bottom:8px;"><p><b>Interior.</b> Perspective Touch+ glass panel, side-stick controls (not a center yoke), CAPS handle.</p></div>
+    </div>
+
+    <h3 style="margin-top:24px;font-size:1rem;text-transform:none;">Mood board — world &amp; light</h3>
+    <div class="cards">
+      <div class="card"><img class="zoomable" src="moodboard/01-cockpit.png" style="width:100%;border-radius:8px;margin-bottom:8px;"><p><b>Cockpit workload</b> — golden afternoon light, correct TRAC panel + side stick.</p></div>
+      <div class="card"><img class="zoomable" src="moodboard/02-lounge.png" style="width:100%;border-radius:8px;margin-bottom:8px;"><p><b>Hangar lounge debrief</b> — warm lamp light, wall screen glow.</p></div>
+      <div class="card"><img class="zoomable" src="moodboard/03-ramp.png" style="width:100%;border-radius:8px;margin-bottom:8px;"><p><b>Golden-hour ramp</b> — sunrise, next-flight energy.</p></div>
+    </div>
+
+    <h3 style="margin-top:24px;font-size:1rem;text-transform:none;">Hero takes — Mia &amp; Dave together</h3>
+    <div class="cards">
+      <div class="card pick"><img class="zoomable" src="casting/take-cockpit.png" style="width:100%;border-radius:8px;margin-bottom:8px;"><p><b>Take 1 — Cockpit.</b> Dave gesturing outside, Mia scanning instruments.</p></div>
+      <div class="card pick"><img class="zoomable" src="casting/take-debrief.png" style="width:100%;border-radius:8px;margin-bottom:8px;"><p><b>Take 2 — Debrief.</b> Tablet in Dave's hands, wall screen glowing behind them.</p></div>
+      <div class="card pick"><img class="zoomable" src="casting/take-nextflight.png" style="width:100%;border-radius:8px;margin-bottom:8px;"><p><b>Take 3 — Next Flight.</b> Morning ramp, Mia glancing at her phone, Dave approaching.</p></div>
+    </div>
+
+    <div class="footer-note">Approved. Note: the two hero takes above still show the earlier navy-stripe airframe — the storyboard phase will re-render every aircraft-visible frame against the corrected orange-and-tail-logo canonical reference above so the final film is consistent.</div>
+  </div>
+</section>
+
+<section id="dna" class="alt">
+  <div class="wrap">
+    <div class="eyebrow">Phase 4<span class="badge locked">LOCKED</span></div>
+    <h2>Visual DNA</h2>
+    <p class="sub">Six verbatim lines appended to every prompt from here on, alongside the concept spine.</p>
+    <div class="spine">
+      <code class="line">1. Lighting: warm golden-hour and lamp-lit practical light, soft window bounce, warm-to-cool-to-warm arc across the film</code>
+      <code class="line">2. Palette: navy and near-black ink, warm wood and skin mid-tones, a single desaturated orange accent reserved for the AfterFlight mark only</code>
+      <code class="line">3. Capture: shot on a full-frame digital cinema camera, 35mm and 50mm prime lenses, slightly handheld documentary framing</code>
+      <code class="line">4. Depth of field: shallow depth of field at f/1.8-f/2.8, soft falloff isolating faces and hands</code>
+      <code class="line">5. Composition: intimate coverage — over-the-shoulder, medium close-up, rack focus; no static wide tripod shots</code>
+      <code class="line">6. Authenticity: subtle 35mm film grain, gentle halation, natural skin texture, slight lens breathing, imperfect handheld micro-shake, no plastic AI-smooth skin</code>
+    </div>
+  </div>
+</section>
+
+<div id="lightbox" onclick="this.classList.remove('open')"><img id="lightbox-img" src=""></div>
+<script>
+  document.addEventListener('click', e=>{
+    if(e.target.tagName==='IMG' && e.target.classList.contains('zoomable')){
+      document.getElementById('lightbox-img').src = e.target.src;
+      document.getElementById('lightbox').classList.add('open');
+    }
+  });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.getElementById('lightbox').classList.remove('open'); });
+</script>
+</body>
+</html>

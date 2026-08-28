@@ -1,0 +1,27 @@
+AfterFlight — "Every Flight Builds" — 60-second score
+
+Instrumental only. Minimal cinematic score, tracking the film's arc exactly:
+
+0:00–0:15 (The Flight → Mental Saturation) — tense, propulsive: sparse low pulse,
+subtle ticking/percussive texture under a single held string note, workload energy
+without melody. Cuts to near-silence at the engine shutdown (0:11–0:15), leaving
+just air and a soft sustained pad — the sudden quiet after the noise.
+
+0:15–0:30 (The Debrief → Problem starts) — warm, intimate: soft piano and warm
+strings enter quietly, a real human conversation, unhurried. Around 0:26–0:30 the
+warmth thins out and the music drops in volume and density as the parking-lot
+beat lands — sparse, a little hollow, mirroring "already starting to forget."
+
+0:30–0:45 (Problem finishes → AfterFlight reveal) — the score opens up here: at
+0:33 (the app appears) a clean, hopeful piano/synth motif enters, gentle and
+clear — the emotional turn. Builds steadily through the interface beats to 0:45.
+
+0:45–1:00 (Next Flight → Payoff) — warmest and fullest: strings swell under the
+piano motif, confident and forward-moving, peaking on the runway turn (0:55) and
+resolving into a clean, settled final chord under the AfterFlight logo card
+(0:58–1:00) — clarity and quiet confidence, not triumphant or bombastic.
+
+Genre/instrumentation: modern cinematic minimalism — solo piano, warm string
+section, sparse synth pad, light percussion texture only in the tension section.
+No drums/beat-driven sections. No vocals. Tempo: rubato/free in 0:00–0:30,
+settling into a gentle, steady pulse (~70–80 BPM feel) from 0:33 onward.

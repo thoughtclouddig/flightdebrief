@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/marketing/reveal";
+import { ResourceIndex, type ResourceCard } from "@/components/marketing/resource-index";
 import { getRepository } from "@/lib/data";
+import { heroImageSrc } from "@/lib/content/images";
+import { toPlainText } from "@/lib/content/article-body";
 import { appOrigin } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -23,71 +26,61 @@ export default async function ResourcesHubPage() {
     repo.listResourceTopics(),
     repo.listArticles({ status: "published" }),
   ]);
+  const topicById = new Map(topics.map((t) => [t.id, t]));
+
+  const cards: ResourceCard[] = articles.map((article) => {
+    const topic = article.topicId ? topicById.get(article.topicId) ?? null : null;
+    return {
+      id: article.id,
+      href: `/resources/${topic?.slug ?? "afterflight"}/${article.slug}`,
+      title: article.title,
+      dek: article.dek,
+      topicId: article.topicId,
+      topicName: topic?.name ?? null,
+      imageSrc: heroImageSrc("articles", article.id, article.imageUrl),
+      dateLabel: article.publishedAt
+        ? new Date(article.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+        : null,
+      readMinutes: readMinutes(article.bodyBlocks ? toPlainText(article.bodyBlocks) : article.body),
+    };
+  });
 
   return (
-    <section className="bg-white px-6 pb-20 pt-32 sm:pb-28 sm:pt-36">
-      <div className="mx-auto max-w-3xl">
+    <section className="bg-white px-6 pb-24 pt-32 sm:pt-36">
+      <div className="mx-auto max-w-6xl">
         <Reveal>
-          <h1 className="font-display text-balance text-4xl font-bold text-[#101727] sm:text-5xl" style={{ textTransform: "none" }}>
+          <nav aria-label="Breadcrumb" className="text-sm text-[#8c97a2]">
+            <Link href="/" className="hover:text-[#101727]">
+              Home
+            </Link>
+            <span className="px-2" aria-hidden>
+              /
+            </span>
+            <span className="text-[#3f474f]">Resources</span>
+          </nav>
+          <h1
+            className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl"
+            style={{ textTransform: "none" }}
+          >
             Resources
           </h1>
-          <p className="mt-3 text-pretty text-lg leading-relaxed text-[#68717D]">
+          <p className="mt-3 max-w-[62ch] text-pretty text-lg leading-relaxed text-[#68717D]">
             Guidance for student pilots, CFIs, and flight schools -- grounded in how structured debriefing actually
             works.
           </p>
         </Reveal>
 
-        <Reveal delay={100} className="mt-12">
-          <h2 className="font-display text-sm font-bold uppercase tracking-wide text-[#68717D]">Topics</h2>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {topics.map((topic) => (
-              <Link
-                key={topic.id}
-                href={`/resources/${topic.slug}`}
-                className="rounded-xl border border-slate-200 p-4 transition-colors hover:border-brand hover:bg-[#fef4ec]"
-              >
-                <p className="font-display font-bold text-[#101727]">{topic.name}</p>
-                <p className="mt-1 text-sm text-[#68717D]">{topic.description}</p>
-              </Link>
-            ))}
-          </div>
-        </Reveal>
-
-        <Reveal delay={200} className="mt-14">
-          <h2 className="font-display text-sm font-bold uppercase tracking-wide text-[#68717D]">Latest</h2>
-          {articles.length === 0 ? (
-            <p className="mt-4 text-[#68717D]">Nothing published yet -- check back soon.</p>
-          ) : (
-            <ul className="mt-4 flex flex-col gap-6">
-              {articles.map((article) => (
-                <li key={article.id}>
-                  <Link
-                    href={`/resources/${topicSlugFor(topics, article.topicId)}/${article.slug}`}
-                    className="group flex gap-4"
-                  >
-                    {article.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs
-                      <img
-                        src={article.imageUrl}
-                        alt=""
-                        className="aspect-[4/3] w-28 shrink-0 rounded-lg object-cover sm:w-36"
-                      />
-                    ) : null}
-                    <div>
-                      <p className="font-display text-xl font-bold text-[#101727] group-hover:text-brand">{article.title}</p>
-                      {article.dek ? <p className="mt-1 text-[#68717D]">{article.dek}</p> : null}
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Reveal>
+        <ResourceIndex cards={cards} topics={topics.map((t) => ({ id: t.id, name: t.name }))} />
       </div>
     </section>
   );
 }
 
-function topicSlugFor(topics: { id: string; slug: string }[], topicId: string | null): string {
-  return topics.find((t) => t.id === topicId)?.slug ?? "afterflight";
+/**
+ * Reading time at 225 words a minute, the usual figure for adult prose.
+ * Rounded up and floored at one so nothing ever reads "0 min read".
+ */
+function readMinutes(text: string): number {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 225));
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Reveal } from "@/components/marketing/reveal";
 import { getRepository } from "@/lib/data";
+import { heroImageSrc } from "@/lib/content/images";
 import { appOrigin } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -75,10 +76,10 @@ export default async function ResourceTopicPage(props: PageProps<"/resources/[to
               {articles.map((article) => (
                 <li key={article.id}>
                   <Link href={`/resources/${topic.slug}/${article.slug}`} className="group flex gap-4">
-                    {article.imageUrl ? (
+                    {heroImageSrc("articles", article.id, article.imageUrl) ? (
                       // eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs
                       <img
-                        src={article.imageUrl}
+                        src={heroImageSrc("articles", article.id, article.imageUrl)!}
                         alt=""
                         className="aspect-[4/3] w-28 shrink-0 rounded-lg object-cover sm:w-36"
                       />

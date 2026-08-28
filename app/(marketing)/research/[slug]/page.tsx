@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "@/components/marketing/reveal";
 import { getRepository } from "@/lib/data";
+import { heroImageSrc } from "@/lib/content/images";
 import { appOrigin } from "@/lib/email";
 import type { SourceType } from "@/lib/types";
 
@@ -120,10 +121,10 @@ export default async function ResearchReportPage(props: PageProps<"/research/[sl
           </div>
         </Reveal>
 
-        {report.imageUrl ? (
+        {heroImageSrc("research", report.id, report.imageUrl) ? (
           <Reveal delay={80}>
             {/* eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs */}
-            <img src={report.imageUrl} alt="" className="mt-8 aspect-[16/9] w-full rounded-2xl object-cover shadow-sm" />
+            <img src={heroImageSrc("research", report.id, report.imageUrl)!} alt="" className="mt-8 aspect-[16/9] w-full rounded-2xl object-cover shadow-sm" />
           </Reveal>
         ) : null}
       </div>

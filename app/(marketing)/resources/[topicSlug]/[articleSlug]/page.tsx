@@ -7,6 +7,7 @@ import { ArticleBody } from "@/components/marketing/article-body";
 import { ArticleCta } from "@/components/marketing/article-cta";
 import { Reveal } from "@/components/marketing/reveal";
 import { getRepository } from "@/lib/data";
+import { heroImageSrc } from "@/lib/content/images";
 import { appOrigin } from "@/lib/email";
 import type { SourceType } from "@/lib/types";
 
@@ -176,7 +177,7 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
               article.imageUrl ? (
                 /* eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs; next/image can't optimize data: URLs */
                 <img
-                  src={article.imageUrl}
+                  src={heroImageSrc("articles", article.id, article.imageUrl)!}
                   alt=""
                   className="aspect-[16/9] w-full rounded-lg object-cover"
                 />

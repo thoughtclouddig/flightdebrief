@@ -1,9 +1,12 @@
 import OpenAI from "openai";
+import { encodeHeroImage } from "@/lib/content/images";
 
 /**
- * Generates a hero image for an article and returns it as a data: URL --
- * stored directly in articles.image_url, same storage-free pattern as
- * users.avatar_url (no object storage in this app). No mock fallback: if
+ * Generates a hero image for an article and returns it as an AVIF data: URL,
+ * stored directly in articles.image_url (no object storage in this app, same
+ * pattern as users.avatar_url). The generator hands back a ~2MB PNG; AVIF at
+ * the same dimensions is a small fraction of that, which matters because
+ * these are served to every visitor. See lib/content/images.ts. No mock fallback: if
  * OPENAI_API_KEY is unset, callers should treat the article as image-less
  * rather than inventing a placeholder.
  */
@@ -23,5 +26,5 @@ export async function generateArticleImage(input: { title: string; topicName: st
   const b64 = response.data?.[0]?.b64_json;
   if (!b64) throw new Error("OpenAI image response contained no image data");
 
-  return `data:image/png;base64,${b64}`;
+  return encodeHeroImage(Buffer.from(b64, "base64"));
 }

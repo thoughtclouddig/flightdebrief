@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/marketing/reveal";
 import { getRepository } from "@/lib/data";
+import { heroImageSrc } from "@/lib/content/images";
 import { appOrigin } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -48,9 +49,9 @@ export default async function ResearchHubPage() {
                 href={`/research/${report.slug}`}
                 className="flex gap-4 rounded-lg border border-hairline p-5 transition-colors hover:border-brand/40"
               >
-                {report.imageUrl ? (
+                {heroImageSrc("research", report.id, report.imageUrl) ? (
                   // eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs
-                  <img src={report.imageUrl} alt="" className="aspect-[4/3] w-28 shrink-0 rounded-lg object-cover sm:w-36" />
+                  <img src={heroImageSrc("research", report.id, report.imageUrl)!} alt="" className="aspect-[4/3] w-28 shrink-0 rounded-lg object-cover sm:w-36" />
                 ) : null}
                 <div>
                   <p className="font-display text-lg font-bold text-[#101727]">{report.title}</p>
