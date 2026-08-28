@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getRepository } from "@/lib/data";
-import { getStripeClient } from "@/lib/stripe";
+import { planForStripePriceId, getStripeClient } from "@/lib/stripe";
 import type { BillingPlan } from "@/lib/types";
 
 /**
@@ -58,9 +58,19 @@ export async function POST(request: Request) {
         const organizationId = subscription.metadata.organizationId;
         if (!organizationId) break;
 
+        // Plan is derived from the price on the subscription item, not from
+        // metadata: metadata is written once at checkout and a portal-driven
+        // plan switch never updates it, so trusting it here would leave the
+        // billing page showing the old plan while Stripe billed the new one.
+        // An unrecognized price returns null, which leaves the stored plan
+        // untouched rather than clearing it.
+        const priceId = subscription.items.data[0]?.price?.id;
+        const plan = priceId ? planForStripePriceId(priceId) : null;
+
         await repo.updateOrganizationBilling(organizationId, {
           subscriptionStatus: subscription.status,
           subscriptionQuantity: subscription.items.data[0]?.quantity ?? 1,
+          subscriptionPlan: plan ?? undefined,
         });
         break;
       }

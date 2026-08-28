@@ -39,6 +39,31 @@ export function getStripePriceId(plan: BillingPlan, billingPeriod: BillingPeriod
   return priceId;
 }
 
+/**
+ * Reverse of getStripePriceId: which plan a live Stripe price belongs to.
+ *
+ * Needed because a subscription's plan can change after checkout -- a customer
+ * switching plans in the Customer Portal never touches the metadata written at
+ * checkout, so metadata is only trustworthy as the plan at signup. The price on
+ * the subscription item is the actual current truth.
+ *
+ * Returns null for an unrecognized price (an old price id, or one created in
+ * the dashboard without a matching env var) so callers can leave the stored
+ * plan alone rather than overwriting it with a guess.
+ */
+export function planForStripePriceId(priceId: string): BillingPlan | null {
+  const byEnv: Array<[string | undefined, BillingPlan]> = [
+    [process.env.STRIPE_PRICE_PILOT_MONTHLY, "pilot"],
+    [process.env.STRIPE_PRICE_PILOT_ANNUAL, "pilot"],
+    [process.env.STRIPE_PRICE_SCHOOL_MONTHLY, "school_pro"],
+    [process.env.STRIPE_PRICE_SCHOOL_ANNUAL, "school_pro"],
+  ];
+  for (const [configured, plan] of byEnv) {
+    if (configured && configured === priceId) return plan;
+  }
+  return null;
+}
+
 /** App origin for Stripe's success_url/cancel_url and the Customer Portal's return_url -- see lib/email.ts's appOrigin() for the resolution chain. */
 export function getAppBaseUrl(): string {
   return appOrigin() ?? "http://localhost:3000";
