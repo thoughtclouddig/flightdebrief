@@ -1,3 +1,4 @@
+import { isContentPublic } from "@/lib/content/visibility";
 import type { MetadataRoute } from "next";
 import { getRepository } from "@/lib/data";
 import { appOrigin } from "@/lib/email";
@@ -27,6 +28,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${origin}${path}`,
     lastModified: new Date(),
   }));
+
+  // Gated with the pages themselves -- listing URLs that 404 is worse than
+  // listing nothing, and a sitemap is the fastest way to get unfinished
+  // content crawled. See lib/content/visibility.ts.
+  if (!isContentPublic()) return entries;
 
   entries.push({ url: `${origin}/resources`, lastModified: new Date() });
   for (const topic of topics) {

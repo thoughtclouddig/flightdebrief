@@ -1,3 +1,4 @@
+import { isContentPublic } from "@/lib/content/visibility";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -27,6 +28,9 @@ export async function generateMetadata(props: PageProps<"/resources/[topicSlug]"
 }
 
 export default async function ResourceTopicPage(props: PageProps<"/resources/[topicSlug]">) {
+  // Whole content surface is gated until it's ready -- see lib/content/visibility.ts.
+  if (!isContentPublic()) notFound();
+
   const { topicSlug } = await props.params;
   const repo = getRepository();
   const topic = await repo.getResourceTopicBySlug(topicSlug);

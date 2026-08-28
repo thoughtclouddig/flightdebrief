@@ -1,3 +1,5 @@
+import { isContentPublic } from "@/lib/content/visibility";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Reveal } from "@/components/marketing/reveal";
@@ -13,6 +15,9 @@ export const metadata: Metadata = {
 };
 
 export default async function ResearchHubPage() {
+  // Whole content surface is gated until it's ready -- see lib/content/visibility.ts.
+  if (!isContentPublic()) notFound();
+
   const repo = getRepository();
   const reports = await repo.listResearchReports({ status: "published" });
 

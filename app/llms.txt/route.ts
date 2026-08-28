@@ -1,3 +1,4 @@
+import { isContentPublic } from "@/lib/content/visibility";
 import { getRepository } from "@/lib/data";
 import { appOrigin } from "@/lib/email";
 
@@ -59,6 +60,14 @@ export async function GET() {
   push(`- [Enterprise](${origin}/enterprise)`);
   push(`- [Pricing](${origin}/#pricing)`);
   push();
+
+  // Same gate. llms.txt exists to tell models what's worth reading; pointing
+  // them at content that isn't ready is the one thing it must not do.
+  if (!isContentPublic()) {
+    return new Response(lines.join("\n"), {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
 
   push("## Resources");
   push();

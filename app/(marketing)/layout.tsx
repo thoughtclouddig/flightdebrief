@@ -1,9 +1,21 @@
+import { isContentPublic } from "@/lib/content/visibility";
 import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { MarketingNav } from "@/components/marketing/nav";
 import { ReferralTracker } from "@/components/marketing/referral-tracker";
 import { appOrigin } from "@/lib/email";
+
+// The Resources/Research column is added only when the content surface is
+// public -- see lib/content/visibility.ts. Linking to gated pages from the
+// footer of every page would be the most visible possible dead end.
+const CONTENT_COLUMN = {
+  title: "Resources",
+  links: [
+    { href: "/resources", label: "Resources" },
+    { href: "/research", label: "Research" },
+  ],
+};
 
 const FOOTER_COLUMNS = [
   {
@@ -14,13 +26,7 @@ const FOOTER_COLUMNS = [
       { href: "/what-is-afterflight", label: "What Is AfterFlight?" },
     ],
   },
-  {
-    title: "Resources",
-    links: [
-      { href: "/resources", label: "Resources" },
-      { href: "/research", label: "Research" },
-    ],
-  },
+
   {
     title: "Who It's For",
     links: [
@@ -104,6 +110,9 @@ const LIGHT_SCOPE_STYLE = {
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   const origin = appOrigin() ?? "https://getafterflight.com";
+  const footerColumns = isContentPublic()
+    ? [FOOTER_COLUMNS[0], CONTENT_COLUMN, ...FOOTER_COLUMNS.slice(1)]
+    : FOOTER_COLUMNS;
   const siteJsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -150,7 +159,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex flex-wrap gap-x-12 gap-y-8">
-              {FOOTER_COLUMNS.map((column) => (
+              {footerColumns.map((column) => (
                 <div key={column.title}>
                   <p className="text-xs font-bold uppercase tracking-wide text-[#101727]">{column.title}</p>
                   <ul className="mt-3 flex flex-col gap-2">

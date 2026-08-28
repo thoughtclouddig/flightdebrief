@@ -1,3 +1,4 @@
+import { isContentPublic } from "@/lib/content/visibility";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -58,6 +59,9 @@ export async function generateMetadata(props: PageProps<"/research/[slug]">): Pr
 }
 
 export default async function ResearchReportPage(props: PageProps<"/research/[slug]">) {
+  // Whole content surface is gated until it's ready -- see lib/content/visibility.ts.
+  if (!isContentPublic()) notFound();
+
   const { slug } = await props.params;
   const report = await loadReport(slug);
   if (!report) notFound();
