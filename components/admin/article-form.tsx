@@ -58,7 +58,7 @@ export function ArticleForm({ topics, article }: { topics: ResourceTopic[]; arti
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-hairline bg-surface p-5">
+    <div className="flex flex-col gap-4 rounded-lg border border-hairline bg-surface p-5">
       {error ? <p className="text-sm text-danger">{error}</p> : null}
 
       <div>

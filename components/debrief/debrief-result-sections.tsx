@@ -141,7 +141,7 @@ export function DebriefResultSections({
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               {result.instructorGuidance.map((g, i) => (
-                <blockquote key={i} className="rounded-xl bg-amber-soft px-4 py-3 text-foreground-soft">
+                <blockquote key={i} className="rounded-lg bg-amber-soft px-4 py-3 text-foreground-soft">
                   <p className="text-xs font-semibold uppercase tracking-wide text-amber-ink">{g.instructorName} said</p>
                   <p className="mt-1 italic">&ldquo;{g.quote}&rdquo;</p>
                 </blockquote>

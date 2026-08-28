@@ -90,7 +90,7 @@ export function InviteStudentForm({ instructors }: { instructors: InstructorOpti
               id="student-cfi"
               value={primaryInstructorId}
               onChange={(e) => setPrimaryInstructorId(e.target.value)}
-              className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
+              className="mt-1.5 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
             >
               {instructors.map((i) => (
                 <option key={i.id} value={i.id}>

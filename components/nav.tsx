@@ -156,7 +156,7 @@ function MobileNavOverflow({ items, active }: { items: NavItem[]; active: boolea
             className="fixed inset-0 z-30 cursor-default"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute bottom-full left-0 right-0 z-40 mb-2 overflow-hidden rounded-xl border border-hairline bg-surface py-1 shadow-lg">
+          <div className="absolute bottom-full left-0 right-0 z-40 mb-2 overflow-hidden rounded-lg border border-hairline bg-surface py-1 shadow-lg">
             {items.map((item) => {
               const Icon = item.icon;
               return (
@@ -205,7 +205,7 @@ function NavOverflowMenu({
       {open ? (
         <>
           <button aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-40 mt-2 w-44 overflow-hidden rounded-xl border border-hairline bg-surface py-1 shadow-lg">
+          <div className="absolute right-0 z-40 mt-2 w-44 overflow-hidden rounded-lg border border-hairline bg-surface py-1 shadow-lg">
             {items.map((item) => (
               <Link
                 key={item.href}

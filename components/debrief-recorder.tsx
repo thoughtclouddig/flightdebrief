@@ -125,7 +125,7 @@ export function DebriefRecorder({ flightId, solo = false }: { flightId: string; 
       {/* Fixed height, scrolled to the end: previously min-h with no max, so
           this grew for as long as you talked and walked the Finish button down
           the page. The last few lines are the only ones anyone reads. */}
-      <div className="flex h-32 flex-col-reverse overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200">
+      <div className="flex h-32 flex-col-reverse overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200">
         {transcription.transcript || transcription.interimTranscript ? (
           <p className="leading-relaxed">
             {transcription.transcript}{" "}

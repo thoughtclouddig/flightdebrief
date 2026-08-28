@@ -77,7 +77,7 @@ export function UserMenu({
       {open ? (
         <>
           <button aria-label="Close" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-xl border border-hairline bg-surface py-1 shadow-lg">
+          <div className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-lg border border-hairline bg-surface py-1 shadow-lg">
             <div className="px-3 py-2">
               <p className="truncate text-sm font-medium text-foreground">{viewer.user.name}</p>
               <p className="truncate text-xs capitalize text-foreground-faint">{viewer.role}</p>

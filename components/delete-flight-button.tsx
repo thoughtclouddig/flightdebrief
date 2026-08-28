@@ -40,7 +40,7 @@ export function DeleteFlightButton({ flightId }: { flightId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-4">
+    <div className="flex flex-col gap-2 rounded-lg border border-red-500/30 bg-red-500/5 p-4">
       <p className="text-sm text-red-700 dark:text-red-400">
         This permanently deletes this flight and its debrief and training data. This can&rsquo;t be undone.
       </p>

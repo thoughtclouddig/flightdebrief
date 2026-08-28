@@ -73,7 +73,7 @@ function InstructorSelect({
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
+        className="mt-1.5 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
       >
         <option value="">No instructor</option>
         {instructorNames.map((name) => (
@@ -85,7 +85,7 @@ function InstructorSelect({
 
       {allowInviteCfi ? (
         inviting ? (
-          <div className="flex flex-col gap-2 rounded-xl border border-dashed border-slate-300 p-3 dark:border-white/15">
+          <div className="flex flex-col gap-2 rounded-lg border border-dashed border-slate-300 p-3 dark:border-white/15">
             <div className="grid gap-2 sm:grid-cols-2">
               <Input placeholder="CFI's name" value={name} onChange={(e) => setName(e.target.value)} />
               <Input type="email" placeholder="CFI's email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -147,7 +147,7 @@ export function NewFlightClient({
             id="student"
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
-            className="mt-1.5 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
+            className="mt-1.5 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
           >
             {students.map((s) => (
               <option key={s.id} value={s.id}>

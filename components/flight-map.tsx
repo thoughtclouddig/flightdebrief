@@ -31,7 +31,7 @@ export function FlightMap({
 
   if (!displayTrack || displayTrack.length < 2) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-6 text-center dark:border-white/15">
+      <div className="flex h-64 flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-6 text-center dark:border-white/15">
         <p className="text-sm text-slate-400">No flight path to show.</p>
         <p className="text-xs text-slate-400">
           {hasAdsbLookup
@@ -101,7 +101,7 @@ function DeferredMap({ track }: { track: TrackPosition[] }) {
         ref={placeholderRef}
         data-testid="flight-map"
         aria-busy={shouldLoadMap && !mapLoaded && !mapLoadFailed}
-        className="relative h-64 overflow-hidden rounded-xl border border-hairline bg-slate-50 dark:bg-slate-900/40 sm:h-80"
+        className="relative h-64 overflow-hidden rounded-lg border border-hairline bg-slate-50 dark:bg-slate-900/40 sm:h-80"
       >
         {!mapLoaded ? (
           <TrackMapPlaceholder

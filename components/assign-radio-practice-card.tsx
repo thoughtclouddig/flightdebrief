@@ -98,7 +98,7 @@ export function AssignRadioPracticeCard({
           <select
             value={scenarioId}
             onChange={(e) => setScenarioId(e.target.value)}
-            className="h-11 flex-1 rounded-xl border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
+            className="h-11 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
           >
             {PHASES.map((phase) => (
               <optgroup key={phase} label={RADIO_SCENARIO_PHASE_LABEL[phase]}>
