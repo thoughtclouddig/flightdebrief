@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { DraftIdeaButton } from "./draft-idea-button";
+import { RedraftArticleButton } from "./redraft-article-button";
 
 /**
  * The content desk: everything AfterFlight is writing, in one table.
@@ -35,6 +36,8 @@ export interface ContentRow {
   liveHref: string | null;
   /** Set on queued rows: the idea this row can be drafted from, right here. */
   draftableIdeaId?: string | null;
+  /** Set on real articles: rewriting is only meaningful once text exists. */
+  redraftableId?: string | null;
 }
 
 const ARTICLE_STAGES: { key: Stage | "all"; label: string }[] = [
@@ -178,6 +181,7 @@ export function ContentDesk({
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-3 text-sm">
                         {row.draftableIdeaId ? <DraftIdeaButton ideaId={row.draftableIdeaId} /> : null}
+                        {row.redraftableId ? <RedraftArticleButton articleId={row.redraftableId} /> : null}
                         {row.previewHref ? (
                           <Link href={row.previewHref} className="font-medium text-white/60 hover:text-white">
                             Preview

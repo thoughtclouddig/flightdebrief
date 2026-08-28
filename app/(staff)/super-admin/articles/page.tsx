@@ -48,6 +48,7 @@ export default async function ContentDeskPage(props: PageProps<"/super-admin/art
         dateLabel: shortDate(article.updatedAt),
         href: `/super-admin/articles/${article.id}`,
         previewHref: `/super-admin/articles/${article.id}/preview`,
+        redraftableId: article.id,
         liveHref:
           article.status === "published" ? `/resources/${topic?.slug ?? "afterflight"}/${article.slug}` : null,
       };
