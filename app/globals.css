@@ -88,12 +88,12 @@
    * bigger type at the old leading reads cramped, which looks like a
    * different problem than it is.
    */
-  --text-xs: 0.875rem;         /* 14px */
-  --text-xs--line-height: 1.25rem;
-  --text-sm: 1rem;             /* 16px */
-  --text-sm--line-height: 1.5rem;
-  --text-base: 1.125rem;       /* 18px */
-  --text-base--line-height: 1.75rem;
+  --text-xs: 0.9375rem;        /* 15px */
+  --text-xs--line-height: 1.35rem;
+  --text-sm: 1.0625rem;        /* 17px -- iOS HIG body */
+  --text-sm--line-height: 1.6rem;
+  --text-base: 1.1875rem;      /* 19px */
+  --text-base--line-height: 1.8rem;
 }
 
 @media (prefers-color-scheme: dark) {

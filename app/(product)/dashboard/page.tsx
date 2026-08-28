@@ -16,9 +16,11 @@ export default async function DashboardPage() {
   ]);
   const nextToDebrief = flights.find((f) => f.debriefStatus !== "complete");
 
-  const now = Date.now();
+  // Read once, outside the filter, so "upcoming" is evaluated against a single
+  // instant rather than a clock that could tick mid-list.
+  const nowMs = new Date().getTime();
   const upcomingReservations = reservations
-    .filter((r) => r.status === "scheduled" && new Date(r.scheduledStart).getTime() >= now)
+    .filter((r) => r.status === "scheduled" && new Date(r.scheduledStart).getTime() >= nowMs)
     .sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart));
   const upcoming = await Promise.all(
     upcomingReservations.map(async (reservation) => ({
