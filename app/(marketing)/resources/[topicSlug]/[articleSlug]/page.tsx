@@ -138,12 +138,24 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
             </p>
           ) : null}
           <h1
-            className="font-display mt-2 text-balance text-4xl font-bold text-[#101727] sm:text-5xl"
+            /* Larger, with the leading pulled in -- at this size default
+               line-height opens gaps that read as separate statements rather
+               than one headline.
+               Tracking is normal, not negative: .font-display already applies
+               -0.02em, and at 125% width stretch that closes the counters and
+               makes a long headline look cramped. Display type usually wants
+               tightening; Archivo expanded at this size does not. */
+            className="font-display mt-3 text-balance text-[2.75rem] font-bold leading-[1.05] tracking-normal text-[#101727] sm:text-[3.5rem]"
             style={{ textTransform: "none" }}
           >
             {article.title}
           </h1>
-          {article.dek ? <p className="mt-3 max-w-3xl text-pretty text-lg leading-relaxed text-[#68717D]">{article.dek}</p> : null}
+          {/* Stepped down and narrowed. The dek frames the piece; the lead
+              answer below delivers it. At the old size the two competed, and
+              a reader met two summaries before any content. */}
+          {article.dek ? (
+            <p className="mt-4 max-w-[52ch] text-pretty text-[17px] leading-relaxed text-[#68717D]">{article.dek}</p>
+          ) : null}
           <div className="mt-5 flex items-center gap-2 text-sm text-[#68717D]">
             <span className="rounded-full bg-[#f4f5f6] px-3 py-1 font-medium text-[#101727]">{article.authorName}</span>
             {article.publishedAt ? (
