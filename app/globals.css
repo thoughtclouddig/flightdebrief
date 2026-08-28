@@ -208,6 +208,17 @@ select {
   }
 }
 
+/*
+ * The marketing header is position: fixed at 4rem tall, so a plain jump to
+ * "/#how-it-works" parks that section's heading underneath it. scroll-margin
+ * offsets the landing point by the header height plus a little breathing room,
+ * for both the :target element and any section addressed by id.
+ */
+:target,
+section[id] {
+  scroll-margin-top: 5rem;
+}
+
 html,
 body {
   /* Belt-and-suspenders against any element (marquee, oversized clamp() type,
