@@ -5,7 +5,7 @@ import { ACTIVE_MEMBERSHIP_COOKIE } from "@/lib/auth/session";
 import { createMembership, createOrganization, getOrganization, listMembershipsForUser, setMembershipStatus } from "@/lib/auth/store";
 
 /**
- * "Leave my school, go solo": deactivates the caller's school membership
+ * "Leave, go solo": deactivates the caller's school or independent-CFI membership
  * (soft -- setMembershipStatus, same as everywhere else memberships are
  * removed, so their flight/debrief history stays attached to the school org
  * it actually happened under) and gives them a personal "individual" org to
@@ -23,8 +23,13 @@ export async function POST() {
   if (auth.response) return auth.response;
   const { viewer } = auth;
 
-  if (viewer.organization.kind !== "school") {
-    return NextResponse.json({ error: "You're not part of a school." }, { status: 400 });
+  // Independent-CFI orgs too: a student who parts ways with a freelance CFI
+  // has exactly the same need as one leaving a school, and nothing below is
+  // school-specific. Excluding them meant the only exit door in the product
+  // was closed to them -- they could not detach from their instructor at all.
+  // "individual" is excluded because that IS the personal org this creates.
+  if (viewer.organization.kind === "individual") {
+    return NextResponse.json({ error: "You're already training on your own." }, { status: 400 });
   }
 
   const memberships = await listMembershipsForUser(viewer.user.id);

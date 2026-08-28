@@ -74,7 +74,7 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
                 <Building2 className="size-4 text-slate-400" />
                 {viewer.organization.name}
               </p>
-              {viewer.role === "student" && viewer.organization.kind === "school" ? (
+              {viewer.role === "student" && viewer.organization.kind !== "individual" ? (
                 <LeaveOrganizationButton organizationName={viewer.organization.name} />
               ) : null}
             </div>

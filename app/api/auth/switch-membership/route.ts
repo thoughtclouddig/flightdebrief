@@ -5,8 +5,10 @@ import { listMembershipsForUser } from "@/lib/auth/store";
 import { isMembershipSwitcherEnabled } from "@/lib/auth/membership-switcher";
 
 /**
- * Development-only test endpoint for selecting one of the caller's own
- * memberships. It is deliberately unavailable in published deployments.
+ * Selects one of the caller's own memberships (see lib/auth/membership-switcher.ts
+ * for why this is no longer development-only). Never trusts the submitted id:
+ * the caller's memberships are re-read server-side and the target must be
+ * theirs and active.
  */
 export async function POST(request: Request) {
   if (!isMembershipSwitcherEnabled()) {

@@ -34,8 +34,8 @@ export function LeaveOrganizationButton({ organizationName }: { organizationName
       <div className="flex flex-col gap-2">
         <p className="text-sm text-foreground-soft">
           You&rsquo;ll leave <strong className="text-foreground">{organizationName}</strong> and continue training on
-          your own AfterFlight account. Your CFI and school admin will no longer see your flights, but your existing
-          history stays exactly as it is.
+          your own AfterFlight account. Your instructor will no longer see your new flights, and the debriefs you
+          already recorded stay with {organizationName}.
         </p>
         {error ? <p className="text-xs text-danger">{error}</p> : null}
         <div className="flex gap-2">
