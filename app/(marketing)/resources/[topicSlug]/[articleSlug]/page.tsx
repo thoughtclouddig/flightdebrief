@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { ArticleBody } from "@/components/marketing/article-body";
 import { Reveal } from "@/components/marketing/reveal";
 import { getRepository } from "@/lib/data";
 import { appOrigin } from "@/lib/email";
@@ -85,6 +86,21 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
       : {}),
   };
 
+  // Only emitted when the article genuinely carries an FAQ -- marking up
+  // questions that aren't on the page is what gets structured data ignored.
+  const faqJsonLd =
+    article.bodyBlocks && article.bodyBlocks.faq.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: article.bodyBlocks.faq.map((item) => ({
+            "@type": "Question",
+            name: item.question,
+            acceptedAnswer: { "@type": "Answer", text: item.answer },
+          })),
+        }
+      : null;
+
   const breadcrumbJsonLd =
     origin && topic
       ? {
@@ -98,13 +114,15 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
         }
       : null;
 
-  const paragraphs = article.body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
 
   return (
     <section className="bg-white px-6 pb-20 pt-32 sm:pb-28 sm:pt-36">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {breadcrumbJsonLd ? (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      ) : null}
+      {faqJsonLd ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       ) : null}
 
       <div className="mx-auto max-w-4xl">
@@ -142,12 +160,8 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
       </div>
 
       <div className="mx-auto max-w-3xl">
-        <Reveal delay={100} className="mt-10 flex flex-col gap-5">
-          {paragraphs.map((p, i) => (
-            <p key={i} className="text-pretty text-[17px] leading-relaxed text-[#4b545d]">
-              {p}
-            </p>
-          ))}
+        <Reveal delay={100} className="mt-10">
+          <ArticleBody body={article.bodyBlocks} plainText={article.body} />
         </Reveal>
 
         {article.sources.length ? (

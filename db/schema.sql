@@ -718,6 +718,11 @@ CREATE INDEX IF NOT EXISTS research_reports_status_idx ON research_reports (stat
 -- infra in this app). Populated manually via the admin form, or
 -- automatically by the AI content pipeline (lib/ai/generate-article-image.ts).
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_url text;
+-- Structured body: lead answer, key facts, H2 sections, FAQ. See
+-- lib/content/article-body.ts for why prose alone was the wrong shape.
+-- Nullable: articles written before this keep only the flat `body`, and
+-- there's no honest way to derive sections for them after the fact.
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS body_blocks jsonb;
 ALTER TABLE research_reports ADD COLUMN IF NOT EXISTS image_url text;
 
 -- AI referral tracking: minimal, privacy-first (no IP, no user agent, no

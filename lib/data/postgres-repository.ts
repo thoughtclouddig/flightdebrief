@@ -1,3 +1,4 @@
+import type { ArticleBody } from "@/lib/content/article-body";
 import { randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import type {
@@ -544,8 +545,8 @@ export class PostgresRepository implements Repository {
   async createArticle(input: CreateArticleInput): Promise<Article> {
     const db = await this.db();
     const { rows } = await db.query(
-      `INSERT INTO articles (id, slug, topic_id, title, dek, body, author_name, sources, image_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      `INSERT INTO articles (id, slug, topic_id, title, dek, body, author_name, sources, image_url, body_blocks)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
       [
         randomUUID(),
         input.slug,
@@ -556,6 +557,7 @@ export class PostgresRepository implements Repository {
         input.authorName,
         JSON.stringify(input.sources ?? []),
         input.imageUrl ?? null,
+        input.bodyBlocks ? JSON.stringify(input.bodyBlocks) : null,
       ],
     );
     return mapArticle(rows[0]);
@@ -573,7 +575,7 @@ export class PostgresRepository implements Repository {
 
     const { rows } = await db.query(
       `UPDATE articles SET slug = $2, topic_id = $3, title = $4, dek = $5, body = $6, author_name = $7,
-         sources = $8, image_url = $9, status = $10, published_at = $11, updated_at = now()
+         sources = $8, image_url = $9, status = $10, published_at = $11, body_blocks = $12, updated_at = now()
        WHERE id = $1 RETURNING *`,
       [
         id,
@@ -587,6 +589,9 @@ export class PostgresRepository implements Repository {
         input.imageUrl === undefined ? current.imageUrl : input.imageUrl,
         nextStatus,
         publishedAt,
+        input.bodyBlocks === undefined
+          ? current.bodyBlocks && JSON.stringify(current.bodyBlocks)
+          : input.bodyBlocks && JSON.stringify(input.bodyBlocks),
       ],
     );
     return mapArticle(rows[0]);
@@ -1915,6 +1920,7 @@ function mapArticle(row: Row): Article {
     authorName: row.author_name as string,
     sources: (row.sources as Source[] | null) ?? [],
     imageUrl: (row.image_url as string | null) ?? null,
+    bodyBlocks: (row.body_blocks as ArticleBody | null) ?? null,
     publishedAt: row.published_at ? iso(row.published_at) : null,
     updatedAt: iso(row.updated_at),
     createdAt: iso(row.created_at),

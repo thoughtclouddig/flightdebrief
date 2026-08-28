@@ -1,3 +1,4 @@
+import type { ArticleBody } from "@/lib/content/article-body";
 export type DebriefStatus = "not_started" | "in_progress" | "complete";
 
 /**
@@ -703,6 +704,8 @@ export interface Article {
   sources: Source[];
   /** https:// or data: URL -- see db/schema.sql's comment on articles.image_url. */
   imageUrl: string | null;
+  /** Structured body; null for articles written before it existed, which render from `body`. */
+  bodyBlocks: ArticleBody | null;
   publishedAt: string | null;
   updatedAt: string;
   createdAt: string;

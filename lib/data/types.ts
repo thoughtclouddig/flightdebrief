@@ -1,3 +1,4 @@
+import type { ArticleBody } from "@/lib/content/article-body";
 import type {
   Aircraft,
   Article,
@@ -142,6 +143,7 @@ export interface CreateArticleInput {
   authorName: string;
   sources?: Source[];
   imageUrl?: string | null;
+  bodyBlocks?: ArticleBody | null;
 }
 
 export interface UpdateArticleInput {
@@ -153,6 +155,7 @@ export interface UpdateArticleInput {
   authorName?: string;
   sources?: Source[];
   imageUrl?: string | null;
+  bodyBlocks?: ArticleBody | null;
   status?: ArticleStatus;
 }
 
