@@ -44,8 +44,21 @@ const GROUPS = [
   },
 ];
 
+/**
+ * Staff aren't seed personas -- they're whoever SUPERADMIN_EMAILS lists, which
+ * differs per environment. Read at request time rather than hardcoded so this
+ * list is always the same one the staff gate itself checks.
+ */
+function staffEmails(): string[] {
+  return (process.env.SUPERADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean);
+}
+
 export default function DevLoginPage() {
   if (process.env.REPLIT_DEPLOYMENT) notFound();
+  const staff = staffEmails();
 
   return (
     <div className="min-h-screen bg-white">
@@ -57,6 +70,28 @@ export default function DevLoginPage() {
         </p>
 
         <div className="mt-10 flex flex-col gap-10">
+          {staff.length > 0 ? (
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#8c97a2]">AfterFlight — company staff</p>
+              <ul className="mt-3 flex flex-col gap-2">
+                {staff.map((email) => (
+                  <li key={email}>
+                    {/* Straight to the console. Everyone else here lands in a
+                        product shell, but staff have no organization, so
+                        "where you left off" isn't a place that exists. */}
+                    <Link
+                      href={`/api/auth/dev-login?email=${encodeURIComponent(email)}&next=${encodeURIComponent("/super-admin")}`}
+                      className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-brand hover:bg-brand/5"
+                    >
+                      <span className="font-medium text-[#101727]">{email}</span>
+                      <span className="text-sm text-[#56636f]">Super Admin</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           {GROUPS.map((group) => (
             <div key={group.org}>
               <p className="text-xs font-bold uppercase tracking-wide text-[#8c97a2]">{group.org}</p>

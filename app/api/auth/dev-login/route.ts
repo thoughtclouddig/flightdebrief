@@ -38,7 +38,13 @@ export async function GET(request: NextRequest) {
     }
 
     const jwt = await createSessionJwt({ sub: email, email, name: user.name });
-    const destination = user.profileCompleted ? "/app" : "/onboarding";
+    // ?next= lets a caller land somewhere specific -- staff have no
+    // organization, so the usual "/app" hop has nothing to resolve for them.
+    // Relative paths only: an absolute URL here would make this an open
+    // redirect that also hands over a fresh session cookie.
+    const next = request.nextUrl.searchParams.get("next");
+    const requested = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+    const destination = !user.profileCompleted ? "/onboarding" : (requested ?? "/app");
     const response = NextResponse.redirect(`${origin}${destination}`);
     response.cookies.set(SESSION_COOKIE, jwt, {
       httpOnly: true,
