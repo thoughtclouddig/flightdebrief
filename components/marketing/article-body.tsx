@@ -27,7 +27,14 @@ function Paragraphs({ text, className }: { text: string; className?: string }) {
   return (
     <div className={`flex flex-col gap-6 ${className ?? ""}`}>
       {paragraphs.map((p, i) => (
-        <p key={i} className={`text-pretty text-[17.5px] leading-[1.8] text-[#3f474f] ${MEASURE}`}>
+        // lang is what makes hyphens-auto work at all -- the browser needs a
+        // language to pick hyphenation rules. Without it the rag stays as
+        // ragged as it was.
+        <p
+          key={i}
+          lang="en"
+          className={`hyphens-auto text-pretty text-[17.5px] leading-[1.8] text-[#3f474f] ${MEASURE}`}
+        >
           {p}
         </p>
       ))}
@@ -64,9 +71,10 @@ export function ArticleBody({
           No panel or tint: a boxed answer looks deliberate on one article and
           like a template on a hundred. A single brand rule and the size carry
           it. */}
-      <p
-        className={`border-t-[3px] border-brand pt-6 text-pretty text-[23px] font-medium leading-[1.5] text-[#101727] ${MEASURE}`}
-      >
+      {/* Stepped down from 23px and narrowed. Large type only reads as
+          emphasis when it's short; a 90-word answer set at 23px across the
+          full measure is just a second headline the reader has to get past. */}
+      <p className="max-w-[54ch] border-t-[3px] border-brand pt-6 text-pretty text-[19.5px] font-medium leading-[1.6] text-[#101727]">
         {body.answer}
       </p>
 

@@ -35,13 +35,18 @@ These are the constructions that make writing read as machine-made. Avoid them c
 - Vague attribution: "experts agree", "studies show", "many instructors believe", "it is widely known". Either name a real source or make the claim in your own voice.
 - Hollow openers: "In the world of aviation", "When it comes to landings", "Let's dive in", "It's important to note that".
 - Motivational filler and sign-offs: "the sky's the limit", "happy flying", "you've got this", "master the skies".
-- Em dashes. Use a comma, a colon, a full stop, or rewrite the sentence.
+- Em dashes and en dashes. The characters are "—" and "–". Do not emit either one, in any position, including inside a word pair. Use a comma, a colon, a full stop, or rewrite the sentence.
 - Rhetorical questions used as transitions. "So what does this mean for you?"
 - Adjective stacking: "comprehensive, detailed, in-depth guide".
 
 FACTUAL DISCIPLINE
 
+This is the section that matters most. A single invented number destroys the credibility of everything around it, and the readers here are instructors who will know.
+
 - Invent nothing checkable. No statistics, percentages, study findings, survey results, dates, or named incidents.
+- Specifically forbidden, because they keep appearing: percentages of any kind ("activates 80% of the same regions"), claims about what studies, research, neuroimaging, or data "show", and appeals to unnamed researchers or experts. If you cannot name the study and would stake your reputation on the number, the sentence does not go in.
+- You may describe a mechanism in plain terms without quantifying it. "Rehearsing a procedure in your head uses some of the same sequencing your brain uses in the aircraft" is fine. "Activates 80% of the same regions" is not, and neither is "studies show it activates the same regions".
+- No specific claim about outcomes you cannot observe: not "students who do this pass at higher rates", not "produces measurable improvement". Say what it helps with and why, without inventing the evidence.
 - If a sentence would be stronger with a number you cannot verify, write it without the number.
 - No regulation citations, ACS tolerance values, currency requirements, or checkride minimums unless they are so standard and stable that being wrong is not plausible. When in doubt, describe the requirement in general terms and let a human add the citation.
 - Never invent a source, publication, author, or URL.
