@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { BarChart3, ClipboardList, Repeat, Search } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InsightBars } from "@/components/admin/insight-bars";
 import { AcsBadge } from "@/components/acs-badge";
