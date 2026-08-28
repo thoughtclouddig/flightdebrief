@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import { GuideControl } from "@/components/guide/guide-control";
+import { SupportLink } from "@/components/support-link";
 import type { GuideStep } from "@/lib/guide";
 import type { MembershipOption, Viewer } from "@/lib/viewer";
 
@@ -285,6 +286,12 @@ export function Nav({
           </nav>
           <div className="flex shrink-0 items-center gap-2">
             <GuideControl steps={guideSteps} variant="desktop" />
+            <SupportLink
+              name={viewer.user.name}
+              email={viewer.user.email}
+              organizationName={viewer.organization.name}
+              role={viewer.role}
+            />
             <ThemeToggle />
             <UserMenu viewer={viewer} memberships={memberships} />
           </div>
@@ -295,6 +302,13 @@ export function Nav({
         <Wordmark href={homeHref} compact />
         <div className="flex items-center gap-2">
           <GuideControl steps={guideSteps} variant="mobile" />
+          <SupportLink
+            name={viewer.user.name}
+            email={viewer.user.email}
+            organizationName={viewer.organization.name}
+            role={viewer.role}
+            compact
+          />
           <ThemeToggle compact />
           <UserMenu viewer={viewer} memberships={memberships} compact />
         </div>

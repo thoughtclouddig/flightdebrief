@@ -108,8 +108,8 @@ export default function TermsPage() {
       <LegalSection title="Contact Us">
         <p>
           Questions about these Terms can be sent to{" "}
-          <a href="mailto:legal@afterflight.app" className="font-semibold text-brand hover:underline">
-            legal@afterflight.app
+          <a href="mailto:legal@getafterflight.com" className="font-semibold text-brand hover:underline">
+            legal@getafterflight.com
           </a>
           .
         </p>

@@ -121,7 +121,7 @@ export default function EnterprisePage() {
             your organization can actually use.
           </p>
           <div className="mt-8 flex justify-center">
-            <CtaLink href="mailto:sales@afterflight.app">Talk to Sales</CtaLink>
+            <CtaLink href="mailto:sales@getafterflight.com">Talk to Sales</CtaLink>
           </div>
           <p className="mt-5 text-sm text-white/50">Across one location or twenty, see what&rsquo;s happening inside the training.</p>
         </Reveal>
@@ -325,7 +325,7 @@ export default function EnterprisePage() {
           <p className="mt-6 font-display text-xl font-bold text-white">{ENTERPRISE_PRICING.priceLabel}</p>
           <p className="mt-2 text-sm text-white/50">{ENTERPRISE_PRICING.pricingDetails.join(" · ")}</p>
           <div className="mt-8">
-            <CtaLink href="mailto:sales@afterflight.app">{ENTERPRISE_PRICING.cta}</CtaLink>
+            <CtaLink href="mailto:sales@getafterflight.com">{ENTERPRISE_PRICING.cta}</CtaLink>
           </div>
         </Reveal>
       </section>

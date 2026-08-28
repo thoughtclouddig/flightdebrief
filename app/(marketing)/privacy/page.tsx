@@ -96,8 +96,8 @@ export default function PrivacyPage() {
       <LegalSection title="Contact Us">
         <p>
           Questions about this Privacy Policy can be sent to{" "}
-          <a href="mailto:privacy@afterflight.app" className="font-semibold text-brand hover:underline">
-            privacy@afterflight.app
+          <a href="mailto:privacy@getafterflight.com" className="font-semibold text-brand hover:underline">
+            privacy@getafterflight.com
           </a>
           .
         </p>
