@@ -213,8 +213,15 @@ body {
   /* Belt-and-suspenders against any element (marquee, oversized clamp() type,
      rounding on a vw-based width) coming out a fraction wider than the
      viewport -- without this, that lets mobile browsers pan the whole page
-     sideways on a thumb drag instead of just clipping the offending element. */
-  overflow-x: hidden;
+     sideways on a thumb drag instead of just clipping the offending element.
+
+     `clip`, not `hidden`: overflow-x: hidden makes the element a scroll
+     container, which (a) forces overflow-y to auto even though it's written
+     as visible, and (b) breaks position: fixed / sticky descendants on mobile
+     -- which is what stopped the marketing header staying put while scrolling.
+     overflow: clip does the same visual clipping without ever creating a
+     scroll container, so fixed positioning keeps working. */
+  overflow-x: clip;
 }
 
 body {
