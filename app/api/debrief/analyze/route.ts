@@ -16,6 +16,7 @@ import { setCachedAudio } from "@/lib/audio-cache";
 import { DEFAULT_TTS_VOICE } from "@/lib/tts-voices";
 import type { DebriefGuidanceMode, StructuredDebrief } from "@/lib/types";
 import { buildDiarizedTurns } from "@/lib/transcription/diarized-turns";
+import { filterTrainingItemDescriptions } from "@/lib/training-item-quality";
 import type { TranscriptWord } from "@/lib/transcription/types";
 import { DEMO_FLIGHT_ID } from "@/lib/demo/video-demo-data";
 import { DEMO_CURATED_RESULT } from "@/lib/demo/video-demo-seed";
@@ -164,8 +165,11 @@ export async function POST(request: Request) {
   // genuinely prior items, never this same debrief's freshly-created ones.
   await autoResolveActionItems(repo, flight.userId, structured.wentWell);
 
+  // The prompt asks for specific, nameable skills and no narrative recaps,
+  // but a prompt is a request, not a constraint -- and anything that slips
+  // through is permanent on the student's list. See lib/training-item-quality.ts.
   await repo.createTrainingItems([
-    ...structured.needsWork.map((description) => ({
+    ...filterTrainingItemDescriptions(structured.needsWork).map((description) => ({
       flightId: flight.id,
       debriefId: debrief.id,
       category: "keep_working_on" as const,
@@ -174,7 +178,7 @@ export async function POST(request: Request) {
       completedAt: null,
       visibility: "shared" as const,
     })),
-    ...structured.actionItems.map((description) => ({
+    ...filterTrainingItemDescriptions(structured.actionItems).map((description) => ({
       flightId: flight.id,
       debriefId: debrief.id,
       category: "before_next_flight" as const,
