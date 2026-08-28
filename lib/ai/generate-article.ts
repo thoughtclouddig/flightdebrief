@@ -1,9 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { ARTICLE_SYSTEM_PROMPT, buildArticleUserPrompt } from "./article-prompt";
 import { generatedArticleSchema, type GeneratedArticle } from "./article-schema";
+import { extractJson } from "./extract-json";
 import { getRepository } from "@/lib/data";
 import { slugify } from "@/lib/slugify";
-import type { ResourceTopic } from "@/lib/types";
+import type { ArticleIdea, ResourceTopic } from "@/lib/types";
 
 /**
  * Picks the resource topic with the fewest existing articles, so daily
@@ -24,22 +25,16 @@ export async function pickNextTopic(): Promise<ResourceTopic> {
   return [...topics].sort((a, b) => (countByTopic.get(a.id) ?? 0) - (countByTopic.get(b.id) ?? 0))[0];
 }
 
-function extractJson(text: string): string {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) return fenced[1].trim();
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start === -1 || end === -1) return text;
-  return text.slice(start, end + 1);
-}
-
 /**
  * Drafts one article via Claude for the given topic. No mock fallback --
  * unlike debrief analysis, a "mock article" would just be fabricated
  * content, which this pipeline explicitly must not produce. Callers should
  * surface the error rather than silently degrading.
  */
-export async function generateArticleDraft(topic: ResourceTopic): Promise<GeneratedArticle & { slug: string }> {
+export async function generateArticleDraft(
+  topic: ResourceTopic,
+  idea?: ArticleIdea | null,
+): Promise<GeneratedArticle & { slug: string }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set -- cannot generate an article");
 
@@ -58,6 +53,7 @@ export async function generateArticleDraft(topic: ResourceTopic): Promise<Genera
           topicName: topic.name,
           topicDescription: topic.description,
           existingTitles: existing.map((a) => a.title),
+          idea: idea ?? null,
         }),
       },
     ],

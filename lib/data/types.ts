@@ -2,6 +2,8 @@ import type { ArticleBody } from "@/lib/content/article-body";
 import type {
   Aircraft,
   Article,
+  ArticleIdea,
+  ArticleIdeaStatus,
   ArticleStatus,
   AssessmentRole,
   CardDefinition,
@@ -134,6 +136,14 @@ export interface CreateStudentNoteInput {
   description: string;
 }
 
+export interface CreateArticleIdeaInput {
+  topicId: string | null;
+  title: string;
+  angle: string;
+  targetQuery: string;
+  rationale: string;
+}
+
 export interface CreateArticleInput {
   slug: string;
   topicId: string | null;
@@ -253,6 +263,13 @@ export interface Repository {
   listArticles(filter: { status?: ArticleStatus; topicId?: string }): Promise<Article[]>;
   getArticleBySlug(slug: string): Promise<Article | null>;
   getArticle(id: string): Promise<Article | null>;
+  // --- Article ideas: the review gate ahead of drafting ---
+  listArticleIdeas(filter?: { status?: ArticleIdeaStatus }): Promise<ArticleIdea[]>;
+  getArticleIdea(id: string): Promise<ArticleIdea | null>;
+  /** Bulk insert -- ideas are generated in batches, never one at a time. */
+  createArticleIdeas(inputs: CreateArticleIdeaInput[]): Promise<ArticleIdea[]>;
+  setArticleIdeaStatus(id: string, status: ArticleIdeaStatus, articleId?: string | null): Promise<ArticleIdea | null>;
+
   createArticle(input: CreateArticleInput): Promise<Article>;
   updateArticle(id: string, input: UpdateArticleInput): Promise<Article>;
 

@@ -20,14 +20,28 @@ export function buildArticleUserPrompt(input: {
   topicName: string;
   topicDescription: string;
   existingTitles: string[];
+  /** An approved idea to write up. When absent the model picks its own angle. */
+  idea?: { title: string; angle: string; targetQuery: string } | null;
 }): string {
   const avoid = input.existingTitles.length
     ? `Existing articles already published in this topic (write about something different, don't repeat these):\n${input.existingTitles.map((t) => `- ${t}`).join("\n")}`
     : "No articles published in this topic yet.";
 
+  // A human approved this exact angle, so it isn't a suggestion -- drifting
+  // off it would publish something nobody reviewed.
+  const brief = input.idea
+    ? `Write this specific approved article:
+
+Working title: ${input.idea.title}
+Angle: ${input.idea.angle}
+The reader's question: ${input.idea.targetQuery}
+
+Answer that question directly. You may improve the title's wording, but do not change the subject.`
+    : "Pick a specific, useful angle within this topic -- not a generic overview.";
+
   return `Write one new resource article for the topic "${input.topicName}": ${input.topicDescription}
 
 ${avoid}
 
-Pick a specific, useful angle within this topic -- not a generic overview.`;
+${brief}`;
 }

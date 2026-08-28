@@ -723,6 +723,28 @@ ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_url text;
 -- Nullable: articles written before this keep only the flat `body`, and
 -- there's no honest way to derive sections for them after the fact.
 ALTER TABLE articles ADD COLUMN IF NOT EXISTS body_blocks jsonb;
+
+-- Article ideas: the review gate that makes an automated pipeline survivable.
+-- Generating a draft is slow and expensive; generating an idea is neither, so
+-- the human decision moves to the cheap end. You approve a one-line idea in
+-- seconds, and only approved ideas are ever written up.
+CREATE TABLE IF NOT EXISTS article_ideas (
+  id text PRIMARY KEY,
+  topic_id text REFERENCES resource_topics(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  /* What makes this specific rather than a generic overview. */
+  angle text NOT NULL DEFAULT '',
+  /* The question or search this is meant to answer, in the reader's words. */
+  target_query text NOT NULL DEFAULT '',
+  /* Why it's worth writing -- shown at review time so the call is informed. */
+  rationale text NOT NULL DEFAULT '',
+  status text NOT NULL DEFAULT 'proposed' CHECK (status IN ('proposed','approved','rejected','drafted')),
+  /* Set once the draft exists, so an idea links to what it became. */
+  article_id text REFERENCES articles(id) ON DELETE SET NULL,
+  decided_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS article_ideas_status_idx ON article_ideas (status, created_at DESC);
 ALTER TABLE research_reports ADD COLUMN IF NOT EXISTS image_url text;
 
 -- AI referral tracking: minimal, privacy-first (no IP, no user agent, no

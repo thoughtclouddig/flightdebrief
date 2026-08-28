@@ -1,37 +1,39 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
 import { authorize } from "@/lib/auth/guard";
 import { pickNextTopic, generateArticleDraft } from "@/lib/ai/generate-article";
 import { generateArticleImage } from "@/lib/ai/generate-article-image";
-
-function hasValidSecret(request: Request): boolean {
-  const expected = process.env.CONTENT_PIPELINE_SECRET;
-  if (!expected) return false;
-  const header = request.headers.get("authorization");
-  const provided = header?.startsWith("Bearer ") ? header.slice(7) : null;
-  if (!provided) return false;
-
-  const a = Buffer.from(provided);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
+import { hasContentPipelineSecret } from "@/lib/content/pipeline-auth";
 
 /**
- * Generates one AI-written article draft for the topic with the fewest
- * existing articles. Always creates a draft, never publishes -- a human
- * reviews and publishes from /admin/articles. Called either by an admin
- * session (the "Generate Draft Now" button) or by a scheduled external
- * caller (Replit Scheduled Deployment) bearing CONTENT_PIPELINE_SECRET.
+ * Drafts the oldest approved article idea. Always creates a draft, never
+ * publishes -- a human reviews and publishes from /admin/articles. Called by
+ * an admin session (the button) or a scheduled caller bearing
+ * CONTENT_PIPELINE_SECRET.
+ *
+ * Approved ideas drive this, rather than "whichever topic is thinnest". The
+ * old behaviour wrote about whatever was least covered, which is a coverage
+ * heuristic, not an editorial one -- it had no way to know whether the angle
+ * was worth writing. Now the human decision at /admin/ideas is what the
+ * pipeline consumes, and the coverage heuristic only survives as the fallback
+ * for when the approved queue is empty.
  */
 export async function POST(request: Request) {
-  if (!hasValidSecret(request)) {
+  if (!hasContentPipelineSecret(request)) {
     const auth = await authorize("admin");
     if (auth.response) return auth.response;
   }
 
-  const topic = await pickNextTopic();
-  const draft = await generateArticleDraft(topic);
+  const repo = getRepository();
+
+  // Oldest first, so an approved idea can't sit behind newer ones forever.
+  const approved = (await repo.listArticleIdeas({ status: "approved" })).reverse();
+  const idea = approved[0] ?? null;
+
+  const topics = await repo.listResourceTopics();
+  const topic = idea?.topicId ? topics.find((t) => t.id === idea.topicId) ?? (await pickNextTopic()) : await pickNextTopic();
+
+  const draft = await generateArticleDraft(topic, idea);
 
   let imageUrl: string | null = null;
   try {
@@ -41,7 +43,6 @@ export async function POST(request: Request) {
     console.error("[content-pipeline] image generation failed:", err);
   }
 
-  const repo = getRepository();
   const article = await repo.createArticle({
     slug: draft.slug,
     topicId: topic.id,
@@ -53,5 +54,9 @@ export async function POST(request: Request) {
     imageUrl,
   });
 
-  return NextResponse.json({ article });
+  // Link the idea to what it became, so the queue reflects reality and the
+  // same idea can't be drafted twice.
+  if (idea) await repo.setArticleIdeaStatus(idea.id, "drafted", article.id);
+
+  return NextResponse.json({ article, fromIdea: idea?.title ?? null });
 }

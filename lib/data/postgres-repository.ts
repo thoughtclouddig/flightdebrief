@@ -4,6 +4,8 @@ import type { Pool, PoolClient } from "pg";
 import type {
   Aircraft,
   Article,
+  ArticleIdea,
+  ArticleIdeaStatus,
   ArticleStatus,
   AssessmentRole,
   CardDefinition,
@@ -42,6 +44,7 @@ import type {
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
 import { buildSeed, DEMO_USER_ID } from "./seed";
 import type {
+  CreateArticleIdeaInput,
   CreateArticleInput,
   CreateDebriefInput,
   CreateFlightInput,
@@ -540,6 +543,56 @@ export class PostgresRepository implements Repository {
     const db = await this.db();
     const { rows } = await db.query("SELECT * FROM articles WHERE id = $1", [id]);
     return rows[0] ? mapArticle(rows[0]) : null;
+  }
+
+  async listArticleIdeas(filter?: { status?: ArticleIdeaStatus }): Promise<ArticleIdea[]> {
+    const db = await this.db();
+    const { rows } = filter?.status
+      ? await db.query("SELECT * FROM article_ideas WHERE status = $1 ORDER BY created_at DESC", [filter.status])
+      : await db.query("SELECT * FROM article_ideas ORDER BY created_at DESC");
+    return rows.map(mapArticleIdea);
+  }
+
+  async getArticleIdea(id: string): Promise<ArticleIdea | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM article_ideas WHERE id = $1", [id]);
+    return rows[0] ? mapArticleIdea(rows[0]) : null;
+  }
+
+  async createArticleIdeas(inputs: CreateArticleIdeaInput[]): Promise<ArticleIdea[]> {
+    if (inputs.length === 0) return [];
+    const db = await this.db();
+    // One multi-row insert rather than a loop: ideas always arrive as a batch
+    // from a single generation call, and a partial batch is worse than none.
+    const values: unknown[] = [];
+    const groups = inputs.map((input, i) => {
+      const base = i * 6;
+      values.push(randomUUID(), input.topicId, input.title, input.angle, input.targetQuery, input.rationale);
+      return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6})`;
+    });
+    const { rows } = await db.query(
+      `INSERT INTO article_ideas (id, topic_id, title, angle, target_query, rationale)
+       VALUES ${groups.join(",")} RETURNING *`,
+      values,
+    );
+    return rows.map(mapArticleIdea);
+  }
+
+  async setArticleIdeaStatus(
+    id: string,
+    status: ArticleIdeaStatus,
+    articleId?: string | null,
+  ): Promise<ArticleIdea | null> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      `UPDATE article_ideas
+         SET status = $2,
+             article_id = COALESCE($3, article_id),
+             decided_at = now()
+       WHERE id = $1 RETURNING *`,
+      [id, status, articleId ?? null],
+    );
+    return rows[0] ? mapArticleIdea(rows[0]) : null;
   }
 
   async createArticle(input: CreateArticleInput): Promise<Article> {
@@ -1905,6 +1958,21 @@ function mapResourceTopic(row: Row): ResourceTopic {
     slug: row.slug as string,
     name: row.name as string,
     description: row.description as string,
+  };
+}
+
+function mapArticleIdea(row: Row): ArticleIdea {
+  return {
+    id: row.id as string,
+    topicId: (row.topic_id as string | null) ?? null,
+    title: row.title as string,
+    angle: row.angle as string,
+    targetQuery: row.target_query as string,
+    rationale: row.rationale as string,
+    status: row.status as ArticleIdeaStatus,
+    articleId: (row.article_id as string | null) ?? null,
+    decidedAt: row.decided_at ? iso(row.decided_at) : null,
+    createdAt: iso(row.created_at),
   };
 }
 

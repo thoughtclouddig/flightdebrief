@@ -67,6 +67,7 @@ const ADMIN_ITEMS = [
   { href: "/admin/instructors", label: "CFIs", icon: UserCog },
   { href: "/admin/aircraft", label: "Aircraft", icon: PlaneTakeoff },
   { href: "/admin/activity", label: "Activity", icon: Activity },
+  { href: "/admin/ideas", label: "Ideas", icon: Lightbulb },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

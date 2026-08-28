@@ -692,6 +692,27 @@ export interface Source {
 }
 
 /** body is plain text, blank-line-separated paragraphs -- no markdown/MDX pipeline yet (Phase 2 concern). */
+export type ArticleIdeaStatus = "proposed" | "approved" | "rejected" | "drafted";
+
+/**
+ * A proposed article, before anything is written. See db/schema.sql --
+ * approving one of these is the cheap human gate on an otherwise automated
+ * pipeline.
+ */
+export interface ArticleIdea {
+  id: string;
+  topicId: string | null;
+  title: string;
+  angle: string;
+  targetQuery: string;
+  rationale: string;
+  status: ArticleIdeaStatus;
+  /** The article this became, once drafted. */
+  articleId: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+}
+
 export interface Article {
   id: string;
   slug: string;
