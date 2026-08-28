@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { LocalDateTime } from "@/components/local-date-time";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -145,7 +146,10 @@ export default async function StudentHomePage() {
           <CardContent className="flex flex-col gap-4">
             <div>
               <p className="font-medium text-foreground">
-                {formatDateTime(brief.upcomingReservation.scheduledStart)}
+                <LocalDateTime
+                  iso={brief.upcomingReservation.scheduledStart}
+                  options={{ weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }}
+                />
               </p>
               <p className="text-sm text-foreground-soft">
                 Instructor: {brief.upcomingReservationInstructor?.name ?? "TBD"}

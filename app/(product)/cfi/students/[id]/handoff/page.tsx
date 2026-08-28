@@ -20,6 +20,7 @@ import { getRepository } from "@/lib/data";
 import { getAuthorizedStudent } from "@/lib/auth/access";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
+import { LocalDateTime } from "@/components/local-date-time";
 
 export const dynamic = "force-dynamic";
 
@@ -89,13 +90,10 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
           </CardHeader>
           <CardContent>
             <p className="text-foreground">
-              {new Date(brief.upcomingReservation.scheduledStart).toLocaleString("en-US", {
-                weekday: "long",
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              })}
+              <LocalDateTime
+                iso={brief.upcomingReservation.scheduledStart}
+                options={{ weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }}
+              />
             </p>
             {brief.upcomingReservationInstructor ? (
               <p className="mt-0.5 text-sm text-foreground-soft">With {brief.upcomingReservationInstructor.name}</p>

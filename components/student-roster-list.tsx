@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn, formatDurationShort } from "@/lib/utils";
 import type { StudentRosterEntry } from "@/lib/training-memory";
+import { LocalDateTime } from "@/components/local-date-time";
 
 type Filter = "all" | "active" | "upcoming" | "needs_debrief" | "recently_flown";
 
@@ -97,13 +98,10 @@ export function StudentRosterList({ roster }: { roster: StudentRosterEntry[] }) 
                     {entry.nextReservation ? (
                       <p className="mt-0.5 text-sm font-medium text-brand">
                         Next:{" "}
-                        {new Date(entry.nextReservation.scheduledStart).toLocaleString("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })}
+                        <LocalDateTime
+                          iso={entry.nextReservation.scheduledStart}
+                          options={{ weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }}
+                        />
                       </p>
                     ) : null}
                     {entry.currentFocus.length > 0 ? (

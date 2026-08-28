@@ -24,6 +24,7 @@ import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { formatFlightContext } from "@/lib/utils";
 import type { User } from "@/lib/types";
 import type { Viewer } from "@/lib/viewer";
+import { LocalDateTime } from "@/components/local-date-time";
 
 /**
  * Recent flights, debrief summaries, topics, strengths, recurring challenges,
@@ -292,13 +293,10 @@ export async function StudentTrainingDetail({
               </p>
               {brief.upcomingReservation ? (
                 <p className="text-sm text-slate-700 dark:text-slate-200">
-                  {new Date(brief.upcomingReservation.scheduledStart).toLocaleString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
+                  <LocalDateTime
+                    iso={brief.upcomingReservation.scheduledStart}
+                    options={{ weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }}
+                  />
                 </p>
               ) : (
                 <p className="text-sm text-slate-400">Nothing scheduled yet.</p>

@@ -1,10 +1,12 @@
+import type * as React from "react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export interface CfiStudentCardProps {
   studentName: string;
-  timeLabel: string;
+  /** ReactNode, not string -- callers pass <LocalDateTime> so the lesson time renders in the viewer's zone rather than the server's. */
+  timeLabel: React.ReactNode;
   tailNumber: string;
   aircraftType: string;
   focusAreas: string[];

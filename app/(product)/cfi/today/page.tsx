@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CfiStudentCard } from "@/components/cfi-student-card";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { LocalDateTime } from "@/components/local-date-time";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { attentionReasons, computeInstructorRoster, computeNextLessonBrief } from "@/lib/training-memory";
@@ -13,14 +14,18 @@ import { formatFlightContext, formatFlightDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-}
-
-function formatUpcomingDateTime(iso: string) {
-  const d = new Date(iso);
-  return `${d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} · ${formatTime(iso)}`;
-}
+// Server-side formatting of a stored instant renders in the SERVER's zone
+// (UTC in deployment), which is both wrong for the reader and a hydration
+// mismatch -- see components/local-date-time.tsx. These constants feed that
+// component instead of formatting here.
+const TIME_ONLY: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit" };
+const DAY_AND_TIME: Intl.DateTimeFormatOptions = {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+};
 
 export default async function CfiTodayPage() {
   const repo = getRepository();
@@ -117,7 +122,7 @@ export default async function CfiTodayPage() {
               <CfiStudentCard
                 key={reservation.id}
                 studentName={student?.name ?? "—"}
-                timeLabel={formatTime(reservation.scheduledStart)}
+                timeLabel={<LocalDateTime iso={reservation.scheduledStart} options={TIME_ONLY} />}
                 tailNumber={aircraft?.tailNumber ?? "—"}
                 aircraftType={aircraft?.type ?? "—"}
                 focusAreas={brief.focusAreas}
@@ -147,7 +152,7 @@ export default async function CfiTodayPage() {
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{student?.name ?? "—"}</p>
                     <p className="text-xs text-slate-400">{aircraft?.tailNumber ?? "—"}</p>
                   </div>
-                  <span className="text-xs font-medium text-foreground-faint">{formatUpcomingDateTime(reservation.scheduledStart)}</span>
+                  <span className="text-xs font-medium text-foreground-faint"><LocalDateTime iso={reservation.scheduledStart} options={DAY_AND_TIME} /></span>
                 </Link>
               ))}
             </CardContent>
