@@ -1,6 +1,6 @@
-import { isSuperadmin } from "@/lib/superadmin";
 import { NextResponse } from "next/server";
 import { getViewer, type Viewer } from "@/lib/viewer";
+import { getStaffViewer, type StaffViewer } from "@/lib/auth/staff";
 import type { OrgRole } from "@/lib/types";
 
 /**
@@ -16,16 +16,20 @@ import type { OrgRole } from "@/lib/types";
  * platform-wide data) must use this instead, or a customer can act on it.
  */
 export async function authorizeSuperadmin(): Promise<
-  { viewer: Viewer; response?: undefined } | { viewer?: undefined; response: NextResponse }
+  { staff: StaffViewer; response?: undefined } | { staff?: undefined; response: NextResponse }
 > {
-  const auth = await authorize();
-  if (auth.response) return auth;
-  if (!isSuperadmin(auth.viewer.user.email)) {
-    // 404 rather than 403: a customer admin has no business knowing these
-    // endpoints exist.
+  // Deliberately not built on authorize(): that requires an active
+  // organization membership, so every one of these endpoints started
+  // returning "Not signed in" the moment staff stopped being a member of a
+  // customer org -- which is the whole point of a staff account.
+  const staff = await getStaffViewer();
+  if (!staff) {
+    // 404 rather than 401/403: a customer admin has no business learning
+    // these endpoints exist, and the distinction between "not signed in" and
+    // "not staff" is itself information.
     return { response: NextResponse.json({ error: "Not found" }, { status: 404 }) };
   }
-  return { viewer: auth.viewer };
+  return { staff };
 }
 
 export async function authorize(
