@@ -66,12 +66,22 @@ export function DebriefResultSections({
 }) {
   return (
     <>
-      {/* The null fallback used to read "with your instructor" -- but null IS
+      {/* Grouped, not two loose paragraphs. As direct children of the page's
+          flex column they inherited card-level spacing and floated between
+          the cards with nothing holding them -- they're the lede for the whole
+          result: who you debriefed with, and the one sentence describing the
+          flight.
+
+          The null fallback used to read "with your instructor" -- but null IS
           the no-instructor case, so it named someone who doesn't exist. */}
-      <p className="text-sm text-foreground-faint">
-        {instructorFirstName ? `From your debrief with ${instructorFirstName}` : "From your debrief"}
-      </p>
-      {result.flightSummary ? <p className="text-lg text-foreground-soft">{result.flightSummary}</p> : null}
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">
+          {instructorFirstName ? `From your debrief with ${instructorFirstName}` : "From your debrief"}
+        </p>
+        {result.flightSummary ? (
+          <p className="text-lg leading-relaxed text-foreground">{result.flightSummary}</p>
+        ) : null}
+      </div>
 
       <Card>
         <CardHeader>
