@@ -7,15 +7,16 @@ import { cn } from "@/lib/utils";
  * a chip cloud, where the only way to compare two numbers was to read them.
  *
  * One series, so no legend (the card title names it) and no categorical
- * palette. The bar is the existing brand hue, stepped per theme:
- * --brand on the light track measures 2.4:1, under the 3:1 a graphical object
- * needs, so light mode uses --brand-dark (4.07:1). Dark mode keeps --brand
- * against the sunken track at 6.5:1.
+ * palette -- just the brand hue.
  *
- * Values stay in text tokens rather than the bar colour -- the mark carries
- * magnitude, the text carries the number, and neither depends on the other
- * being perceivable. That also means this degrades to a readable label/value
- * list with no colour at all.
+ * It stays --brand in both themes rather than darkening for light mode. The
+ * 3:1 non-text contrast rule covers graphics *required* to understand the
+ * content, and the count is printed in text beside every bar, so the mark is
+ * supplementary: the whole list reads correctly with no colour at all. Paying
+ * for contrast the bar doesn't need cost the brand orange and looked muddy.
+ *
+ * Values wear text tokens rather than the bar colour -- the mark carries
+ * magnitude, the text carries the number, neither depends on the other.
  */
 export interface InsightBarDatum {
   key: string;
@@ -59,9 +60,9 @@ export function InsightBars({
             {/* Track + fill. aria-hidden because the row above already states
                 the label and the value -- a screen reader gains nothing from
                 the bar and would just hear the number twice. */}
-            <div aria-hidden className="h-1.5 w-full overflow-hidden rounded-full bg-surface-sunken">
+            <div aria-hidden className="h-1 w-full overflow-hidden rounded-full bg-surface-sunken">
               <div
-                className="h-full rounded-full bg-brand-dark dark:bg-brand"
+                className="h-full rounded-full bg-brand"
                 style={{ width: `${pct}%` }}
               />
             </div>
