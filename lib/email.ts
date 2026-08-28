@@ -1,5 +1,9 @@
 import { ReplitConnectors } from "@replit/connectors-sdk";
 import type { OrgRole } from "@/lib/types";
+import { appOrigin } from "@/lib/email-origin";
+import { renderEmail, escapeHtml, firstName, type EmailContent } from "@/lib/email-layout";
+
+export { appOrigin };
 
 const connectors = new ReplitConnectors();
 
@@ -27,21 +31,25 @@ async function sendViaResend(payload: object): Promise<Response> {
 }
 
 /**
- * Sends the "you've been invited" email via the Resend connection.
- * Best-effort: callers should not fail the invite if the email fails --
- * the invitee can still log in once told the URL. Returns true on success.
+ * One send path for every template. Each of these used to carry its own
+ * identical try/catch, which is four places for the error handling to drift.
+ * Best-effort by contract: returns false and logs rather than throwing, so a
+ * failed send never fails the action that triggered it (an invite still
+ * exists even if its email bounced).
  */
-/**
- * Server-controlled public origin for links in outgoing email. Never derived
- * from request headers -- forwarded-host values are attacker-influenceable
- * and would end up as phishing links in real inboxes. REPLIT_DOMAINS holds
- * the deployment's domain in production and the dev domain in the workspace.
- */
-export function appOrigin(): string | null {
-  const configured = process.env.APP_BASE_URL;
-  if (configured) return configured.replace(/\/$/, "");
-  const domain = process.env.REPLIT_DOMAINS?.split(",")[0]?.trim();
-  return domain ? `https://${domain}` : null;
+async function send(kind: string, to: string, subject: string, text: string, content: EmailContent): Promise<boolean> {
+  try {
+    const response = await sendViaResend({ from: FROM, to: [to], subject, text, html: renderEmail(content) });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      console.error(`[email] ${kind} to ${to} failed: ${response.status} ${detail}`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`[email] ${kind} to ${to} failed:`, err);
+    return false;
+  }
 }
 
 export async function sendInviteEmail(input: {
@@ -58,8 +66,9 @@ export async function sendInviteEmail(input: {
   const roleLabel = input.role === "instructor" ? "an instructor (CFI)" : input.role === "admin" ? "an admin" : "a student";
   const loginUrl = new URL("/login", origin).toString();
   const subject = `You're invited to ${input.organizationName} on AfterFlight`;
+
   const text = [
-    `Hi ${input.name},`,
+    `Hi ${firstName(input.name)},`,
     ``,
     `You've been added to ${input.organizationName} on AfterFlight as ${roleLabel}.`,
     ``,
@@ -68,37 +77,20 @@ export async function sendInviteEmail(input: {
     ``,
     `No password or account setup needed -- just make sure you use this same email so your invitation is recognized.`,
   ].join("\n");
-  const html = `
-    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#101727">
-      <h2 style="margin:0 0 16px">You're invited to ${escapeHtml(input.organizationName)}</h2>
-      <p>Hi ${escapeHtml(input.name)},</p>
-      <p>You've been added to <strong>${escapeHtml(input.organizationName)}</strong> on AfterFlight as ${roleLabel}.</p>
-      <p>To get started, enter this email address (<strong>${escapeHtml(input.to)}</strong>) on the sign-in page and we'll send you a one-time sign-in link:</p>
-      <p style="margin:24px 0">
-        <a href="${escapeHtml(loginUrl)}" style="background:#f07621;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Log in to AfterFlight</a>
-      </p>
-      <p style="color:#56636f;font-size:14px">No password or account setup needed — just make sure you use this same email so your invitation is recognized.</p>
-    </div>`;
 
-  try {
-    const response = await sendViaResend({ from: FROM, to: [input.to], subject, text, html });
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.error(`[email] invite email to ${input.to} failed: ${response.status} ${detail}`);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error(`[email] invite email to ${input.to} failed:`, err);
-    return false;
-  }
+  return send("invite email", input.to, subject, text, {
+    preheader: `You've been added as ${roleLabel}. No password needed.`,
+    heading: `You're invited to ${escapeHtml(input.organizationName)}`,
+    body: [
+      `Hi ${escapeHtml(firstName(input.name))},`,
+      `You've been added to <strong>${escapeHtml(input.organizationName)}</strong> on AfterFlight as ${roleLabel}.`,
+      `There's no password to create. Enter <strong>${escapeHtml(input.to)}</strong> on the sign-in page and we'll email you a one-time link.`,
+    ],
+    cta: { label: "Get started", url: loginUrl },
+    footnote: `Use this same address — your invitation is tied to it.`,
+  });
 }
 
-/**
- * Emails a sign-in (magic) link. Same conventions as sendInviteEmail:
- * server-controlled origin, escaped HTML, best-effort (returns false on
- * failure, never throws).
- */
 export async function sendMagicLinkEmail(input: { to: string; url: string }): Promise<boolean> {
   const subject = "Your AfterFlight sign-in link";
   const text = [
@@ -107,65 +99,39 @@ export async function sendMagicLinkEmail(input: { to: string; url: string }): Pr
     ``,
     `This link expires in 15 minutes. If you didn't request it, you can ignore this email.`,
   ].join("\n");
-  const html = `
-    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#101727">
-      <h2 style="margin:0 0 16px">Sign in to AfterFlight</h2>
-      <p style="margin:24px 0">
-        <a href="${escapeHtml(input.url)}" style="background:#f07621;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Sign in</a>
-      </p>
-      <p style="color:#56636f;font-size:14px">This link expires in 15 minutes. If you didn't request it, you can ignore this email.</p>
-    </div>`;
 
-  try {
-    const response = await sendViaResend({ from: FROM, to: [input.to], subject, text, html });
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.error(`[email] magic link to ${input.to} failed: ${response.status} ${detail}`);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error(`[email] magic link to ${input.to} failed:`, err);
-    return false;
-  }
+  return send("magic link", input.to, subject, text, {
+    preheader: "Your one-time link, good for 15 minutes.",
+    heading: "Sign in to AfterFlight",
+    body: [`Here's your one-time sign-in link. No password required.`],
+    cta: { label: "Sign in", url: input.url },
+    footnote: `This link expires in 15 minutes and can only be used once. If you didn't request it, you can safely ignore this email — nobody can sign in without it.`,
+  });
 }
 
-/** Emails a self-serve signup confirmation link -- same conventions as sendMagicLinkEmail. */
 export async function sendSignupLinkEmail(input: { to: string; url: string; name: string }): Promise<boolean> {
   const subject = "Confirm your AfterFlight account";
   const text = [
-    `Hi ${input.name},`,
+    `Hi ${firstName(input.name)},`,
     ``,
     `Click to confirm your AfterFlight account and set up your organization:`,
     input.url,
     ``,
     `This link expires in 15 minutes. If you didn't request it, you can ignore this email.`,
   ].join("\n");
-  const html = `
-    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#101727">
-      <h2 style="margin:0 0 16px">Confirm your AfterFlight account</h2>
-      <p>Hi ${escapeHtml(input.name)},</p>
-      <p style="margin:24px 0">
-        <a href="${escapeHtml(input.url)}" style="background:#f07621;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Confirm and continue</a>
-      </p>
-      <p style="color:#56636f;font-size:14px">This link expires in 15 minutes. If you didn't request it, you can ignore this email.</p>
-    </div>`;
 
-  try {
-    const response = await sendViaResend({ from: FROM, to: [input.to], subject, text, html });
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.error(`[email] signup link to ${input.to} failed: ${response.status} ${detail}`);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error(`[email] signup link to ${input.to} failed:`, err);
-    return false;
-  }
+  return send("signup link", input.to, subject, text, {
+    preheader: "One click to confirm, then you're set up.",
+    heading: "Confirm your AfterFlight account",
+    body: [
+      `Hi ${escapeHtml(firstName(input.name))},`,
+      `Confirm this address and we'll finish setting up your account. It takes one click — there's no password to create.`,
+    ],
+    cta: { label: "Confirm and continue", url: input.url },
+    footnote: `This link expires in 15 minutes. If you didn't sign up for AfterFlight, you can ignore this email.`,
+  });
 }
 
-/** Emails an email-change confirmation link -- same conventions as sendMagicLinkEmail. */
 export async function sendEmailChangeEmail(input: { to: string; url: string }): Promise<boolean> {
   const subject = "Confirm your new AfterFlight email";
   const text = [
@@ -174,30 +140,14 @@ export async function sendEmailChangeEmail(input: { to: string; url: string }): 
     ``,
     `This link expires in 15 minutes. If you didn't request this, you can ignore this email -- your AfterFlight sign-in email won't change.`,
   ].join("\n");
-  const html = `
-    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#101727">
-      <h2 style="margin:0 0 16px">Confirm your new email</h2>
-      <p>Confirm this address as your new AfterFlight sign-in email:</p>
-      <p style="margin:24px 0">
-        <a href="${escapeHtml(input.url)}" style="background:#f07621;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Confirm new email</a>
-      </p>
-      <p style="color:#56636f;font-size:14px">This link expires in 15 minutes. If you didn't request this, you can ignore this email -- your AfterFlight sign-in email won't change.</p>
-    </div>`;
 
-  try {
-    const response = await sendViaResend({ from: FROM, to: [input.to], subject, text, html });
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.error(`[email] email-change link to ${input.to} failed: ${response.status} ${detail}`);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error(`[email] email-change link to ${input.to} failed:`, err);
-    return false;
-  }
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return send("email-change link", input.to, subject, text, {
+    preheader: "Confirm this address to finish the change.",
+    heading: "Confirm your new email",
+    body: [
+      `You asked to use <strong>${escapeHtml(input.to)}</strong> as your AfterFlight sign-in address. Confirm it below and it takes effect right away.`,
+    ],
+    cta: { label: "Confirm new email", url: input.url },
+    footnote: `This link expires in 15 minutes. If you didn't request this, ignore this email — your sign-in address won't change.`,
+  });
 }
