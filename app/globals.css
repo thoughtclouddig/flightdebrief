@@ -151,21 +151,36 @@
   --danger-soft: #3a1613;
 }
 
-* {
-  border-color: var(--hairline);
-}
-
 /*
- * Focus ring. Without this the browser supplies its own -- Chrome's accent
- * blue, which is the one color on screen that isn't in this palette and which
- * clashed badly with anything brand-colored underneath it. :focus-visible
- * rather than :focus, so it appears for keyboard users and not on every mouse
- * click. Components that already declare their own focus-visible ring (Button,
- * Input, the map controls) keep theirs -- a class beats a bare selector.
+ * Both of these MUST stay inside @layer base.
+ *
+ * Tailwind v4 emits every utility into @layer utilities, and in the cascade an
+ * unlayered rule beats any layered one no matter the specificity. This default
+ * border color was previously unlayered, which meant a bare `*` selector was
+ * silently overriding every border-<color> utility in the app -- border-brand,
+ * border-transparent, hover:border-brand and friends all rendered as hairline
+ * grey, so nothing could ever show a colored border. Layering it fixes that:
+ * utilities come after base, so a class wins again.
+ *
+ * The focus ring has the same hazard in reverse. Unlayered, it would beat the
+ * `focus-visible:outline-none` that Button/Input use to opt out in favor of
+ * their own ring, and they'd render both. In base, those utilities win.
  */
-:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
+@layer base {
+  * {
+    border-color: var(--hairline);
+  }
+
+  /*
+   * Without this the browser supplies its own focus ring -- Chrome's accent
+   * blue, the one color on screen that isn't in this palette, landing right on
+   * top of anything brand-colored underneath. :focus-visible rather than
+   * :focus, so it shows for keyboard users and not on every mouse click.
+   */
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
 }
 
 /*
