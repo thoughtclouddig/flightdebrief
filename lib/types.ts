@@ -30,6 +30,15 @@ export interface Aircraft {
 
 export type OrganizationKind = "individual" | "independent_cfi" | "school";
 
+/**
+ * Human label for an org kind. Exists because the call sites were doing
+ * `kind.replace("_", " ")` under a `capitalize` class, which title-cases the
+ * acronym into "Independent Cfi".
+ */
+export function organizationKindLabel(kind: OrganizationKind): string {
+  return kind === "independent_cfi" ? "Independent CFI" : kind === "school" ? "School" : "Individual";
+}
+
 /** Distinct from the unrelated Subscription/SubscriptionPlan types below (a pre-existing stub for a future CFI revenue-share feature, unconnected to real billing) -- this one is the actual Stripe-backed plan on an organization. */
 export type BillingPlan = "pilot" | "school_pro";
 

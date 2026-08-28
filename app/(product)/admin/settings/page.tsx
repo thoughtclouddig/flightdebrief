@@ -1,3 +1,4 @@
+import { organizationKindLabel } from "@/lib/types";
 import { Mail } from "lucide-react";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { ChangeEmailForm } from "@/components/change-email-form";
@@ -71,7 +72,7 @@ export default async function AdminSettingsPage(props: PageProps<"/admin/setting
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Workspace type</p>
             <Badge variant="neutral" className="mt-1.5 capitalize">
-              {viewer.organization.kind.replace("_", " ")}
+              {organizationKindLabel(viewer.organization.kind)}
             </Badge>
           </div>
         </CardContent>

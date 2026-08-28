@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+import { organizationKindLabel } from "@/lib/types";
 import Link from "next/link";
 import { Lightbulb, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -49,12 +51,16 @@ export default async function AdminOverviewPage() {
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">{viewer.organization.name}</h1>
-        <p className="mt-1 text-sm capitalize text-slate-500 dark:text-slate-400">{viewer.organization.kind.replace("_", " ")}</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{organizationKindLabel(viewer.organization.kind)}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className={cn("grid grid-cols-2 gap-4", viewer.organization.kind === "independent_cfi" ? "sm:grid-cols-3" : "sm:grid-cols-4")}>
         <AdminStat label="Active Students" value={activeStudents} />
-        <AdminStat label="CFIs" value={activeInstructors} />
+        {/* An independent CFI is the only instructor, so this tile can only
+            ever say "1" -- and it's counting the person reading it. */}
+        {viewer.organization.kind === "independent_cfi" ? null : (
+          <AdminStat label="CFIs" value={activeInstructors} />
+        )}
         <AdminStat label="Flights This Month" value={flightsThisMonth.length} />
         <AdminStat label="Debriefs Completed" value={`${debriefedPct}%`} />
       </div>

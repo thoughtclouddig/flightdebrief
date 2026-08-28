@@ -71,9 +71,19 @@ const ADMIN_ITEMS = [
 
 const SUPERADMIN_ITEM = { href: "/super-admin", label: "Super Admin", icon: Building2 };
 
-function itemsForRole(role: Viewer["role"], isSuperadmin: boolean, solo: boolean) {
+function itemsForRole(
+  role: Viewer["role"],
+  isSuperadmin: boolean,
+  solo: boolean,
+  orgKind: Viewer["organization"]["kind"],
+) {
   const studentItems = solo ? SOLO_PILOT_ITEMS : STUDENT_ITEMS;
-  const base = role === "instructor" ? CFI_ITEMS : role === "admin" ? ADMIN_ITEMS : studentItems;
+  // An independent CFI is the only instructor in their org, so a roster of
+  // CFIs lists one person -- themselves -- beside a button that deactivates
+  // them. Nothing useful is behind it.
+  const adminItems =
+    orgKind === "independent_cfi" ? ADMIN_ITEMS.filter((i) => i.href !== "/admin/instructors") : ADMIN_ITEMS;
+  const base = role === "instructor" ? CFI_ITEMS : role === "admin" ? adminItems : studentItems;
   return isSuperadmin ? [...base, SUPERADMIN_ITEM] : base;
 }
 
@@ -227,7 +237,12 @@ export function Nav({
   const pathname = usePathname();
   // Derived here rather than passed in -- Nav already has the viewer, and
   // every other consumer of "is this a solo pilot" uses the same test.
-  const items = itemsForRole(viewer.role, isSuperadmin, viewer.organization.kind === "individual");
+  const items = itemsForRole(
+    viewer.role,
+    isSuperadmin,
+    viewer.organization.kind === "individual",
+    viewer.organization.kind,
+  );
   // In a live demo, the logo goes back to the persona picker (so a visitor
   // can restart or try a different role) instead of their own dashboard --
   // there's nowhere else in-product to do that.

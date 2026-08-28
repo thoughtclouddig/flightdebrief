@@ -88,8 +88,23 @@ export async function updateUserEmail(userId: string, newEmail: string): Promise
 }
 
 export async function listMembershipsForUser(userId: string): Promise<OrganizationMember[]> {
+  // The role tiebreak matters for exactly one case, and it's a real one: an
+  // independent CFI is given 'admin' and 'instructor' in a single INSERT (see
+  // resolveSignupOnLogin), so both rows carry the same transaction-stable
+  // now() and ORDER BY created_at alone leaves it to the planner. getViewer
+  // takes the first active membership, so a CFI could land on the admin
+  // dashboard instead of CFI Today -- their own teaching screens reachable
+  // only through the membership switcher.
+  //
+  // Preferring instructor puts them on the screen they actually work from;
+  // admin stays one switch away. Memberships created at different times (a
+  // school inviting someone) still order by created_at exactly as before --
+  // this only decides genuine ties.
   const { rows } = await getDb().query(
-    "SELECT * FROM organization_members WHERE user_id = $1 ORDER BY created_at",
+    `SELECT * FROM organization_members
+     WHERE user_id = $1
+     ORDER BY created_at,
+       CASE role WHEN 'instructor' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END`,
     [userId],
   );
   return rows.map((r) => ({
@@ -116,6 +131,22 @@ export async function createMembership(input: {
      ON CONFLICT (organization_id, user_id, role) DO NOTHING`,
     [input.id ?? `member-${randomUUID()}`, input.organizationId, input.userId, input.role, input.certificateType ?? null],
   );
+}
+
+/** One membership by id, for authorizing an action against its org/user. */
+export async function getMembershipById(memberId: string): Promise<OrganizationMember | null> {
+  const { rows } = await getDb().query("SELECT * FROM organization_members WHERE id = $1", [memberId]);
+  if (!rows[0]) return null;
+  const r = rows[0];
+  return {
+    id: r.id,
+    organizationId: r.organization_id,
+    userId: r.user_id,
+    role: r.role as OrgRole,
+    status: r.status,
+    certificateType: r.certificate_type ?? null,
+    createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
+  };
 }
 
 export async function setMembershipStatus(memberId: string, status: "active" | "inactive"): Promise<void> {

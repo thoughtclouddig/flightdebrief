@@ -1,3 +1,4 @@
+import { organizationKindLabel } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getRepository } from "@/lib/data";
@@ -23,7 +24,7 @@ export default async function SuperAdminSchoolsPage() {
               <div>
                 <p className="font-medium text-slate-900 dark:text-white">{org.name}</p>
                 <p className="text-sm capitalize text-slate-500 dark:text-slate-400">
-                  {org.kind.replace("_", " ")} · {memberCounts[i].length} member{memberCounts[i].length === 1 ? "" : "s"}
+                  {organizationKindLabel(org.kind)} · {memberCounts[i].length} member{memberCounts[i].length === 1 ? "" : "s"}
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">

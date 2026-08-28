@@ -20,6 +20,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminInsightsPage() {
   const repo = getRepository();
   const viewer = await getViewer();
+  /** A one-person operation: no chief instructor to escalate to, and no other CFI to compare against. */
+  const solo = viewer.organization.kind === "independent_cfi";
   const orgId = viewer.organization.id;
 
   const [common, recurring, carried, coverage, needsReview] = await Promise.all([
@@ -35,7 +37,7 @@ export default async function AdminInsightsPage() {
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Training Insights</h1>
         <p className="mt-1 text-sm text-foreground-soft">
-          Patterns worth a look -- not verdicts. A chief instructor makes the call.
+          {solo ? "Patterns worth a look -- not verdicts. You make the call." : "Patterns worth a look -- not verdicts. A chief instructor makes the call."}
         </p>
       </div>
 

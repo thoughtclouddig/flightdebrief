@@ -55,7 +55,14 @@ export default async function AdminInstructorsPage() {
                     : " · No recent activity"}
                 </p>
               </Link>
-              <MemberStatusButton memberId={member.id} status={member.status} />
+              {/* No control to deactivate yourself -- the API refuses it too.
+                  getViewer resolves the first *active* membership, so this is
+                  the button that locks you out of your own organization. */}
+              {user.id === viewer.user.id ? (
+                <span className="shrink-0 text-xs text-foreground-faint">You</span>
+              ) : (
+                <MemberStatusButton memberId={member.id} status={member.status} />
+              )}
             </CardContent>
           </Card>
         ))}
