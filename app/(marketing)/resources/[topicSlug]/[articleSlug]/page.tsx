@@ -8,6 +8,7 @@ import { ArticleCta } from "@/components/marketing/article-cta";
 import { Reveal } from "@/components/marketing/reveal";
 import { getRepository } from "@/lib/data";
 import { heroImageSrc } from "@/lib/content/images";
+import { toPlainText } from "@/lib/content/article-body";
 import { appOrigin } from "@/lib/email";
 import type { SourceType } from "@/lib/types";
 
@@ -73,6 +74,9 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
         .filter((a) => a.id !== article.id)
         .slice(0, 3)
     : [];
+
+  const plainText = article.bodyBlocks ? toPlainText(article.bodyBlocks) : article.body;
+  const readMinutes = Math.max(1, Math.round(plainText.trim().split(/\s+/).filter(Boolean).length / 225));
 
   const origin = appOrigin();
   const jsonLd = {
@@ -162,11 +166,15 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
           {article.dek ? (
             <p className="mt-4 max-w-[52ch] text-pretty text-[17px] leading-relaxed text-[#68717D]">{article.dek}</p>
           ) : null}
-          <div className="mt-5 flex items-center gap-2 text-sm text-[#68717D]">
+          {/* Read time sits with the byline because it answers the question a
+              reader has at exactly this point: is this worth starting now. */}
+          <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[#68717D]">
             <span className="rounded-full bg-[#f4f5f6] px-3 py-1 font-medium text-[#101727]">{article.authorName}</span>
             {article.publishedAt ? (
               <span>{new Date(article.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
             ) : null}
+            <span aria-hidden>·</span>
+            <span>{readMinutes} min read</span>
           </div>
         </Reveal>
 
@@ -212,17 +220,39 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
         ) : null}
 
         {related.length ? (
-          <Reveal delay={200} className="mt-10 border-t border-hairline pt-8">
-            <h2 className="font-display text-lg font-bold text-[#101727]">Related</h2>
-            <ul className="mt-3 flex flex-col gap-2">
-              {related.map((a) => (
-                <li key={a.id}>
-                  <Link href={`/resources/${topicSlug}/${a.slug}`} className="text-brand hover:underline">
-                    {a.title}
+          <Reveal delay={200} className="mt-14 border-t border-slate-200 pt-10">
+            {/* Cards, not a bulleted list of links. At the end of an article
+                the question is "what should I read next", and a title alone
+                doesn't answer it -- the image and dek are what make the
+                choice. */}
+            <h2 className="font-display text-sm font-bold uppercase tracking-[0.12em] text-[#68717D]">Keep reading</h2>
+            <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
+              {related.map((a) => {
+                const src = heroImageSrc("articles", a.id, a.imageUrl);
+                return (
+                  <Link
+                    key={a.id}
+                    href={`/resources/${topicSlug}/${a.slug}`}
+                    className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors hover:border-[#c8ced4]"
+                  >
+                    <div className="aspect-[16/10] w-full overflow-hidden bg-[#f1efe8]">
+                      {src ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- served from /api/media
+                        <img src={src} alt="" loading="lazy" className="size-full object-cover" />
+                      ) : null}
+                    </div>
+                    <div className="flex flex-1 flex-col p-4">
+                      <p className="font-display text-pretty text-[16px] font-bold leading-[1.3] text-[#101727] group-hover:text-brand">
+                        {a.title}
+                      </p>
+                      {a.dek ? (
+                        <p className="mt-2 line-clamp-2 text-[14px] leading-relaxed text-[#68717D]">{a.dek}</p>
+                      ) : null}
+                    </div>
                   </Link>
-                </li>
-              ))}
-            </ul>
+                );
+              })}
+            </div>
           </Reveal>
         ) : null}
       </div>
