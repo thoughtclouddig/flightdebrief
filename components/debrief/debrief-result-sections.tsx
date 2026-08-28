@@ -34,6 +34,7 @@ export function DebriefResultSections({
   result,
   differenceRows,
   displayTrack,
+  hasAdsbLookup = true,
   ttsEnabled,
   flightId,
   flightSkillProgressions,
@@ -45,6 +46,8 @@ export function DebriefResultSections({
   result: StructuredDebrief;
   differenceRows: ComparisonRow[];
   displayTrack: TrackPosition[] | null;
+  /** False for a hand-logged flight, so the empty map doesn't claim an ADS-B lookup happened. */
+  hasAdsbLookup?: boolean;
   ttsEnabled: boolean;
   flightId: string;
   flightSkillProgressions: SkillProgression[];
@@ -71,7 +74,7 @@ export function DebriefResultSections({
           <CardTitle>Flight Path</CardTitle>
         </CardHeader>
         <CardContent>
-          <FlightMap track={displayTrack} />
+          <FlightMap track={displayTrack} hasAdsbLookup={hasAdsbLookup} />
         </CardContent>
       </Card>
 

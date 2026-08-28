@@ -88,7 +88,7 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
           <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Flight track</h2>
           <Badge variant="outline">ADS-B contextual data</Badge>
         </div>
-        <FlightMap track={displayTrack} />
+        <FlightMap track={displayTrack} hasAdsbLookup={flight.fr24FlightId !== null} />
       </div>
 
       {hasPendingDebrief && flight.debriefStatus !== "complete" ? (

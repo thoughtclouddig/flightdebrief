@@ -13,16 +13,30 @@ import type { TrackPosition } from "@/lib/types";
  */
 const BASEMAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
-export function FlightMap({ track }: { track: TrackPosition[] | null }) {
+export function FlightMap({
+  track,
+  /**
+   * Whether this flight came from an ADS-B lookup at all. A manually-entered
+   * flight has no fr24FlightId, so there was never a lookup to come back
+   * sparse -- telling that pilot the flight "was found" but had thin position
+   * history describes something that never happened. Defaults to true so the
+   * marketing demo and any caller that doesn't know keeps the old wording.
+   */
+  hasAdsbLookup = true,
+}: {
+  track: TrackPosition[] | null;
+  hasAdsbLookup?: boolean;
+}) {
   const displayTrack = simplifyTrackForDisplay(track);
 
   if (!displayTrack || displayTrack.length < 2) {
     return (
       <div className="flex h-64 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 px-6 text-center dark:border-white/15">
-        <p className="text-sm text-slate-400">No track data available for this flight.</p>
+        <p className="text-sm text-slate-400">No flight path to show.</p>
         <p className="text-xs text-slate-400">
-          Some aircraft have sparse or no public ADS-B position history even when the flight itself was found --
-          this doesn&rsquo;t affect the rest of the debrief.
+          {hasAdsbLookup
+            ? "This aircraft had sparse or no public ADS-B position history for the flight -- it doesn't affect the rest of the debrief."
+            : "This flight was logged by hand rather than matched to an ADS-B track, so there's no path to draw. Everything else in the debrief works the same."}
         </p>
       </div>
     );

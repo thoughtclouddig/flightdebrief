@@ -79,6 +79,7 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
         result={result}
         differenceRows={differenceRows}
         displayTrack={displayTrack}
+        hasAdsbLookup={flight.fr24FlightId !== null}
         ttsEnabled={ttsEnabled}
         flightId={flight.id}
         flightSkillProgressions={flightSkillProgressions}
