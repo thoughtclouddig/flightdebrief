@@ -108,25 +108,25 @@ export default async function AdminOverviewPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
                 <tr>
-                  <th className="px-4 py-2.5 font-medium">Student</th>
-                  <th className="px-4 py-2.5 font-medium">CFI</th>
-                  <th className="px-4 py-2.5 font-medium">Aircraft</th>
-                  <th className="px-4 py-2.5 font-medium">Flight</th>
-                  <th className="px-4 py-2.5 font-medium">Debrief</th>
-                  <th className="px-4 py-2.5 font-medium">Next Focus</th>
+                  <th className="whitespace-nowrap px-4 py-2.5 font-medium">Student</th>
+                  <th className="whitespace-nowrap px-4 py-2.5 font-medium">CFI</th>
+                  <th className="whitespace-nowrap px-4 py-2.5 font-medium">Aircraft</th>
+                  <th className="whitespace-nowrap px-4 py-2.5 font-medium">Flight</th>
+                  <th className="whitespace-nowrap px-4 py-2.5 font-medium">Debrief</th>
+                  <th className="whitespace-nowrap px-4 py-2.5 font-medium">Next Focus</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                 {rows.map(({ flight, student, debrief }) => (
                   <tr key={flight.id}>
-                    <td className="px-4 py-2.5 font-medium text-slate-900 dark:text-white">{student?.name}</td>
-                    <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{flight.instructor?.name ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{flight.aircraft.tailNumber}</td>
-                    <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">
+                    <td className="whitespace-nowrap px-4 py-2.5 font-medium text-slate-900 dark:text-white">{student?.name}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-slate-600 dark:text-slate-300">{flight.instructor?.name ?? "—"}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-slate-600 dark:text-slate-300">{flight.aircraft.tailNumber}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-slate-600 dark:text-slate-300">
                       {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} ·{" "}
                       {formatDurationShort(flight.durationMinutes)}
                     </td>
-                    <td className="px-4 py-2.5">
+                    <td className="whitespace-nowrap px-4 py-2.5">
                       <Badge variant={flight.debriefStatus === "complete" ? "success" : "warning"}>
                         {flight.debriefStatus === "complete" ? "Complete" : "Pending"}
                       </Badge>

@@ -84,6 +84,18 @@ export interface ListReservationsFilter {
   instructorId?: string;
 }
 
+export interface UpdateAircraftInput {
+  tailNumber?: string;
+  make?: string;
+  model?: string;
+  homeAirport?: string;
+  status?: Aircraft["status"];
+}
+
+export type AircraftDeleteResult =
+  | { deleted: true; cancelledReservations: number }
+  | { deleted: false; reason: "has-flights"; flightCount: number };
+
 export interface UpdateReservationInput {
   scheduledStart?: string;
   scheduledEnd?: string;
@@ -189,6 +201,16 @@ export interface Repository {
     homeAirport: string;
     organizationId?: string | null;
   }): Promise<Aircraft>;
+  updateAircraft(id: string, input: UpdateAircraftInput): Promise<Aircraft | null>;
+  /**
+   * Hard delete, and only safe when nothing references it. flights.aircraft_id
+   * is ON DELETE RESTRICT so Postgres refuses outright once the aircraft has
+   * flown -- rather than surfacing a constraint error, this reports why and
+   * leaves the row alone, so the UI can offer "mark inactive" instead.
+   * Reservations are ON DELETE CASCADE, so it also reports how many upcoming
+   * bookings a delete would take with it.
+   */
+  deleteAircraft(id: string): Promise<AircraftDeleteResult>;
   getOrCreateInstructor(name: string, organizationId?: string | null): Promise<Instructor>;
 
   listFlights(filter?: ListFlightsFilter): Promise<FlightWithRelations[]>;

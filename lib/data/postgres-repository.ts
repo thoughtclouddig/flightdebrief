@@ -46,6 +46,8 @@ import type {
   CreateFlightInput,
   CreateReferralEventInput,
   CreateReservationInput,
+  UpdateAircraftInput,
+  AircraftDeleteResult,
   UpdateReservationInput,
   CreateResearchReportInput,
   CreateStudentNoteInput,
@@ -166,6 +168,64 @@ export class PostgresRepository implements Repository {
     // conflicting row now exists, fetch it instead of returning undefined.
     const { rows: afterConflict } = await db.query("SELECT * FROM aircraft WHERE upper(tail_number) = $1", [tail]);
     return mapAircraft(afterConflict[0]);
+  }
+
+  async updateAircraft(id: string, input: UpdateAircraftInput): Promise<Aircraft | null> {
+    // Dynamic set list, same reason as updateReservation: an omitted field
+    // keeps its current value instead of being nulled by a fixed column list.
+    const sets: string[] = [];
+    const values: unknown[] = [];
+    const push = (column: string, value: unknown) => {
+      values.push(value);
+      sets.push(`${column} = $${values.length}`);
+    };
+    if (input.tailNumber !== undefined) push("tail_number", input.tailNumber.trim().toUpperCase());
+    if (input.homeAirport !== undefined) push("home_airport", input.homeAirport.trim());
+    if (input.status !== undefined) push("status", input.status);
+
+    // `type` is the denormalized display string ("Diamond DA40 NG") that the
+    // rest of the app reads, so it has to move whenever make/model does --
+    // otherwise the list keeps rendering the old name after an edit.
+    if (input.make !== undefined || input.model !== undefined) {
+      const current = await this.getAircraft(id);
+      if (!current) return null;
+      const make = (input.make ?? current.make).trim();
+      const model = (input.model ?? current.model).trim();
+      push("make", make);
+      push("model", model);
+      push("type", `${make} ${model}`.trim() || "Unknown");
+    }
+    if (sets.length === 0) return this.getAircraft(id);
+
+    values.push(id);
+    const db = await this.db();
+    const { rows } = await db.query(
+      `UPDATE aircraft SET ${sets.join(", ")} WHERE id = $${values.length} RETURNING *`,
+      values,
+    );
+    return rows[0] ? mapAircraft(rows[0]) : null;
+  }
+
+  async deleteAircraft(id: string): Promise<AircraftDeleteResult> {
+    const db = await this.db();
+    // Checked rather than caught: flights.aircraft_id is ON DELETE RESTRICT, so
+    // the delete would throw a foreign-key error we'd have to parse. Counting
+    // first lets the caller say how many flights are in the way.
+    const { rows: flightRows } = await db.query<{ n: number }>(
+      "SELECT count(*)::int AS n FROM flights WHERE aircraft_id = $1",
+      [id],
+    );
+    const flightCount = flightRows[0]?.n ?? 0;
+    if (flightCount > 0) return { deleted: false, reason: "has-flights", flightCount };
+
+    // reservations.aircraft_id is ON DELETE CASCADE -- report what the delete
+    // takes with it so it isn't silent.
+    const { rows: resRows } = await db.query<{ n: number }>(
+      "SELECT count(*)::int AS n FROM reservations WHERE aircraft_id = $1",
+      [id],
+    );
+    await db.query("DELETE FROM aircraft WHERE id = $1", [id]);
+    return { deleted: true, cancelledReservations: resRows[0]?.n ?? 0 };
   }
 
   async getOrCreateInstructor(name: string, organizationId?: string | null): Promise<Instructor> {
