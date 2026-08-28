@@ -196,7 +196,7 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
       ) : null}
 
       {watchFor || topNeedsWork ? (
-        <Card className="border-amber/40 bg-amber-soft">
+        <Card className="border-amber/40">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Eye className="size-4 text-amber" />

@@ -77,7 +77,7 @@ export function DebriefReplay({
       />
 
       {recurringTheme ? (
-        <Card className="border-amber/40 bg-amber-soft">
+        <Card className="border-amber/40">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Repeat className="size-4 text-amber" />
