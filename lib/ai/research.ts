@@ -79,24 +79,36 @@ export interface ResearchBrief {
   gaps: string[];
 }
 
+/**
+ * Every field falls back rather than throwing.
+ *
+ * .default() only fills a field that is missing; a field of the wrong type
+ * still throws, and one bad field destroys the whole reply. That has now cost
+ * two full runs -- a sourceType outside the enum, then an array that came
+ * back as something else -- each time discarding six or eight verified
+ * findings over one malformed corner of an otherwise good response.
+ *
+ * A model reply is untrusted input shaped like data. Parsing it should
+ * salvage what is well-formed, not reject the lot.
+ */
 const researchSchema = z.object({
   findings: z
     .array(
       z.object({
-        claim: z.string().default(""),
-        label: z.string().default(""),
-        url: z.string().default(""),
+        claim: z.string().default("").catch(""),
+        label: z.string().default("").catch(""),
+        url: z.string().default("").catch(""),
         // A plain string, mapped afterwards. As a z.enum, one unrecognised
         // value ("faa_handbook", "research") threw the whole parse and
         // discarded every finding alongside it -- eight verified sources lost
         // to one label. The label is the least important field here; the URL
         // and the quote are the point.
-        sourceType: z.string().default(""),
-        support: z.string().default(""),
+        sourceType: z.string().default("").catch(""),
+        support: z.string().default("").catch(""),
       }),
     )
-    .default([]),
-  gaps: z.array(z.string()).default([]),
+    .default([]).catch([]),
+  gaps: z.array(z.string()).default([]).catch([]),
 });
 
 const RESEARCH_SYSTEM = `You are an aviation educator gathering sources before someone else writes an article. You do not write it.
@@ -197,7 +209,9 @@ Find what can be substantiated about it, and say plainly what cannot.`,
     // produces an unsourced article that looks exactly like a sourced one.
     console.error("[research] could not parse the researcher's reply:", err);
     console.error("[research] reply began:", textBlock.text.slice(0, 400));
-    throw new Error("The researcher's reply could not be parsed.");
+    // Short and human. A raw Zod issue array in a table cell tells the reader
+    // nothing they can act on, and the detail is in the log.
+    throw new Error("The researcher's reply could not be read. See the server log.");
   }
 
   // Zero searches means the tool never ran -- a quota, an outage, a rejected
@@ -300,4 +314,4 @@ export function sourcesFrom(brief: ResearchBrief): Source[] {
 }
 
 /** Exported for tests only -- the mapping is worth pinning, the call is not. */
-export const __testing = { toSourceType };
+export const __testing = { toSourceType, researchSchema };

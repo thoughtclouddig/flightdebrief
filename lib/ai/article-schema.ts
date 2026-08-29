@@ -10,45 +10,45 @@ import { z } from "zod";
  * can't be missing.
  */
 export const generatedArticleSchema = z.object({
-  title: z.string().default(""),
-  dek: z.string().default(""),
-  answer: z.string().default(""),
-  keyFacts: z.array(z.string()).default([]),
+  title: z.string().default("").catch(""),
+  dek: z.string().default("").catch(""),
+  answer: z.string().default("").catch(""),
+  keyFacts: z.array(z.string()).default([]).catch([]),
   sections: z
     .array(
       z.object({
-        heading: z.string().default(""),
-        body: z.string().default(""),
+        heading: z.string().default("").catch(""),
+        body: z.string().default("").catch(""),
         // Optional enrichments. Defaulted rather than required so a model
         // that returns none still produces a valid article -- most sections
         // should have none.
-        steps: z.array(z.string()).default([]),
-        tip: z.string().nullable().default(null),
+        steps: z.array(z.string()).default([]).catch([]),
+        tip: z.string().nullable().default(null).catch(null),
         subsections: z
-          .array(z.object({ heading: z.string().default(""), body: z.string().default("") }))
-          .default([]),
-        pullQuote: z.string().nullable().default(null),
+          .array(z.object({ heading: z.string().default("").catch(""), body: z.string().default("").catch("") }))
+          .default([]).catch([]),
+        pullQuote: z.string().nullable().default(null).catch(null),
         comparison: z
           .object({
-            leftLabel: z.string().default(""),
-            left: z.string().default(""),
-            rightLabel: z.string().default(""),
-            right: z.string().default(""),
+            leftLabel: z.string().default("").catch(""),
+            left: z.string().default("").catch(""),
+            rightLabel: z.string().default("").catch(""),
+            right: z.string().default("").catch(""),
           })
           .nullable()
-          .default(null),
-        checklist: z.array(z.string()).default([]),
+          .default(null).catch(null),
+        checklist: z.array(z.string()).default([]).catch([]),
       }),
     )
-    .default([]),
+    .default([]).catch([]),
   faq: z
     .array(
       z.object({
-        question: z.string().default(""),
-        answer: z.string().default(""),
+        question: z.string().default("").catch(""),
+        answer: z.string().default("").catch(""),
       }),
     )
-    .default([]),
+    .default([]).catch([]),
 });
 
 export type GeneratedArticle = z.infer<typeof generatedArticleSchema>;

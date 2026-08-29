@@ -27,3 +27,19 @@ describe("toSourceType", () => {
     expect(toSourceType("")).toBe("expert_opinion");
   });
 });
+
+describe("researchSchema resilience", () => {
+  it("salvages a reply with one malformed field instead of discarding all of it", () => {
+    // Shapes taken from real failures: a gaps value that isn't an array, and
+    // a finding missing its support quote.
+    const reply = {
+      findings: [
+        { claim: "c", label: "l", url: "https://x.test", sourceType: "peer-reviewed journal", support: "s" },
+      ],
+      gaps: "not an array",
+    };
+    const parsed = __testing.researchSchema.parse(reply);
+    expect(parsed.findings).toHaveLength(1);
+    expect(parsed.gaps).toEqual([]);
+  });
+});

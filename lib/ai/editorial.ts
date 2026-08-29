@@ -48,36 +48,36 @@ export interface EditorialResult {
 }
 
 const bodySchema = z.object({
-  answer: z.string().default(""),
-  keyFacts: z.array(z.string()).default([]),
+  answer: z.string().default("").catch(""),
+  keyFacts: z.array(z.string()).default([]).catch([]),
   sections: z
     .array(
       z.object({
-        heading: z.string().default(""),
-        body: z.string().default(""),
-        steps: z.array(z.string()).default([]),
-        tip: z.string().nullable().default(null),
-        subsections: z.array(z.object({ heading: z.string().default(""), body: z.string().default("") })).default([]),
-        pullQuote: z.string().nullable().default(null),
+        heading: z.string().default("").catch(""),
+        body: z.string().default("").catch(""),
+        steps: z.array(z.string()).default([]).catch([]),
+        tip: z.string().nullable().default(null).catch(null),
+        subsections: z.array(z.object({ heading: z.string().default("").catch(""), body: z.string().default("").catch("") })).default([]).catch([]),
+        pullQuote: z.string().nullable().default(null).catch(null),
         comparison: z
           .object({
-            leftLabel: z.string().default(""),
-            left: z.string().default(""),
-            rightLabel: z.string().default(""),
-            right: z.string().default(""),
+            leftLabel: z.string().default("").catch(""),
+            left: z.string().default("").catch(""),
+            rightLabel: z.string().default("").catch(""),
+            right: z.string().default("").catch(""),
           })
           .nullable()
-          .default(null),
-        checklist: z.array(z.string()).default([]),
+          .default(null).catch(null),
+        checklist: z.array(z.string()).default([]).catch([]),
       }),
     )
-    .default([]),
-  faq: z.array(z.object({ question: z.string().default(""), answer: z.string().default("") })).default([]),
+    .default([]).catch([]),
+  faq: z.array(z.object({ question: z.string().default("").catch(""), answer: z.string().default("").catch("") })).default([]).catch([]),
 });
 
 const passSchema = z.object({
   article: bodySchema,
-  changes: z.array(z.object({ before: z.string().default(""), reason: z.string().default("") })).default([]),
+  changes: z.array(z.object({ before: z.string().default("").catch(""), reason: z.string().default("").catch("") })).default([]).catch([]),
 });
 
 async function runPass(
