@@ -12,7 +12,7 @@ import { buildDebriefNarration } from "@/lib/debrief-narration";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
 import { toPilotSpeak } from "@/lib/narration";
-import { setCachedAudio } from "@/lib/audio-cache";
+import { setCachedAudio, audioCacheKey } from "@/lib/audio-cache";
 import { DEFAULT_TTS_VOICE } from "@/lib/tts-voices";
 import type { DebriefGuidanceMode, StructuredDebrief } from "@/lib/types";
 import { buildDiarizedTurns } from "@/lib/transcription/diarized-turns";
@@ -230,8 +230,10 @@ async function prewarmDebriefAudio(
 
   try {
     const student = await getRepository().getUser(studentId);
-    const script = toPilotSpeak(
-      buildDebriefNarration({
+    // The narration, not the pilot-speak form: the route keys the cache on
+    // this and synthesizes the converted text, so keying on the converted
+    // text here would write somewhere the route never looks.
+    const script = buildDebriefNarration({
         studentFirstName: student?.name.split(" ")[0] ?? "there",
         instructorFirstName,
         // Must match what GET /api/flights/[id]/debrief/audio builds, because
@@ -246,11 +248,14 @@ async function prewarmDebriefAudio(
         instructorGuidance: structured.instructorGuidance,
         actionItems: structured.actionItems,
         studyReferences: structured.studyReferences,
-      }),
-    );
+    });
 
-    const audio = await synthesizeSpeech(script, apiKey, DEFAULT_TTS_VOICE);
-    setCachedAudio(`debrief:${flightId}:${DEFAULT_TTS_VOICE}`, audio);
+    const audio = await synthesizeSpeech(toPilotSpeak(script), apiKey, DEFAULT_TTS_VOICE);
+    // Built with the same helper the route uses. Hand-writing the key here is
+    // what broke this: the route moved to a script-hashed key and the
+    // pre-warm kept writing the old shape, so it missed on every click and
+    // silently did nothing but spend a Deepgram call.
+    await setCachedAudio(audioCacheKey(`debrief:${flightId}`, DEFAULT_TTS_VOICE, script), audio);
   } catch (err) {
     console.error("[debrief-audio] pre-warm failed:", err instanceof Error ? err.message : err);
   }

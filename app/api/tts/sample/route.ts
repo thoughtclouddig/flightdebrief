@@ -27,7 +27,7 @@ export async function GET(request: Request) {
   // Content is fixed, so the voice alone identifies the audio -- one render
   // per voice for the whole process, shared across every user.
   const cacheKey = `voice-sample:${voice}`;
-  const cached = getCachedAudio(cacheKey);
+  const cached = await getCachedAudio(cacheKey);
   if (cached) {
     return new NextResponse(new Uint8Array(cached), {
       headers: { "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=86400" },
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
 
   try {
     const audio = await synthesizeSpeech(SAMPLE_LINE, apiKey, voice);
-    setCachedAudio(cacheKey, audio);
+    await setCachedAudio(cacheKey, audio);
     return new NextResponse(new Uint8Array(audio), {
       headers: { "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=86400" },
     });

@@ -10,22 +10,18 @@
  * database ends up backing this app) is a natural fast-follow once that's
  * settled -- this solves "every click is slow," not "the first click is slow."
  */
-const cache = new Map<string, Buffer>();
+import { getDb } from "@/lib/db";
 
 /**
- * A cache key that includes what was actually said.
+ * Process memory in front of Postgres.
  *
- * Keys used to be (subject, voice) on the stated assumption that "a debrief's
- * narration never changes once written". That held until the narration
- * builder changed: fixing the script to stop reading a student's own words
- * back at them had no audible effect, because every listener was served audio
- * synthesized before the fix. The same applies to a scenario whose text is
- * edited -- the corrected ATIS call would have gone on playing the old one.
- *
- * Hashing the script makes the key describe the audio rather than its
- * subject, so a script change is a cache miss by construction and nobody has
- * to remember to invalidate anything.
+ * Memory alone meant every reload, deploy, or new instance started cold, and
+ * the first listener after any of those waited the full synthesis again --
+ * which on Replit, where the dev server reloads constantly, was most of the
+ * time. The database makes a rendered script render once, ever.
  */
+const memory = new Map<string, Buffer>();
+
 export function audioCacheKey(subject: string, voice: string, script: string): string {
   let hash = 0;
   for (let i = 0; i < script.length; i++) {
@@ -49,10 +45,34 @@ export const NARRATION_AUDIO_HEADERS = {
   "Cache-Control": "private, max-age=0, must-revalidate",
 };
 
-export function getCachedAudio(key: string): Buffer | null {
-  return cache.get(key) ?? null;
+export async function getCachedAudio(key: string): Promise<Buffer | null> {
+  const hit = memory.get(key);
+  if (hit) return hit;
+
+  try {
+    const { rows } = await getDb().query<{ audio: Buffer }>(
+      "SELECT audio FROM audio_cache WHERE key = $1",
+      [key],
+    );
+    if (!rows[0]) return null;
+    memory.set(key, rows[0].audio);
+    return rows[0].audio;
+  } catch (err) {
+    // A cache is an optimisation; a database problem here should slow the
+    // request down, not fail it.
+    console.error("[audio-cache] read failed:", err);
+    return null;
+  }
 }
 
-export function setCachedAudio(key: string, audio: Buffer): void {
-  cache.set(key, audio);
+export async function setCachedAudio(key: string, audio: Buffer): Promise<void> {
+  memory.set(key, audio);
+  try {
+    await getDb().query(
+      "INSERT INTO audio_cache (key, audio) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING",
+      [key, audio],
+    );
+  } catch (err) {
+    console.error("[audio-cache] write failed:", err);
+  }
 }

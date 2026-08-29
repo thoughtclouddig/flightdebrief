@@ -760,3 +760,15 @@ CREATE TABLE IF NOT EXISTS referral_events (
 );
 CREATE INDEX IF NOT EXISTS referral_events_created_idx ON referral_events (created_at DESC);
 CREATE INDEX IF NOT EXISTS referral_events_source_idx ON referral_events (referrer_source);
+
+-- Synthesized narration audio, keyed by what was said (see lib/audio-cache.ts).
+-- Deepgram renders a full debrief in several seconds, and the cache was
+-- process-memory only: every dev-server reload, deploy, or scale-out threw it
+-- all away and the next listener waited again. The key already contains a
+-- hash of the script, so a changed narration writes a new row rather than
+-- needing invalidation.
+CREATE TABLE IF NOT EXISTS audio_cache (
+  key text PRIMARY KEY,
+  audio bytea NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);

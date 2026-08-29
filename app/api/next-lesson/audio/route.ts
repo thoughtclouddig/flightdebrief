@@ -51,7 +51,7 @@ export async function GET(request: Request) {
   // the narration is then a miss rather than something someone has to
   // remember to invalidate.
   const cacheKey = audioCacheKey(`next-lesson:${lastDebriefed.id}`, voice, script);
-  const cached = getCachedAudio(cacheKey);
+  const cached = await getCachedAudio(cacheKey);
   if (cached) {
     return new NextResponse(new Uint8Array(cached), { headers: NARRATION_AUDIO_HEADERS });
   }
@@ -65,6 +65,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed to generate audio.", detail }, { status: 502 });
   }
 
-  setCachedAudio(cacheKey, audio);
+  await setCachedAudio(cacheKey, audio);
   return new NextResponse(new Uint8Array(audio), { headers: NARRATION_AUDIO_HEADERS });
 }

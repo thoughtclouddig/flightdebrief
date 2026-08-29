@@ -56,7 +56,7 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
   // After the script, so the key describes the audio rather than the debrief
   // -- a narration change invalidates itself.
   const cacheKey = audioCacheKey(`debrief:${id}`, voice, script);
-  const cached = getCachedAudio(cacheKey);
+  const cached = await getCachedAudio(cacheKey);
   if (cached) {
     return new NextResponse(new Uint8Array(cached), { headers: NARRATION_AUDIO_HEADERS });
   }
@@ -70,6 +70,6 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
     return NextResponse.json({ error: "Failed to generate audio.", detail }, { status: 502 });
   }
 
-  setCachedAudio(cacheKey, audio);
+  await setCachedAudio(cacheKey, audio);
   return new NextResponse(new Uint8Array(audio), { headers: NARRATION_AUDIO_HEADERS });
 }

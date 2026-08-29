@@ -52,7 +52,7 @@ export async function GET(request: Request, { params }: RouteContext<"/api/radio
   // an altimeter back to Ground -- and an id-keyed cache would have gone on
   // playing the wrong one.
   const cacheKey = audioCacheKey(`radio-practice:${scenario.id}`, voice, scenario.atcCall);
-  const cached = getCachedAudio(cacheKey);
+  const cached = await getCachedAudio(cacheKey);
   if (cached) {
     return new NextResponse(new Uint8Array(cached), { headers: NARRATION_AUDIO_HEADERS });
   }
@@ -66,6 +66,6 @@ export async function GET(request: Request, { params }: RouteContext<"/api/radio
     return NextResponse.json({ error: "Failed to generate audio.", detail }, { status: 502 });
   }
 
-  setCachedAudio(cacheKey, audio);
+  await setCachedAudio(cacheKey, audio);
   return new NextResponse(new Uint8Array(audio), { headers: NARRATION_AUDIO_HEADERS });
 }
