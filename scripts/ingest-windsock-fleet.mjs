@@ -189,14 +189,28 @@ const filters = [
 ];
 
 /**
- * Paginate on a stable sort, and de-duplicate.
+ * The headline count comes from the histogram endpoint, in ONE request.
  *
- * Two runs minutes apart disagreed -- 168 trainers then 174, median year 1979
- * then 1978 -- because the default sort is by last-airborne time, which
- * changes underneath a four-page walk. Rows shift between pages, so some are
- * fetched twice and others never. Sorting on the tail number makes the walk
- * deterministic, and the de-duplication is belt and braces: a figure that
- * moves when nothing changed is not a figure worth publishing.
+ * Paging for it does not work and cannot be made to. Three runs minutes apart
+ * gave 683, 683 and 681, with the type counts moving each time -- sorting on
+ * tail number did not fix it, because the registry rows themselves are being
+ * updated continuously and an offset walk over a moving set double-counts
+ * some rows and misses others.
+ *
+ * A single aggregate request has no pages to drift between, so the number a
+ * reader sees is reproducible. The composition below is still a sample and is
+ * stored as one.
+ */
+const histogram = await post("/api/v3/aircraft/search/histogram", { filters });
+const totalCount = histogram?.data?.total_count ?? null;
+
+/**
+ * A sample, for composition only.
+ *
+ * De-duplicated by id because the same row can appear on two pages. Its
+ * COUNTS are not publishable -- they drift by a percent or two between runs --
+ * but the ranking and the median build year are stable enough to describe the
+ * fleet, and that is all the page claims from it.
  */
 const seen = new Set();
 const aircraft = [];
@@ -269,10 +283,14 @@ const runways = Array.isArray(airport.runways)
   ? airport.runways.map((r) => r.ident ?? r.name ?? r.designator).filter(Boolean)
   : [];
 
-console.log(`  ${aircraft.length} aircraft registered within ${RADIUS_MI} mi, median year ${median(years) ?? "unknown"}`);
-console.log(`  ${trainers.length} trainer types, median ${median(trainerHours) ?? "?"} hours flown last year`);
-console.log(`  ${hardWorked} flew 500+ hours — working aircraft rather than privately owned`);
-console.log(`  top types: ${topTypes.slice(0, 4).map((t) => `${t.type} (${t.count})`).join(", ")}`);
+console.log(`  ${totalCount ?? "?"} aircraft registered within ${RADIUS_MI} mi (histogram total, reproducible)`);
+console.log(`  sample of ${aircraft.length} for composition — median build year ${median(years) ?? "unknown"}`);
+console.log(`  top types: ${topTypes.slice(0, 4).map((t) => t.type).join(", ")}`);
+// Kept in the log, not on the page. Eight aircraft over 500 hours out of ~170
+// trainer types does not support a claim about how hard the fleet works: the
+// school aircraft are registered to corporate addresses outside the radius,
+// so a registry search finds local OWNERS rather than based aircraft.
+console.log(`  (utilisation, not published: median ${median(trainerHours) ?? "?"} hrs, ${hardWorked} over 500)`);
 if (runways.length) console.log(`  runways: ${runways.join(", ")}`);
 
 const client = new pg.Client({ connectionString });
@@ -295,7 +313,7 @@ await client.query(
      computed_at = now()`,
   [
     IDENT,
-    aircraft.length,
+    totalCount ?? aircraft.length,
     median(years),
     JSON.stringify(topTypes),
     trainers.length,
