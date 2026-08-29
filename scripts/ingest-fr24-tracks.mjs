@@ -5,12 +5,22 @@
  *   node scripts/ingest-fr24-tracks.mjs KFFZ --sample 400
  *   node scripts/ingest-fr24-tracks.mjs KFFZ --sample 50 --dry-run
  *
- * A SAMPLE, not a census. The track endpoint costs one call per flight, so
- * pulling all 30,000 local flights at a busy field is out of the question --
- * and pointless: a few hundred already show where the practice areas are and
- * which way traffic leaves. The sample is spread across hours and months
- * rather than taken as "the most recent N", because the most recent N is one
- * week of one season and would draw a map of that week.
+ * A SAMPLE, not a census -- but a much cheaper one than it first appeared.
+ *
+ * Measured: a track costs 40 credits, about 1.1 cents. Four hundred is under
+ * five dollars. The flight-summary endpoint that fills airport_flights bills
+ * per RECORD at roughly 2.5 credits each, so a wide query costs ~760 credits
+ * a call -- fifty times a track. Counting requests instead of credits gets
+ * this exactly backwards, which is how the first version of this comment
+ * described tracks as the expensive path.
+ *
+ * Still a sample rather than a census: 30,000 tracks would be around $350,
+ * and a few hundred already show where the practice areas are. Raise --sample
+ * freely though; the figure gets better with more and the cost is small.
+ *
+ * The sample is spread across hours and months rather than taken as "the most
+ * recent N", because the most recent N is one week of one season and would
+ * draw a map of that week.
  *
  * ONLY LOCAL FLIGHTS
  * Departures and arrivals leave the frame almost immediately and would add a

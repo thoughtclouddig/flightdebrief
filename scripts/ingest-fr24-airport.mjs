@@ -27,9 +27,17 @@
  * tuned per airport and per season, and getting it wrong loses data silently
  * rather than loudly.
  *
- * This is still cheap because we are NOT pulling tracks. Runway use would
- * need one /api/flight-tracks call per flight, which is a different order of
- * cost and is deliberately not attempted here.
+ * COST -- measured, not assumed
+ * This endpoint bills per RECORD returned, at roughly 2.5 credits each, so a
+ * chunk returning 300 records costs about 760 credits whatever the request
+ * count says. A 90-day pull at a field flying 350 a day is therefore around
+ * 80,000 credits -- about $22 -- and a two-year pull is roughly $180.
+ *
+ * That is the real budget line for adding airports, and it is the opposite of
+ * what the request count suggests: a track costs 40 credits, a wide summary
+ * query costs fifty times that. Chunking is still worth it for the rate
+ * limit, but it saves no credits at all -- the same records are billed either
+ * way.
  *
  * HOW FAR BACK
  * The plan bounds the history, not just the rate. A range starting before the
