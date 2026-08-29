@@ -56,6 +56,8 @@ export function buildArticleUserPrompt(input: {
   existingTitles: string[];
   /** An approved idea to write up. When absent the model picks its own angle. */
   idea?: { title: string; angle: string; targetQuery: string } | null;
+  /** Verified findings from the research pass -- see lib/ai/research.ts. */
+  research?: string;
 }): string {
   const avoid = input.existingTitles.length
     ? `Existing articles already published in this topic (write about something different, don't repeat these):\n${input.existingTitles.map((t) => `- ${t}`).join("\n")}`
@@ -73,9 +75,14 @@ The reader's question: ${input.idea.targetQuery}
 Answer that question directly. You may improve the title's wording, but do not change the subject.`
     : "Pick a specific, useful angle within this topic -- not a generic overview.";
 
+  // The research brief goes last so it's the most recent thing in context
+  // when writing starts, and is framed as the source of record rather than
+  // background reading.
+  const research = input.research ? `\n\n${input.research}` : "";
+
   return `Write one new resource article for the topic "${input.topicName}": ${input.topicDescription}
 
 ${avoid}
 
-${brief}`;
+${brief}${research}`;
 }

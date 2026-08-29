@@ -5,8 +5,9 @@ import { toPlainText, type ArticleBody } from "@/lib/content/article-body";
 import { extractJson } from "./extract-json";
 import { getRepository } from "@/lib/data";
 import { slugify } from "@/lib/slugify";
-import type { ArticleIdea, ResourceTopic } from "@/lib/types";
+import type { ArticleIdea, ResourceTopic, Source } from "@/lib/types";
 import { reviewArticle, type EditorialNote } from "./editorial";
+import { researchArticle, formatBrief, sourcesFrom, type ResearchBrief } from "./research";
 
 /**
  * Picks the resource topic with the fewest existing articles, so daily
@@ -41,6 +42,8 @@ export interface ArticleDraft {
   slug: string;
   /** What the fact-check, copy-edit, and design passes changed. */
   reviewNotes: EditorialNote[];
+  /** Real citations, gathered by the research pass. Empty if it didn't run. */
+  sources: Source[];
 }
 
 export async function generateArticleDraft(
@@ -52,6 +55,24 @@ export async function generateArticleDraft(
 
   const repo = getRepository();
   const existing = await repo.listArticles({ topicId: topic.id });
+
+  // Research first. A writer with no source material invents authoritative
+  // detail, which is exactly how a fabricated statistic reaches the page; the
+  // fact checker downstream can only smell such a claim, not check it.
+  // Failure is survivable -- the article is still reviewed by a human -- but
+  // it must be visible, so the prompt is told there is no brief rather than
+  // silently omitting one.
+  let brief: ResearchBrief = { findings: [], gaps: [] };
+  try {
+    brief = await researchArticle({
+      topic,
+      title: idea?.title ?? topic.name,
+      angle: idea?.angle ?? topic.description,
+      targetQuery: idea?.targetQuery ?? topic.description,
+    });
+  } catch (err) {
+    console.error("[content-pipeline] research failed:", err);
+  }
 
   const client = new Anthropic({ apiKey });
   const response = await client.messages.create({
@@ -68,6 +89,7 @@ export async function generateArticleDraft(
           topicDescription: topic.description,
           existingTitles: existing.map((a) => a.title),
           idea: idea ?? null,
+          research: formatBrief(brief),
         }),
       },
     ],
@@ -132,7 +154,7 @@ export async function generateArticleDraft(
   // Separate passes because one model writing once has no incentive to catch
   // its own invented statistic -- a fabricated number makes the article more
   // persuasive, which is what the writer is optimising for.
-  const reviewed = await reviewArticle(bodyBlocks);
+  const reviewed = await reviewArticle(bodyBlocks, formatBrief(brief));
 
   return {
     title: parsed.title.trim(),
@@ -143,6 +165,9 @@ export async function generateArticleDraft(
     body: toPlainText(reviewed.body),
     slug: slugify(parsed.title),
     reviewNotes: reviewed.notes,
+    // Real URLs the researcher retrieved. sources was hardcoded empty until
+    // now precisely because an invented citation is worse than none.
+    sources: sourcesFrom(brief),
   };
 }
 

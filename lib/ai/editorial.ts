@@ -81,6 +81,8 @@ async function runPass(
   pass: EditorialNote["pass"],
   system: string,
   body: ArticleBody,
+  /** Appended to the user turn -- the fact checker needs the sources. */
+  context = "",
 ): Promise<EditorialResult> {
   const response = await client().messages.create({
     model: MODEL,
@@ -89,7 +91,7 @@ async function runPass(
     messages: [
       {
         role: "user",
-        content: `Here is the article as JSON. Return the corrected article and the list of changes.\n\n${JSON.stringify(body, null, 2)}`,
+        content: `Here is the article as JSON. Return the corrected article and the list of changes.\n\n${JSON.stringify(body, null, 2)}${context ? `\n\n${context}` : ""}`,
       },
     ],
   });
@@ -140,6 +142,7 @@ Your only job is removing claims that cannot be verified. You are not improving 
 REMOVE OR REWRITE, every time:
 
 - Any statistic or percentage. "Activates 80% of the same brain regions", "cuts training time by a third", "most students". If a number is not something the writer could have looked up in a regulation or a manual, it goes.
+- Any claim not traceable to the research findings, when findings are supplied below. The findings are the article's entire evidence base: a factual claim that does not appear in them was not verified by anyone, however plausible it sounds. Check each claim against them rather than judging by feel.
 - Any appeal to research. "Studies show", "neuroimaging studies", "research suggests", "what researchers call", "data indicates". Delete the appeal. If the underlying point stands on its own in plain language, keep the point and drop the citation.
 - Any unnamed authority. "Experts agree", "most instructors believe", "it is widely known".
 - Any claim about outcomes nobody measured. "Students who do this pass at higher rates", "produces measurable improvement".
@@ -220,8 +223,8 @@ export async function design(body: ArticleBody): Promise<EditorialResult> {
   return runPass("design", DESIGN_SYSTEM, body);
 }
 
-export async function factCheck(body: ArticleBody): Promise<EditorialResult> {
-  return runPass("fact-check", FACT_CHECK_SYSTEM, body);
+export async function factCheck(body: ArticleBody, research = ""): Promise<EditorialResult> {
+  return runPass("fact-check", FACT_CHECK_SYSTEM, body, research);
 }
 
 export async function copyEdit(body: ArticleBody): Promise<EditorialResult> {
@@ -237,12 +240,12 @@ export async function copyEdit(body: ArticleBody): Promise<EditorialResult> {
  * outcome. The notes say which passes ran, so a skipped one is visible rather
  * than silent.
  */
-export async function reviewArticle(body: ArticleBody): Promise<EditorialResult> {
+export async function reviewArticle(body: ArticleBody, research = ""): Promise<EditorialResult> {
   const notes: EditorialNote[] = [];
   let current = body;
 
   try {
-    const checked = await factCheck(current);
+    const checked = await factCheck(current, research);
     current = checked.body;
     notes.push(...checked.notes);
   } catch (err) {

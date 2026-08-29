@@ -42,6 +42,10 @@ export async function POST(request: Request, context: RouteContext<"/api/admin/a
     dek: draft.dek,
     body: draft.body,
     bodyBlocks: draft.bodyBlocks,
+    // Replaced wholesale: the old citations belonged to text that no longer
+    // exists, and carrying them onto new prose would attach real sources to
+    // claims they never supported.
+    sources: draft.sources,
     status: "draft",
   });
 

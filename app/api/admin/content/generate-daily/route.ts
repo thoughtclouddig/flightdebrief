@@ -71,7 +71,10 @@ export async function POST(request: Request) {
     dek: draft.dek,
     body: draft.body,
     authorName: "AfterFlight",
-    sources: [],
+    // Real URLs from the research pass. This was hardcoded empty while the
+    // pipeline had no researcher, because a model-invented citation is worse
+    // than no citation at all.
+    sources: draft.sources,
     imageUrl,
     bodyBlocks: draft.bodyBlocks,
   });
