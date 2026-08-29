@@ -38,6 +38,10 @@ export async function POST(request: Request, context: RouteContext<"/api/admin/a
   const imageUrl = await generateArticleImage({
     title: article.title,
     topicName: topic?.name ?? "Flight training",
+    // The lead answer is the most concrete sentence in the article, which is
+    // what the art direction needs to pick a subject specific to this piece
+    // rather than a generic training scene.
+    answer: article.bodyBlocks?.answer,
     direction: direction || undefined,
   });
 

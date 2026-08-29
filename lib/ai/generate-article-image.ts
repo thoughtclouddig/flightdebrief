@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { encodeHeroImage } from "@/lib/content/images";
+import { directArticleImage } from "./art-direction";
 
 /**
  * Generates a hero image for an article and returns it as an AVIF data: URL,
@@ -15,15 +16,22 @@ export async function generateArticleImage(input: {
   topicName: string;
   /** Free-text steer from a human who didn't like the last one. */
   direction?: string;
+  /** The article's lead answer, so the subject can come from the content. */
+  answer?: string;
 }): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not set -- cannot generate an article image");
 
   const client = new OpenAI({ apiKey });
-  const base = `Editorial hero photo for a flight-training article titled "${input.title}" (topic: ${input.topicName}). Realistic, high-end aviation photography -- a general aviation cockpit, ramp, or training environment. No text, no logos, no people's faces in close-up.`;
-  // The steer goes last so it overrides the generic description rather than
-  // being averaged with it.
-  const prompt = input.direction ? `${base}\n\nSpecific direction: ${input.direction}` : base;
+  // Art-directed per article rather than one prompt for all of them. See
+  // lib/ai/art-direction.ts for why the old one produced the same picture
+  // every time.
+  const directed = await directArticleImage({
+    title: input.title,
+    topicName: input.topicName,
+    answer: input.answer,
+  });
+  const prompt = input.direction ? `${directed}\n\nSpecific direction: ${input.direction}` : directed;
 
   const response = await client.images.generate({
     model: "gpt-image-1",

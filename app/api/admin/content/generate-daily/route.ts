@@ -66,7 +66,11 @@ export async function POST(request: Request) {
     report("Generating the image");
     let imageUrl: string | null = null;
     try {
-      imageUrl = await generateArticleImage({ title: draft.title, topicName: topic.name });
+      imageUrl = await generateArticleImage({
+        title: draft.title,
+        topicName: topic.name,
+        answer: draft.bodyBlocks.answer,
+      });
     } catch (err) {
       // The article is still worth keeping without an image -- log and move on.
       console.error("[content-pipeline] image generation failed:", err);
