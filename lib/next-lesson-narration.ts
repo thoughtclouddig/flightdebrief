@@ -11,7 +11,7 @@
  * independently telling the student what to do -- attribute it to the
  * instructor by first name when known, "your instructor" otherwise.
  */
-import { speakList, toSecondPerson } from "@/lib/narration";
+import { speakList, speakItems, toSecondPerson } from "@/lib/narration";
 
 export interface NextLessonNarrationInput {
   studentFirstName: string;
@@ -48,7 +48,16 @@ export function buildNextLessonNarration(input: NextLessonNarrationInput): strin
   }
 
   if (input.keepWorkingOn.length > 0) {
-    lines.push(`Keep an eye on ${speakList(input.keepWorkingOn.map(toSecondPerson))} -- you're already making progress there.`);
+    // "Keep an eye on X" needs a noun phrase. A training item is sometimes a
+    // whole sentence, and "Keep an eye on Nina had you work on..." is not
+    // English -- so sentences get spoken on their own instead.
+    lines.push(
+      speakItems(
+        input.keepWorkingOn.map(toSecondPerson),
+        (list) => `Keep an eye on ${list} -- you're already making progress there.`,
+        "Also carrying over:",
+      ),
+    );
   }
 
   if (input.beforeToday.length > 0) {

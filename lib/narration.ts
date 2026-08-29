@@ -136,3 +136,50 @@ export function toSecondPerson(text: string): string {
   if (startedUpper) return out.charAt(0).toUpperCase() + out.slice(1);
   return out.charAt(0).toLowerCase() + out.slice(1);
 }
+
+/**
+ * Whether an item reads as a complete sentence rather than a noun phrase.
+ *
+ * The scripts wrap items in prepositional frames -- "Keep an eye on X", "was
+ * X" -- which need a noun phrase. Training items are sometimes that ("your
+ * flare timing") and sometimes a whole sentence ("Nina had you work on
+ * getting configured earlier on downwind"). Slotting the second into the
+ * first produces "Keep an eye on Nina had you work on...", which is not
+ * English.
+ *
+ * The test is a subject-verb pattern rather than length: "getting configured
+ * earlier on downwind" is long and still a phrase, while "Nina had you work"
+ * is short and a sentence.
+ */
+const SENTENCE_SHAPE = /\b(had|has|have|was|were|is|are|did|does|wants?|told|asked|said|needs?|should|will|kept|keeps)\b/i;
+
+export function readsAsSentence(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  // A leading capital that isn't just an acronym or a name-led phrase.
+  return SENTENCE_SHAPE.test(trimmed) && trimmed.split(/\s+/).length > 3;
+}
+
+/**
+ * Frames a list of items for speech, choosing based on their shape.
+ *
+ * Phrases go inside the caller's frame ("Keep an eye on A and B"). Sentences
+ * are spoken on their own after a short lead-in, because no prepositional
+ * frame survives a sentence being dropped into it.
+ */
+export function speakItems(items: string[], phraseFrame: (list: string) => string, sentenceLead: string): string {
+  const phrases = items.filter((i) => !readsAsSentence(i));
+  const sentences = items.filter(readsAsSentence);
+
+  const parts: string[] = [];
+  if (phrases.length > 0) parts.push(phraseFrame(speakList(phrases)));
+  if (sentences.length > 0) {
+    parts.push(`${sentenceLead} ${sentences.map((s) => endWithPeriod(s)).join(" ")}`);
+  }
+  return parts.join(" ");
+}
+
+function endWithPeriod(text: string): string {
+  const trimmed = text.trim();
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}

@@ -1,4 +1,4 @@
-import { speakList, toSecondPerson } from "@/lib/narration";
+import { speakList, toSecondPerson, readsAsSentence } from "@/lib/narration";
 import type { InstructorGuidance, StudyReference } from "@/lib/types";
 
 /**
@@ -71,10 +71,11 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
 
   if (input.needsWork.length > 0) {
     sections.push(
-      // Indexed rather than passed through speakList, which is how it escaped
-      // the person conversion when every other field got it. Any single-item
-      // interpolation is a place to check.
-      `The biggest thing you and ${cfiOrFallback} identified during the debrief was ${toSecondPerson(input.needsWork[0]!)}.`,
+      // Same shape problem as the brief's "Keep an eye on": "...was X" wants
+      // a noun phrase, and needsWork items are often whole sentences.
+      readsAsSentence(input.needsWork[0]!)
+        ? `The biggest thing you and ${cfiOrFallback} identified during the debrief: ${toSecondPerson(input.needsWork[0]!)}`
+        : `The biggest thing you and ${cfiOrFallback} identified during the debrief was ${toSecondPerson(input.needsWork[0]!)}.`,
     );
   }
 
