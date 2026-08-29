@@ -772,3 +772,70 @@ CREATE TABLE IF NOT EXISTS audio_cache (
   audio bytea NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- --- Airport insights ------------------------------------------------------
+-- The data behind per-airport content: one page per training airport carrying
+-- numbers that exist nowhere else. Deliberately two tables.
+--
+-- airport_operations is the observation log: one row per movement seen at an
+-- airport, whatever the source. Raw, append-only, and never rendered.
+--
+-- airport_insights is what a page reads: a periodically recomputed summary
+-- with the window and sample size it was computed from. Pages never aggregate
+-- at request time and never call an external API -- a page that recomputes on
+-- every view is slow, inconsistent between visitors, and impossible to cite.
+
+CREATE TABLE IF NOT EXISTS airports (
+  -- ICAO where one exists, else the local identifier. Upper case.
+  ident text PRIMARY KEY,
+  name text NOT NULL,
+  municipality text,
+  region text,
+  latitude double precision,
+  longitude double precision,
+  -- Whether this is somewhere training actually happens. Set from observed
+  -- activity rather than assumed, so the page list can be driven by it.
+  is_training_field boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS airport_operations (
+  id text PRIMARY KEY,
+  airport_ident text NOT NULL REFERENCES airports(ident) ON DELETE CASCADE,
+  -- "arrival" | "departure" | "pattern": a touch-and-go is neither an arrival
+  -- nor a departure, and conflating them is what makes pattern counts wrong.
+  operation_type text NOT NULL CHECK (operation_type IN ('arrival','departure','pattern')),
+  occurred_at timestamptz NOT NULL,
+  -- Local hour 0-23, stored rather than derived: "busiest hour" means local
+  -- time to a student, and deriving it at query time needs the timezone on
+  -- every row anyway.
+  local_hour smallint NOT NULL CHECK (local_hour BETWEEN 0 AND 23),
+  local_day_of_week smallint NOT NULL CHECK (local_day_of_week BETWEEN 0 AND 6),
+  runway text,
+  aircraft_type text,
+  -- Where the observation came from ("fr24", "afterflight"), so a finding can
+  -- state its provenance and a source can be excluded wholesale if its terms
+  -- require it.
+  source text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS airport_operations_airport_time_idx
+  ON airport_operations (airport_ident, occurred_at);
+
+CREATE TABLE IF NOT EXISTS airport_insights (
+  airport_ident text PRIMARY KEY REFERENCES airports(ident) ON DELETE CASCADE,
+  -- The window these numbers cover. Published on the page: a figure without a
+  -- window is an assertion, not a finding, and nothing citable.
+  window_start date NOT NULL,
+  window_end date NOT NULL,
+  -- How many observations it rests on. Also the gate: below a floor, the
+  -- airport gets no page rather than a page saying "insufficient data".
+  sample_size integer NOT NULL,
+  -- Computed summaries, shaped by lib/airport-insights.ts.
+  busiest_hours jsonb NOT NULL DEFAULT '[]'::jsonb,
+  busiest_days jsonb NOT NULL DEFAULT '[]'::jsonb,
+  runway_use jsonb NOT NULL DEFAULT '[]'::jsonb,
+  common_destinations jsonb NOT NULL DEFAULT '[]'::jsonb,
+  computed_at timestamptz NOT NULL DEFAULT now()
+);
