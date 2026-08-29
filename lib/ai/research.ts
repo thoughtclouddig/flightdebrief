@@ -59,7 +59,12 @@ const researchSchema = z.object({
         claim: z.string().default(""),
         label: z.string().default(""),
         url: z.string().default(""),
-        sourceType: z.enum(SOURCE_TYPES).default("expert_opinion"),
+        // A plain string, mapped afterwards. As a z.enum, one unrecognised
+        // value ("faa_handbook", "research") threw the whole parse and
+        // discarded every finding alongside it -- eight verified sources lost
+        // to one label. The label is the least important field here; the URL
+        // and the quote are the point.
+        sourceType: z.string().default(""),
         support: z.string().default(""),
       }),
     )
@@ -184,20 +189,47 @@ Find what can be substantiated about it, and say plainly what cannot.`,
     throw new Error("Research returned no text content");
   }
 
-  const parsed = researchSchema.parse(JSON.parse(extractJson(textBlock.text)));
+  let parsed;
+  try {
+    parsed = researchSchema.parse(JSON.parse(extractJson(textBlock.text)));
+  } catch (err) {
+    // Loudly, with the text: a research pass that silently returns nothing
+    // produces an unsourced article that looks exactly like a sourced one.
+    console.error("[research] could not parse the researcher's reply:", err);
+    console.error("[research] reply began:", textBlock.text.slice(0, 400));
+    throw new Error("The researcher's reply could not be parsed.");
+  }
 
-  return {
+  const findings = parsed.findings
     // A finding without a real http(s) URL is exactly the thing this pass
     // exists to prevent, so it's dropped rather than trusted.
-    findings: parsed.findings
-      .filter((f) => f.claim.trim() && f.support.trim() && /^https?:\/\//i.test(f.url.trim()))
-      .map((f) => ({
-        claim: f.claim.trim(),
-        support: f.support.trim(),
-        source: { label: f.label.trim() || f.url.trim(), url: f.url.trim(), sourceType: f.sourceType },
-      })),
-    gaps: parsed.gaps.map((g) => g.trim()).filter(Boolean),
-  };
+    .filter((f) => f.claim.trim() && f.support.trim() && /^https?:\/\//i.test(f.url.trim()))
+    .map((f) => ({
+      claim: f.claim.trim(),
+      support: f.support.trim(),
+      source: {
+        label: f.label.trim() || f.url.trim(),
+        url: f.url.trim(),
+        sourceType: toSourceType(f.sourceType),
+      },
+    }));
+
+  console.log(
+    `[research] ${findings.length} findings, ${parsed.gaps.length} gaps (${parsed.findings.length - findings.length} dropped for a missing URL or quote)`,
+  );
+
+  return { findings, gaps: parsed.gaps.map((g) => g.trim()).filter(Boolean) };
+}
+
+/**
+ * Maps whatever label came back onto the stored vocabulary. Unrecognised
+ * values become expert_opinion -- the weakest classification, so a
+ * mislabelled source is under-claimed rather than over-claimed.
+ */
+function toSourceType(value: string): SourceType {
+  const normalised = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const match = SOURCE_TYPES.find((t) => t === normalised);
+  return match ?? "expert_opinion";
 }
 
 /** The findings as prompt material for the writer and the fact checker. */
