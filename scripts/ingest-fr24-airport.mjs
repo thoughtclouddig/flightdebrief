@@ -3,13 +3,30 @@
  *
  *   node scripts/ingest-fr24-airport.mjs KFFZ --days 365
  *   node scripts/ingest-fr24-airport.mjs KFFZ --days 7 --dry-run
- *   node scripts/ingest-fr24-airport.mjs KFFZ --days 365 --delay 3000
+ *   node scripts/ingest-fr24-airport.mjs KFFZ --days 365 --chunk 14
  *   node scripts/ingest-fr24-airport.mjs KFFZ --days 30 --refresh
  *
- * One API call per day of the window. A year at one airport is ~365 calls,
- * which is cheap -- the reason this is affordable is that we are NOT pulling
- * tracks. Runway use would need one /api/flight-tracks call per flight, which
- * is a different order of cost and is deliberately not attempted here.
+ * The endpoint takes a date RANGE, so the window is pulled in chunks rather
+ * than a call per day: a year at 14-day chunks is 26 calls, not 365. That
+ * matters because the API rate-limits hard -- a 429 here comes back asking
+ * for a 31-second wait, which at one call per day would be three hours.
+ *
+ * Chunk size is bounded by the page limit, not by politeness. A chunk that
+ * returns PAGE_LIMIT records has silently truncated the tail of its range, so
+ * that case is reported and the chunk is not recorded as pulled. At a field
+ * flying ~20 a day, 14 days is ~280 records and has comfortable headroom; a
+ * busier field needs a smaller --chunk.
+ *
+ * This is still cheap because we are NOT pulling tracks. Runway use would
+ * need one /api/flight-tracks call per flight, which is a different order of
+ * cost and is deliberately not attempted here.
+ *
+ * HOW FAR BACK
+ * The plan bounds the history, not just the rate. A range starting before the
+ * subscription's earliest date returns 400 with that date in the message, and
+ * the script stops there rather than grinding through hundreds of doomed
+ * chunks at 31 seconds each. The window you get is the window the plan sells;
+ * a longer --days does not buy more history.
  *
  * RATE LIMITS AND RESUMING
  * The API rate-limits well below what a tight loop will do, so calls are
@@ -53,6 +70,9 @@ const DAYS = daysFlag === -1 ? 30 : Number(argv[daysFlag + 1]);
 const delayFlag = argv.indexOf("--delay");
 /** Milliseconds between calls. Tuned down from "as fast as possible", which the API rejects. */
 const DELAY_MS = delayFlag === -1 ? 2500 : Number(argv[delayFlag + 1]);
+const chunkFlag = argv.indexOf("--chunk");
+/** Days per API call. Bounded by PAGE_LIMIT, not by rate limits. */
+const CHUNK_DAYS = chunkFlag === -1 ? 14 : Number(argv[chunkFlag + 1]);
 const DRY_RUN = argv.includes("--dry-run");
 const REFRESH = argv.includes("--refresh");
 const MAX_RETRIES = 5;
@@ -128,9 +148,21 @@ async function fetchDay(from, to) {
     });
     if (res.ok) return (await res.json())?.data ?? [];
 
+    const text = await res.text();
+
+    // The plan's history limit. Not retryable, and not a per-chunk problem
+    // either: every older chunk will fail the same way, so this aborts the
+    // run rather than spending the rate limit discovering it 300 more times.
+    if (res.status === 400 && /earlier than your subscription plan allows/i.test(text)) {
+      const earliest = text.match(/from '([^']+)'/)?.[1] ?? "an unknown date";
+      const err = new Error(`plan history starts at ${earliest}`);
+      err.planLimit = earliest;
+      throw err;
+    }
+
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= MAX_RETRIES) {
-      throw new Error(`${res.status}: ${(await res.text()).slice(0, 200)}`);
+      throw new Error(`${res.status}: ${text.slice(0, 200)}`);
     }
     const retryAfter = Number(res.headers.get("retry-after"));
     const wait = Number.isFinite(retryAfter) && retryAfter > 0
@@ -202,8 +234,8 @@ const alreadyDone = new Set(
 );
 
 console.log(
-  `[ingest] ${IDENT} (${timezone}), ${DAYS} day window, ${DELAY_MS}ms between calls` +
-    `${DRY_RUN ? " — DRY RUN, nothing written" : ""}`,
+  `[ingest] ${IDENT} (${timezone}), ${DAYS} day window in ${CHUNK_DAYS}-day chunks, ` +
+    `${DELAY_MS}ms between calls${DRY_RUN ? " — DRY RUN, nothing written" : ""}`,
 );
 if (alreadyDone.size && !REFRESH) {
   console.log(`[ingest] ${alreadyDone.size} day(s) already pulled — skipping. Pass --refresh to re-pull.`);
@@ -213,37 +245,70 @@ let fetched = 0;
 let written = 0;
 let skipped = 0;
 let resumed = 0;
-const failedDays = [];
+let calls = 0;
+const failedChunks = [];
+const truncatedChunks = [];
 const kinds = new Map();
 
-for (let d = 1; d <= DAYS; d++) {
-  const to = new Date(Date.now() - (d - 1) * 86400000);
-  const from = new Date(to.getTime() - 86400000);
-  const dayKey = fmt(from).slice(0, 10);
+/** The calendar days a chunk covers, oldest first, as YYYY-MM-DD. */
+function daysIn(from, to) {
+  const out = [];
+  for (let t = from.getTime(); t < to.getTime(); t += 86400000) {
+    out.push(new Date(t).toISOString().slice(0, 10));
+  }
+  return out;
+}
 
-  if (!REFRESH && alreadyDone.has(dayKey)) {
-    resumed++;
+const chunks = [];
+for (let d = 1; d <= DAYS; d += CHUNK_DAYS) {
+  const span = Math.min(CHUNK_DAYS, DAYS - d + 1);
+  const to = new Date(Date.now() - (d - 1) * 86400000);
+  const from = new Date(to.getTime() - span * 86400000);
+  chunks.push({ from, to, days: daysIn(from, to) });
+}
+
+for (const [i, chunk] of chunks.entries()) {
+  const label = `${chunk.days[0]}..${chunk.days[chunk.days.length - 1]}`;
+  const missing = REFRESH ? chunk.days : chunk.days.filter((day) => !alreadyDone.has(day));
+  if (!missing.length) {
+    resumed += chunk.days.length;
     continue;
   }
 
-  // Spacing is what keeps this under the rate limit. Before the request, not
-  // after, so a resumed run doesn't burst through its first few days.
-  if (fetched > 0 || d > 1) await sleep(DELAY_MS);
+  // Spacing before the request, so a resumed run doesn't burst through its
+  // first few chunks.
+  if (calls > 0) await sleep(DELAY_MS);
 
   let records;
   try {
-    records = await fetchDay(from, to);
+    records = await fetchDay(chunk.from, chunk.to);
+    calls++;
   } catch (err) {
-    // One bad day shouldn't lose the other 364. Collected and reported at the
-    // end rather than swallowed -- a window with silent holes in it is a
-    // window whose sample size lies.
-    console.error(`  ${dayKey}  FAILED: ${err.message}`);
-    failedDays.push(dayKey);
+    if (err.planLimit) {
+      // Everything older fails identically. Stop and say so plainly: this is
+      // a subscription boundary, not a transient error, and no amount of
+      // retrying or waiting changes it.
+      console.log(`\n[ingest] Reached the end of the plan's history at ${err.planLimit}.`);
+      console.log(`[ingest] Chunks older than that were not attempted. A longer --days buys nothing`);
+      console.log(`[ingest] without a plan that includes deeper history.`);
+      break;
+    }
+    // One bad chunk shouldn't lose the rest of the year. Collected and
+    // reported at the end rather than swallowed -- a window with invisible
+    // holes is a window whose published sample size under-reports.
+    console.error(`  ${label}  FAILED: ${err.message}`);
+    failedChunks.push(label);
     continue;
   }
   fetched += records.length;
+
   if (records.length >= PAGE_LIMIT) {
-    console.warn(`  ${fmt(from).slice(0, 10)}  hit the ${PAGE_LIMIT} limit — this day is truncated.`);
+    // The range was truncated, so some of these days are only partly covered.
+    // Not recorded as pulled: re-running with a smaller --chunk fixes it, and
+    // marking it done would bake the gap in permanently.
+    console.warn(`  ${label}  hit the ${PAGE_LIMIT} record limit — truncated. Re-run with a smaller --chunk.`);
+    truncatedChunks.push(label);
+    continue;
   }
 
   const rows = records.map(toRow).filter(Boolean);
@@ -251,70 +316,74 @@ for (let d = 1; d <= DAYS; d++) {
   for (const r of rows) kinds.set(r.kind, (kinds.get(r.kind) ?? 0) + 1);
 
   if (!DRY_RUN) {
-    // Marked before the insert, and marked even when the day was empty: a
-    // genuinely quiet day is a fetched day, and inferring completion from the
-    // flights table would re-fetch it on every run forever.
+    if (rows.length) {
+      const values = [];
+      const params = [];
+      for (const r of rows) {
+        const n = params.length;
+        values.push(
+          `($${n + 1},$${n + 2},$${n + 3},$${n + 4},$${n + 5},$${n + 6},$${n + 7},$${n + 8},$${n + 9},$${n + 10},$${n + 11},$${n + 12},$${n + 13},$${n + 14})`,
+        );
+        params.push(
+          r.id, IDENT, r.providerFlightId, r.kind, r.occurredAt, r.hour, r.dayOfWeek, r.month,
+          r.durationMinutes, r.aircraftType, r.registration, r.operator, r.destination, SOURCE,
+        );
+      }
+      // Re-running a window updates rather than duplicates, so overlapping
+      // windows on a schedule are safe.
+      const res = await client.query(
+        `INSERT INTO airport_flights
+           (id, airport_ident, provider_flight_id, flight_kind, occurred_at, local_hour,
+            local_day_of_week, local_month, duration_minutes, aircraft_type, registration,
+            operator, destination_ident, source)
+         VALUES ${values.join(",")}
+         ON CONFLICT (airport_ident, provider_flight_id) WHERE provider_flight_id IS NOT NULL
+         DO UPDATE SET
+           flight_kind = EXCLUDED.flight_kind,
+           occurred_at = EXCLUDED.occurred_at,
+           local_hour = EXCLUDED.local_hour,
+           local_day_of_week = EXCLUDED.local_day_of_week,
+           local_month = EXCLUDED.local_month,
+           duration_minutes = EXCLUDED.duration_minutes,
+           destination_ident = EXCLUDED.destination_ident`,
+        params,
+      );
+      written += res.rowCount ?? 0;
+    }
+
+    // Every day in the chunk is marked, including days with no flights: a
+    // genuinely quiet day is still a fetched day, and inferring completion
+    // from the flights table would re-fetch it forever.
+    const dayValues = chunk.days.map((_, i) => `($1, $${i + 3}, $2, 0, now())`).join(",");
     await client.query(
       `INSERT INTO airport_ingest_days (airport_ident, day, source, flights, fetched_at)
-       VALUES ($1, $2, $3, $4, now())
-       ON CONFLICT (airport_ident, day, source)
-       DO UPDATE SET flights = EXCLUDED.flights, fetched_at = now()`,
-      [IDENT, dayKey, SOURCE, rows.length],
+       VALUES ${dayValues}
+       ON CONFLICT (airport_ident, day, source) DO UPDATE SET fetched_at = now()`,
+      [IDENT, SOURCE, ...chunk.days],
     );
   }
 
-  if (!DRY_RUN && rows.length) {
-    const values = [];
-    const params = [];
-    for (const r of rows) {
-      const n = params.length;
-      values.push(
-        `($${n + 1},$${n + 2},$${n + 3},$${n + 4},$${n + 5},$${n + 6},$${n + 7},$${n + 8},$${n + 9},$${n + 10},$${n + 11},$${n + 12},$${n + 13},$${n + 14})`,
-      );
-      params.push(
-        r.id, IDENT, r.providerFlightId, r.kind, r.occurredAt, r.hour, r.dayOfWeek, r.month,
-        r.durationMinutes, r.aircraftType, r.registration, r.operator, r.destination, SOURCE,
-      );
-    }
-    // Re-running a window updates rather than duplicates, so the script is
-    // safe to run on a schedule with overlapping windows.
-    const res = await client.query(
-      `INSERT INTO airport_flights
-         (id, airport_ident, provider_flight_id, flight_kind, occurred_at, local_hour,
-          local_day_of_week, local_month, duration_minutes, aircraft_type, registration,
-          operator, destination_ident, source)
-       VALUES ${values.join(",")}
-       ON CONFLICT (airport_ident, provider_flight_id) WHERE provider_flight_id IS NOT NULL
-       DO UPDATE SET
-         flight_kind = EXCLUDED.flight_kind,
-         occurred_at = EXCLUDED.occurred_at,
-         local_hour = EXCLUDED.local_hour,
-         local_day_of_week = EXCLUDED.local_day_of_week,
-         local_month = EXCLUDED.local_month,
-         duration_minutes = EXCLUDED.duration_minutes,
-         destination_ident = EXCLUDED.destination_ident`,
-      params,
-    );
-    written += res.rowCount ?? 0;
-  }
-
-  if (d % 30 === 0 || d === DAYS) {
-    console.log(`  ${d}/${DAYS} days — ${fetched} records fetched, ${written} rows written`);
-  }
+  console.log(`  ${label}  ${records.length} records  (chunk ${i + 1}/${chunks.length})`);
 }
 
 console.log(`\n[ingest] ${fetched} records fetched, ${written} rows written, ${skipped} skipped (touched neither end).`);
 if (resumed) console.log(`[ingest] ${resumed} day(s) skipped as already pulled.`);
 console.log(`[ingest] by kind: ${[...kinds.entries()].map(([k, n]) => `${k} ${n}`).join(", ") || "none"}`);
 
-if (failedDays.length) {
+console.log(`[ingest] ${calls} API call(s) used.`);
+
+if (failedChunks.length || truncatedChunks.length) {
   // Stated loudly rather than buried: these are holes in the window, and the
   // sample size the page publishes would otherwise quietly under-report.
-  console.log(
-    `\n[ingest] ${failedDays.length} day(s) never succeeded and are NOT recorded as pulled.` +
-      ` Re-run the same command to retry only those, or raise --delay.`,
-  );
-  console.log(`[ingest] first few: ${failedDays.slice(0, 5).join(", ")}`);
+  if (failedChunks.length) {
+    console.log(`\n[ingest] ${failedChunks.length} chunk(s) never succeeded and are NOT recorded as pulled.`);
+    console.log(`[ingest] re-run the same command to retry only those, or raise --delay.`);
+    console.log(`[ingest] ${failedChunks.slice(0, 5).join(", ")}`);
+  }
+  if (truncatedChunks.length) {
+    console.log(`\n[ingest] ${truncatedChunks.length} chunk(s) hit the record limit and were discarded.`);
+    console.log(`[ingest] re-run with a smaller --chunk to cover them: ${truncatedChunks.slice(0, 5).join(", ")}`);
+  }
 }
 
 if (!DRY_RUN) console.log(`\n[ingest] now run: node scripts/recompute-airport-insights.mjs ${IDENT}`);

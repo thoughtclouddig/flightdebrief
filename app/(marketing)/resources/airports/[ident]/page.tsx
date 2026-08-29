@@ -91,7 +91,14 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
   const quietest = [...hours].filter((h) => h.flights > 0).sort((a, b) => a.flights - b.flights)[0];
   const busiestDay = insights.busiestDays[0];
   const quietestDay = insights.busiestDays[insights.busiestDays.length - 1];
-  const seasons = insights.bySeason.filter((s) => s.flights > 0);
+  // A window has to actually span the year before anything seasonal can be
+  // said about it. A single month would otherwise render under "How the year
+  // changes it" showing one season, which reads as a finding and is not one.
+  const windowDays = Math.round(
+    (new Date(insights.windowEnd).getTime() - new Date(insights.windowStart).getTime()) / 86_400_000,
+  );
+  const windowSpansYear = windowDays >= 300;
+  const seasons = windowSpansYear ? insights.bySeason.filter((s) => s.flights > 0) : [];
   const peakMonthFlights = insights.byMonth.length ? Math.max(...insights.byMonth.map((m) => m.flights)) : 0;
 
   // Only worth stating when the peak actually moves. A field whose busy hour
@@ -266,7 +273,7 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
             </p>
           ) : null}
 
-          {insights.byMonth.length ? (
+          {insights.byMonth.length > 1 ? (
             <div className="mt-8">
               <p className="text-sm text-[#68717D]">Flights by month</p>
               <ol className="mt-3 grid h-28 items-end gap-[3px]" style={MONTH_GRID} aria-label="Flights by month">
