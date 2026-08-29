@@ -103,7 +103,20 @@ async function runPass(
   const textBlock = response.content.find((block) => block.type === "text");
   if (!textBlock || textBlock.type !== "text") throw new Error(`${pass}: no text content in response`);
 
-  const parsed = passSchema.parse(JSON.parse(extractJson(textBlock.text)));
+  let parsed;
+  try {
+    parsed = passSchema.parse(JSON.parse(extractJson(textBlock.text)));
+  } catch (err) {
+    // Named, and non-fatal. Losing a whole draft because the copy editor
+    // returned a stray quotation mark is a bad trade: the input article is
+    // already reviewed, and a skipped pass is recorded as a note.
+    console.error(`[editorial] ${pass}: could not parse the reply:`, err);
+    console.error(`[editorial] ${pass} reply began:`, textBlock.text.slice(0, 300));
+    return {
+      body,
+      notes: [{ pass, before: "", reason: `The ${pass} pass returned something unreadable and was skipped.` }],
+    };
+  }
 
   // A pass that returns an empty or gutted article is a failed pass, not an
   // edit. Keeping the input is the safe direction: the draft is reviewed by a

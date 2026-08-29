@@ -112,6 +112,8 @@ Flight-school blogs, gear retailers, and content farms rewriting each other. For
 EVERY FINDING NEEDS
 A URL you actually retrieved in this session, and the supporting passage quoted verbatim. If you cannot quote it, you have not verified it.
 
+Inside "support", never use a double quotation mark -- the passage sits inside a JSON string and a stray " breaks the whole reply. Use single quotes if the passage itself quotes something.
+
 GAPS
 List what you looked for and could not substantiate. Be specific: "no FAA guidance found on skill decay between lessons" is useful, "limited information" is not. This is what stops the writer inventing.
 
