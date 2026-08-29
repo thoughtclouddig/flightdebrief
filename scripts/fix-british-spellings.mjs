@@ -53,37 +53,60 @@ function fix(text) {
 const write = process.argv.includes("--write");
 const db = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
-for (const table of ["articles", "research_reports"]) {
-  const { rows } = await db.query(`SELECT id, slug, title, dek, body, body_blocks FROM ${table}`);
+// The two tables hold prose in different columns -- research_reports has no
+// dek or body_blocks, and carries its narrative across several named fields
+// instead. Listing them per table beats assuming a shared shape.
+const TABLES = [
+  { name: "articles", columns: ["title", "dek", "body"], jsonColumns: ["body_blocks"] },
+  {
+    name: "research_reports",
+    columns: [
+      "title",
+      "summary",
+      "key_findings",
+      "methodology",
+      "definitions",
+      "limitations",
+      "anonymization_note",
+    ],
+    jsonColumns: [],
+  },
+];
+
+for (const table of TABLES) {
+  const all = [...table.columns, ...table.jsonColumns];
+  const { rows } = await db.query(`SELECT id, slug, ${all.join(", ")} FROM ${table.name}`);
+
   for (const row of rows) {
-    // body_blocks is JSON; fixing it as a string is safe here because the
-    // replacements are whole words that never appear in JSON syntax.
-    const blocks = row.body_blocks ? JSON.stringify(row.body_blocks) : null;
-    const next = {
-      title: fix(row.title ?? ""),
-      dek: fix(row.dek ?? ""),
-      body: fix(row.body ?? ""),
-      blocks: blocks ? fix(blocks) : null,
-    };
+    const updates = {};
+    const found = new Set();
 
-    const found = [
-      ...new Set([
-        ...(row.title ?? "").match(pattern) ?? [],
-        ...(row.dek ?? "").match(pattern) ?? [],
-        ...(row.body ?? "").match(pattern) ?? [],
-        ...(blocks ?? "").match(pattern) ?? [],
-      ]),
-    ];
-    if (found.length === 0) continue;
+    for (const column of table.columns) {
+      const value = row[column];
+      if (typeof value !== "string" || !value) continue;
+      for (const m of value.match(pattern) ?? []) found.add(m);
+      updates[column] = fix(value);
+    }
+    for (const column of table.jsonColumns) {
+      if (row[column] == null) continue;
+      // Whole-word replacements never collide with JSON syntax, so fixing the
+      // serialized form is safe and keeps the structure untouched.
+      const text = JSON.stringify(row[column]);
+      for (const m of text.match(pattern) ?? []) found.add(m);
+      updates[column] = JSON.parse(fix(text));
+    }
 
-    console.log(`${table}/${row.slug}: ${found.join(", ")}`);
+    if (found.size === 0) continue;
+    console.log(`${table.name}/${row.slug}: ${[...found].join(", ")}`);
     if (!write) continue;
 
+    const keys = Object.keys(updates);
+    const sets = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
     await db.query(
-      `UPDATE ${table} SET title = $1, dek = $2, body = $3, body_blocks = $4 WHERE id = $5`,
-      [next.title, next.dek, next.body, next.blocks ? JSON.parse(next.blocks) : null, row.id],
+      `UPDATE ${table.name} SET ${sets} WHERE id = $${keys.length + 1}`,
+      [...keys.map((k) => updates[k]), row.id],
     );
-    console.log(`  fixed`);
+    console.log("  fixed");
   }
 }
 
