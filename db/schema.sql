@@ -941,6 +941,14 @@ CREATE TABLE IF NOT EXISTS airport_fleet (
   computed_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- CREATE TABLE IF NOT EXISTS does nothing to a table that already exists, so
+-- every column added to airport_fleet after it first shipped needs an
+-- explicit ALTER. This is the fourth time this file has caught me out the
+-- same way; the rule is that a new column in a CREATE block above always
+-- needs a line down here too.
+ALTER TABLE airport_fleet ADD COLUMN IF NOT EXISTS radius_mi integer NOT NULL DEFAULT 10;
+ALTER TABLE airport_fleet ADD COLUMN IF NOT EXISTS runways text[] NOT NULL DEFAULT '{}';
+
 CREATE TABLE IF NOT EXISTS airport_insights (
   airport_ident text PRIMARY KEY REFERENCES airports(ident) ON DELETE CASCADE,
   -- The window these numbers cover. Published on the page: a figure without a
