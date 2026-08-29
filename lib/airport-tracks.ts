@@ -124,10 +124,14 @@ export function summarizeTracks(tracks: TrackPoints[], airport: LatLon): TrackSu
       return {
         sector,
         share: distances.length / (outside || 1),
-        // The middle 80% of the sector's activity. A min-to-max band would be
-        // set by one flight that carried on to the next state.
-        innerNm: Math.round(percentile(sorted, 0.1)),
-        outerNm: Math.round(percentile(sorted, 0.9)),
+        // The middle HALF of the sector's activity, not the middle 80%.
+        // Wider percentiles produced bands like "10-51 nm", which is not a
+        // practice area, it is most of a state -- a local flight can be a
+        // round-trip cross-country, and a handful of those stretch the tail
+        // until the band stops describing anywhere. The interquartile range
+        // says where the flying actually concentrates.
+        innerNm: Math.round(percentile(sorted, 0.25)),
+        outerNm: Math.round(percentile(sorted, 0.75)),
       };
     })
     .sort((a, b) => b.share - a.share || a.sector.localeCompare(b.sector));
@@ -152,28 +156,12 @@ export function summarizeTracks(tracks: TrackPoints[], airport: LatLon): TrackSu
 export function describeTracks(summary: TrackSummary): string[] {
   if (!summary.trackCount) return [];
   const out: string[] = [];
-  const pct = (n: number) => `${Math.round(n * 100)}%`;
-
-  out.push(
-    `${pct(summary.patternShare)} of recorded time is spent within ${PATTERN_RADIUS_NM} nm of the field — the pattern, and the reason the airport itself is the brightest thing on the map.`,
-  );
-
   const top = summary.sectors.filter((s) => s.share >= 0.1).slice(0, 3);
   if (top.length) {
-    const phrases = top.map(
-      (s) => `${pct(s.share)} ${s.sector}, ${s.innerNm}–${s.outerNm} nm out`,
-    );
     out.push(
-      `Of the flying that leaves the pattern, ${listPhrase(phrases)}. That is where to expect training traffic, and where you will find company if you go looking for a practice area.`,
+      `Head ${listPhrase(top.map((s) => s.sector))} and you are flying where everyone else from this field flies. That is where to expect training traffic, and where to look for a practice area with company in it.`,
     );
   }
-
-  if (summary.medianRangeNm > PATTERN_RADIUS_NM) {
-    out.push(
-      `The typical local flight gets ${summary.medianRangeNm} nm from the field before turning back.`,
-    );
-  }
-
   return out;
 }
 

@@ -72,15 +72,19 @@ describe("summarizeTracks", () => {
     expect(summary.sectors[1].sector).toBe("north");
   });
 
-  it("does not let one long flight set the distance band", () => {
-    // Nine points clustered at 8-10nm and one that carried on to 60. The band
-    // should describe where the flying is, not how far the outlier went.
+  it("does not let long round trips set the distance band", () => {
+    // Most of the flying is 8-10nm out; a few local flights are round-trip
+    // cross-countries reaching 60. The band should say where the flying
+    // concentrates, not span everything that happened.
     const points: TrackPoints = [
-      ...Array.from({ length: 9 }, (_, i) => offset(8 + i * 0.2, 90)),
+      ...Array.from({ length: 16 }, (_, i) => offset(8 + (i % 3), 90)),
+      offset(55, 90),
       offset(60, 90),
+      offset(58, 90),
+      offset(62, 90),
     ];
     const summary = summarizeTracks([points], KFFZ);
-    expect(summary.sectors[0].outerNm).toBeLessThan(20);
+    expect(summary.sectors[0].outerNm).toBeLessThan(15);
   });
 
   it("reports the median range across flights, not across points", () => {
@@ -109,7 +113,6 @@ describe("describeTracks", () => {
     const summary = summarizeTracks([east], KFFZ);
     const text = describeTracks(summary).join(" ");
     expect(text).toContain("east");
-    expect(text).toContain("nm out");
   });
 
   it("stays quiet about sectors too thin to be a finding", () => {

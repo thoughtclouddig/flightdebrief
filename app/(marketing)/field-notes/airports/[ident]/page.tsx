@@ -6,7 +6,7 @@ import { isContentPublic } from "@/lib/content/visibility";
 import { appOrigin } from "@/lib/email";
 import type { AirportInsightsRecord } from "@/lib/types";
 import { TrackDensityMap } from "@/components/marketing/track-density-map";
-import { describeTracks, summarizeTracks } from "@/lib/airport-tracks";
+import { describeTracks, summarizeTracks, PATTERN_RADIUS_NM } from "@/lib/airport-tracks";
 
 export const dynamic = "force-dynamic";
 
@@ -105,10 +105,12 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
   // the airport, which the reader already knew; the finding is which sectors
   // the flying goes to and how far out. Computed from the same tracks the
   // figure draws, so the words and the picture cannot disagree.
-  const trackSummary =
-    airport.latitude !== null && airport.longitude !== null
-      ? describeTracks(summarizeTracks(tracks, { lat: airport.latitude, lon: airport.longitude }))
-      : [];
+  const trackStats =
+    airport.latitude !== null && airport.longitude !== null && tracks.length
+      ? summarizeTracks(tracks, { lat: airport.latitude, lon: airport.longitude })
+      : null;
+  const trackSummary = trackStats ? describeTracks(trackStats) : [];
+  const topSectors = trackStats ? trackStats.sectors.filter((s) => s.share >= 0.1).slice(0, 3) : [];
 
   const seasons = windowSpansYear ? insights.bySeason.filter((s) => s.flights > 0) : [];
   const peakMonthFlights = insights.byMonth.length ? Math.max(...insights.byMonth.map((m) => m.flights)) : 0;
@@ -401,10 +403,55 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
         title="Where the flying actually happens"
         note="Every local flight in the sample, drawn over each other. Where the lines pile up is where aircraft from this field spend their time — the practice areas, the corridor out, and how far the pattern really extends."
       >
-        {trackSummary.length ? (
-          <div className="mt-5 flex flex-col gap-3">
+        {trackStats ? (
+          <div className="mt-5 rounded-xl border border-hairline p-5 sm:p-6">
+            <div className="flex flex-wrap gap-x-10 gap-y-5">
+              <div>
+                <p className="font-display text-[2.25rem] font-bold leading-none tabular-nums text-brand-dark">
+                  {Math.round(trackStats.patternShare * 100)}%
+                </p>
+                <p className="mt-1.5 text-sm text-[#5b6472]">
+                  of time within {PATTERN_RADIUS_NM} nm — the pattern
+                </p>
+              </div>
+              <div>
+                <p className="font-display text-[2.25rem] font-bold leading-none tabular-nums text-brand-dark">
+                  {trackStats.medianRangeNm}
+                  <span className="ml-1 text-lg font-semibold text-[#5b6472]">nm</span>
+                </p>
+                <p className="mt-1.5 text-sm text-[#5b6472]">how far a typical flight gets out</p>
+              </div>
+            </div>
+
+            {topSectors.length ? (
+              <div className="mt-6 border-t border-hairline pt-5">
+                <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-[#5b6472]">
+                  Where the rest of it goes
+                </p>
+                <dl className="mt-3 flex flex-col gap-2.5">
+                  {topSectors.map((s) => (
+                    <div key={s.sector} className="flex items-center gap-4">
+                      <dt className="w-24 shrink-0 text-sm capitalize text-[#33383f]">{s.sector}</dt>
+                      <dd className="flex flex-1 items-center gap-3">
+                        <span
+                          className="block h-2.5 rounded-full bg-brand"
+                          style={{ width: `${(s.share / topSectors[0].share) * 100}%` }}
+                        />
+                        <span className="shrink-0 whitespace-nowrap text-sm tabular-nums text-[#5b6472]">
+                          {Math.round(s.share * 100)}% · {s.innerNm}–{s.outerNm} nm
+                        </span>
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <p className="mt-3 text-xs text-[#5b6472]">
+                  Distance bands cover the middle half of each sector&rsquo;s activity.
+                </p>
+              </div>
+            ) : null}
+
             {trackSummary.map((line, i) => (
-              <p key={i} className="text-[15px] leading-relaxed text-[#33383f]">
+              <p key={i} className="mt-5 text-[15px] leading-relaxed text-[#33383f]">
                 {line}
               </p>
             ))}
