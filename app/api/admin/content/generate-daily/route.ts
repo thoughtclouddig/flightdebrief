@@ -54,7 +54,19 @@ export async function POST(request: Request) {
   const topics = await repo.listResourceTopics();
   const topic = idea?.topicId ? topics.find((t) => t.id === idea.topicId) ?? (await pickNextTopic()) : await pickNextTopic();
 
-  const draft = await generateArticleDraft(topic, idea);
+  let draft;
+  try {
+    draft = await generateArticleDraft(topic, idea);
+  } catch (err) {
+    // Returned rather than thrown so the desk can show what went wrong. A
+    // pipeline this long -- research, write, check, edit, design -- fails in
+    // too many distinct ways for "Couldn't draft that" to be actionable.
+    console.error("[content-pipeline] draft failed:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Drafting failed." },
+      { status: 502 },
+    );
+  }
 
   let imageUrl: string | null = null;
   try {

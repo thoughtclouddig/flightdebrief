@@ -25,16 +25,30 @@ export function DraftIdeaButton({ ideaId }: { ideaId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ideaId }),
       });
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) {
+        // Show the server's reason. A generic message here sent the last
+        // debugging session hunting through logs for something the API
+        // already knew.
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error || `Request failed (${response.status})`);
+      }
       router.refresh();
-    } catch {
-      setError("Couldn't draft that.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't draft that.");
     } finally {
       setBusy(false);
     }
   }
 
-  if (error) return <span className="text-sm text-danger">{error}</span>;
+  // title as well as text: a real error message is often longer than the
+  // column, and truncating the useful half is how you end up reading logs.
+  if (error) {
+    return (
+      <span className="max-w-[420px] truncate text-sm text-danger" title={error}>
+        {error}
+      </span>
+    );
+  }
 
   return (
     <button
