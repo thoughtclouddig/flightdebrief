@@ -857,3 +857,13 @@ CREATE TABLE IF NOT EXISTS airport_insights (
   sources text[] NOT NULL DEFAULT '{}',
   computed_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Columns added to the airport tables after they first shipped. CREATE TABLE
+-- IF NOT EXISTS silently does nothing to an existing table, so every column
+-- added to those definitions above also needs an explicit ALTER here or it
+-- never reaches a database that already ran the earlier schema.
+ALTER TABLE airport_operations ADD COLUMN IF NOT EXISTS destination_ident text;
+ALTER TABLE airport_operations ADD COLUMN IF NOT EXISTS local_month smallint NOT NULL DEFAULT 1;
+ALTER TABLE airport_insights ADD COLUMN IF NOT EXISTS sources text[] NOT NULL DEFAULT '{}';
+ALTER TABLE airport_insights ADD COLUMN IF NOT EXISTS by_month jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE airport_insights ADD COLUMN IF NOT EXISTS by_season jsonb NOT NULL DEFAULT '[]'::jsonb;
