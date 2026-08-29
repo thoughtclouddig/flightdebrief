@@ -1,9 +1,14 @@
 /**
- * Turns raw airport observations into the findings a page can publish.
+ * Turns raw airport flight records into the findings a page can publish.
  *
  * Pure functions over rows, deliberately: the aggregation is the part that
  * has to be right, and it should be testable without a database, an API key,
  * or a network. Ingestion and storage live elsewhere.
+ *
+ * The unit is a FLIGHT, not a movement. The data source reports a 1.4-hour
+ * local lesson containing a dozen touch-and-goes as one record, so calling
+ * these "operations" would overstate every figure by an order of magnitude.
+ * Nothing in this file says operations.
  *
  * Every result carries the window and the sample size it came from. That is
  * not decoration -- an unattributed number is an assertion, and the whole
@@ -11,18 +16,26 @@
  * the article fact-checker applies to a model's claims applies here.
  */
 
-export type OperationType = "arrival" | "departure" | "pattern";
+/**
+ * "local" is the training signal: departed and returned to the same field, so
+ * a lesson, pattern work, or a trip to the practice area. Counted separately
+ * rather than folded into departures and arrivals.
+ */
+export type FlightKind = "local" | "departure" | "arrival";
 
-export interface AirportOperation {
-  operationType: OperationType;
+export interface AirportFlight {
+  kind: FlightKind;
   /** 0-23, local to the airport. */
   localHour: number;
   /** 0 = Sunday. */
   localDayOfWeek: number;
   /** 1-12, local to the airport. */
   localMonth: number;
-  runway: string | null;
-  /** For departures: where it went. Null when unknown or a pattern flight. */
+  /** Block time where the source reports both ends. */
+  durationMinutes?: number | null;
+  /** Operator callsign prefix, where the source reports one. */
+  operator?: string | null;
+  /** For departures: where it went. Null when unknown or a local flight. */
   destination?: string | null;
 }
 
@@ -46,37 +59,31 @@ export function seasonOf(month: number): SeasonKey {
 
 export interface HourCount {
   hour: number;
-  operations: number;
-  /** Share of all operations, 0-1. Rounded at render time, not here. */
+  flights: number;
+  /** Share of all flights, 0-1. Rounded at render time, not here. */
   share: number;
 }
 
 export interface DayCount {
   dayOfWeek: number;
-  operations: number;
-  share: number;
-}
-
-export interface RunwayUse {
-  runway: string;
-  operations: number;
+  flights: number;
   share: number;
 }
 
 export interface MonthCount {
   month: number;
-  operations: number;
+  flights: number;
   share: number;
 }
 
 export interface SeasonSummary {
   season: SeasonKey;
-  operations: number;
+  flights: number;
   share: number;
   /**
    * The busiest local hour within this season alone. Null when the season has
-   * no operations -- an absent peak is reported as absent rather than
-   * defaulting to midnight.
+   * no flights -- an absent peak is reported as absent rather than defaulting
+   * to midnight.
    */
   peakHour: number | null;
 }
@@ -86,106 +93,129 @@ export interface DestinationCount {
   flights: number;
 }
 
+export interface OperatorCount {
+  operator: string;
+  flights: number;
+  share: number;
+}
+
 export interface AirportInsights {
-  sampleSize: number;
+  flightCount: number;
   busiestHours: HourCount[];
   busiestDays: DayCount[];
-  runwayUse: RunwayUse[];
   byMonth: MonthCount[];
   bySeason: SeasonSummary[];
   commonDestinations: DestinationCount[];
-  /** Pattern work as a share of all operations -- how much of a training field it is. */
-  patternShare: number;
+  topOperators: OperatorCount[];
+  /** Share of flights that departed and returned here -- how much of a training field it is. */
+  localShare: number;
+  /** Median local-flight block time. Median because one ferry flight skews a mean badly. */
+  medianLocalMinutes: number | null;
 }
 
 /**
  * Below this, an airport gets no page.
  *
- * A page built on forty observations reads as authoritative and isn't. The
- * failure mode of programmatic content is thousands of pages that each say
- * almost nothing, and a floor is the only thing that prevents it.
+ * A page built on forty flights reads as authoritative and isn't. The failure
+ * mode of programmatic content is thousands of pages that each say almost
+ * nothing, and a floor is the only thing that prevents it.
+ *
+ * Lower than the movement-based floor it replaces, because the unit changed:
+ * one flight here is what several rows used to be.
  */
-export const MIN_SAMPLE_SIZE = 500;
+export const MIN_FLIGHT_COUNT = 250;
 
-export function hasEnoughData(operations: AirportOperation[]): boolean {
-  return operations.length >= MIN_SAMPLE_SIZE;
+export function hasEnoughData(flights: AirportFlight[]): boolean {
+  return flights.length >= MIN_FLIGHT_COUNT;
 }
 
-export function computeAirportInsights(operations: AirportOperation[]): AirportInsights {
-  const total = operations.length;
+/** Median of an unsorted list, or null when empty. Even counts take the lower-middle pair's mean. */
+function median(values: number[]): number | null {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+
+export function computeAirportInsights(flights: AirportFlight[]): AirportInsights {
+  const total = flights.length;
   if (total === 0) {
     return {
-      sampleSize: 0,
+      flightCount: 0,
       busiestHours: [],
       busiestDays: [],
-      runwayUse: [],
       byMonth: [],
       bySeason: [],
       commonDestinations: [],
-      patternShare: 0,
+      topOperators: [],
+      localShare: 0,
+      medianLocalMinutes: null,
     };
   }
 
   const byHour = new Map<number, number>();
   const byDay = new Map<number, number>();
-  const byRunway = new Map<string, number>();
   const byMonth = new Map<number, number>();
-  const seasonHours = new Map<SeasonKey, Map<number, number>>();
   const byDestination = new Map<string, number>();
-  let patternCount = 0;
+  const byOperator = new Map<string, number>();
+  const seasonHours = new Map<SeasonKey, Map<number, number>>();
+  const localDurations: number[] = [];
+  let localCount = 0;
 
-  for (const op of operations) {
-    byHour.set(op.localHour, (byHour.get(op.localHour) ?? 0) + 1);
-    byDay.set(op.localDayOfWeek, (byDay.get(op.localDayOfWeek) ?? 0) + 1);
-    if (op.runway) byRunway.set(op.runway, (byRunway.get(op.runway) ?? 0) + 1);
-    byMonth.set(op.localMonth, (byMonth.get(op.localMonth) ?? 0) + 1);
-    const season = seasonOf(op.localMonth);
+  for (const f of flights) {
+    byHour.set(f.localHour, (byHour.get(f.localHour) ?? 0) + 1);
+    byDay.set(f.localDayOfWeek, (byDay.get(f.localDayOfWeek) ?? 0) + 1);
+    byMonth.set(f.localMonth, (byMonth.get(f.localMonth) ?? 0) + 1);
+    if (f.operator) byOperator.set(f.operator, (byOperator.get(f.operator) ?? 0) + 1);
+
+    const season = seasonOf(f.localMonth);
     const hours = seasonHours.get(season) ?? new Map<number, number>();
-    hours.set(op.localHour, (hours.get(op.localHour) ?? 0) + 1);
+    hours.set(f.localHour, (hours.get(f.localHour) ?? 0) + 1);
     seasonHours.set(season, hours);
-    if (op.operationType === "pattern") patternCount++;
+
+    if (f.kind === "local") {
+      localCount++;
+      if (typeof f.durationMinutes === "number" && f.durationMinutes > 0) {
+        localDurations.push(f.durationMinutes);
+      }
+    }
+
     // Destinations come from departures only. Counting arrivals too would
     // double every round trip and make the busiest "destination" the airport
     // itself.
-    if (op.operationType === "departure" && op.destination) {
-      byDestination.set(op.destination, (byDestination.get(op.destination) ?? 0) + 1);
+    if (f.kind === "departure" && f.destination) {
+      byDestination.set(f.destination, (byDestination.get(f.destination) ?? 0) + 1);
     }
   }
 
   return {
-    sampleSize: total,
+    flightCount: total,
     busiestHours: [...byHour.entries()]
-      .map(([hour, operations]) => ({ hour, operations, share: operations / total }))
+      .map(([hour, flights]) => ({ hour, flights, share: flights / total }))
       // Ties broken by hour so the output is stable across recomputations --
       // a page whose "busiest hour" flips between two equal hours every month
       // looks wrong even when it isn't.
-      .sort((a, b) => b.operations - a.operations || a.hour - b.hour),
+      .sort((a, b) => b.flights - a.flights || a.hour - b.hour),
     busiestDays: [...byDay.entries()]
-      .map(([dayOfWeek, operations]) => ({ dayOfWeek, operations, share: operations / total }))
-      .sort((a, b) => b.operations - a.operations || a.dayOfWeek - b.dayOfWeek),
-    runwayUse: [...byRunway.entries()]
-      .map(([runway, operations]) => ({ runway, operations, share: operations / total }))
-      .sort((a, b) => b.operations - a.operations || a.runway.localeCompare(b.runway)),
+      .map(([dayOfWeek, flights]) => ({ dayOfWeek, flights, share: flights / total }))
+      .sort((a, b) => b.flights - a.flights || a.dayOfWeek - b.dayOfWeek),
     byMonth: [...byMonth.entries()]
-      .map(([month, operations]) => ({ month, operations, share: operations / total }))
+      .map(([month, flights]) => ({ month, flights, share: flights / total }))
       .sort((a, b) => a.month - b.month),
     bySeason: SEASONS.map(({ key }) => {
       const hours = seasonHours.get(key);
-      const operations = hours ? [...hours.values()].reduce((n, v) => n + v, 0) : 0;
-      const peak = hours
-        ? [...hours.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]
-        : undefined;
-      return {
-        season: key,
-        operations,
-        share: operations / total,
-        peakHour: peak ? peak[0] : null,
-      };
+      const flights = hours ? [...hours.values()].reduce((n, v) => n + v, 0) : 0;
+      const peak = hours ? [...hours.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0] : undefined;
+      return { season: key, flights, share: flights / total, peakHour: peak ? peak[0] : null };
     }),
     commonDestinations: [...byDestination.entries()]
       .map(([airport, flights]) => ({ airport, flights }))
       .sort((a, b) => b.flights - a.flights || a.airport.localeCompare(b.airport)),
-    patternShare: patternCount / total,
+    topOperators: [...byOperator.entries()]
+      .map(([operator, flights]) => ({ operator, flights, share: flights / total }))
+      .sort((a, b) => b.flights - a.flights || a.operator.localeCompare(b.operator)),
+    localShare: localCount / total,
+    medianLocalMinutes: median(localDurations),
   };
 }
 
@@ -193,10 +223,12 @@ export function computeAirportInsights(operations: AirportOperation[]): AirportI
  * The sentence a page states above its numbers.
  *
  * Kept next to the computation so the two can't drift: if the window changes
- * shape, the attribution changes with it.
+ * shape, the attribution changes with it. It says flights rather than
+ * operations on purpose -- that distinction is the whole reason this file was
+ * rewritten.
  */
 export function describeSample(insights: AirportInsights, windowStart: string, windowEnd: string): string {
   const format = (iso: string) =>
     new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  return `Based on ${insights.sampleSize.toLocaleString("en-US")} operations recorded between ${format(windowStart)} and ${format(windowEnd)}.`;
+  return `Based on ${insights.flightCount.toLocaleString("en-US")} flights recorded between ${format(windowStart)} and ${format(windowEnd)}.`;
 }

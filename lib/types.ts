@@ -789,7 +789,7 @@ export interface ReferralSummary {
 }
 
 
-/** A field we publish an insights report for. */
+/** A field we publish an airport report for. */
 export interface Airport {
   ident: string;
   name: string;
@@ -797,25 +797,33 @@ export interface Airport {
   region: string | null;
   latitude: number | null;
   longitude: number | null;
+  /** IANA zone. Without it the local hours -- the headline figure -- are wrong. */
+  timezone: string | null;
   isTrainingField: boolean;
 }
 
 /**
  * The recomputed summary an airport report renders. Never computed at request
  * time -- see lib/airport-insights.ts and scripts/recompute-airport-insights.mjs.
+ *
+ * Counts are FLIGHTS, not movements: the data source reports a local lesson
+ * containing a dozen touch-and-goes as one record.
  */
 export interface AirportInsightsRecord {
   airportIdent: string;
   windowStart: string;
   windowEnd: string;
-  sampleSize: number;
-  busiestHours: { hour: number; operations: number; share: number }[];
-  busiestDays: { dayOfWeek: number; operations: number; share: number }[];
-  runwayUse: { runway: string; operations: number; share: number }[];
-  byMonth: { month: number; operations: number; share: number }[];
-  bySeason: { season: string; operations: number; share: number; peakHour: number | null }[];
+  flightCount: number;
+  busiestHours: { hour: number; flights: number; share: number }[];
+  busiestDays: { dayOfWeek: number; flights: number; share: number }[];
+  byMonth: { month: number; flights: number; share: number }[];
+  bySeason: { season: string; flights: number; share: number; peakHour: number | null }[];
   commonDestinations: { airport: string; flights: number }[];
-  /** Which data sources the window drew on, e.g. ["fr24"] or ["synthetic"]. */
+  topOperators: { operator: string; flights: number; share: number }[];
+  /** Share of flights that departed and returned here. */
+  localShare: number;
+  medianLocalMinutes: number | null;
+  /** Which data sources the window drew on, e.g. ["fr24"]. */
   sources: string[];
   computedAt: string;
 }

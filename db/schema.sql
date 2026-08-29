@@ -773,17 +773,27 @@ CREATE TABLE IF NOT EXISTS audio_cache (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
--- --- Airport insights ------------------------------------------------------
+-- --- Airport reports -------------------------------------------------------
 -- The data behind per-airport content: one page per training airport carrying
--- numbers that exist nowhere else. Deliberately two tables.
+-- numbers that exist nowhere else.
 --
--- airport_operations is the observation log: one row per movement seen at an
--- airport, whatever the source. Raw, append-only, and never rendered.
+-- The unit is a FLIGHT, not a movement, because that is what the data source
+-- actually reports. A 1.4-hour local lesson containing a dozen touch-and-goes
+-- comes back as a single record. Publishing those as "operations" would be
+-- wrong by an order of magnitude, so the schema, the aggregation and the page
+-- all say flights and mean it.
+--
+-- airport_flights is the observation log: one row per flight touching the
+-- airport, whatever the source. Append-only, never rendered.
 --
 -- airport_insights is what a page reads: a periodically recomputed summary
 -- with the window and sample size it was computed from. Pages never aggregate
 -- at request time and never call an external API -- a page that recomputes on
 -- every view is slow, inconsistent between visitors, and impossible to cite.
+--
+-- The first cut of these tables counted movements. Superseded rather than
+-- migrated: they only ever held synthetic rows, and there is nothing in them
+-- worth keeping. scripts/drop-legacy-airport-tables.mjs removes them.
 
 CREATE TABLE IF NOT EXISTS airports (
   -- ICAO where one exists, else the local identifier. Upper case.
@@ -793,34 +803,49 @@ CREATE TABLE IF NOT EXISTS airports (
   region text,
   latitude double precision,
   longitude double precision,
+  -- IANA zone, e.g. America/Phoenix. Required to turn the UTC timestamps the
+  -- data source returns into the local hours a reader actually cares about.
+  timezone text,
   -- Whether this is somewhere training actually happens. Set from observed
   -- activity rather than assumed, so the page list can be driven by it.
   is_training_field boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS airport_operations (
+ALTER TABLE airports ADD COLUMN IF NOT EXISTS timezone text;
+
+CREATE TABLE IF NOT EXISTS airport_flights (
   id text PRIMARY KEY,
   airport_ident text NOT NULL REFERENCES airports(ident) ON DELETE CASCADE,
-  -- "arrival" | "departure" | "pattern": a touch-and-go is neither an arrival
-  -- nor a departure, and conflating them is what makes pattern counts wrong.
-  operation_type text NOT NULL CHECK (operation_type IN ('arrival','departure','pattern')),
+  -- Provider flight id, so re-running a window updates rather than duplicates.
+  provider_flight_id text,
+  -- "local"     -- departed and returned here: a lesson, pattern work, airwork
+  -- "departure" -- left here for somewhere else
+  -- "arrival"   -- came here from somewhere else
+  -- Local flights are the training signal and are counted separately rather
+  -- than folded into departures and arrivals.
+  flight_kind text NOT NULL CHECK (flight_kind IN ('local','departure','arrival')),
+  -- The moment this flight touched the airport: takeoff for local and
+  -- departure, landing for arrival. Everything time-based keys off this.
   occurred_at timestamptz NOT NULL,
   -- Local hour 0-23, stored rather than derived: "busiest hour" means local
   -- time to a student, and deriving it at query time needs the timezone on
   -- every row anyway.
   local_hour smallint NOT NULL CHECK (local_hour BETWEEN 0 AND 23),
   local_day_of_week smallint NOT NULL CHECK (local_day_of_week BETWEEN 0 AND 6),
-  -- 1-12, local. Stored for the same reason as local_hour: seasonality is
-  -- the strongest effect at most training fields, and at a desert field it
-  -- moves the busy hours as well as the volume.
-  local_month smallint NOT NULL DEFAULT 1 CHECK (local_month BETWEEN 1 AND 12),
-  runway text,
-  -- Where a departure went. Null on arrivals and pattern work: counting the
+  -- 1-12, local. Seasonality is the strongest effect at most training fields,
+  -- and at a desert field it moves the busy hours as well as the volume.
+  local_month smallint NOT NULL CHECK (local_month BETWEEN 1 AND 12),
+  duration_minutes integer,
+  aircraft_type text,
+  registration text,
+  -- Operator callsign prefix where the source reports one, so a flight
+  -- school's own traffic is distinguishable from transient GA.
+  operator text,
+  -- Where a departure went. Null on arrivals and local flights: counting the
   -- arrival leg too would double every round trip and make the busiest
   -- "destination" the airport itself.
   destination_ident text,
-  aircraft_type text,
   -- Where the observation came from ("fr24", "afterflight"), so a finding can
   -- state its provenance and a source can be excluded wholesale if its terms
   -- require it.
@@ -828,8 +853,11 @@ CREATE TABLE IF NOT EXISTS airport_operations (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS airport_operations_airport_time_idx
-  ON airport_operations (airport_ident, occurred_at);
+CREATE INDEX IF NOT EXISTS airport_flights_airport_time_idx
+  ON airport_flights (airport_ident, occurred_at);
+CREATE UNIQUE INDEX IF NOT EXISTS airport_flights_provider_idx
+  ON airport_flights (airport_ident, provider_flight_id)
+  WHERE provider_flight_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS airport_insights (
   airport_ident text PRIMARY KEY REFERENCES airports(ident) ON DELETE CASCADE,
@@ -837,19 +865,26 @@ CREATE TABLE IF NOT EXISTS airport_insights (
   -- window is an assertion, not a finding, and nothing citable.
   window_start date NOT NULL,
   window_end date NOT NULL,
-  -- How many observations it rests on. Also the gate: below a floor, the
-  -- airport gets no page rather than a page saying "insufficient data".
-  sample_size integer NOT NULL,
+  -- Flights, not movements. Named so the two cannot be confused. Also the
+  -- gate: below a floor, the airport gets no page rather than a page saying
+  -- "insufficient data".
+  flight_count integer NOT NULL,
   -- Computed summaries, shaped by lib/airport-insights.ts.
   busiest_hours jsonb NOT NULL DEFAULT '[]'::jsonb,
   busiest_days jsonb NOT NULL DEFAULT '[]'::jsonb,
-  runway_use jsonb NOT NULL DEFAULT '[]'::jsonb,
   by_month jsonb NOT NULL DEFAULT '[]'::jsonb,
   -- Per-season volume AND that season's peak hour. The second half is the
   -- point: at a field where summer flying starts at dawn, an annual "busiest
   -- hour" is an average of two different behaviours and describes neither.
   by_season jsonb NOT NULL DEFAULT '[]'::jsonb,
   common_destinations jsonb NOT NULL DEFAULT '[]'::jsonb,
+  top_operators jsonb NOT NULL DEFAULT '[]'::jsonb,
+  -- Share of flights that departed and returned here. The training-intensity
+  -- figure, and the one number on the page that needs no caveat about units.
+  local_share double precision NOT NULL DEFAULT 0,
+  -- Median duration of a local flight, in minutes. Median rather than mean:
+  -- a single ferry flight or a stuck record drags an average badly.
+  median_local_minutes integer,
   -- Which sources the window drew on. The page reads this: a summary built
   -- from synthetic or sample data must not be able to render looking like a
   -- real finding, and provenance is the only thing that can tell it apart
@@ -857,13 +892,3 @@ CREATE TABLE IF NOT EXISTS airport_insights (
   sources text[] NOT NULL DEFAULT '{}',
   computed_at timestamptz NOT NULL DEFAULT now()
 );
-
--- Columns added to the airport tables after they first shipped. CREATE TABLE
--- IF NOT EXISTS silently does nothing to an existing table, so every column
--- added to those definitions above also needs an explicit ALTER here or it
--- never reaches a database that already ran the earlier schema.
-ALTER TABLE airport_operations ADD COLUMN IF NOT EXISTS destination_ident text;
-ALTER TABLE airport_operations ADD COLUMN IF NOT EXISTS local_month smallint NOT NULL DEFAULT 1;
-ALTER TABLE airport_insights ADD COLUMN IF NOT EXISTS sources text[] NOT NULL DEFAULT '{}';
-ALTER TABLE airport_insights ADD COLUMN IF NOT EXISTS by_month jsonb NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE airport_insights ADD COLUMN IF NOT EXISTS by_season jsonb NOT NULL DEFAULT '[]'::jsonb;

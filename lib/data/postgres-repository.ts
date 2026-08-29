@@ -2122,6 +2122,7 @@ function mapAirport(row: Record<string, unknown>): Airport {
     region: (row.region as string) ?? null,
     latitude: row.latitude === null ? null : Number(row.latitude),
     longitude: row.longitude === null ? null : Number(row.longitude),
+    timezone: (row.timezone as string) ?? null,
     isTrainingField: Boolean(row.is_training_field),
   };
 }
@@ -2132,13 +2133,15 @@ function mapAirportInsights(row: Record<string, unknown>): AirportInsightsRecord
     airportIdent: row.airport_ident as string,
     windowStart: asDate(row.window_start),
     windowEnd: asDate(row.window_end),
-    sampleSize: Number(row.sample_size),
+    flightCount: Number(row.flight_count),
     busiestHours: (row.busiest_hours as AirportInsightsRecord["busiestHours"]) ?? [],
     busiestDays: (row.busiest_days as AirportInsightsRecord["busiestDays"]) ?? [],
-    runwayUse: (row.runway_use as AirportInsightsRecord["runwayUse"]) ?? [],
     byMonth: (row.by_month as AirportInsightsRecord["byMonth"]) ?? [],
     bySeason: (row.by_season as AirportInsightsRecord["bySeason"]) ?? [],
     commonDestinations: (row.common_destinations as AirportInsightsRecord["commonDestinations"]) ?? [],
+    topOperators: (row.top_operators as AirportInsightsRecord["topOperators"]) ?? [],
+    localShare: Number(row.local_share ?? 0),
+    medianLocalMinutes: row.median_local_minutes === null ? null : Number(row.median_local_minutes),
     sources: (row.sources as string[]) ?? [],
     computedAt: row.computed_at instanceof Date ? (row.computed_at as Date).toISOString() : String(row.computed_at),
   };

@@ -16,6 +16,7 @@ const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frid
  * is excluded from search.
  */
 const NON_EVIDENTIAL_SOURCES = new Set(["synthetic", "sample"]);
+
 const isProvisional = (insights: AirportInsightsRecord) =>
   insights.sources.length === 0 || insights.sources.some((s) => NON_EVIDENTIAL_SOURCES.has(s));
 
@@ -59,7 +60,7 @@ export async function generateMetadata(
   const origin = appOrigin();
   return {
     title: `${airport.ident} traffic report — when it's busy, which runway, where people go`,
-    description: `Operations at ${airport.name} (${airport.ident}) by hour and day, runway use, and common destinations, from ${insights.sampleSize.toLocaleString("en-US")} recorded operations.`,
+    description: `Flights at ${airport.name} (${airport.ident}) by hour, day and season, how much of it is local training, and where people go, from ${insights.flightCount.toLocaleString("en-US")} recorded flights.`,
     alternates: origin ? { canonical: `${origin}/resources/airports/${airport.ident.toLowerCase()}` } : undefined,
     // A provisional report must never be indexed. Doing this in metadata
     // rather than a robots.txt rule keeps the decision next to the data that
@@ -85,14 +86,13 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
 
   const provisional = isProvisional(insights);
   const hours = insights.busiestHours;
-  const peakHourOps = hours.length ? Math.max(...hours.map((h) => h.operations)) : 0;
+  const peakHourFlights = hours.length ? Math.max(...hours.map((h) => h.flights)) : 0;
   const byHour = [...hours].sort((a, b) => a.hour - b.hour);
-  const quietest = [...hours].filter((h) => h.operations > 0).sort((a, b) => a.operations - b.operations)[0];
+  const quietest = [...hours].filter((h) => h.flights > 0).sort((a, b) => a.flights - b.flights)[0];
   const busiestDay = insights.busiestDays[0];
   const quietestDay = insights.busiestDays[insights.busiestDays.length - 1];
-  const topRunway = insights.runwayUse[0];
-  const seasons = insights.bySeason.filter((s) => s.operations > 0);
-  const peakMonthOps = insights.byMonth.length ? Math.max(...insights.byMonth.map((m) => m.operations)) : 0;
+  const seasons = insights.bySeason.filter((s) => s.flights > 0);
+  const peakMonthFlights = insights.byMonth.length ? Math.max(...insights.byMonth.map((m) => m.flights)) : 0;
 
   // Only worth stating when the peak actually moves. A field whose busy hour
   // is the same all year should say nothing here rather than manufacture a
@@ -147,8 +147,8 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
       {/* The attribution sits above the numbers rather than in a footnote:
           a figure whose window and sample size are hidden is an assertion. */}
       <p className="mt-6 rounded-lg border border-hairline bg-[#fafafb] px-4 py-3 text-sm text-[#56636f]">
-        Based on <strong className="font-semibold text-[#101727]">{insights.sampleSize.toLocaleString("en-US")}</strong>{" "}
-        operations recorded between {windowLabel(insights.windowStart)} and {windowLabel(insights.windowEnd)}
+        Based on <strong className="font-semibold text-[#101727]">{insights.flightCount.toLocaleString("en-US")}</strong>{" "}
+        flights recorded between {windowLabel(insights.windowStart)} and {windowLabel(insights.windowEnd)}
         {insights.sources.length ? <> · source: {insights.sources.join(", ")}</> : null}
         {" · "}last computed {new Date(insights.computedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.
       </p>
@@ -156,17 +156,17 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
       {/* --- Hour of day ------------------------------------------------- */}
       <Section
         title="When the field is busy"
-        note="Share of all recorded operations by local hour."
+        note="Share of all recorded flights by local hour. One flight, not one landing — a lesson with a dozen touch-and-goes counts once."
       >
-        <ol className="mt-6 grid h-52 items-end gap-[3px]" style={HOUR_GRID} aria-label="Operations by local hour">
+        <ol className="mt-6 grid h-52 items-end gap-[3px]" style={HOUR_GRID} aria-label="Flights by local hour">
           {byHour.map((h) => {
-            const height = peakHourOps ? (h.operations / peakHourOps) * 100 : 0;
-            const isPeak = h.operations === peakHourOps && peakHourOps > 0;
+            const height = peakHourFlights ? (h.flights / peakHourFlights) * 100 : 0;
+            const isPeak = h.flights === peakHourFlights && peakHourFlights > 0;
             return (
               <li
                 key={h.hour}
                 className="flex h-full flex-col justify-end"
-                title={`${hourLabel(h.hour)} — ${h.operations.toLocaleString("en-US")} operations (${pct(h.share)})`}
+                title={`${hourLabel(h.hour)} — ${h.flights.toLocaleString("en-US")} flights (${pct(h.share)})`}
               >
                 {isPeak ? (
                   <span className="mb-1 text-center text-[11px] font-bold tabular-nums text-[#101727]">
@@ -175,7 +175,7 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
                 ) : null}
                 <span
                   className={`block w-full rounded-t-[4px] ${isPeak ? "bg-[#101727]" : "bg-[#c7ccd4]"}`}
-                  style={{ height: `${Math.max(height, h.operations > 0 ? 2 : 0)}%` }}
+                  style={{ height: `${Math.max(height, h.flights > 0 ? 2 : 0)}%` }}
                 />
               </li>
             );
@@ -200,7 +200,7 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
       </Section>
 
       {/* --- Day of week -------------------------------------------------- */}
-      <Section title="Which days" note="Share of all recorded operations by day of week.">
+      <Section title="Which days" note="Share of all recorded flights by day of week.">
         <dl className="mt-5 flex flex-col gap-2.5">
           {[...insights.busiestDays].sort((a, b) => a.dayOfWeek - b.dayOfWeek).map((d) => (
             <div key={d.dayOfWeek} className="flex items-center gap-4">
@@ -243,12 +243,12 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
                   </span>
                 </dt>
                 <dd className="mt-2 text-sm text-[#68717D]">
-                  <span className="tabular-nums text-[#101727]">{pct(s.share)}</span> of the year&rsquo;s operations
+                  <span className="tabular-nums text-[#101727]">{pct(s.share)}</span> of the year&rsquo;s flights
                 </dd>
                 <dd className="mt-1 text-sm text-[#68717D]">
                   Busiest hour:{" "}
                   <span className="font-semibold text-[#101727]">
-                    {s.peakHour === null ? "no operations" : hourLabel(s.peakHour)}
+                    {s.peakHour === null ? "no flights" : hourLabel(s.peakHour)}
                   </span>
                 </dd>
               </div>
@@ -268,17 +268,17 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
 
           {insights.byMonth.length ? (
             <div className="mt-8">
-              <p className="text-sm text-[#68717D]">Operations by month</p>
-              <ol className="mt-3 grid h-28 items-end gap-[3px]" style={MONTH_GRID} aria-label="Operations by month">
+              <p className="text-sm text-[#68717D]">Flights by month</p>
+              <ol className="mt-3 grid h-28 items-end gap-[3px]" style={MONTH_GRID} aria-label="Flights by month">
                 {insights.byMonth.map((m) => (
                   <li
                     key={m.month}
                     className="flex h-full flex-col justify-end"
-                    title={`${MONTH_NAMES[m.month - 1]} — ${m.operations.toLocaleString("en-US")} operations (${pct(m.share)})`}
+                    title={`${MONTH_NAMES[m.month - 1]} — ${m.flights.toLocaleString("en-US")} flights (${pct(m.share)})`}
                   >
                     <span
-                      className={`block w-full rounded-t-[4px] ${m.operations === peakMonthOps ? "bg-[#101727]" : "bg-[#c7ccd4]"}`}
-                      style={{ height: `${peakMonthOps ? (m.operations / peakMonthOps) * 100 : 0}%` }}
+                      className={`block w-full rounded-t-[4px] ${m.flights === peakMonthFlights ? "bg-[#101727]" : "bg-[#c7ccd4]"}`}
+                      style={{ height: `${peakMonthFlights ? (m.flights / peakMonthFlights) * 100 : 0}%` }}
                     />
                   </li>
                 ))}
@@ -293,27 +293,59 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
         </Section>
       ) : null}
 
-      {/* --- Runways ------------------------------------------------------ */}
+      {/* --- Training intensity -------------------------------------------
+          Replaces the runway section, which the data source cannot feed:
+          FR24's flight-summary carries no runway at all, and deriving it
+          would take one track call per flight. This asks a question the data
+          answers directly instead of half-answering the one it can't. */}
       <Section
-        title="Which runway you&rsquo;ll actually get"
-        note="Share of operations by runway. Often not the runway the wind alone would suggest — noise abatement, terrain, and habit all move it."
+        title="How much of this is training"
+        note="A local flight departed and returned here — a lesson, pattern work, or a trip to the practice area. The rest went somewhere else or came from somewhere else."
       >
-        <dl className="mt-5 grid gap-3 sm:grid-cols-2">
-          {insights.runwayUse.map((r) => (
-            <div key={r.runway} className="rounded-xl border border-hairline bg-[#fafafb] px-4 py-3">
-              <dt className="font-display text-2xl font-bold tabular-nums text-[#101727]">{r.runway}</dt>
-              <dd className="mt-1 text-sm text-[#68717D]">
-                <span className="tabular-nums">{pct(r.share)}</span> of operations
-                <span className="text-[#a0a7b0]"> · {r.operations.toLocaleString("en-US")}</span>
-              </dd>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-hairline bg-[#fafafb] px-5 py-4">
+            <p className="font-display text-[2.5rem] font-bold leading-none tabular-nums text-[#101727]">
+              {pct(insights.localShare)}
+            </p>
+            <p className="mt-2 text-sm text-[#68717D]">of flights departed and returned here</p>
+          </div>
+          {insights.medianLocalMinutes ? (
+            <div className="rounded-xl border border-hairline bg-[#fafafb] px-5 py-4">
+              <p className="font-display text-[2.5rem] font-bold leading-none tabular-nums text-[#101727]">
+                {insights.medianLocalMinutes}
+                <span className="ml-1 text-lg font-semibold text-[#68717D]">min</span>
+              </p>
+              <p className="mt-2 text-sm text-[#68717D]">median local flight, block to block</p>
             </div>
-          ))}
-        </dl>
-        {topRunway ? (
+          ) : null}
+        </div>
+
+        {insights.localShare >= 0.5 ? (
           <p className="mt-5 text-[15px] leading-relaxed text-[#3d4653]">
-            Runway {topRunway.runway} takes {pct(topRunway.share)} of everything that moves here. If you&rsquo;ve
-            only ever flown the pattern one direction at this field, that&rsquo;s why.
+            More than half of everything here goes up and comes back to the same field. That is what a
+            training airport looks like from the outside, and it is worth knowing before you plan a stop:
+            the pattern is the busy part.
           </p>
+        ) : null}
+
+        {insights.topOperators.length ? (
+          <div className="mt-8">
+            <p className="text-sm text-[#68717D]">Most active operators</p>
+            <ol className="mt-3 flex flex-col divide-y divide-[#eceef1]">
+              {insights.topOperators.map((o) => (
+                <li key={o.operator} className="flex items-baseline gap-4 py-2.5">
+                  <span className="font-display text-lg font-bold text-[#101727]">{o.operator}</span>
+                  <span className="ml-auto text-sm tabular-nums text-[#68717D]">
+                    {pct(o.share)} of flights
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-3 text-xs leading-relaxed text-[#68717D]">
+              Callsign prefixes as filed. Flights without one — most privately owned aircraft — are counted in
+              the totals above but not here.
+            </p>
+          </div>
         ) : null}
       </Section>
 
@@ -362,13 +394,19 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
       <Section title="How this was measured">
         <div className="mt-4 flex flex-col gap-3 text-[15px] leading-relaxed text-[#3d4653]">
           <p>
-            Each operation is one movement: an arrival, a departure, or a lap in the pattern. Pattern work is
-            counted separately from arrivals and departures, because a touch-and-go is neither, and conflating
-            them is what makes most published pattern counts wrong.
+            Each figure counts one flight, not one movement. A lesson that departs, flies a dozen
+            touch-and-goes and lands is one flight here, because that is what the data source records. Any
+            page reporting these as &ldquo;operations&rdquo; would be overstating them several times over.
           </p>
           <p>
-            Hours and days are local to the field. Destinations are counted from departures only, so a round
-            trip counts once rather than twice.
+            Flights are classified by which ends touched this field: local when it departed and returned here,
+            otherwise a departure or an arrival. A departure is timed from its takeoff and an arrival from its
+            landing, so an evening arrival is not filed under a morning departure time from elsewhere.
+          </p>
+          <p>
+            Hours, days and months are local to the field. Destinations are counted from departures only, so a
+            round trip counts once rather than twice. Median local duration is a median rather than an average
+            because one ferry flight would drag a mean badly.
           </p>
           <p>
             Seasons are whole calendar months — December through February is winter — because that is what
