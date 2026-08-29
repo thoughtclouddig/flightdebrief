@@ -3,11 +3,21 @@
  *
  *   node scripts/ingest-fr24-airport.mjs KFFZ --days 365
  *   node scripts/ingest-fr24-airport.mjs KFFZ --days 7 --dry-run
+ *   node scripts/ingest-fr24-airport.mjs KFFZ --days 365 --delay 3000
+ *   node scripts/ingest-fr24-airport.mjs KFFZ --days 30 --refresh
  *
  * One API call per day of the window. A year at one airport is ~365 calls,
  * which is cheap -- the reason this is affordable is that we are NOT pulling
  * tracks. Runway use would need one /api/flight-tracks call per flight, which
  * is a different order of cost and is deliberately not attempted here.
+ *
+ * RATE LIMITS AND RESUMING
+ * The API rate-limits well below what a tight loop will do, so calls are
+ * spaced by --delay and a 429 is retried with backoff rather than counted as
+ * a lost day. Days already pulled are recorded in airport_ingest_days and
+ * skipped on a re-run, so an interrupted year picks up where it stopped
+ * instead of re-spending the calls that already worked. Pass --refresh to
+ * re-pull days already recorded.
  *
  * WHAT A ROW MEANS
  * FR24's flight-summary returns one record per FLIGHT, not per movement. A
@@ -40,7 +50,14 @@ const argv = process.argv.slice(2);
 const IDENT = (argv.find((a) => !a.startsWith("--")) ?? "KFFZ").toUpperCase();
 const daysFlag = argv.indexOf("--days");
 const DAYS = daysFlag === -1 ? 30 : Number(argv[daysFlag + 1]);
+const delayFlag = argv.indexOf("--delay");
+/** Milliseconds between calls. Tuned down from "as fast as possible", which the API rejects. */
+const DELAY_MS = delayFlag === -1 ? 2500 : Number(argv[delayFlag + 1]);
 const DRY_RUN = argv.includes("--dry-run");
+const REFRESH = argv.includes("--refresh");
+const MAX_RETRIES = 5;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const BASE = "https://fr24api.flightradar24.com";
 const SOURCE = "fr24";
@@ -90,18 +107,38 @@ function localParts(iso) {
 
 const fmt = (d) => d.toISOString().replace(/\.\d{3}Z$/, "");
 
+/**
+ * One day, with backoff.
+ *
+ * A 429 is not a lost day -- it means we asked too fast, and the fix is to
+ * wait rather than to drop the data and leave an invisible hole in the
+ * window. Honours Retry-After when the server sends one, since that is a real
+ * number and our doubling is a guess.
+ */
 async function fetchDay(from, to) {
   const url = new URL("/api/flight-summary/light", BASE);
   url.searchParams.set("airports", `both:${IDENT}`);
   url.searchParams.set("flight_datetime_from", fmt(from));
   url.searchParams.set("flight_datetime_to", fmt(to));
   url.searchParams.set("limit", String(PAGE_LIMIT));
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${KEY}`, Accept: "application/json", "Accept-Version": "v1" },
-  });
-  if (!res.ok) throw new Error(`${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const body = await res.json();
-  return body?.data ?? [];
+
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${KEY}`, Accept: "application/json", "Accept-Version": "v1" },
+    });
+    if (res.ok) return (await res.json())?.data ?? [];
+
+    const retryable = res.status === 429 || res.status >= 500;
+    if (!retryable || attempt >= MAX_RETRIES) {
+      throw new Error(`${res.status}: ${(await res.text()).slice(0, 200)}`);
+    }
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const wait = Number.isFinite(retryAfter) && retryAfter > 0
+      ? retryAfter * 1000
+      : Math.min(60_000, DELAY_MS * 2 ** (attempt + 1));
+    console.log(`    ${res.status} — waiting ${Math.round(wait / 1000)}s (attempt ${attempt + 1}/${MAX_RETRIES})`);
+    await sleep(wait);
+  }
 }
 
 /**
@@ -154,24 +191,54 @@ function toRow(f) {
   };
 }
 
-console.log(`[ingest] ${IDENT} (${timezone}), ${DAYS} day window${DRY_RUN ? " — DRY RUN, nothing written" : ""}`);
+// Days already pulled, so an interrupted run resumes instead of re-spending
+// the calls that already worked.
+const { rows: doneRows } = await client.query(
+  "SELECT day FROM airport_ingest_days WHERE airport_ident = $1 AND source = $2",
+  [IDENT, SOURCE],
+);
+const alreadyDone = new Set(
+  doneRows.map((r) => (r.day instanceof Date ? r.day.toISOString().slice(0, 10) : String(r.day))),
+);
+
+console.log(
+  `[ingest] ${IDENT} (${timezone}), ${DAYS} day window, ${DELAY_MS}ms between calls` +
+    `${DRY_RUN ? " — DRY RUN, nothing written" : ""}`,
+);
+if (alreadyDone.size && !REFRESH) {
+  console.log(`[ingest] ${alreadyDone.size} day(s) already pulled — skipping. Pass --refresh to re-pull.`);
+}
 
 let fetched = 0;
 let written = 0;
 let skipped = 0;
+let resumed = 0;
+const failedDays = [];
 const kinds = new Map();
 
 for (let d = 1; d <= DAYS; d++) {
   const to = new Date(Date.now() - (d - 1) * 86400000);
   const from = new Date(to.getTime() - 86400000);
+  const dayKey = fmt(from).slice(0, 10);
+
+  if (!REFRESH && alreadyDone.has(dayKey)) {
+    resumed++;
+    continue;
+  }
+
+  // Spacing is what keeps this under the rate limit. Before the request, not
+  // after, so a resumed run doesn't burst through its first few days.
+  if (fetched > 0 || d > 1) await sleep(DELAY_MS);
 
   let records;
   try {
     records = await fetchDay(from, to);
   } catch (err) {
-    // One bad day shouldn't lose the other 364. Reported, not swallowed --
-    // a window with silent holes in it is a window whose sample size lies.
-    console.error(`  ${fmt(from).slice(0, 10)}  FAILED: ${err.message}`);
+    // One bad day shouldn't lose the other 364. Collected and reported at the
+    // end rather than swallowed -- a window with silent holes in it is a
+    // window whose sample size lies.
+    console.error(`  ${dayKey}  FAILED: ${err.message}`);
+    failedDays.push(dayKey);
     continue;
   }
   fetched += records.length;
@@ -182,6 +249,19 @@ for (let d = 1; d <= DAYS; d++) {
   const rows = records.map(toRow).filter(Boolean);
   skipped += records.length - rows.length;
   for (const r of rows) kinds.set(r.kind, (kinds.get(r.kind) ?? 0) + 1);
+
+  if (!DRY_RUN) {
+    // Marked before the insert, and marked even when the day was empty: a
+    // genuinely quiet day is a fetched day, and inferring completion from the
+    // flights table would re-fetch it on every run forever.
+    await client.query(
+      `INSERT INTO airport_ingest_days (airport_ident, day, source, flights, fetched_at)
+       VALUES ($1, $2, $3, $4, now())
+       ON CONFLICT (airport_ident, day, source)
+       DO UPDATE SET flights = EXCLUDED.flights, fetched_at = now()`,
+      [IDENT, dayKey, SOURCE, rows.length],
+    );
+  }
 
   if (!DRY_RUN && rows.length) {
     const values = [];
@@ -224,7 +304,19 @@ for (let d = 1; d <= DAYS; d++) {
 }
 
 console.log(`\n[ingest] ${fetched} records fetched, ${written} rows written, ${skipped} skipped (touched neither end).`);
+if (resumed) console.log(`[ingest] ${resumed} day(s) skipped as already pulled.`);
 console.log(`[ingest] by kind: ${[...kinds.entries()].map(([k, n]) => `${k} ${n}`).join(", ") || "none"}`);
-if (!DRY_RUN) console.log(`[ingest] now run: node scripts/recompute-airport-insights.mjs ${IDENT}`);
+
+if (failedDays.length) {
+  // Stated loudly rather than buried: these are holes in the window, and the
+  // sample size the page publishes would otherwise quietly under-report.
+  console.log(
+    `\n[ingest] ${failedDays.length} day(s) never succeeded and are NOT recorded as pulled.` +
+      ` Re-run the same command to retry only those, or raise --delay.`,
+  );
+  console.log(`[ingest] first few: ${failedDays.slice(0, 5).join(", ")}`);
+}
+
+if (!DRY_RUN) console.log(`\n[ingest] now run: node scripts/recompute-airport-insights.mjs ${IDENT}`);
 
 await client.end();

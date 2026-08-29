@@ -859,6 +859,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS airport_flights_provider_idx
   ON airport_flights (airport_ident, provider_flight_id)
   WHERE provider_flight_id IS NOT NULL;
 
+-- Which days have already been pulled, so a re-run resumes instead of
+-- re-spending API calls. Recorded per day rather than inferred from
+-- airport_flights: a genuinely quiet day has no flights, and inferring from
+-- the flights table would re-fetch it forever.
+CREATE TABLE IF NOT EXISTS airport_ingest_days (
+  airport_ident text NOT NULL REFERENCES airports(ident) ON DELETE CASCADE,
+  day date NOT NULL,
+  source text NOT NULL,
+  flights integer NOT NULL DEFAULT 0,
+  fetched_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (airport_ident, day, source)
+);
+
 CREATE TABLE IF NOT EXISTS airport_insights (
   airport_ident text PRIMARY KEY REFERENCES airports(ident) ON DELETE CASCADE,
   -- The window these numbers cover. Published on the page: a figure without a
