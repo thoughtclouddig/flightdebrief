@@ -52,17 +52,21 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
     : "Nice work today. Keep chipping away, and fly safe.";
 
   if (input.narrativeRecap?.trim()) {
-    return [opening, input.narrativeRecap.trim(), closing].join("\n\n");
+    // Converted like everything else. This branch returns early and skips the
+    // whole template below, so a fix applied field-by-field down there never
+    // reached the one path that actually runs for most debriefs -- which is
+    // why "Nina had me work on..." survived the first attempt at this.
+    return [opening, toSecondPerson(input.narrativeRecap.trim()), closing].join("\n\n");
   }
 
   const sections: string[] = [opening];
 
   if (input.whatWeDid.length > 0) {
-    sections.push(`Today you worked on ${speakList(input.whatWeDid)}.`);
+    sections.push(`Today you worked on ${speakList(input.whatWeDid.map(toSecondPerson))}.`);
   }
 
   if (input.wentWell.length > 0) {
-    sections.push(`${cfiOrFallbackCapitalized} noted that ${speakList(input.wentWell)}.`);
+    sections.push(`${cfiOrFallbackCapitalized} noted that ${speakList(input.wentWell.map(toSecondPerson))}.`);
   }
 
   if (input.needsWork.length > 0) {
@@ -85,7 +89,7 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   }
 
   if (input.actionItems.length > 0) {
-    sections.push(`For your next flight, ${cfiOrFallback} wants you to focus on ${input.actionItems[0]}.`);
+    sections.push(`For your next flight, ${cfiOrFallback} wants you to focus on ${toSecondPerson(input.actionItems[0]!)}.`);
   }
 
   if (input.studyReferences.length > 0) {

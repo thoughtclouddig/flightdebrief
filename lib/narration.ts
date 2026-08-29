@@ -113,10 +113,21 @@ const PERSON_SUBSTITUTIONS: [RegExp, string][] = [
 ];
 
 export function toSecondPerson(text: string): string {
-  let out = text;
+  // Transcripts and model output both use the typographic apostrophe, and
+  // every contraction rule below is written with a straight one -- without
+  // this, "I'm" with a curly apostrophe passes through untouched.
+  let out = text.replace(/\u2019/g, "'");
   for (const [pattern, replacement] of PERSON_SUBSTITUTIONS) {
     out = out.replace(pattern, replacement);
   }
+  // A sentence that began "I" now begins "you", mid-paragraph and lowercase.
+  // Only matters once these strings got long enough to contain more than one
+  // sentence -- which they did the moment the narrative recap went through
+  // here rather than a list of short items.
+  out = out.replace(/([.!?]\s+)(you|your)\b/g, (_, punctuation: string, word: string) =>
+    `${punctuation}${word.charAt(0).toUpperCase()}${word.slice(1)}`,
+  );
+
   // Match the original's opening case rather than always capitalising. These
   // strings are sometimes a whole sentence and sometimes a fragment dropped
   // into the middle of one ("Nina pointed out: <fragment>"), and capitalising

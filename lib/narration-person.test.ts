@@ -39,3 +39,17 @@ describe("toSecondPerson", () => {
     expect(toSecondPerson("ILS approach into KMRY")).toBe("ILS approach into KMRY");
   });
 });
+
+describe("toSecondPerson with real-world punctuation", () => {
+  it("handles the typographic apostrophe transcripts actually contain", () => {
+    expect(toSecondPerson("I’m not rushed on base")).toBe("You're not rushed on base");
+  });
+
+  it("converts a whole narrative paragraph, not just short items", () => {
+    const recap =
+      "Nina had me work on getting configured earlier on downwind, so I’m not rushed on base. I was behind the airplane on my first two circuits.";
+    expect(toSecondPerson(recap)).toBe(
+      "Nina had you work on getting configured earlier on downwind, so you're not rushed on base. You were behind the airplane on your first two circuits.",
+    );
+  });
+});
