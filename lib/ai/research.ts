@@ -33,7 +33,7 @@ const MODEL = "claude-sonnet-5";
  * nothing in the log to read. A pass that gives up loudly is strictly better
  * than one that hangs quietly.
  */
-const REQUEST_TIMEOUT_MS = 180_000;
+const REQUEST_TIMEOUT_MS = 120_000;
 
 const SOURCE_TYPES = [
   "faa_requirement",
@@ -150,7 +150,11 @@ export async function researchArticle(input: {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set -- cannot research an article");
 
-  const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 1 });
+  // maxRetries: 0 deliberately. With a retry, the timeout is the ceiling for
+  // one attempt but not for the call -- a stalled search sat on "Researching"
+  // for twice the stated limit, which is exactly the opaque wait the timeout
+  // was added to prevent. One attempt, then a clear failure.
+  const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
   console.log(`[research] searching: ${input.title}`);
   const startedAt = Date.now();
   const response = await client.messages.create({

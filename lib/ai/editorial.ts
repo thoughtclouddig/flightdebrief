@@ -30,7 +30,7 @@ const REQUEST_TIMEOUT_MS = 120_000;
 function client(): Anthropic {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set -- cannot run the editorial pipeline");
-  return new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 1 });
+  return new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
 }
 
 /** One thing a pass changed, in language a person reviewing the draft can act on. */
