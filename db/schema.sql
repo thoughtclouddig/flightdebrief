@@ -911,6 +911,29 @@ CREATE TABLE IF NOT EXISTS airport_tracks (
 
 CREATE INDEX IF NOT EXISTS airport_tracks_airport_idx ON airport_tracks (airport_ident);
 
+-- What is registered near an airport, from Windsock's registry.
+--
+-- "Registered near" is NOT "based at": the coordinate on a registry row is
+-- the registrant's mailing address, which for a management company is an
+-- office downtown. Within ten miles of a field that is a good proxy and not a
+-- fact, and the page has to say so -- the same discipline as calling flights
+-- flights rather than operations.
+CREATE TABLE IF NOT EXISTS airport_fleet (
+  airport_ident text PRIMARY KEY REFERENCES airports(ident) ON DELETE CASCADE,
+  aircraft_count integer NOT NULL,
+  median_year integer,
+  -- [{type, count, share}], most common first.
+  top_types jsonb NOT NULL DEFAULT '[]'::jsonb,
+  trainer_count integer NOT NULL DEFAULT 0,
+  median_trainer_hours integer,
+  -- Trainers that flew 500+ hours last year. The number that separates a
+  -- school aeroplane on a line from a privately owned one, which is the
+  -- distinction a student comparing schools actually cares about.
+  hard_worked_trainers integer NOT NULL DEFAULT 0,
+  source text NOT NULL,
+  computed_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS airport_insights (
   airport_ident text PRIMARY KEY REFERENCES airports(ident) ON DELETE CASCADE,
   -- The window these numbers cover. Published on the page: a figure without a
