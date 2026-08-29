@@ -1,11 +1,13 @@
 /**
- * Diagnostic for the research pass. Makes the same call lib/ai/research.ts
- * makes and prints the response shape, so we can see which step fails:
- * whether the search runs, what block types come back and in what order,
- * whether the turn paused, and whether the final text block is the JSON the
- * parser expects.
+ * Diagnostic for the research pass, using the REAL system prompt.
+ *
+ * A stripped-down version of this call returned eight sourced findings, while
+ * the app returns none -- so the difference is in the prompt or the timing,
+ * not the API. This runs the actual prompt, with the actual timeout, and
+ * reports which.
  */
 import Anthropic from "@anthropic-ai/sdk";
+import fs from "fs";
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
@@ -13,18 +15,11 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const client = new Anthropic({ apiKey });
+const SYSTEM = fs.readFileSync(new URL("./research-system-prompt.txt", import.meta.url), "utf8");
+console.log(`system prompt: ${SYSTEM.length} characters\n`);
 
-const SYSTEM = `You are the researcher for AfterFlight's flight-training articles. Search the web and return findings, each with a URL you actually retrieved and a quoted supporting passage.
-
-Return ONLY this JSON, no fences, no commentary:
-
-{
-  "findings": [{ "claim": "...", "label": "...", "url": "https://...", "sourceType": "faa_guidance", "support": "quoted passage" }],
-  "gaps": ["what you could not substantiate"]
-}`;
-
-console.log("Calling claude-sonnet-5 with web_search_20260209 ...\n");
+const client = new Anthropic({ apiKey, timeout: 120_000, maxRetries: 0 });
+const startedAt = Date.now();
 
 let response;
 try {
@@ -36,50 +31,49 @@ try {
     messages: [
       {
         role: "user",
-        content:
-          "Research this: do student pilots retain skills better training twice a week or once a week with longer lessons? Find what the FAA handbooks and any real research say.",
+        content: `Research this article before it is written.
+
+Topic: Aviation Research -- What the research actually says about training retention.
+Working title: Why students who chair-fly perform better on checkrides
+Angle: Examines whether mental rehearsal improves checkride performance.
+The reader's question: does chair flying actually help?
+
+Find what can be substantiated about it, and say plainly what cannot.`,
       },
     ],
   });
 } catch (err) {
-  console.error("REQUEST THREW:");
+  console.error(`REQUEST FAILED after ${Math.round((Date.now() - startedAt) / 1000)}s`);
   console.error(err?.message ?? err);
   if (err?.status) console.error("HTTP status:", err.status);
   process.exit(1);
 }
 
+console.log(`completed in ${Math.round((Date.now() - startedAt) / 1000)}s`);
 console.log("stop_reason:", response.stop_reason);
-console.log("block types in order:", response.content.map((b) => b.type).join(", "));
-console.log(
-  "usage:",
-  JSON.stringify({
-    input: response.usage?.input_tokens,
-    output: response.usage?.output_tokens,
-    server_tool_use: response.usage?.server_tool_use,
-  }),
-);
+console.log("searches:", response.usage?.server_tool_use?.web_search_requests ?? 0);
+console.log("input tokens:", response.usage?.input_tokens);
 
 const textBlocks = response.content.filter((b) => b.type === "text");
-console.log(`\ntext blocks: ${textBlocks.length}`);
+console.log(`text blocks: ${textBlocks.length}`);
 
 if (textBlocks.length === 0) {
-  console.log("\nNO TEXT BLOCK. The turn produced only tool activity.");
-  console.log("If stop_reason is pause_turn, the search loop hit its cap and needs resuming.");
+  console.log("\nNO TEXT BLOCK -- the turn produced only tool activity.");
+  console.log("stop_reason above says whether it paused mid-search.");
   process.exit(0);
 }
 
 const last = textBlocks[textBlocks.length - 1].text;
-console.log("\n--- LAST TEXT BLOCK (first 1200 chars) ---");
-console.log(last.slice(0, 1200));
+console.log("\n--- LAST TEXT BLOCK (first 900 chars) ---");
+console.log(last.slice(0, 900));
 console.log("--- END ---\n");
 
+const fenced = last.match(/```(?:json)?\s*([\s\S]*?)```/);
+const raw = fenced ? fenced[1].trim() : last.slice(last.indexOf("{"), last.lastIndexOf("}") + 1);
 try {
-  const start = last.indexOf("{");
-  const end = last.lastIndexOf("}");
-  const parsed = JSON.parse(last.slice(start, end + 1));
+  const parsed = JSON.parse(raw);
   console.log(`PARSED OK. findings: ${parsed.findings?.length ?? 0}, gaps: ${parsed.gaps?.length ?? 0}`);
-  for (const f of parsed.findings ?? []) console.log(`  - ${f.url}`);
+  for (const f of parsed.findings ?? []) console.log(`  [${f.sourceType}] ${f.url}`);
 } catch (err) {
   console.log("PARSE FAILED:", err.message);
-  console.log("That means the model answered in prose instead of the JSON contract.");
 }
