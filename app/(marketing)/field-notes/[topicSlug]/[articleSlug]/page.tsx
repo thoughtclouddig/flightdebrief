@@ -37,14 +37,14 @@ async function loadArticle(topicSlug: string, articleSlug: string) {
 }
 
 export async function generateMetadata(
-  props: PageProps<"/resources/[topicSlug]/[articleSlug]">,
+  props: PageProps<"/field-notes/[topicSlug]/[articleSlug]">,
 ): Promise<Metadata> {
   const { topicSlug, articleSlug } = await props.params;
   const found = await loadArticle(topicSlug, articleSlug);
   if (!found) return {};
   const { article } = found;
   const origin = appOrigin();
-  const canonical = origin ? `${origin}/resources/${topicSlug}/${articleSlug}` : undefined;
+  const canonical = origin ? `${origin}/field-notes/${topicSlug}/${articleSlug}` : undefined;
   return {
     title: `${article.title} — AfterFlight`,
     description: article.dek || undefined,
@@ -59,7 +59,7 @@ export async function generateMetadata(
   };
 }
 
-export default async function ArticlePage(props: PageProps<"/resources/[topicSlug]/[articleSlug]">) {
+export default async function ArticlePage(props: PageProps<"/field-notes/[topicSlug]/[articleSlug]">) {
   // Whole content surface is gated until it's ready -- see lib/content/visibility.ts.
   if (!isContentPublic()) notFound();
 
@@ -89,7 +89,7 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
     author: { "@type": "Organization", name: article.authorName },
     publisher: { "@type": "Organization", name: "AfterFlight" },
     ...(origin
-      ? { url: `${origin}/resources/${topicSlug}/${articleSlug}`, isPartOf: { "@type": "WebSite", url: origin } }
+      ? { url: `${origin}/field-notes/${topicSlug}/${articleSlug}`, isPartOf: { "@type": "WebSite", url: origin } }
       : {}),
     ...(article.sources.length
       ? { citation: article.sources.map((s) => ({ "@type": "CreativeWork", name: s.label, url: s.url })) }
@@ -117,9 +117,9 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Resources", item: `${origin}/resources` },
-            { "@type": "ListItem", position: 2, name: topic.name, item: `${origin}/resources/${topic.slug}` },
-            { "@type": "ListItem", position: 3, name: article.title, item: `${origin}/resources/${topicSlug}/${articleSlug}` },
+            { "@type": "ListItem", position: 1, name: "Field Notes", item: `${origin}/field-notes` },
+            { "@type": "ListItem", position: 2, name: topic.name, item: `${origin}/field-notes/${topic.slug}` },
+            { "@type": "ListItem", position: 3, name: article.title, item: `${origin}/field-notes/${topicSlug}/${articleSlug}` },
           ],
         }
       : null;
@@ -144,7 +144,7 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
         <Reveal>
           {topic ? (
             <p className="text-balance text-sm font-bold uppercase tracking-[0.16em] text-brand">
-              <Link href={`/resources/${topic.slug}`} className="hover:underline">{topic.name}</Link>
+              <Link href={`/field-notes/${topic.slug}`} className="hover:underline">{topic.name}</Link>
             </p>
           ) : null}
           <h1
@@ -236,7 +236,7 @@ export default async function ArticlePage(props: PageProps<"/resources/[topicSlu
                 return (
                   <Link
                     key={a.id}
-                    href={`/resources/${topicSlug}/${a.slug}`}
+                    href={`/field-notes/${topicSlug}/${a.slug}`}
                     className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors hover:border-[#c8ced4]"
                   >
                     <div className="aspect-[16/10] w-full overflow-hidden bg-[#f1efe8]">

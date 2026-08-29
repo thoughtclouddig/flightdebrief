@@ -11,9 +11,10 @@ const NAV_LINKS = [
   { href: "/#how-it-works", label: "How It Works" },
   { href: "/instructors", label: "For Instructors" },
   { href: "/schools", label: "For Schools" },
-  // "Resources" is deliberately not in the public nav yet -- the hub has no
-  // published articles, so it's crawlable/linkable but not surfaced as a
-  // primary nav item until there's real content worth sending visitors to.
+  // Sits with the audience pages rather than after Pricing: Pricing stays
+  // last because it is adjacent to the signup CTA, and content belongs before
+  // the ask rather than after it.
+  { href: "/field-notes", label: "Field Notes" },
   { href: "/#pricing", label: "Pricing" },
 ];
 

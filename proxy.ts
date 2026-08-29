@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, SITE_GATE_COOKIE, isSiteGateEnabled, verifySessionJwt, verifySiteGateJwt } from "@/lib/auth/session";
 
 const MARKETING_PATHS = new Set(["/", "/instructors", "/schools", "/enterprise", "/privacy", "/terms", "/what-is-afterflight"]);
-const MARKETING_PREFIXES = ["/resources", "/research"];
+const MARKETING_PREFIXES = ["/field-notes", "/research"];
 
 /**
  * Route protection, in two unrelated tiers:
@@ -78,8 +78,8 @@ export const config = {
     "/privacy",
     "/terms",
     "/what-is-afterflight",
-    "/resources",
-    "/resources/:path*",
+    "/field-notes",
+    "/field-notes/:path*",
     "/research",
     "/research/:path*",
   ],

@@ -47,7 +47,7 @@ const hourLabel = (h: number) =>
 const pct = (share: number) => `${Math.round(share * 100)}%`;
 
 export async function generateMetadata(
-  props: PageProps<"/resources/airports/[ident]">,
+  props: PageProps<"/field-notes/airports/[ident]">,
 ): Promise<Metadata> {
   const { ident } = await props.params;
   const repo = getRepository();
@@ -61,7 +61,7 @@ export async function generateMetadata(
   return {
     title: `${airport.ident} traffic report — when it's busy, which runway, where people go`,
     description: `Flights at ${airport.name} (${airport.ident}) by hour, day and season, how much of it is local training, and where people go, from ${insights.flightCount.toLocaleString("en-US")} recorded flights.`,
-    alternates: origin ? { canonical: `${origin}/resources/airports/${airport.ident.toLowerCase()}` } : undefined,
+    alternates: origin ? { canonical: `${origin}/field-notes/airports/${airport.ident.toLowerCase()}` } : undefined,
     // A provisional report must never be indexed. Doing this in metadata
     // rather than a robots.txt rule keeps the decision next to the data that
     // drives it, so it can't be left behind when the data changes.
@@ -69,7 +69,7 @@ export async function generateMetadata(
   };
 }
 
-export default async function AirportReportPage(props: PageProps<"/resources/airports/[ident]">) {
+export default async function AirportReportPage(props: PageProps<"/field-notes/airports/[ident]">) {
   if (!isContentPublic()) notFound();
 
   const { ident } = await props.params;
@@ -131,7 +131,7 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
       ) : null}
 
       <p className="font-display text-sm font-bold uppercase tracking-[0.12em] text-[#68717D]">
-        <Link href="/resources" className="hover:underline">Resources</Link>
+        <Link href="/field-notes" className="hover:underline">Field Notes</Link>
         <span className="px-2">/</span>Airport reports
       </p>
 

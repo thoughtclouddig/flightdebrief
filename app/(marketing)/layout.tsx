@@ -6,13 +6,13 @@ import { MarketingNav } from "@/components/marketing/nav";
 import { ReferralTracker } from "@/components/marketing/referral-tracker";
 import { appOrigin } from "@/lib/email";
 
-// The Resources/Research column is added only when the content surface is
+// The Field Notes/Research column is added only when the content surface is
 // public -- see lib/content/visibility.ts. Linking to gated pages from the
 // footer of every page would be the most visible possible dead end.
 const CONTENT_COLUMN = {
-  title: "Resources",
+  title: "Field Notes",
   links: [
-    { href: "/resources", label: "Resources" },
+    { href: "/field-notes", label: "Field Notes" },
     { href: "/research", label: "Research" },
   ],
 };

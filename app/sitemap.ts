@@ -34,14 +34,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // content crawled. See lib/content/visibility.ts.
   if (!isContentPublic()) return entries;
 
-  entries.push({ url: `${origin}/resources`, lastModified: new Date() });
+  entries.push({ url: `${origin}/field-notes`, lastModified: new Date() });
   for (const topic of topics) {
-    entries.push({ url: `${origin}/resources/${topic.slug}`, lastModified: new Date() });
+    entries.push({ url: `${origin}/field-notes/${topic.slug}`, lastModified: new Date() });
   }
   for (const article of articles) {
     const topicSlug = (article.topicId && topicBySlugId.get(article.topicId)) || "afterflight";
     entries.push({
-      url: `${origin}/resources/${topicSlug}/${article.slug}`,
+      url: `${origin}/field-notes/${topicSlug}/${article.slug}`,
       lastModified: new Date(article.updatedAt),
     });
   }

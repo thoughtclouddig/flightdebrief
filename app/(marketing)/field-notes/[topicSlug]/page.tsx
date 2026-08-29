@@ -16,19 +16,19 @@ const TOPIC_PRODUCT_LINK: Record<string, { href: string; label: string }> = {
   "student-pilot": { href: "/what-is-afterflight", label: "See what AfterFlight is" },
 };
 
-export async function generateMetadata(props: PageProps<"/resources/[topicSlug]">): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<"/field-notes/[topicSlug]">): Promise<Metadata> {
   const { topicSlug } = await props.params;
   const topic = await getRepository().getResourceTopicBySlug(topicSlug);
   if (!topic) return {};
   const origin = appOrigin();
   return {
-    title: `${topic.name} — AfterFlight Resources`,
+    title: `${topic.name} — AfterFlight Field Notes`,
     description: topic.description,
-    alternates: origin ? { canonical: `${origin}/resources/${topicSlug}` } : undefined,
+    alternates: origin ? { canonical: `${origin}/field-notes/${topicSlug}` } : undefined,
   };
 }
 
-export default async function ResourceTopicPage(props: PageProps<"/resources/[topicSlug]">) {
+export default async function ResourceTopicPage(props: PageProps<"/field-notes/[topicSlug]">) {
   // Whole content surface is gated until it's ready -- see lib/content/visibility.ts.
   if (!isContentPublic()) notFound();
 
@@ -46,8 +46,8 @@ export default async function ResourceTopicPage(props: PageProps<"/resources/[to
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Resources", item: `${origin}/resources` },
-          { "@type": "ListItem", position: 2, name: topic.name, item: `${origin}/resources/${topic.slug}` },
+          { "@type": "ListItem", position: 1, name: "Field Notes", item: `${origin}/field-notes` },
+          { "@type": "ListItem", position: 2, name: topic.name, item: `${origin}/field-notes/${topic.slug}` },
         ],
       }
     : null;
@@ -60,7 +60,7 @@ export default async function ResourceTopicPage(props: PageProps<"/resources/[to
       <div className="mx-auto max-w-3xl">
         <Reveal>
           <p className="text-balance text-sm font-bold uppercase tracking-[0.16em] text-brand">
-            <Link href="/resources" className="hover:underline">Resources</Link>
+            <Link href="/field-notes" className="hover:underline">Field Notes</Link>
           </p>
           <h1 className="font-display mt-2 text-balance text-4xl font-bold text-[#101727] sm:text-5xl" style={{ textTransform: "none" }}>
             {topic.name}
@@ -75,7 +75,7 @@ export default async function ResourceTopicPage(props: PageProps<"/resources/[to
             <ul className="flex flex-col gap-6">
               {articles.map((article) => (
                 <li key={article.id}>
-                  <Link href={`/resources/${topic.slug}/${article.slug}`} className="group flex gap-4">
+                  <Link href={`/field-notes/${topic.slug}/${article.slug}`} className="group flex gap-4">
                     {heroImageSrc("articles", article.id, article.imageUrl) ? (
                       // eslint-disable-next-line @next/next/no-img-element -- must render both https:// and data: URLs
                       <img

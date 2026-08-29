@@ -182,7 +182,7 @@ export default async function ResearchReportPage(props: PageProps<"/research/[sl
 
           {relatedTopic ? (
             <div>
-              <Link href={`/resources/${relatedTopic.slug}`} className="text-brand hover:underline">
+              <Link href={`/field-notes/${relatedTopic.slug}`} className="text-brand hover:underline">
                 See related resources in {relatedTopic.name} &rarr;
               </Link>
             </div>

@@ -1,5 +1,5 @@
 /**
- * Whether the public content surface (/resources, /research) is reachable.
+ * Whether the public content surface (/field-notes, /research) is reachable.
  *
  * Off unless CONTENT_PUBLIC is explicitly set. Fail-closed on purpose: the
  * articles pipeline can produce and publish drafts before the design and

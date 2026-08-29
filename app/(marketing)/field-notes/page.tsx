@@ -10,10 +10,10 @@ import { appOrigin } from "@/lib/email";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Resources — AfterFlight",
+  title: "Field Notes — AfterFlight",
   description:
     "Guidance for student pilots, CFIs, and flight schools -- grounded in how structured debriefing actually works.",
-  alternates: appOrigin() ? { canonical: `${appOrigin()}/resources` } : undefined,
+  alternates: appOrigin() ? { canonical: `${appOrigin()}/field-notes` } : undefined,
 };
 
 /**
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
  * rather than client state. That's the better shape here anyway: every filter
  * combination becomes a real URL that can be linked, shared, and crawled.
  */
-export default async function ResourcesHubPage(props: PageProps<"/resources">) {
+export default async function FieldNotesHubPage(props: PageProps<"/field-notes">) {
   if (!isContentPublic()) notFound();
 
   const { topic: topicParam, q: queryParam } = await props.searchParams;
@@ -53,7 +53,7 @@ export default async function ResourcesHubPage(props: PageProps<"/resources">) {
         title: article.title,
         dek: article.dek,
         topic,
-        href: `/resources/${topic?.slug ?? "afterflight"}/${article.slug}`,
+        href: `/field-notes/${topic?.slug ?? "afterflight"}/${article.slug}`,
         imageSrc: heroImageSrc("articles", article.id, article.imageUrl),
         dateLabel: article.publishedAt
           ? new Date(article.publishedAt).toLocaleDateString("en-US", {
@@ -81,7 +81,7 @@ export default async function ResourcesHubPage(props: PageProps<"/resources">) {
     if (slug) params.set("topic", slug);
     if (query) params.set("q", query);
     const qs = params.toString();
-    return qs ? `/resources?${qs}` : "/resources";
+    return qs ? `/field-notes?${qs}` : "/field-notes";
   }
 
   return (
@@ -95,14 +95,14 @@ export default async function ResourcesHubPage(props: PageProps<"/resources">) {
             <span className="px-2" aria-hidden>
               /
             </span>
-            <span className="text-[#3f474f]">Resources</span>
+            <span className="text-[#3f474f]">Field Notes</span>
           </nav>
 
           <h1
             className="font-display mt-4 text-balance text-4xl font-bold text-[#101727] sm:text-5xl"
             style={{ textTransform: "none" }}
           >
-            Resources
+            Field Notes
           </h1>
           <p className="mt-3 max-w-[64ch] text-pretty text-lg leading-relaxed text-[#68717D]">
             Guidance for student pilots, CFIs, and flight schools -- grounded in how structured debriefing actually
@@ -110,7 +110,7 @@ export default async function ResourcesHubPage(props: PageProps<"/resources">) {
           </p>
 
           {/* A GET form, so a search is a URL. No JavaScript involved. */}
-          <form action="/resources" method="get" className="mt-7 max-w-xl" role="search">
+          <form action="/field-notes" method="get" className="mt-7 max-w-xl" role="search">
             {activeTopic ? <input type="hidden" name="topic" value={activeTopic} /> : null}
             <div className="flex gap-2">
               <input
@@ -156,7 +156,7 @@ export default async function ResourcesHubPage(props: PageProps<"/resources">) {
                   : "Try a different topic, or clear the search."}
               </p>
               {articles.length > 0 ? (
-                <Link href="/resources" className="mt-4 inline-block font-semibold text-brand hover:underline">
+                <Link href="/field-notes" className="mt-4 inline-block font-semibold text-brand hover:underline">
                   Show all articles
                 </Link>
               ) : null}

@@ -69,13 +69,13 @@ export async function GET() {
     });
   }
 
-  push("## Resources");
+  push("## Field Notes");
   push();
-  push(`- [Resources hub](${origin}/resources)`);
+  push(`- [Field Notes hub](${origin}/field-notes)`);
   for (const topic of topics) {
-    push(`- [${topic.name}](${origin}/resources/${topic.slug}): ${topic.description}`);
+    push(`- [${topic.name}](${origin}/field-notes/${topic.slug}): ${topic.description}`);
     for (const article of articlesByTopic.get(topic.id) ?? []) {
-      push(`  - [${article.title}](${origin}/resources/${topic.slug}/${article.slug})`);
+      push(`  - [${article.title}](${origin}/field-notes/${topic.slug}/${article.slug})`);
     }
   }
   push();

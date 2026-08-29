@@ -145,7 +145,7 @@ export default function WhatIsAfterFlightPage() {
               <li><Link href="/schools" className="text-brand hover:underline">For Flight Schools</Link></li>
               <li><Link href="/enterprise" className="text-brand hover:underline">Enterprise</Link></li>
               <li><Link href="/#pricing" className="text-brand hover:underline">Pricing</Link></li>
-              <li><Link href="/resources" className="text-brand hover:underline">Resources</Link></li>
+              <li><Link href="/field-notes" className="text-brand hover:underline">Field Notes</Link></li>
               <li><Link href="/research" className="text-brand hover:underline">Research</Link></li>
             </ul>
           </AnswerBlock>

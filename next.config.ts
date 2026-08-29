@@ -15,6 +15,15 @@ const nextConfig: NextConfig = {
   // (match one-or-more labels), not "*" -- the single-star version silently
   // blocked every dev asset request, leaving the page unhydrated/inert.
   allowedDevOrigins: ["**.replit.dev", "**.repl.co"],
+  // /resources moved to /field-notes. Permanent rather than temporary because
+  // the move is final, and kept rather than dropped because a link that has
+  // been crawled or shared outlives our decision to rename the section.
+  async redirects() {
+    return [
+      { source: "/resources", destination: "/field-notes", permanent: true },
+      { source: "/resources/:path*", destination: "/field-notes/:path*", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

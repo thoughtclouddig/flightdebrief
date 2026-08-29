@@ -50,7 +50,7 @@ export default async function ContentDeskPage(props: PageProps<"/super-admin/art
         previewHref: `/super-admin/articles/${article.id}/preview`,
         redraftableId: article.id,
         liveHref:
-          article.status === "published" ? `/resources/${topic?.slug ?? "afterflight"}/${article.slug}` : null,
+          article.status === "published" ? `/field-notes/${topic?.slug ?? "afterflight"}/${article.slug}` : null,
       };
     }),
   ];

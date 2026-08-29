@@ -13,7 +13,7 @@ import sharp from "sharp";
  * Served from a URL, not inlined. These are stored as data: URLs in Postgres
  * (the app has no object storage, same pattern as users.avatar_url), and a
  * data: URL in a server-rendered page is pasted into both the HTML and the
- * RSC payload -- one 2MB image made /resources a 4.3MB response that could
+ * RSC payload -- one 2MB image made /field-notes a 4.3MB response that could
  * never be cached separately from the page. heroImageSrc() hands the browser
  * a stable URL instead, so the bytes come down once and stay cached.
  */
