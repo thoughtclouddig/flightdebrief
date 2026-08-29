@@ -15,8 +15,8 @@ describe("toSecondPerson", () => {
   });
 
   it("converts possessives", () => {
-    expect(toSecondPerson("my airspeed control needs work")).toBe("Your airspeed control needs work");
-    expect(toSecondPerson("that landing was mine")).toBe("That landing was yours");
+    expect(toSecondPerson("My airspeed control needs work")).toBe("Your airspeed control needs work");
+    expect(toSecondPerson("That landing was mine")).toBe("That landing was yours");
   });
 
   it("keeps verb agreement after the swap", () => {
@@ -26,6 +26,13 @@ describe("toSecondPerson", () => {
   it("leaves second-person text alone, so guidance written properly is untouched", () => {
     const already = "Configure earlier on downwind so you're not rushed on base";
     expect(toSecondPerson(already)).toBe(already);
+  });
+
+  it("keeps the opening case, so a fragment dropped mid-sentence isn't capitalised", () => {
+    expect(toSecondPerson("my flare timing")).toBe("your flare timing");
+    expect(toSecondPerson("My flare timing")).toBe("Your flare timing");
+    // Text with no pronouns at all comes back exactly as given.
+    expect(toSecondPerson("held the centerline")).toBe("held the centerline");
   });
 
   it("doesn't touch an I inside a word", () => {

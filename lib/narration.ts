@@ -117,6 +117,11 @@ export function toSecondPerson(text: string): string {
   for (const [pattern, replacement] of PERSON_SUBSTITUTIONS) {
     out = out.replace(pattern, replacement);
   }
-  // A sentence that began "I" now begins "you" mid-capitalisation.
-  return out.charAt(0).toUpperCase() + out.slice(1);
+  // Match the original's opening case rather than always capitalising. These
+  // strings are sometimes a whole sentence and sometimes a fragment dropped
+  // into the middle of one ("Nina pointed out: <fragment>"), and capitalising
+  // a fragment mid-sentence is its own small wrongness.
+  const startedUpper = /^[A-Z]/.test(text);
+  if (startedUpper) return out.charAt(0).toUpperCase() + out.slice(1);
+  return out.charAt(0).toLowerCase() + out.slice(1);
 }
