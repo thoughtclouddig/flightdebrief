@@ -183,6 +183,15 @@ async function fetchDay(from, to) {
       throw err;
     }
 
+    // Out of credits. Like the plan-history boundary above, this is an
+    // account state rather than a transient error, and every later chunk
+    // fails identically.
+    if (res.status === 402) {
+      const err = new Error("credit limit reached");
+      err.outOfCredits = true;
+      throw err;
+    }
+
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= MAX_RETRIES) {
       throw new Error(`${res.status}: ${text.slice(0, 200)}`);
@@ -334,6 +343,11 @@ for (const [i, chunk] of chunks.entries()) {
   try {
     records = await fetchRange(chunk.from, chunk.to);
   } catch (err) {
+    if (err.outOfCredits) {
+      console.log(`\n[ingest] Out of API credits. Stopping.`);
+      console.log(`[ingest] Days already pulled are recorded, so re-running later resumes rather than restarts.`);
+      break;
+    }
     if (err.planLimit) {
       // Everything older fails identically. Stop and say so plainly: this is
       // a subscription boundary, not a transient error, and no amount of

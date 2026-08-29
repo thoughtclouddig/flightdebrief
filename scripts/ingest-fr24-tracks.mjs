@@ -98,6 +98,16 @@ async function fetchTrack(flightId) {
       return body?.[0]?.tracks ?? [];
     }
     const text = await res.text();
+
+    // Out of credits. An account state, not a transient error: every
+    // remaining flight fails the same way, so this stops the run instead of
+    // discovering it four hundred more times.
+    if (res.status === 402) {
+      const err = new Error("credit limit reached");
+      err.outOfCredits = true;
+      throw err;
+    }
+
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= MAX_RETRIES) throw new Error(`${res.status}: ${text.slice(0, 160)}`);
     const retryAfter = Number(res.headers.get("retry-after"));
@@ -143,6 +153,11 @@ for (const [i, c] of candidates.entries()) {
   try {
     tracks = await fetchTrack(c.provider_flight_id);
   } catch (err) {
+    if (err.outOfCredits) {
+      console.log(`\n[tracks] Out of API credits after ${written} tracks. Stopping.`);
+      console.log(`[tracks] What is stored is still usable -- re-run later to add more.`);
+      break;
+    }
     console.error(`  ${c.provider_flight_id}  FAILED: ${err.message}`);
     failed++;
     continue;
