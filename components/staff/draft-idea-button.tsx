@@ -20,6 +20,7 @@ export function DraftIdeaButton({ ideaId }: { ideaId: string }) {
   // report and a shrug.
   const [stage, setStage] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   async function submit() {
     setBusy(true);
@@ -45,13 +46,32 @@ export function DraftIdeaButton({ ideaId }: { ideaId: string }) {
     }
   }
 
-  // title as well as text: a real error message is often longer than the
-  // column, and truncating the useful half is how you end up reading logs.
+  // Expandable rather than truncated. A hover title was not enough: an API
+  // error puts the part that identifies the failure at the end, so the one
+  // line shown was always the least useful half. Click to read it, and to
+  // retry without reloading the desk.
   if (error) {
     return (
-      <span className="max-w-[420px] truncate text-sm text-danger" title={error}>
-        {error}
-      </span>
+      <div className="flex max-w-[420px] flex-col items-start gap-1.5">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className={`text-left text-sm text-danger ${expanded ? "whitespace-pre-wrap break-words" : "line-clamp-2"}`}
+          title={expanded ? "Collapse" : "Show the full error"}
+        >
+          {error}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setError(null);
+            setExpanded(false);
+          }}
+          className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-400 hover:text-slate-200"
+        >
+          Dismiss
+        </button>
+      </div>
     );
   }
 
