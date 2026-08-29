@@ -71,7 +71,10 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
 
   if (input.needsWork.length > 0) {
     sections.push(
-      `The biggest thing you and ${cfiOrFallback} identified during the debrief was ${input.needsWork[0]}.`,
+      // Indexed rather than passed through speakList, which is how it escaped
+      // the person conversion when every other field got it. Any single-item
+      // interpolation is a place to check.
+      `The biggest thing you and ${cfiOrFallback} identified during the debrief was ${toSecondPerson(input.needsWork[0]!)}.`,
     );
   }
 

@@ -69,3 +69,39 @@ describe("spoken instructor guidance is capped", () => {
     expect(script).toContain("only quote");
   });
 });
+
+describe("person conversion covers every spoken field", () => {
+  const base = {
+    studentFirstName: "Danny",
+    instructorFirstName: "Nina",
+    whatWeDid: [],
+    wentWell: [],
+    needsWork: [],
+    instructorGuidance: [],
+    actionItems: [],
+    studyReferences: [],
+  };
+
+  it("converts the single needsWork item, which is interpolated rather than listed", () => {
+    const script = buildDebriefNarration({
+      ...base,
+      needsWork: ["Nina had me work on getting configured earlier on downwind, so I'm not rushed on base"],
+    });
+    expect(script).toContain("Nina had you work on getting configured earlier on downwind, so you're not rushed on base");
+    expect(script).not.toContain("had me work");
+  });
+
+  it("converts the narrative recap, which returns before the template runs", () => {
+    const script = buildDebriefNarration({
+      ...base,
+      narrativeRecap: "Nina had me work on configuring earlier, so I'm not rushed.",
+    });
+    expect(script).toContain("Nina had you work on configuring earlier, so you're not rushed.");
+    expect(script).not.toContain("had me");
+  });
+
+  it("converts the first action item", () => {
+    const script = buildDebriefNarration({ ...base, actionItems: ["practice my radio calls"] });
+    expect(script).toContain("practice your radio calls");
+  });
+});

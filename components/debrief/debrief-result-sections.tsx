@@ -83,6 +83,14 @@ export function DebriefResultSections({
         ) : null}
       </div>
 
+      {/* Above the flight path, not below it. Once a debrief is finished,
+          listening to it is the thing the student came back for -- and it was
+          sitting under a map they have to scroll past. The map is context;
+          this is the deliverable. */}
+      {ttsEnabled ? (
+        <ListenButton baseSrc={`/api/flights/${flightId}/debrief/audio`} label="Listen to your debrief" />
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Flight Path</CardTitle>
@@ -91,8 +99,6 @@ export function DebriefResultSections({
           <FlightMap track={displayTrack} hasAdsbLookup={hasAdsbLookup} />
         </CardContent>
       </Card>
-
-      {ttsEnabled ? <ListenButton baseSrc={`/api/flights/${flightId}/debrief/audio`} label="Listen to your debrief" /> : null}
 
       {/* What We Did is a neutral recap, not a positive/negative judgment -- kept outside the Went Well grouping so that heading only ever sits over content that's actually praise. */}
       <Section icon={ListChecks} title="What We Did" items={result.whatWeDid} empty="Nothing captured yet." />
