@@ -14,6 +14,13 @@ import { extractJson } from "./extract-json";
  *
  * So this asks for a specific subject drawn from what the article is actually
  * about, and steers away from the failure modes rather than into them.
+ *
+ * The look is bright and cinematic on purpose. The first version asked for
+ * documentary realism -- muted colour, grain, "quiet" -- and combined with a
+ * shot list full of rain and overcast it produced a run of images that read
+ * as bleak. Flight training is not a bleak subject, and an article about
+ * getting better at something should not be illustrated like a story about
+ * losing something.
  */
 
 const MODEL = "claude-sonnet-5";
@@ -25,11 +32,12 @@ const REQUEST_TIMEOUT_MS = 30_000;
  * average of everything, which is the stock photo we're trying to avoid.
  */
 const SHOT_TYPES = [
-  "an empty cockpit in specific light -- early morning, late afternoon, rain on the windscreen",
-  "an object close up: a headset on a seat, a kneeboard, a fuel tester, keys on a wing",
-  "an aircraft on the ramp from outside, weather doing something interesting",
-  "the view a pilot has -- out the windscreen, over the cowling, down a runway",
-  "the airport as environment: hangar row, windsock, tiedowns, a taxiway at dusk",
+  "an empty cockpit filled with light -- sun through the windscreen, warm reflections on the glareshield",
+  "an object close up and beautifully lit: a headset on a seat, a kneeboard, a fuel tester, keys on a wing",
+  "an aircraft on the ramp from outside, clean air, big sky, strong sunlight",
+  "the view a pilot has -- out the windscreen, over the cowling, down a runway toward open country",
+  "the airport as landscape: hangar row, windsock, tiedowns, a taxiway leading somewhere",
+  "an aircraft airborne, seen against sky and terrain, wing catching the sun",
 ] as const;
 
 const briefSchema = z.object({
@@ -55,28 +63,42 @@ ALSO NEVER
 - Anything requiring text: signs, placards, avionics readouts, tail numbers in focus.
 - Cliches: sunset silhouette with arms raised, a compass rose, a paper map and coffee.
 
-Be concrete. "A headset resting on the left seat of a Cessna 172, low sun through the side window" is a photograph. "Aviation training concept" is not.
+LIGHT -- this matters as much as the subject
+
+Bright, warm, and open. Golden hour, clear high-desert morning, sun breaking across a ramp, big blue sky with structured cloud. The feeling is early in a good flying day.
+
+Never overcast, grey, rainy, dim, night, or fog. Not because those aren't real, but because this illustrates articles about getting better at flying, and a reader should want to be there. An article about improving should not look like an article about loss.
+
+Be concrete. "A headset resting on the left seat of a Cessna 172, morning sun pouring through the side window" is a photograph. "Aviation training concept" is not.
 
 Return ONLY this JSON, no fences:
 
 {"subject": "what is in frame, one sentence", "light": "time of day and weather, a few words"}`;
 
-/** A prompt for the image model, built from the article. */
+/**
+ * What the picture is about. The photographer decides how it is shot --
+ * see lib/ai/photographer.ts. Splitting the two is what stopped every
+ * article getting the same competent, interchangeable frame.
+ */
+export interface ArtBrief {
+  subject: string;
+  light: string;
+}
+
+const DEFAULT_BRIEF: ArtBrief = {
+  subject: "An empty general aviation cockpit, headset resting on the right seat, sunlight across the seats.",
+  light: "Clear golden morning.",
+};
+
+/** Chooses the subject and the light for one article's photograph. */
 export async function directArticleImage(input: {
   title: string;
   topicName: string;
   /** The article's lead answer, so the subject can come from the content. */
   answer?: string;
-}): Promise<string> {
-  const base = (subject: string, light: string) =>
-    // The photographic direction is fixed rather than model-chosen: it's what
-    // separates a photograph from a render, and it shouldn't vary per article.
-    `Documentary photograph, 35mm, natural light, shallow depth of field, muted colour, slight grain. ${subject} ${light}. No text anywhere in frame, no legible instruments, no logos. Not a stock photo: specific, quiet, and unposed.`;
-
+}): Promise<ArtBrief> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return base("An empty general aviation cockpit, headset resting on the right seat.", "Early morning, overcast.");
-  }
+  if (!apiKey) return DEFAULT_BRIEF;
 
   try {
     const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
@@ -102,11 +124,11 @@ Direct one photograph for it.`,
     const brief = briefSchema.parse(JSON.parse(extractJson(textBlock.text)));
     if (!brief.subject.trim()) throw new Error("no subject");
 
-    return base(brief.subject.trim(), brief.light.trim() || "Overcast, mid-morning.");
+    return { subject: brief.subject.trim(), light: brief.light.trim() || "Clear, bright mid-morning." };
   } catch (err) {
     // A generic-but-decent picture beats no picture, and beats blocking the
     // article on the art direction.
     console.error("[art-direction] failed, using the default subject:", err);
-    return base("An empty general aviation cockpit, headset resting on the right seat.", "Early morning, overcast.");
+    return DEFAULT_BRIEF;
   }
 }

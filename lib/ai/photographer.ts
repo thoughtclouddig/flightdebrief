@@ -1,0 +1,184 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { z } from "zod";
+import { extractJson } from "./extract-json";
+import type { ArtBrief } from "./art-direction";
+
+/**
+ * The photographer, and the photo editor who checks their work.
+ *
+ * Splitting these off from art direction is the same move as splitting the
+ * writer from the fact-checker. The art director decides WHAT the picture is
+ * about -- a subject drawn from this specific article. The photographer
+ * decides HOW it is made: lens, distance, angle, depth, where the light comes
+ * from, how it is graded. One brief can be shot a dozen ways, and the
+ * difference between a good image and a stock one lives almost entirely in
+ * the second decision.
+ *
+ * Then the photo editor looks at the actual frame. Everything upstream is
+ * text describing an image that does not exist yet; this is the only step
+ * that sees what came back. A rule in a prompt is a request, and image models
+ * put people in cockpits anyway. Checking the pixels is what makes "no
+ * people" enforceable rather than aspirational.
+ */
+
+const MODEL = "claude-sonnet-5";
+const REQUEST_TIMEOUT_MS = 30_000;
+
+const shotSchema = z.object({
+  lens: z.string().default("").catch(""),
+  framing: z.string().default("").catch(""),
+  composition: z.string().default("").catch(""),
+  grade: z.string().default("").catch(""),
+});
+
+const PHOTOGRAPHER = `You are a photographer shooting one frame for a flight-training article. The subject and the light are already decided. You decide how it is shot.
+
+Make the choices a real photographer makes:
+
+LENS -- a focal length and aperture, and what that does. A 24mm close to the subject puts the viewer inside the scene; a 135mm from across the ramp compresses the hangar row behind it. Choose one because it serves this subject, not because it sounds impressive.
+
+FRAMING -- where you stand. Height, distance, angle. Low and close to a nosewheel is a different picture from eye level ten feet back.
+
+COMPOSITION -- what makes the frame work. Leading lines down a taxiway, the aircraft placed off-centre against open sky, a foreground element the eye enters through, negative space that gives the subject room.
+
+GRADE -- the colour. Warm and luminous. Think a well-graded film still: deep saturated sky, clean warm highlights, shadows that stay open rather than crushing to black. Never desaturated, never grey, never washed out.
+
+THE LOOK IS BRIGHT AND CINEMATIC
+Wide, generous, sunlit. A reader should want to be there. This illustrates articles about getting better at flying, so the frame should feel like the good part of a flying day, not the end of a hard one.
+
+CONSTRAINTS YOU CANNOT SHOOT AROUND
+- No people. No hands, no silhouettes, no figures anywhere, however distant.
+- No legible instruments, avionics screens, gauge faces, placards, signage, or tail numbers in focus. These render as gibberish and are the first thing a reader clocks as machine-made.
+- No stock-photo cliches: sunset silhouettes, arms raised, a compass rose, a paper map with coffee.
+
+Return ONLY this JSON, no fences:
+
+{"lens": "focal length, aperture, and effect", "framing": "where the camera is", "composition": "what makes the frame work", "grade": "the colour treatment"}`;
+
+/** Turns an art brief into the prompt the image model actually receives. */
+export async function composeShot(brief: ArtBrief): Promise<string> {
+  const assemble = (shot: z.infer<typeof shotSchema>) =>
+    [
+      "Cinematic photograph, shot on film, anamorphic.",
+      shot.lens,
+      `${brief.subject} ${brief.light}`,
+      shot.framing,
+      shot.composition,
+      shot.grade,
+      "Radiant natural light, rich saturated colour, high dynamic range, crisp and luminous.",
+      "Bright and optimistic, never grey or gloomy.",
+      "No people anywhere in frame. No text, no legible instruments, no logos.",
+      "A real moment, beautifully lit -- not a stock photo.",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+  const fallback = assemble({
+    lens: "35mm at f/2.8, close enough to feel present without distorting.",
+    framing: "Eye level, a few feet back, the subject slightly off centre.",
+    composition: "Open space on one side, a clean line leading the eye in.",
+    grade: "Warm highlights, deep blue sky, open shadows.",
+  });
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return fallback;
+
+  try {
+    const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 500,
+      system: PHOTOGRAPHER,
+      messages: [
+        {
+          role: "user",
+          content: `Subject: ${brief.subject}
+Light: ${brief.light}
+
+Shoot it.`,
+        },
+      ],
+    });
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock || textBlock.type !== "text") throw new Error("no text");
+    const shot = shotSchema.parse(JSON.parse(extractJson(textBlock.text)));
+    if (!shot.lens.trim() && !shot.framing.trim()) throw new Error("empty shot");
+    return assemble(shot);
+  } catch (err) {
+    // A competently shot default beats blocking the article on the camera
+    // department.
+    console.error("[photographer] failed, using the default shot:", err);
+    return fallback;
+  }
+}
+
+const verdictSchema = z.object({
+  usable: z.boolean().default(true).catch(true),
+  problems: z.array(z.string()).default([]).catch([]),
+  fix: z.string().default("").catch(""),
+});
+
+export interface PhotoVerdict {
+  usable: boolean;
+  problems: string[];
+  /** What to change on a reshoot, in the photographer's terms. */
+  fix: string;
+}
+
+const PHOTO_EDITOR = `You are a photo editor. You are looking at one generated image intended to run as the hero on a flight-training article. Decide whether it can be published.
+
+REJECT it if any of these are true:
+- A person is visible. Any person: a pilot, a figure at distance, a hand, a silhouette, a reflection of one.
+- Text appears anywhere and is legible or half-legible: signage, placards, avionics readouts, tail numbers, watermarks. Garbled lettering is worse than none.
+- An instrument panel or avionics display is readable enough to look wrong.
+- It is dark, grey, gloomy, washed out, or flat. The brief is bright and cinematic.
+- It reads as generic stock photography rather than a specific moment.
+- Something is anatomically or mechanically wrong in a way a pilot would notice: an aircraft with impossible geometry, a wing attached wrongly, a propeller that makes no sense.
+
+Be strict. A borderline image is a reject -- these run at the top of the page and are the first thing a reader judges.
+
+If you reject it, say what to change in terms a photographer can act on. Not "make it better" but "move the camera outside the aircraft so no seats are in frame".
+
+Return ONLY this JSON, no fences:
+
+{"usable": true or false, "problems": ["what is wrong"], "fix": "what to shoot instead"}`;
+
+/**
+ * Looks at the generated frame and decides whether it can run.
+ *
+ * The only step in the pipeline that sees an actual image. Everything before
+ * it is text about a picture that does not exist yet, which is why "no
+ * people" kept failing: it was a request, not a check.
+ *
+ * Defaults to usable on any failure. A review that cannot run should not cost
+ * the article its picture -- this is a filter on quality, not a gate on
+ * publishing.
+ */
+export async function reviewPhotograph(pngBase64: string): Promise<PhotoVerdict> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { usable: true, problems: [], fix: "" };
+
+  try {
+    const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
+    const response = await client.messages.create({
+      model: MODEL,
+      max_tokens: 500,
+      system: PHOTO_EDITOR,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: "image/png", data: pngBase64 } },
+            { type: "text", text: "Can this run?" },
+          ],
+        },
+      ],
+    });
+    const textBlock = response.content.find((b) => b.type === "text");
+    if (!textBlock || textBlock.type !== "text") throw new Error("no text");
+    return verdictSchema.parse(JSON.parse(extractJson(textBlock.text)));
+  } catch (err) {
+    console.error("[photo-editor] review failed, accepting the image:", err);
+    return { usable: true, problems: [], fix: "" };
+  }
+}
