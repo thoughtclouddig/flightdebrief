@@ -8,6 +8,7 @@ import { slugify } from "@/lib/slugify";
 import type { ArticleIdea, ResourceTopic, Source } from "@/lib/types";
 import { reviewArticle, type EditorialNote } from "./editorial";
 import { researchArticle, formatBrief, sourcesFrom, type ResearchBrief } from "./research";
+import { toUsSpelling } from "@/lib/content/us-spelling";
 
 /**
  * Picks the resource topic with the fewest existing articles, so daily
@@ -168,13 +169,18 @@ export async function generateArticleDraft(
   const reviewed = await reviewArticle(bodyBlocks, formatBrief(brief), report);
   console.log("[content-pipeline] review complete");
 
+  // Applied after every pass, not before: the copy editor rewrites sentences
+  // and can reintroduce a British form the writer didn't use. The prompt asks
+  // for American spelling; this is what makes it true.
+  const american = americanized(reviewed.body);
+
   return {
-    title: parsed.title.trim(),
-    dek: parsed.dek.trim(),
-    bodyBlocks: reviewed.body,
+    title: toUsSpelling(parsed.title.trim()),
+    dek: toUsSpelling(parsed.dek.trim()),
+    bodyBlocks: american,
     // Flat copy for articles.body -- excerpts, search, and anything that
     // predates the structure.
-    body: toPlainText(reviewed.body),
+    body: toPlainText(american),
     slug: slugify(parsed.title),
     reviewNotes: reviewed.notes,
     // Real URLs the researcher retrieved. sources was hardcoded empty until
@@ -183,6 +189,36 @@ export async function generateArticleDraft(
   };
 }
 
+
+/** Every piece of prose in a body, run through the spelling fix. */
+function americanized(body: ArticleBody): ArticleBody {
+  return {
+    answer: toUsSpelling(body.answer),
+    keyFacts: body.keyFacts.map(toUsSpelling),
+    sections: body.sections.map((s) => ({
+      ...s,
+      heading: toUsSpelling(s.heading),
+      body: toUsSpelling(s.body),
+      steps: s.steps?.map(toUsSpelling),
+      tip: s.tip ? toUsSpelling(s.tip) : s.tip,
+      checklist: s.checklist?.map(toUsSpelling),
+      pullQuote: s.pullQuote ? toUsSpelling(s.pullQuote) : s.pullQuote,
+      comparison: s.comparison
+        ? {
+            leftLabel: toUsSpelling(s.comparison.leftLabel),
+            left: toUsSpelling(s.comparison.left),
+            rightLabel: toUsSpelling(s.comparison.rightLabel),
+            right: toUsSpelling(s.comparison.right),
+          }
+        : s.comparison,
+      subsections: s.subsections?.map((sub) => ({
+        heading: toUsSpelling(sub.heading),
+        body: toUsSpelling(sub.body),
+      })),
+    })),
+    faq: body.faq.map((f) => ({ question: toUsSpelling(f.question), answer: toUsSpelling(f.answer) })),
+  };
+}
 
 /**
  * Returns the quote only if it actually appears in the body it claims to come

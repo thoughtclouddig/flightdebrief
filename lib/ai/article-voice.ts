@@ -35,6 +35,7 @@ These are the constructions that make writing read as machine-made. Avoid them c
 - Vague attribution: "experts agree", "studies show", "many instructors believe", "it is widely known". Either name a real source or make the claim in your own voice.
 - Hollow openers: "In the world of aviation", "When it comes to landings", "Let's dive in", "It's important to note that".
 - Motivational filler and sign-offs: "the sky's the limit", "happy flying", "you've got this", "master the skies".
+- British spellings. This is written for US pilots and cites FAA documents that use American spelling: maneuver not manoeuvre, practice not practise, center not centre, analyze not analyse, color not colour, airplane not aeroplane, program not programme, toward not towards, while not whilst.
 - Em dashes and en dashes. The characters are "—" and "–". Do not emit either one, in any position, including inside a word pair. Use a comma, a colon, a full stop, or rewrite the sentence.
 - Rhetorical questions used as transitions. "So what does this mean for you?"
 - Adjective stacking: "comprehensive, detailed, in-depth guide".
