@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { extractJson } from "./extract-json";
 import type { ArtBrief } from "./art-direction";
+import type { AircraftSpec } from "./aircraft-advisor";
 
 /**
  * The photographer, and the photo editor who checks their work.
@@ -56,7 +57,7 @@ Return ONLY this JSON, no fences:
 {"lens": "focal length, aperture, and effect", "framing": "where the camera is", "composition": "what makes the frame work", "grade": "the colour treatment"}`;
 
 /** Turns an art brief into the prompt the image model actually receives. */
-export async function composeShot(brief: ArtBrief): Promise<string> {
+export async function composeShot(brief: ArtBrief, aircraft?: AircraftSpec | null): Promise<string> {
   const assemble = (shot: z.infer<typeof shotSchema>) =>
     [
       "Cinematic photograph, shot on film, anamorphic.",
@@ -65,6 +66,10 @@ export async function composeShot(brief: ArtBrief): Promise<string> {
       shot.framing,
       shot.composition,
       shot.grade,
+      // The aircraft spec goes in verbatim rather than paraphrased. It is the
+      // one part of this prompt that is a matter of fact rather than taste,
+      // and rewording "one engine in the nose" is how it stops being true.
+      aircraft ? `The aircraft is a ${aircraft.aircraft}. ${aircraft.configuration} ${aircraft.avoid}` : "",
       "Radiant natural light, rich saturated colour, high dynamic range, crisp and luminous.",
       "Bright and optimistic, never grey or gloomy.",
       "No people anywhere in frame. No text, no legible instruments, no logos.",
@@ -94,6 +99,7 @@ export async function composeShot(brief: ArtBrief): Promise<string> {
           role: "user",
           content: `Subject: ${brief.subject}
 Light: ${brief.light}
+${aircraft ? `Aircraft: ${aircraft.aircraft} -- ${aircraft.configuration}` : ""}
 
 Shoot it.`,
         },
@@ -133,7 +139,12 @@ REJECT it if any of these are true:
 - An instrument panel or avionics display is readable enough to look wrong.
 - It is dark, grey, gloomy, washed out, or flat. The brief is bright and cinematic.
 - It reads as generic stock photography rather than a specific moment.
-- Something is anatomically or mechanically wrong in a way a pilot would notice: an aircraft with impossible geometry, a wing attached wrongly, a propeller that makes no sense.
+- The aircraft is wrong in a way a pilot would notice. Check this deliberately rather than glancing at it, because it is the failure that gets published:
+  - Propellers. A single-engine aeroplane has ONE propeller, on the NOSE. Not on a wing, not two of them, not one facing backwards. A twin has one on each wing, both facing forward. A propeller anywhere else is an automatic reject.
+  - Wings. Attached at the top or the bottom of the fuselage, not the middle, and not merging into it. Struts, if present, run from the lower fuselage to the underside of the wing.
+  - Landing gear. Three wheels, arranged either as two mains plus a nosewheel or two mains plus a tailwheel. Never both. Never floating clear of the airframe.
+  - General geometry: a tail that attaches to nothing, a cabin with no way in, doubled or half-melted surfaces.
+- The aircraft is a Cessna 172 when the brief specified something else. The type in the brief is the type in the frame.
 
 Be strict. A borderline image is a reject -- these run at the top of the page and are the first thing a reader judges.
 

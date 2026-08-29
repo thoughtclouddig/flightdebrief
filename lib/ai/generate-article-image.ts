@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { encodeHeroImage } from "@/lib/content/images";
 import { directArticleImage } from "./art-direction";
+import { adviseAircraft, needsAircraft } from "./aircraft-advisor";
 import { composeShot, reviewPhotograph } from "./photographer";
 
 /**
@@ -50,7 +51,13 @@ export async function generateArticleImage(input: {
     answer: input.answer,
   });
 
-  let prompt = await composeShot(brief);
+  // A named, correctly configured type rather than "an aircraft". Left out
+  // entirely when the subject is a headset or a windsock -- naming a type
+  // there would invite an aeroplane into a frame that was about something
+  // else.
+  const aircraft = needsAircraft(brief) ? await adviseAircraft(brief) : null;
+
+  let prompt = await composeShot(brief, aircraft);
   // A human steer outranks everything the pipeline decided: they have seen
   // the picture they didn't like and the agents have not.
   if (input.direction) prompt = `${prompt}\n\nSpecific direction, follow this above all: ${input.direction}`;
