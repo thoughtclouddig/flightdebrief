@@ -4,6 +4,7 @@ import { authorizeSuperadmin } from "@/lib/auth/guard";
 import { pickNextTopic, generateArticleDraft } from "@/lib/ai/generate-article";
 import { generateArticleImage } from "@/lib/ai/generate-article-image";
 import { hasContentPipelineSecret } from "@/lib/content/pipeline-auth";
+import { startDraftJob } from "@/lib/content/draft-jobs";
 
 /**
  * Drafts the oldest approved article idea. Always creates a draft, never
@@ -54,46 +55,43 @@ export async function POST(request: Request) {
   const topics = await repo.listResourceTopics();
   const topic = idea?.topicId ? topics.find((t) => t.id === idea.topicId) ?? (await pickNextTopic()) : await pickNextTopic();
 
-  let draft;
-  try {
-    draft = await generateArticleDraft(topic, idea);
-  } catch (err) {
-    // Returned rather than thrown so the desk can show what went wrong. A
-    // pipeline this long -- research, write, check, edit, design -- fails in
-    // too many distinct ways for "Couldn't draft that" to be actionable.
-    console.error("[content-pipeline] draft failed:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Drafting failed." },
-      { status: 502 },
-    );
-  }
+  // Everything above is fast and can fail usefully in the request. Everything
+  // below takes minutes, so it runs as a job: a research pass, four model
+  // calls, and an image generation together outlive Replit's proxy timeout,
+  // which returned its own 502 while the work carried on and the article
+  // landed anyway -- an error reported for something that succeeded.
+  const job = startDraftJob(async () => {
+    const draft = await generateArticleDraft(topic, idea);
 
-  let imageUrl: string | null = null;
-  try {
-    imageUrl = await generateArticleImage({ title: draft.title, topicName: topic.name });
-  } catch (err) {
-    // The article is still worth keeping without an image -- log and move on.
-    console.error("[content-pipeline] image generation failed:", err);
-  }
+    let imageUrl: string | null = null;
+    try {
+      imageUrl = await generateArticleImage({ title: draft.title, topicName: topic.name });
+    } catch (err) {
+      // The article is still worth keeping without an image -- log and move on.
+      console.error("[content-pipeline] image generation failed:", err);
+    }
 
-  const article = await repo.createArticle({
-    slug: draft.slug,
-    topicId: topic.id,
-    title: draft.title,
-    dek: draft.dek,
-    body: draft.body,
-    authorName: "AfterFlight",
-    // Real URLs from the research pass. This was hardcoded empty while the
-    // pipeline had no researcher, because a model-invented citation is worse
-    // than no citation at all.
-    sources: draft.sources,
-    imageUrl,
-    bodyBlocks: draft.bodyBlocks,
+    const article = await repo.createArticle({
+      slug: draft.slug,
+      topicId: topic.id,
+      title: draft.title,
+      dek: draft.dek,
+      body: draft.body,
+      authorName: "AfterFlight",
+      // Real URLs from the research pass. This was hardcoded empty while the
+      // pipeline had no researcher, because a model-invented citation is
+      // worse than no citation at all.
+      sources: draft.sources,
+      imageUrl,
+      bodyBlocks: draft.bodyBlocks,
+    });
+
+    // Link the idea to what it became, so the queue reflects reality and the
+    // same idea can't be drafted twice.
+    if (idea) await repo.setArticleIdeaStatus(idea.id, "drafted", article.id);
+
+    return { articleId: article.id };
   });
 
-  // Link the idea to what it became, so the queue reflects reality and the
-  // same idea can't be drafted twice.
-  if (idea) await repo.setArticleIdeaStatus(idea.id, "drafted", article.id);
-
-  return NextResponse.json({ article, fromIdea: idea?.title ?? null });
+  return NextResponse.json({ jobId: job.id }, { status: 202 });
 }
