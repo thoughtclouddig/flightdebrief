@@ -60,9 +60,10 @@ export async function POST(request: Request) {
   // calls, and an image generation together outlive Replit's proxy timeout,
   // which returned its own 502 while the work carried on and the article
   // landed anyway -- an error reported for something that succeeded.
-  const job = startDraftJob(async () => {
-    const draft = await generateArticleDraft(topic, idea);
+  const job = startDraftJob(async (report) => {
+    const draft = await generateArticleDraft(topic, idea, report);
 
+    report("Generating the image");
     let imageUrl: string | null = null;
     try {
       imageUrl = await generateArticleImage({ title: draft.title, topicName: topic.name });
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
       console.error("[content-pipeline] image generation failed:", err);
     }
 
+    report("Saving");
     const article = await repo.createArticle({
       slug: draft.slug,
       topicId: topic.id,

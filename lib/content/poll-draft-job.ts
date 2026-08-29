@@ -8,13 +8,18 @@ const POLL_MS = 4000;
 /** ~8 minutes. Past that, stop rather than spin forever. */
 const MAX_POLLS = 120;
 
-export async function pollDraftJob(jobId: string): Promise<void> {
+export async function pollDraftJob(jobId: string, onStage?: (stage: string) => void): Promise<void> {
+  let lastStage = "";
   for (let i = 0; i < MAX_POLLS; i++) {
     await new Promise((resolve) => setTimeout(resolve, POLL_MS));
     const status = await fetch(`/api/admin/content/draft-jobs/${jobId}`);
     if (!status.ok) continue;
 
-    const job = (await status.json()) as { state: string; error: string | null };
+    const job = (await status.json()) as { state: string; stage?: string; error: string | null };
+    if (job.stage && job.stage !== lastStage) {
+      lastStage = job.stage;
+      onStage?.(job.stage);
+    }
     if (job.state === "done") return;
     if (job.state === "failed") throw new Error(job.error || "The pipeline failed.");
     // The server forgot the job -- restarted, most likely. The work may well
@@ -22,5 +27,6 @@ export async function pollDraftJob(jobId: string): Promise<void> {
     // a failure for something that might have succeeded.
     if (job.state === "unknown") return;
   }
-  throw new Error("Still running after 8 minutes. Check the Articles tab.");
+  // Naming the stage it was stuck on turns a useless timeout into a report.
+  throw new Error(`Gave up after 8 minutes, stuck at: ${lastStage || "unknown"}`);
 }

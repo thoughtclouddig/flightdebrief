@@ -49,6 +49,8 @@ export interface ArticleDraft {
 export async function generateArticleDraft(
   topic: ResourceTopic,
   idea?: ArticleIdea | null,
+  /** Progress, surfaced in the CMS. See lib/content/draft-jobs.ts. */
+  report: (stage: string) => void = () => {},
 ): Promise<ArticleDraft> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set -- cannot generate an article");
@@ -63,6 +65,7 @@ export async function generateArticleDraft(
   // it must be visible, so the prompt is told there is no brief rather than
   // silently omitting one.
   let brief: ResearchBrief = { findings: [], gaps: [] };
+  report("Researching");
   try {
     brief = await researchArticle({
       topic,
@@ -74,6 +77,11 @@ export async function generateArticleDraft(
     console.error("[content-pipeline] research failed:", err);
   }
 
+  report(
+    brief.findings.length > 0
+      ? `Writing from ${brief.findings.length} sources`
+      : "Writing (no sources found)",
+  );
   console.log("[content-pipeline] writing");
 
   const client = new Anthropic({ apiKey });
@@ -157,7 +165,7 @@ export async function generateArticleDraft(
   // its own invented statistic -- a fabricated number makes the article more
   // persuasive, which is what the writer is optimising for.
   console.log("[content-pipeline] written; reviewing");
-  const reviewed = await reviewArticle(bodyBlocks, formatBrief(brief));
+  const reviewed = await reviewArticle(bodyBlocks, formatBrief(brief), report);
   console.log("[content-pipeline] review complete");
 
   return {

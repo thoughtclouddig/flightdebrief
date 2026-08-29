@@ -40,9 +40,10 @@ export async function POST(request: Request, context: RouteContext<"/api/admin/a
   // four model calls as a fresh draft, which outlives Replit's proxy timeout.
   // Held open, the browser got a 502 while the rewrite carried on and landed
   // anyway -- an error reported for work that succeeded.
-  const job = startDraftJob(async () => {
-    const draft = await generateArticleDraft(topic, idea);
+  const job = startDraftJob(async (report) => {
+    const draft = await generateArticleDraft(topic, idea, report);
 
+    report("Saving");
     const article = await repo.updateArticle(id, {
       title: draft.title,
       dek: draft.dek,

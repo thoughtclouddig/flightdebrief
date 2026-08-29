@@ -246,11 +246,16 @@ export async function copyEdit(body: ArticleBody): Promise<EditorialResult> {
  * outcome. The notes say which passes ran, so a skipped one is visible rather
  * than silent.
  */
-export async function reviewArticle(body: ArticleBody, research = ""): Promise<EditorialResult> {
+export async function reviewArticle(
+  body: ArticleBody,
+  research = "",
+  report: (stage: string) => void = () => {},
+): Promise<EditorialResult> {
   const notes: EditorialNote[] = [];
   let current = body;
 
   try {
+    report("Fact-checking");
     const checked = await factCheck(current, research);
     current = checked.body;
     notes.push(...checked.notes);
@@ -260,6 +265,7 @@ export async function reviewArticle(body: ArticleBody, research = ""): Promise<E
   }
 
   try {
+    report("Copy-editing");
     const edited = await copyEdit(current);
     current = edited.body;
     notes.push(...edited.notes);
@@ -269,6 +275,7 @@ export async function reviewArticle(body: ArticleBody, research = ""): Promise<E
   }
 
   try {
+    report("Designing");
     const designed = await design(current);
     current = designed.body;
     notes.push(...designed.notes);

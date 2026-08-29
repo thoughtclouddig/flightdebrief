@@ -15,5 +15,5 @@ export async function GET(request: Request, context: RouteContext<"/api/admin/co
   // failure for work that may well have succeeded.
   if (!job) return NextResponse.json({ state: "unknown" });
 
-  return NextResponse.json({ state: job.state, error: job.error, articleId: job.articleId });
+  return NextResponse.json({ state: job.state, stage: job.stage, error: job.error, articleId: job.articleId });
 }

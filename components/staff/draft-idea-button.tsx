@@ -15,6 +15,10 @@ import { pollDraftJob } from "@/lib/content/poll-draft-job";
 export function DraftIdeaButton({ ideaId }: { ideaId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  // The stage the job reports, shown in place of a spinner. A run that stalls
+  // then says which step it stalled on, which is the difference between a
+  // report and a shrug.
+  const [stage, setStage] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
@@ -31,12 +35,13 @@ export function DraftIdeaButton({ ideaId }: { ideaId: string }) {
         throw new Error(body?.error || `Request failed (${response.status})`);
       }
       const { jobId } = (await response.json()) as { jobId: string };
-      await pollDraftJob(jobId);
+      await pollDraftJob(jobId, setStage);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't draft that.");
     } finally {
       setBusy(false);
+      setStage("");
     }
   }
 
@@ -57,7 +62,7 @@ export function DraftIdeaButton({ ideaId }: { ideaId: string }) {
       disabled={busy}
       className="font-medium text-brand-bright hover:underline disabled:opacity-60"
     >
-      {busy ? "Researching and writing…" : "Draft now"}
+      {busy ? `${stage || "Starting"}…` : "Draft now"}
     </button>
   );
 }

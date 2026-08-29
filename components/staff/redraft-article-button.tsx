@@ -14,6 +14,10 @@ import { pollDraftJob } from "@/lib/content/poll-draft-job";
 export function RedraftArticleButton({ articleId }: { articleId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  // The stage the job reports, shown in place of a spinner. A run that stalls
+  // then says which step it stalled on, which is the difference between a
+  // report and a shrug.
+  const [stage, setStage] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
@@ -29,12 +33,13 @@ export function RedraftArticleButton({ articleId }: { articleId: string }) {
         throw new Error(body?.error || `Request failed (${response.status})`);
       }
       const { jobId } = (await response.json()) as { jobId: string };
-      await pollDraftJob(jobId);
+      await pollDraftJob(jobId, setStage);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't redraft.");
     } finally {
       setBusy(false);
+      setStage("");
     }
   }
 
@@ -53,7 +58,7 @@ export function RedraftArticleButton({ articleId }: { articleId: string }) {
       disabled={busy}
       className="font-medium text-white/60 hover:text-white disabled:opacity-60"
     >
-      {busy ? "Researching and rewriting…" : "Redraft"}
+      {busy ? `${stage || "Starting"}…` : "Redraft"}
     </button>
   );
 }
