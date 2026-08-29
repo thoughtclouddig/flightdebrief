@@ -18,9 +18,14 @@
  * available here: the data looks fine and the window quietly under-reports.
  *
  * So chunks are not trusted to be the right size. A range that returns the
- * cap is split in half and both halves are re-fetched, recursively, down to a
- * single day. Guessing a --chunk that works in August does not work in
- * February, when the same field flies several times the traffic.
+ * cap is split in half and both halves are re-fetched, recursively -- and the
+ * recursion goes below a day, because at a field like Falcon Field a single
+ * day exceeds the cap on its own. It bottoms out at MIN_SPAN_MS, which is
+ * short enough that no airport realistically fills it.
+ *
+ * Guessing a fixed --chunk does not work here at all: it would have to be
+ * tuned per airport and per season, and getting it wrong loses data silently
+ * rather than loudly.
  *
  * This is still cheap because we are NOT pulling tracks. Runway use would
  * need one /api/flight-tracks call per flight, which is a different order of
@@ -77,7 +82,7 @@ const delayFlag = argv.indexOf("--delay");
 const DELAY_MS = delayFlag === -1 ? 2500 : Number(argv[delayFlag + 1]);
 const chunkFlag = argv.indexOf("--chunk");
 /** Days per API call to start with. Ranges that overflow the response cap are split automatically. */
-const CHUNK_DAYS = chunkFlag === -1 ? 14 : Number(argv[chunkFlag + 1]);
+const CHUNK_DAYS = chunkFlag === -1 ? 2 : Number(argv[chunkFlag + 1]);
 const DRY_RUN = argv.includes("--dry-run");
 const REFRESH = argv.includes("--refresh");
 const MAX_RETRIES = 5;
@@ -93,6 +98,13 @@ const SOURCE = "fr24";
  */
 const RESPONSE_CAP = 300;
 const REQUEST_LIMIT = 500;
+/**
+ * The smallest range worth splitting to. One hour: no airport puts 300
+ * flights into an hour, so reaching this bound means something else is wrong
+ * -- a filter being ignored, say -- and that deserves a report rather than an
+ * infinite descent.
+ */
+const MIN_SPAN_MS = 60 * 60 * 1000;
 
 const client = new pg.Client({ connectionString });
 await client.connect();
@@ -279,11 +291,12 @@ for (let d = 1; d <= DAYS; d += CHUNK_DAYS) {
 }
 
 /**
- * Fetch one range, splitting it when the response comes back at the cap.
+ * Fetch one range, halving it whenever the response comes back at the cap.
  *
- * Returns the records, or null when even a single day overflows -- that day
- * cannot be fully retrieved through this endpoint and must not be recorded as
- * pulled, because doing so would bake a permanent hole into the window.
+ * Returns the records, or null when a range at the minimum span still
+ * overflows -- that range cannot be fully retrieved through this endpoint and
+ * must not be recorded as pulled, because doing so would bake a permanent
+ * hole into the window.
  */
 async function fetchRange(from, to, depth = 0) {
   if (calls > 0) await sleep(DELAY_MS);
@@ -292,15 +305,19 @@ async function fetchRange(from, to, depth = 0) {
 
   if (records.length < RESPONSE_CAP) return records;
 
-  const spanDays = Math.round((to.getTime() - from.getTime()) / 86400000);
-  if (spanDays <= 1) {
-    console.warn(`  ${fmt(from).slice(0, 10)}  single day returned the ${RESPONSE_CAP}-record cap — cannot be fully covered.`);
+  const span = to.getTime() - from.getTime();
+  if (span <= MIN_SPAN_MS) {
+    console.warn(`  ${fmt(from)}..${fmt(to)} still at the ${RESPONSE_CAP}-record cap — cannot be fully covered.`);
     return null;
   }
 
-  const mid = new Date(from.getTime() + Math.floor(spanDays / 2) * 86400000);
-  console.log(`${"  ".repeat(depth + 1)}${fmt(from).slice(0, 10)}..${fmt(to).slice(0, 10)} hit the cap — splitting`);
-  const [a, b] = [await fetchRange(from, mid, depth + 1), await fetchRange(mid, to, depth + 1)];
+  const mid = new Date(from.getTime() + Math.floor(span / 2));
+  if (depth < 3) {
+    // Deeper splits are routine at a busy field and would drown the log.
+    console.log(`${"  ".repeat(depth + 1)}${fmt(from).slice(0, 13)}..${fmt(to).slice(0, 13)} hit the cap — splitting`);
+  }
+  const a = await fetchRange(from, mid, depth + 1);
+  const b = await fetchRange(mid, to, depth + 1);
   if (a === null || b === null) return null;
   return [...a, ...b];
 }
