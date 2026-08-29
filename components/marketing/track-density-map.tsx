@@ -80,8 +80,14 @@ export function TrackDensityMap({
               // Thin and faint on purpose. A single track is almost invisible;
               // fifty overlapping ones are unmistakable. That difference is
               // the entire chart.
-              "line-width": 1,
-              "line-opacity": 0.13,
+              //
+              // Both values scale with the sample, because a fixed opacity
+              // only works at the density it was tuned for: 0.13 reads well
+              // at four hundred tracks and disappears at twenty-five. The
+              // inverse-square-root keeps the accumulated brightness in the
+              // busy areas roughly constant however many tracks there are.
+              "line-width": tracks.length < 120 ? 1.4 : 1,
+              "line-opacity": Math.min(0.5, Math.max(0.08, 1.8 / Math.sqrt(tracks.length))),
             },
           });
         });
