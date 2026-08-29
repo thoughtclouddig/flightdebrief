@@ -7,7 +7,6 @@ import {
   ExternalLink,
   History,
   PlaneTakeoff,
-  Radio,
   Sparkles,
 } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
@@ -22,7 +21,7 @@ import { computeDebriefProgress } from "@/lib/debrief-progress";
 import { computeDebriefStreak, computeTotalCaptured } from "@/lib/milestones";
 import { suggestStudyReferences } from "@/lib/topics";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
-import { cn } from "@/lib/utils";
+import { RadioPracticeCard } from "@/components/radio-practice-card";
 import { formatDurationShort, formatFlightContext } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +59,9 @@ export default async function StudentHomePage() {
   const completedRadioPractice = radioPractice
     .filter((a) => a.status === "completed")
     .slice(0, 5);
+
+  const scenarioTitle = (scenarioId: string) =>
+    RADIO_PRACTICE_SCENARIOS.find((s) => s.id === scenarioId)?.title ?? "Radio call";
 
   const debriefedFlights = flights.filter((f) => f.debriefStatus === "complete");
   const recentDebriefs = debriefedFlights.slice(0, 3);
@@ -367,83 +369,17 @@ export default async function StudentHomePage() {
         </Card>
       ) : null}
 
-      {pendingRadioPractice.length > 0 ? (
-        <Card className="border-brand/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Radio className="size-4 text-brand" />
-              Radio Practice
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Link
-              href={`/practice/${pendingRadioPractice[0]!.id}`}
-              className="-mx-2 flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-surface-sunken"
-            >
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {RADIO_PRACTICE_SCENARIOS.find((s) => s.id === pendingRadioPractice[0]!.scenarioId)?.title ?? "Assigned practice"}
-                </p>
-                <p className="text-xs text-foreground-soft">
-                  {pendingRadioPractice.length > 1 ? `${pendingRadioPractice.length} assigned -- tap to start this one →` : "Tap to practice this call →"}
-                </p>
-              </div>
-            </Link>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-dashed">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground-soft">
-              <Radio className="size-4" />
-              Radio Practice
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-foreground-faint">
-              {completedRadioPractice.length > 0
-                ? "Nothing new assigned. Your finished calls are below -- run any of them again."
-                : "No radio-communications practice assigned yet."}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {completedRadioPractice.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Radio className="size-4" />
-              Radio Calls you&apos;ve practiced
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1">
-            {completedRadioPractice.map((a) => {
-              const scenario = RADIO_PRACTICE_SCENARIOS.find((sc) => sc.id === a.scenarioId);
-              if (!scenario) return null;
-              return (
-                <Link
-                  key={a.id}
-                  href={`/practice/${a.id}`}
-                  className="-mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-2 transition-colors hover:bg-surface-sunken"
-                >
-                  <span className="text-sm text-foreground">{scenario.title}</span>
-                  {/* The result, not just the fact that it's done: the ones
-                      that went badly are the reason to come back here. */}
-                  <span
-                    className={cn(
-                      "shrink-0 text-xs font-semibold",
-                      a.correct ? "text-good" : "text-danger",
-                    )}
-                  >
-                    {a.correct ? "Correct" : "Review"}
-                  </span>
-                </Link>
-              );
-            })}
-          </CardContent>
-        </Card>
-      ) : null}
+      <RadioPracticeCard
+        assigned={pendingRadioPractice.map((a) => ({
+          id: a.id,
+          title: scenarioTitle(a.scenarioId),
+        }))}
+        practiced={completedRadioPractice.map((a) => ({
+          id: a.id,
+          title: scenarioTitle(a.scenarioId),
+          correct: a.correct ?? false,
+        }))}
+      />
 
       {!brief.lastFlight && !brief.upcomingReservation && !pendingFlight ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-hairline p-10 text-center text-foreground-soft">
