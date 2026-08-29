@@ -930,6 +930,13 @@ CREATE TABLE IF NOT EXISTS airport_fleet (
   -- school aeroplane on a line from a privately owned one, which is the
   -- distinction a student comparing schools actually cares about.
   hard_worked_trainers integer NOT NULL DEFAULT 0,
+  -- The radius the census covers, so the page can state it rather than imply
+  -- a precision it does not have.
+  radius_mi integer NOT NULL DEFAULT 10,
+  -- Runway identifiers as painted, from Windsock's airport record. Deriving
+  -- runway use from tracks gives a heading; this gives the name a reader
+  -- expects to see.
+  runways text[] NOT NULL DEFAULT '{}',
   source text NOT NULL,
   computed_at timestamptz NOT NULL DEFAULT now()
 );

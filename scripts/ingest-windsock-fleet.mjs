@@ -167,21 +167,43 @@ if (PROBE) {
   process.exit(0);
 }
 
-const nearby = await get(`/api/v3/airports/${IDENT}/nearby-aircraft`, { limit: 200 });
-const aircraft = rowsOf(nearby);
+/**
+ * The census.
+ *
+ * NOT /nearby-aircraft, which returns what is airborne near the field right
+ * now -- a live snapshot with altitudes and distances, and no utilisation
+ * history. The registry search with a radius filter is what answers "what is
+ * based around here", and it is the one that carries flight_hours_last_year.
+ */
+const RADIUS_MI = 10;
+const PAGE = 200;
+const MAX_ROWS = 800;
+
+if (LAT === null || LON === null) {
+  console.error(`[windsock] ${IDENT} has no coordinates in the airport record; cannot run a radius search.`);
+  process.exit(1);
+}
+
+const filters = [
+  { field_name: "location_point", condition: `within_${RADIUS_MI}`, value: `${LAT},${LON}` },
+];
+
+const aircraft = [];
+for (let offset = 0; offset < MAX_ROWS; offset += PAGE) {
+  const body = await post("/api/v3/aircraft/search", { filters, limit: PAGE, offset });
+  const rows = rowsOf(body);
+  aircraft.push(...rows);
+  if (rows.length < PAGE) break;
+}
 
 if (!aircraft.length) {
-  console.error("[windsock] No aircraft returned. Check the ident and the plan's access to this endpoint.");
+  console.error("[windsock] The radius search returned nothing. Check the coordinates on the airport record.");
   process.exit(1);
 }
 
 if (DRY_RUN) {
-  // The response shape is not documented field-by-field, so the first run
-  // prints it rather than assuming. Guessing at a contract is what cost real
-  // money on the other API today.
   console.log(`\n[windsock] ${aircraft.length} rows. First record:`);
   console.log(JSON.stringify(aircraft[0], null, 2).slice(0, 2500));
-  console.log(`\n[windsock] Fields present: ${Object.keys(aircraft[0]).join(", ")}`);
   process.exit(0);
 }
 
@@ -197,7 +219,7 @@ const median = (values) => {
   if (!values.length) return null;
   const s = [...values].sort((a, b) => a - b);
   const mid = Math.floor(s.length / 2);
-  return s.length % 2 ? s[mid] : Math.round((s[mid - 1] + s[mid]) / 2);
+  return s.length % 2 ? Math.round(s[mid]) : Math.round((s[mid - 1] + s[mid]) / 2);
 };
 
 const byType = new Map();
@@ -213,31 +235,31 @@ const topTypes = [...byType.entries()]
 const years = aircraft.map(year).filter(Boolean);
 const trainers = aircraft.filter((a) => TRAINER_PATTERN.test(model(a)));
 const trainerHours = trainers.map(hours).filter(Boolean);
-// The utilisation split that makes this worth publishing: a school aeroplane
-// and a privately owned one of the same type live completely different lives.
+// The split worth publishing: a school aeroplane and a privately owned one of
+// the same type live completely different lives -- roughly 1,000 hours a year
+// against 50. A fleet count alone says nothing; this says which fields have
+// aircraft actually working.
 const hardWorked = trainerHours.filter((h) => h >= 500).length;
 
-const summary = {
-  aircraftCount: aircraft.length,
-  medianYear: median(years),
-  topTypes,
-  trainerCount: trainers.length,
-  medianTrainerHours: median(trainerHours),
-  hardWorkedTrainers: hardWorked,
-};
+// Runway identifiers as painted, from the airport record. Deriving runway use
+// from ADS-B tracks gives a heading; this gives the name the reader expects.
+const runways = Array.isArray(airport.runways)
+  ? airport.runways.map((r) => r.ident ?? r.name ?? r.designator).filter(Boolean)
+  : [];
 
-console.log(`  ${summary.aircraftCount} aircraft, median year ${summary.medianYear ?? "unknown"}`);
-console.log(`  ${summary.trainerCount} trainer-type aircraft, median ${summary.medianTrainerHours ?? "?"} hours last year`);
-console.log(`  ${hardWorked} of them flew 500+ hours — school aircraft rather than privately owned`);
+console.log(`  ${aircraft.length} aircraft registered within ${RADIUS_MI} mi, median year ${median(years) ?? "unknown"}`);
+console.log(`  ${trainers.length} trainer types, median ${median(trainerHours) ?? "?"} hours flown last year`);
+console.log(`  ${hardWorked} flew 500+ hours — working aircraft rather than privately owned`);
 console.log(`  top types: ${topTypes.slice(0, 4).map((t) => `${t.type} (${t.count})`).join(", ")}`);
+if (runways.length) console.log(`  runways: ${runways.join(", ")}`);
 
 const client = new pg.Client({ connectionString });
 await client.connect();
 await client.query(
   `INSERT INTO airport_fleet
      (airport_ident, aircraft_count, median_year, top_types, trainer_count,
-      median_trainer_hours, hard_worked_trainers, source, computed_at)
-   VALUES ($1,$2,$3,$4,$5,$6,$7,$8, now())
+      median_trainer_hours, hard_worked_trainers, radius_mi, runways, source, computed_at)
+   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, now())
    ON CONFLICT (airport_ident) DO UPDATE SET
      aircraft_count = EXCLUDED.aircraft_count,
      median_year = EXCLUDED.median_year,
@@ -245,16 +267,20 @@ await client.query(
      trainer_count = EXCLUDED.trainer_count,
      median_trainer_hours = EXCLUDED.median_trainer_hours,
      hard_worked_trainers = EXCLUDED.hard_worked_trainers,
+     radius_mi = EXCLUDED.radius_mi,
+     runways = EXCLUDED.runways,
      source = EXCLUDED.source,
      computed_at = now()`,
   [
     IDENT,
-    summary.aircraftCount,
-    summary.medianYear,
+    aircraft.length,
+    median(years),
     JSON.stringify(topTypes),
-    summary.trainerCount,
-    summary.medianTrainerHours,
-    summary.hardWorkedTrainers,
+    trainers.length,
+    median(trainerHours),
+    hardWorked,
+    RADIUS_MI,
+    runways,
     SOURCE,
   ],
 );
