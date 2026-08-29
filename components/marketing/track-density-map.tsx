@@ -122,11 +122,16 @@ export function TrackDensityMap({
   }, [tracks, center]);
 
   // The container changes size when it goes full screen, and MapLibre only
-  // learns that if it is told.
+  // learns that if it is told. Observed rather than guessed with a timeout:
+  // a single delayed resize races the CSS transition and leaves the map
+  // measuring a box it no longer occupies.
   useEffect(() => {
-    const id = setTimeout(() => mapRef.current?.resize(), 60);
-    return () => clearTimeout(id);
-  }, [fullscreen]);
+    const node = containerRef.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => mapRef.current?.resize());
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   // Escape is what people press. Without it, full screen is a trap on a page
   // whose own controls have just scrolled out of reach.
@@ -141,31 +146,24 @@ export function TrackDensityMap({
 
   // Lock the page behind the overlay.
   //
-  // Without this the figure going `fixed` takes 420px out of the document,
-  // the page gets shorter, and the browser chases the scroll position it can
-  // no longer honour -- which reads as the page scrolling itself upward while
-  // the map is open. Pinning the body at its current offset keeps the
-  // document the size it was and restores the exact position on exit.
+  // Not by pinning the body: `position: fixed` on the body moves the layout
+  // origin out from under MapLibre, whose cached container offset then no
+  // longer matches reality, and every pointer event resolves to the wrong
+  // place -- which showed up as the map creeping upward on its own. Hiding
+  // overflow on the root element stops the page scrolling without moving
+  // anything, so the map's geometry stays true.
   useEffect(() => {
     if (!fullscreen) return;
-    const { body } = document;
-    const scrollY = window.scrollY;
-    const previous = {
-      position: body.style.position,
-      top: body.style.top,
-      width: body.style.width,
-      overflow: body.style.overflow,
-    };
-    body.style.position = "fixed";
-    body.style.top = `-${scrollY}px`;
-    body.style.width = "100%";
-    body.style.overflow = "hidden";
+    const root = document.documentElement;
+    const previousOverflow = root.style.overflow;
+    const previousGutter = root.style.scrollbarGutter;
+    root.style.overflow = "hidden";
+    // Without this the page jumps sideways by the scrollbar width when it
+    // disappears, which reads as the layout twitching every time the map opens.
+    root.style.scrollbarGutter = "stable";
     return () => {
-      body.style.position = previous.position;
-      body.style.top = previous.top;
-      body.style.width = previous.width;
-      body.style.overflow = previous.overflow;
-      window.scrollTo(0, scrollY);
+      root.style.overflow = previousOverflow;
+      root.style.scrollbarGutter = previousGutter;
     };
   }, [fullscreen]);
 
