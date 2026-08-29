@@ -5,7 +5,7 @@ import { buildNextLessonNarration } from "@/lib/next-lesson-narration";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
 import { toPilotSpeak } from "@/lib/narration";
-import { getCachedAudio, setCachedAudio } from "@/lib/audio-cache";
+import { getCachedAudio, setCachedAudio, audioCacheKey, NARRATION_AUDIO_HEADERS } from "@/lib/audio-cache";
 import { DEFAULT_TTS_VOICE, isValidTtsVoice } from "@/lib/tts-voices";
 
 /** Server-side TTS for the Next-Lesson Brief -- see lib/next-lesson-narration.ts for the script. */
@@ -31,18 +31,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "No debriefed flight yet." }, { status: 404 });
   }
 
-  // "private" (never shared/CDN cache -- this route is per-user access-controlled,
-  // so a shared cache could serve one user's audio to another) but "immutable" --
-  // a given (flight, voice) never changes once generated, so the browser never
-  // needs to re-fetch it on revisit.
-  const AUDIO_CACHE_HEADERS = { "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=604800, immutable" };
-
-  const cacheKey = `next-lesson:${lastDebriefed.id}:${voice}`;
-  const cached = getCachedAudio(cacheKey);
-  if (cached) {
-    return new NextResponse(new Uint8Array(cached), { headers: AUDIO_CACHE_HEADERS });
-  }
-
   const [debrief, trainingItems] = await Promise.all([
     repo.getDebriefByFlight(lastDebriefed.id),
     repo.listTrainingItems(),
@@ -59,6 +47,15 @@ export async function GET(request: Request) {
     focus: debrief?.structuredResult.nextLessonFocus ?? [],
   });
 
+  // Looked up after the script exists, so the key can include it: a change to
+  // the narration is then a miss rather than something someone has to
+  // remember to invalidate.
+  const cacheKey = audioCacheKey(`next-lesson:${lastDebriefed.id}`, voice, script);
+  const cached = getCachedAudio(cacheKey);
+  if (cached) {
+    return new NextResponse(new Uint8Array(cached), { headers: NARRATION_AUDIO_HEADERS });
+  }
+
   let audio;
   try {
     audio = await synthesizeSpeech(toPilotSpeak(script), apiKey, voice);
@@ -69,5 +66,5 @@ export async function GET(request: Request) {
   }
 
   setCachedAudio(cacheKey, audio);
-  return new NextResponse(new Uint8Array(audio), { headers: AUDIO_CACHE_HEADERS });
+  return new NextResponse(new Uint8Array(audio), { headers: NARRATION_AUDIO_HEADERS });
 }

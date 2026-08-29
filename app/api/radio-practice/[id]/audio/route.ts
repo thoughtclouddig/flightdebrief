@@ -4,7 +4,7 @@ import { getRepository } from "@/lib/data";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
 import { toPilotSpeak } from "@/lib/narration";
-import { getCachedAudio, setCachedAudio } from "@/lib/audio-cache";
+import { getCachedAudio, setCachedAudio, audioCacheKey, NARRATION_AUDIO_HEADERS } from "@/lib/audio-cache";
 import { DEFAULT_TTS_VOICE, isValidTtsVoice } from "@/lib/tts-voices";
 
 /**
@@ -46,12 +46,15 @@ export async function GET(request: Request, { params }: RouteContext<"/api/radio
   // "private" (the URL is per-assignment and access-controlled above, so there's
   // no shared-cache benefit to forgo) but "immutable" -- a given (scenario, voice)
   // never changes, so the browser never needs to re-fetch it on revisit.
-  const AUDIO_CACHE_HEADERS = { "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=604800, immutable" };
 
-  const cacheKey = `radio-practice:${scenario.id}:${voice}`;
+  // Keyed on the call text, not the scenario id. Scenario wording gets
+  // corrected -- the ATIS call was rewritten after it asked students to read
+  // an altimeter back to Ground -- and an id-keyed cache would have gone on
+  // playing the wrong one.
+  const cacheKey = audioCacheKey(`radio-practice:${scenario.id}`, voice, scenario.atcCall);
   const cached = getCachedAudio(cacheKey);
   if (cached) {
-    return new NextResponse(new Uint8Array(cached), { headers: AUDIO_CACHE_HEADERS });
+    return new NextResponse(new Uint8Array(cached), { headers: NARRATION_AUDIO_HEADERS });
   }
 
   let audio;
@@ -64,5 +67,5 @@ export async function GET(request: Request, { params }: RouteContext<"/api/radio
   }
 
   setCachedAudio(cacheKey, audio);
-  return new NextResponse(new Uint8Array(audio), { headers: AUDIO_CACHE_HEADERS });
+  return new NextResponse(new Uint8Array(audio), { headers: NARRATION_AUDIO_HEADERS });
 }

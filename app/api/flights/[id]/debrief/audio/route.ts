@@ -5,7 +5,7 @@ import { buildDebriefNarration } from "@/lib/debrief-narration";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
 import { toPilotSpeak } from "@/lib/narration";
-import { getCachedAudio, setCachedAudio } from "@/lib/audio-cache";
+import { getCachedAudio, setCachedAudio, audioCacheKey, NARRATION_AUDIO_HEADERS } from "@/lib/audio-cache";
 import { DEFAULT_TTS_VOICE, isValidTtsVoice } from "@/lib/tts-voices";
 
 /** Server-side TTS for a completed debrief -- see lib/debrief-narration.ts for the script. */
@@ -27,13 +27,6 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
   // another without ever re-checking authorization) but "immutable" -- a given
   // (flight, voice) never changes once generated, so the browser never needs to
   // re-fetch it on revisit.
-  const AUDIO_CACHE_HEADERS = { "Content-Type": "audio/mpeg", "Cache-Control": "private, max-age=604800, immutable" };
-
-  const cacheKey = `debrief:${id}:${voice}`;
-  const cached = getCachedAudio(cacheKey);
-  if (cached) {
-    return new NextResponse(new Uint8Array(cached), { headers: AUDIO_CACHE_HEADERS });
-  }
 
   const repo = getRepository();
   const flight = await repo.getFlight(id);
@@ -60,6 +53,14 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
     studyReferences: debrief.structuredResult.studyReferences,
   });
 
+  // After the script, so the key describes the audio rather than the debrief
+  // -- a narration change invalidates itself.
+  const cacheKey = audioCacheKey(`debrief:${id}`, voice, script);
+  const cached = getCachedAudio(cacheKey);
+  if (cached) {
+    return new NextResponse(new Uint8Array(cached), { headers: NARRATION_AUDIO_HEADERS });
+  }
+
   let audio;
   try {
     audio = await synthesizeSpeech(toPilotSpeak(script), apiKey, voice);
@@ -70,5 +71,5 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
   }
 
   setCachedAudio(cacheKey, audio);
-  return new NextResponse(new Uint8Array(audio), { headers: AUDIO_CACHE_HEADERS });
+  return new NextResponse(new Uint8Array(audio), { headers: NARRATION_AUDIO_HEADERS });
 }
