@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minus, Plus, X } from "lucide-react";
 
 /**
  * Hundreds of ground tracks drawn over each other, so density is the message.
@@ -33,7 +34,14 @@ export function TrackDensityMap({
   label: string;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<{ zoomIn: () => void; zoomOut: () => void; resize: () => void } | null>(null);
   const [failed, setFailed] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  const zoom = useCallback((direction: 1 | -1) => {
+    if (direction === 1) mapRef.current?.zoomIn();
+    else mapRef.current?.zoomOut();
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current || !center || !tracks.length) return;
@@ -51,11 +59,20 @@ export function TrackDensityMap({
           center: [center.lon, center.lat],
           zoom: 9.4,
           attributionControl: { compact: true },
-          // A static figure, not a toy. Panning around a density map invites
-          // reading individual lines, which is exactly what it does not mean.
-          interactive: false,
+          // Interactive after all. The first version locked the view on the
+          // grounds that panning invites reading individual lines -- but at
+          // this scale the pattern and the practice areas are different
+          // orders of magnitude apart, and without zoom the reader can see
+          // neither properly. The summary above the map carries the finding,
+          // so exploring underneath it is a bonus rather than a
+          // misinterpretation waiting to happen.
+          interactive: true,
+          dragRotate: false,
+          touchPitch: false,
         });
+        instance.scrollZoom.disable(); // Page scroll should not become map zoom.
         map = instance;
+        mapRef.current = instance as unknown as typeof mapRef.current;
 
         instance.on("load", () => {
           if (cancelled) return;
@@ -104,20 +121,75 @@ export function TrackDensityMap({
     };
   }, [tracks, center]);
 
+  // The container changes size when it goes full screen, and MapLibre only
+  // learns that if it is told.
+  useEffect(() => {
+    const id = setTimeout(() => mapRef.current?.resize(), 60);
+    return () => clearTimeout(id);
+  }, [fullscreen]);
+
+  // Escape is what people press. Without it, full screen is a trap on a page
+  // whose own controls have just scrolled out of reach.
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [fullscreen]);
+
   if (!tracks.length || !center || failed) return null;
 
   return (
-    <figure className="mt-5">
-      <div
-        ref={containerRef}
-        className="h-[420px] w-full overflow-hidden rounded-xl border border-hairline"
-        role="img"
-        aria-label={label}
-      />
-      <figcaption className="mt-3 text-xs leading-relaxed text-[#5b6472]">
+    <figure className={fullscreen ? "fixed inset-0 z-50 m-0 flex flex-col bg-white p-4 sm:p-6" : "mt-5"}>
+      <div className="relative flex-1">
+        <div
+          ref={containerRef}
+          className={`w-full overflow-hidden rounded-xl border border-hairline ${
+            fullscreen ? "h-full" : "h-[420px]"
+          }`}
+          role="img"
+          aria-label={label}
+        />
+        <div className="absolute right-3 top-3 flex flex-col gap-1.5">
+          <MapButton onClick={() => zoom(1)} label="Zoom in"><Plus size={16} /></MapButton>
+          <MapButton onClick={() => zoom(-1)} label="Zoom out"><Minus size={16} /></MapButton>
+          <MapButton
+            onClick={() => setFullscreen((v) => !v)}
+            label={fullscreen ? "Exit full screen" : "View full screen"}
+          >
+            {fullscreen ? <X size={16} /> : <Maximize2 size={16} />}
+          </MapButton>
+        </div>
+      </div>
+      <figcaption className="mt-3 shrink-0 text-xs leading-relaxed text-[#5b6472]">
         {tracks.length.toLocaleString("en-US")} local flights, drawn over each other. Brighter areas are where
-        aircraft from this field spend the most time. Individual flights are not identified.
+        aircraft from this field spend the most time. Drag to pan, and use the controls to zoom. Individual
+        flights are not identified.
       </figcaption>
     </figure>
+  );
+}
+
+function MapButton({
+  onClick,
+  label,
+  children,
+}: {
+  onClick: () => void;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="flex h-8 w-8 items-center justify-center rounded-lg border border-hairline bg-white/95 text-[#33383f] shadow-sm transition-colors hover:bg-white hover:text-brand"
+    >
+      {children}
+    </button>
   );
 }

@@ -6,6 +6,7 @@ import { isContentPublic } from "@/lib/content/visibility";
 import { appOrigin } from "@/lib/email";
 import type { AirportInsightsRecord } from "@/lib/types";
 import { TrackDensityMap } from "@/components/marketing/track-density-map";
+import { describeTracks, summarizeTracks } from "@/lib/airport-tracks";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,15 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
     (new Date(insights.windowEnd).getTime() - new Date(insights.windowStart).getTime()) / 86_400_000,
   );
   const windowSpansYear = windowDays >= 300;
+  // The map is decorative without this. Overlaid tracks show a bright spot on
+  // the airport, which the reader already knew; the finding is which sectors
+  // the flying goes to and how far out. Computed from the same tracks the
+  // figure draws, so the words and the picture cannot disagree.
+  const trackSummary =
+    airport.latitude !== null && airport.longitude !== null
+      ? describeTracks(summarizeTracks(tracks, { lat: airport.latitude, lon: airport.longitude }))
+      : [];
+
   const seasons = windowSpansYear ? insights.bySeason.filter((s) => s.flights > 0) : [];
   const peakMonthFlights = insights.byMonth.length ? Math.max(...insights.byMonth.map((m) => m.flights)) : 0;
 
@@ -391,6 +401,16 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
         title="Where the flying actually happens"
         note="Every local flight in the sample, drawn over each other. Where the lines pile up is where aircraft from this field spend their time — the practice areas, the corridor out, and how far the pattern really extends."
       >
+        {trackSummary.length ? (
+          <div className="mt-5 flex flex-col gap-3">
+            {trackSummary.map((line, i) => (
+              <p key={i} className="text-[15px] leading-relaxed text-[#33383f]">
+                {line}
+              </p>
+            ))}
+          </div>
+        ) : null}
+
         {tracks.length ? (
           <TrackDensityMap
             tracks={tracks.map((points) => ({ points }))}
