@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
 import { authorizeSuperadmin, recordNotFound } from "@/lib/auth/guard";
 import { generateArticleDraft } from "@/lib/ai/generate-article";
+import { startDraftJob } from "@/lib/content/draft-jobs";
 
 /**
  * Rewrites an existing article with the current prompt.
@@ -35,19 +36,27 @@ export async function POST(request: Request, context: RouteContext<"/api/admin/a
   const ideas = await repo.listArticleIdeas({ status: "drafted" });
   const idea = ideas.find((i) => i.articleId === id) ?? null;
 
-  const draft = await generateArticleDraft(topic, idea);
+  // A job, not a blocking request: rewriting runs the same research pass and
+  // four model calls as a fresh draft, which outlives Replit's proxy timeout.
+  // Held open, the browser got a 502 while the rewrite carried on and landed
+  // anyway -- an error reported for work that succeeded.
+  const job = startDraftJob(async () => {
+    const draft = await generateArticleDraft(topic, idea);
 
-  const article = await repo.updateArticle(id, {
-    title: draft.title,
-    dek: draft.dek,
-    body: draft.body,
-    bodyBlocks: draft.bodyBlocks,
-    // Replaced wholesale: the old citations belonged to text that no longer
-    // exists, and carrying them onto new prose would attach real sources to
-    // claims they never supported.
-    sources: draft.sources,
-    status: "draft",
+    const article = await repo.updateArticle(id, {
+      title: draft.title,
+      dek: draft.dek,
+      body: draft.body,
+      bodyBlocks: draft.bodyBlocks,
+      // Replaced wholesale: the old citations belonged to text that no longer
+      // exists, and carrying them onto new prose would attach real sources to
+      // claims they never supported.
+      sources: draft.sources,
+      status: "draft",
+    });
+
+    return { articleId: article.id };
   });
 
-  return NextResponse.json({ article });
+  return NextResponse.json({ jobId: job.id }, { status: 202 });
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { pollDraftJob } from "@/lib/content/poll-draft-job";
 
 /**
  * Drafts one queued idea, from the row it's sitting on.
@@ -11,10 +12,6 @@ import { useRouter } from "next/navigation";
  * own 502 long before that -- reporting a failure for work that was still
  * running and did eventually land.
  */
-const POLL_MS = 4000;
-/** ~8 minutes. Past that, stop polling rather than spin forever. */
-const MAX_POLLS = 120;
-
 export function DraftIdeaButton({ ideaId }: { ideaId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -34,27 +31,8 @@ export function DraftIdeaButton({ ideaId }: { ideaId: string }) {
         throw new Error(body?.error || `Request failed (${response.status})`);
       }
       const { jobId } = (await response.json()) as { jobId: string };
-
-      for (let i = 0; i < MAX_POLLS; i++) {
-        await new Promise((resolve) => setTimeout(resolve, POLL_MS));
-        const status = await fetch(`/api/admin/content/draft-jobs/${jobId}`);
-        if (!status.ok) continue;
-        const job = (await status.json()) as { state: string; error: string | null };
-
-        if (job.state === "done") {
-          router.refresh();
-          return;
-        }
-        if (job.state === "failed") throw new Error(job.error || "Drafting failed.");
-        // "unknown" means the server forgot the job -- a restart, most
-        // likely. The article may well exist, so refresh rather than claim a
-        // failure for something that might have succeeded.
-        if (job.state === "unknown") {
-          router.refresh();
-          return;
-        }
-      }
-      throw new Error("Still writing after 8 minutes. Check the Articles tab.");
+      await pollDraftJob(jobId);
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't draft that.");
     } finally {
