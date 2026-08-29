@@ -4,6 +4,7 @@
  *
  *   node scripts/ingest-windsock-fleet.mjs KFFZ
  *   node scripts/ingest-windsock-fleet.mjs KFFZ --dry-run   # print the shape, write nothing
+ *   node scripts/ingest-windsock-fleet.mjs KFFZ --probe     # find the request shape that works
  *
  * Windsock Enterprise API v3: https://windsock.ai/api/v3, authenticated with
  * an X-API-Key header. Set WINDSOCK_API_KEY.
@@ -38,6 +39,7 @@ if (!connectionString) {
 const argv = process.argv.slice(2);
 const IDENT = (argv.find((a) => !a.startsWith("--")) ?? "KFFZ").toUpperCase();
 const DRY_RUN = argv.includes("--dry-run");
+const PROBE = argv.includes("--probe");
 const BASE = "https://windsock.ai";
 const SOURCE = "windsock";
 
@@ -61,6 +63,43 @@ async function get(path, params) {
 const rowsOf = (body) => (Array.isArray(body) ? body : body?.data ?? []);
 
 console.log(`[windsock] ${IDENT}${DRY_RUN ? " — DRY RUN, nothing written" : ""}`);
+
+/**
+ * Find the request the endpoint actually accepts.
+ *
+ * The first attempt sent `limit` and came back 422 "upstream airports service
+ * error", which says the request was wrong without saying how. Rather than
+ * guess a second time, try the plausible shapes and report which one works --
+ * the same move that settled FR24's response cap.
+ */
+if (PROBE) {
+  const variants = [
+    ["airport detail (is the ident right at all?)", `/api/v3/airports/${IDENT}`, undefined],
+    ["no parameters", `/api/v3/airports/${IDENT}/nearby-aircraft`, undefined],
+    ["radius_nm", `/api/v3/airports/${IDENT}/nearby-aircraft`, { radius_nm: 10 }],
+    ["radius", `/api/v3/airports/${IDENT}/nearby-aircraft`, { radius: 10 }],
+    ["distance", `/api/v3/airports/${IDENT}/nearby-aircraft`, { distance: 10 }],
+    ["per_page", `/api/v3/airports/${IDENT}/nearby-aircraft`, { per_page: 50 }],
+    ["limit only", `/api/v3/airports/${IDENT}/nearby-aircraft`, { limit: 50 }],
+    ["local ident, no K", `/api/v3/airports/${IDENT.replace(/^K/, "")}/nearby-aircraft`, undefined],
+  ];
+  for (const [label, path, params] of variants) {
+    try {
+      const body = await get(path, params);
+      const rows = rowsOf(body);
+      console.log(`  OK    ${label} — ${rows.length} row(s)`);
+      if (rows.length) {
+        console.log(`        fields: ${Object.keys(rows[0]).slice(0, 20).join(", ")}`);
+      } else {
+        console.log(`        body keys: ${Object.keys(body).join(", ")}`);
+      }
+    } catch (err) {
+      console.log(`  FAIL  ${label} — ${err.message.slice(0, 140)}`);
+    }
+  }
+  console.log(`\n[windsock] Re-run with --dry-run once a variant works, and tell me which.`);
+  process.exit(0);
+}
 
 const nearby = await get(`/api/v3/airports/${IDENT}/nearby-aircraft`, { limit: 200 });
 const aircraft = rowsOf(nearby);
