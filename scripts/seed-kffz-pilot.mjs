@@ -47,11 +47,20 @@ await client.query(
   [IDENT],
 );
 
-// Relative weight per local hour. Morning-heavy, a midday dip, an evening
-// bump for night currency, effectively nothing overnight.
-const HOUR_WEIGHTS = [
+// Relative weight per local hour, by season. The difference between these two
+// rows is the finding the seasonal cut exists to surface: in a Phoenix summer
+// the flying happens at dawn and the afternoon is dead, while the cooler half
+// of the year spreads across the whole day. An annual average describes
+// neither.
+const HOUR_WEIGHTS_COOL = [
   0, 0, 0, 0, 0, 1, 6, 14, 20, 22, 19, 14, 9, 8, 9, 12, 15, 14, 9, 6, 4, 2, 1, 0,
 ];
+const HOUR_WEIGHTS_SUMMER = [
+  0, 0, 0, 0, 2, 14, 26, 24, 15, 8, 4, 2, 1, 1, 1, 1, 2, 4, 7, 9, 6, 3, 1, 0,
+];
+// Relative volume per month. Summer is the quiet half at a desert field.
+const MONTH_WEIGHTS = [0, 12, 12, 13, 12, 10, 5, 4, 5, 9, 12, 13, 12];
+const isSummer = (m) => m >= 6 && m <= 8;
 // Sunday..Saturday. Weekends are the busy end at a training field.
 const DAY_WEIGHTS = [16, 11, 12, 12, 13, 15, 21];
 // Falcon Field's parallels. Weighted toward the 4s, which is the direction
@@ -78,12 +87,13 @@ const COUNT = 4200;
 const values = [];
 const params = [];
 for (let i = 0; i < COUNT; i++) {
-  const hour = pickIndex(HOUR_WEIGHTS);
+  const month = pickIndex(MONTH_WEIGHTS.slice(1)) + 1;
+  const hour = pickIndex(isSummer(month) ? HOUR_WEIGHTS_SUMMER : HOUR_WEIGHTS_COOL);
   const dow = pickIndex(DAY_WEIGHTS);
   const type = pick(OP_TYPES);
   const daysAgo = Math.floor(Math.random() * 360);
   const n = params.length;
-  values.push(`($${n + 1},$${n + 2},$${n + 3}, now() - ($${n + 4} || ' days')::interval, $${n + 5},$${n + 6},$${n + 7},$${n + 8},$${n + 9})`);
+  values.push(`($${n + 1},$${n + 2},$${n + 3}, now() - ($${n + 4} || ' days')::interval, $${n + 5},$${n + 6},$${n + 7},$${n + 8},$${n + 9},$${n + 10})`);
   params.push(
     randomUUID(),
     IDENT,
@@ -91,6 +101,7 @@ for (let i = 0; i < COUNT; i++) {
     daysAgo,
     hour,
     dow,
+    month,
     pick(RUNWAYS),
     type === "departure" ? pick(DESTINATIONS) : null,
     SOURCE,
@@ -99,7 +110,7 @@ for (let i = 0; i < COUNT; i++) {
 
 await client.query(
   `INSERT INTO airport_operations
-     (id, airport_ident, operation_type, occurred_at, local_hour, local_day_of_week, runway, destination_ident, source)
+     (id, airport_ident, operation_type, occurred_at, local_hour, local_day_of_week, local_month, runway, destination_ident, source)
    VALUES ${values.join(",")}`,
   params,
 );

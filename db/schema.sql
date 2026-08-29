@@ -811,6 +811,10 @@ CREATE TABLE IF NOT EXISTS airport_operations (
   -- every row anyway.
   local_hour smallint NOT NULL CHECK (local_hour BETWEEN 0 AND 23),
   local_day_of_week smallint NOT NULL CHECK (local_day_of_week BETWEEN 0 AND 6),
+  -- 1-12, local. Stored for the same reason as local_hour: seasonality is
+  -- the strongest effect at most training fields, and at a desert field it
+  -- moves the busy hours as well as the volume.
+  local_month smallint NOT NULL DEFAULT 1 CHECK (local_month BETWEEN 1 AND 12),
   runway text,
   -- Where a departure went. Null on arrivals and pattern work: counting the
   -- arrival leg too would double every round trip and make the busiest
@@ -840,6 +844,11 @@ CREATE TABLE IF NOT EXISTS airport_insights (
   busiest_hours jsonb NOT NULL DEFAULT '[]'::jsonb,
   busiest_days jsonb NOT NULL DEFAULT '[]'::jsonb,
   runway_use jsonb NOT NULL DEFAULT '[]'::jsonb,
+  by_month jsonb NOT NULL DEFAULT '[]'::jsonb,
+  -- Per-season volume AND that season's peak hour. The second half is the
+  -- point: at a field where summer flying starts at dawn, an annual "busiest
+  -- hour" is an average of two different behaviours and describes neither.
+  by_season jsonb NOT NULL DEFAULT '[]'::jsonb,
   common_destinations jsonb NOT NULL DEFAULT '[]'::jsonb,
   -- Which sources the window drew on. The page reads this: a summary built
   -- from synthetic or sample data must not be able to render looking like a

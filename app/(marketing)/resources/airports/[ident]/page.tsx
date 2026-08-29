@@ -19,6 +19,28 @@ const NON_EVIDENTIAL_SOURCES = new Set(["synthetic", "sample"]);
 const isProvisional = (insights: AirportInsightsRecord) =>
   insights.sources.length === 0 || insights.sources.some((s) => NON_EVIDENTIAL_SOURCES.has(s));
 
+/** Bars and axis ticks are laid out on this one grid so they cannot drift apart. */
+const HOUR_GRID = { gridTemplateColumns: "repeat(24, minmax(0, 1fr))" } as const;
+
+const SEASON_LABELS: Record<string, string> = {
+  winter: "Winter",
+  spring: "Spring",
+  summer: "Summer",
+  fall: "Fall",
+};
+const SEASON_MONTHS: Record<string, string> = {
+  winter: "Dec–Feb",
+  spring: "Mar–May",
+  summer: "Jun–Aug",
+  fall: "Sep–Nov",
+};
+const MONTH_LABELS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const MONTH_GRID = { gridTemplateColumns: "repeat(12, minmax(0, 1fr))" } as const;
+
 const hourLabel = (h: number) =>
   h === 0 ? "12am" : h === 12 ? "12pm" : h < 12 ? `${h}am` : `${h - 12}pm`;
 const pct = (share: number) => `${Math.round(share * 100)}%`;
@@ -69,6 +91,19 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
   const busiestDay = insights.busiestDays[0];
   const quietestDay = insights.busiestDays[insights.busiestDays.length - 1];
   const topRunway = insights.runwayUse[0];
+  const seasons = insights.bySeason.filter((s) => s.operations > 0);
+  const peakMonthOps = insights.byMonth.length ? Math.max(...insights.byMonth.map((m) => m.operations)) : 0;
+
+  // Only worth stating when the peak actually moves. A field whose busy hour
+  // is the same all year should say nothing here rather than manufacture a
+  // finding out of a one-hour wobble.
+  const withPeaks = seasons.filter((s) => s.peakHour !== null);
+  const earliest = withPeaks.length ? withPeaks.reduce((a, b) => (a.peakHour! <= b.peakHour! ? a : b)) : null;
+  const latest = withPeaks.length ? withPeaks.reduce((a, b) => (a.peakHour! >= b.peakHour! ? a : b)) : null;
+  const peakSpread =
+    earliest && latest && latest.peakHour! - earliest.peakHour! >= 2
+      ? { earliest, latest, hours: latest.peakHour! - earliest.peakHour! }
+      : null;
 
   const windowLabel = (iso: string) =>
     new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" });
@@ -123,14 +158,14 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
         title="When the field is busy"
         note="Share of all recorded operations by local hour."
       >
-        <ol className="mt-6 flex h-52 items-end gap-[3px]" aria-label="Operations by local hour">
+        <ol className="mt-6 grid h-52 items-end gap-[3px]" style={HOUR_GRID} aria-label="Operations by local hour">
           {byHour.map((h) => {
             const height = peakHourOps ? (h.operations / peakHourOps) * 100 : 0;
             const isPeak = h.operations === peakHourOps && peakHourOps > 0;
             return (
               <li
                 key={h.hour}
-                className="flex h-full flex-1 flex-col justify-end"
+                className="flex h-full flex-col justify-end"
                 title={`${hourLabel(h.hour)} — ${h.operations.toLocaleString("en-US")} operations (${pct(h.share)})`}
               >
                 {isPeak ? (
@@ -146,8 +181,21 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
             );
           })}
         </ol>
-        <div className="mt-2 flex justify-between text-[11px] tabular-nums text-[#68717D]">
-          <span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>11pm</span>
+        {/* Ticks share the bars' grid rather than being spaced by
+            justify-between. They didn't before, so every label sat up to two
+            hours off its bar -- a chart that reads the peak at the wrong hour
+            is worse than no chart. */}
+        <div className="mt-2 grid gap-[3px] text-[11px] tabular-nums text-[#68717D]" style={HOUR_GRID}>
+          {Array.from({ length: 24 }, (_, h) => (
+            <span
+              key={h}
+              className="text-center"
+              style={{ gridColumn: h + 1 }}
+              aria-hidden={h % 6 !== 0 && h !== 23}
+            >
+              {h % 6 === 0 || h === 23 ? hourLabel(h) : ""}
+            </span>
+          ))}
         </div>
       </Section>
 
@@ -175,6 +223,75 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
           </p>
         ) : null}
       </Section>
+
+      {/* --- Season -------------------------------------------------------
+          The section that makes the hour chart above honest. Where the peak
+          hour moves between seasons, an annual figure is an average of two
+          different behaviours and describes neither. */}
+      {seasons.length ? (
+        <Section
+          title="How the year changes it"
+          note="Volume by season, and the busiest hour within each season on its own. Seasons are whole calendar months, not solstice to solstice."
+        >
+          <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {seasons.map((s) => (
+              <div key={s.season} className="rounded-xl border border-hairline bg-[#fafafb] px-4 py-3">
+                <dt className="font-display text-lg font-bold text-[#101727]">
+                  {SEASON_LABELS[s.season] ?? s.season}
+                  <span className="ml-2 text-xs font-semibold uppercase tracking-[0.08em] text-[#a0a7b0]">
+                    {SEASON_MONTHS[s.season]}
+                  </span>
+                </dt>
+                <dd className="mt-2 text-sm text-[#68717D]">
+                  <span className="tabular-nums text-[#101727]">{pct(s.share)}</span> of the year&rsquo;s operations
+                </dd>
+                <dd className="mt-1 text-sm text-[#68717D]">
+                  Busiest hour:{" "}
+                  <span className="font-semibold text-[#101727]">
+                    {s.peakHour === null ? "no operations" : hourLabel(s.peakHour)}
+                  </span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          {peakSpread ? (
+            <p className="mt-5 text-[15px] leading-relaxed text-[#3d4653]">
+              The busiest hour moves by {peakSpread.hours} hour{peakSpread.hours === 1 ? "" : "s"} across the
+              year — {hourLabel(peakSpread.earliest.peakHour!)} in{" "}
+              {(SEASON_LABELS[peakSpread.earliest.season] ?? "").toLowerCase()} against{" "}
+              {hourLabel(peakSpread.latest.peakHour!)} in{" "}
+              {(SEASON_LABELS[peakSpread.latest.season] ?? "").toLowerCase()}. If you book the same slot
+              year-round, you are not booking the same airport.
+            </p>
+          ) : null}
+
+          {insights.byMonth.length ? (
+            <div className="mt-8">
+              <p className="text-sm text-[#68717D]">Operations by month</p>
+              <ol className="mt-3 grid h-28 items-end gap-[3px]" style={MONTH_GRID} aria-label="Operations by month">
+                {insights.byMonth.map((m) => (
+                  <li
+                    key={m.month}
+                    className="flex h-full flex-col justify-end"
+                    title={`${MONTH_NAMES[m.month - 1]} — ${m.operations.toLocaleString("en-US")} operations (${pct(m.share)})`}
+                  >
+                    <span
+                      className={`block w-full rounded-t-[4px] ${m.operations === peakMonthOps ? "bg-[#101727]" : "bg-[#c7ccd4]"}`}
+                      style={{ height: `${peakMonthOps ? (m.operations / peakMonthOps) * 100 : 0}%` }}
+                    />
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-2 grid gap-[3px] text-center text-[11px] text-[#68717D]" style={MONTH_GRID}>
+                {insights.byMonth.map((m) => (
+                  <span key={m.month}>{MONTH_LABELS[m.month - 1]}</span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </Section>
+      ) : null}
 
       {/* --- Runways ------------------------------------------------------ */}
       <Section
@@ -220,17 +337,23 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
         </Section>
       ) : null}
 
-      {/* --- Ground tracks ------------------------------------------------
-          The figure this report is eventually built around. Rendering an
-          honest placeholder rather than an illustration: a drawn pattern
-          that isn't a real track is the same failure as an unsourced
-          statistic, and harder to spot. */}
-      <Section title="What the pattern looks like" note="Real ground tracks flown at this field.">
+      {/* --- Where the flying happens -------------------------------------
+          Deliberately not "what the pattern looks like": every pattern is a
+          rectangle, and drawing one here would tell a student nothing they
+          don't already know. What differs field to field is where people go
+          once they leave it. Rendering an honest empty state rather than an
+          illustration -- a drawn track that isn't a real track is the same
+          failure as an unsourced statistic and harder to spot. */}
+      <Section
+        title="Where the flying actually happens"
+        note="Which practice areas get used, which way traffic leaves the field, and how far the pattern gets pushed by terrain and airspace."
+      >
         <div className="mt-5 flex h-56 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 px-6 text-center">
           <p className="text-sm text-[#56636f]">No published tracks for this field yet.</p>
           <p className="max-w-md text-xs leading-relaxed text-[#68717D]">
-            Ground tracks are drawn from real ADS-B position history, not illustrated. This section stays empty
-            until there are tracks to draw.
+            This is drawn from real ADS-B position history, never illustrated. It is the local knowledge a
+            transferring student can&rsquo;t get from a chart: where everyone actually goes for airwork, and the
+            corridor they take to get there.
           </p>
         </div>
       </Section>
@@ -246,6 +369,11 @@ export default async function AirportReportPage(props: PageProps<"/resources/air
           <p>
             Hours and days are local to the field. Destinations are counted from departures only, so a round
             trip counts once rather than twice.
+          </p>
+          <p>
+            Seasons are whole calendar months — December through February is winter — because that is what
+            training activity tracks and what a reader can check. Each season&rsquo;s busiest hour is computed
+            within that season alone, not read off the annual chart.
           </p>
           <p>
             Figures are recomputed on a schedule over a rolling window and stored. Nothing on this page is

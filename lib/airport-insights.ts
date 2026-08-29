@@ -19,9 +19,29 @@ export interface AirportOperation {
   localHour: number;
   /** 0 = Sunday. */
   localDayOfWeek: number;
+  /** 1-12, local to the airport. */
+  localMonth: number;
   runway: string | null;
   /** For departures: where it went. Null when unknown or a pattern flight. */
   destination?: string | null;
+}
+
+/**
+ * Meteorological seasons, not astronomical. Whole months are what training
+ * activity actually tracks -- nothing about flying changes on the solstice --
+ * and whole months are also what a reader can check.
+ */
+export const SEASONS = [
+  { key: "winter", label: "Winter", months: [12, 1, 2] },
+  { key: "spring", label: "Spring", months: [3, 4, 5] },
+  { key: "summer", label: "Summer", months: [6, 7, 8] },
+  { key: "fall", label: "Fall", months: [9, 10, 11] },
+] as const;
+
+export type SeasonKey = (typeof SEASONS)[number]["key"];
+
+export function seasonOf(month: number): SeasonKey {
+  return SEASONS.find((s) => (s.months as readonly number[]).includes(month))?.key ?? "winter";
 }
 
 export interface HourCount {
@@ -43,6 +63,24 @@ export interface RunwayUse {
   share: number;
 }
 
+export interface MonthCount {
+  month: number;
+  operations: number;
+  share: number;
+}
+
+export interface SeasonSummary {
+  season: SeasonKey;
+  operations: number;
+  share: number;
+  /**
+   * The busiest local hour within this season alone. Null when the season has
+   * no operations -- an absent peak is reported as absent rather than
+   * defaulting to midnight.
+   */
+  peakHour: number | null;
+}
+
 export interface DestinationCount {
   airport: string;
   flights: number;
@@ -53,6 +91,8 @@ export interface AirportInsights {
   busiestHours: HourCount[];
   busiestDays: DayCount[];
   runwayUse: RunwayUse[];
+  byMonth: MonthCount[];
+  bySeason: SeasonSummary[];
   commonDestinations: DestinationCount[];
   /** Pattern work as a share of all operations -- how much of a training field it is. */
   patternShare: number;
@@ -79,6 +119,8 @@ export function computeAirportInsights(operations: AirportOperation[]): AirportI
       busiestHours: [],
       busiestDays: [],
       runwayUse: [],
+      byMonth: [],
+      bySeason: [],
       commonDestinations: [],
       patternShare: 0,
     };
@@ -87,6 +129,8 @@ export function computeAirportInsights(operations: AirportOperation[]): AirportI
   const byHour = new Map<number, number>();
   const byDay = new Map<number, number>();
   const byRunway = new Map<string, number>();
+  const byMonth = new Map<number, number>();
+  const seasonHours = new Map<SeasonKey, Map<number, number>>();
   const byDestination = new Map<string, number>();
   let patternCount = 0;
 
@@ -94,6 +138,11 @@ export function computeAirportInsights(operations: AirportOperation[]): AirportI
     byHour.set(op.localHour, (byHour.get(op.localHour) ?? 0) + 1);
     byDay.set(op.localDayOfWeek, (byDay.get(op.localDayOfWeek) ?? 0) + 1);
     if (op.runway) byRunway.set(op.runway, (byRunway.get(op.runway) ?? 0) + 1);
+    byMonth.set(op.localMonth, (byMonth.get(op.localMonth) ?? 0) + 1);
+    const season = seasonOf(op.localMonth);
+    const hours = seasonHours.get(season) ?? new Map<number, number>();
+    hours.set(op.localHour, (hours.get(op.localHour) ?? 0) + 1);
+    seasonHours.set(season, hours);
     if (op.operationType === "pattern") patternCount++;
     // Destinations come from departures only. Counting arrivals too would
     // double every round trip and make the busiest "destination" the airport
@@ -117,6 +166,22 @@ export function computeAirportInsights(operations: AirportOperation[]): AirportI
     runwayUse: [...byRunway.entries()]
       .map(([runway, operations]) => ({ runway, operations, share: operations / total }))
       .sort((a, b) => b.operations - a.operations || a.runway.localeCompare(b.runway)),
+    byMonth: [...byMonth.entries()]
+      .map(([month, operations]) => ({ month, operations, share: operations / total }))
+      .sort((a, b) => a.month - b.month),
+    bySeason: SEASONS.map(({ key }) => {
+      const hours = seasonHours.get(key);
+      const operations = hours ? [...hours.values()].reduce((n, v) => n + v, 0) : 0;
+      const peak = hours
+        ? [...hours.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]
+        : undefined;
+      return {
+        season: key,
+        operations,
+        share: operations / total,
+        peakHour: peak ? peak[0] : null,
+      };
+    }),
     commonDestinations: [...byDestination.entries()]
       .map(([airport, flights]) => ({ airport, flights }))
       .sort((a, b) => b.flights - a.flights || a.airport.localeCompare(b.airport)),

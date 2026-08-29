@@ -50,7 +50,7 @@ const skipped = [];
 
 for (const { ident } of airports) {
   const { rows: ops } = await client.query(
-    `SELECT operation_type, local_hour, local_day_of_week, runway, destination_ident, source
+    `SELECT operation_type, local_hour, local_day_of_week, local_month, runway, destination_ident, source
        FROM airport_operations
       WHERE airport_ident = $1
         AND occurred_at >= now() - ($2 || ' days')::interval`,
@@ -89,12 +89,24 @@ for (const { ident } of airports) {
     .sort((a, b) => b.flights - a.flights || a.airport.localeCompare(b.airport))
     .slice(0, 10);
 
+  const months = tally("local_month").map((r) => ({ month: r.value, operations: r.operations, share: r.share }))
+    .sort((a, b) => a.month - b.month);
+
+  const SEASONS = [["winter", [12, 1, 2]], ["spring", [3, 4, 5]], ["summer", [6, 7, 8]], ["fall", [9, 10, 11]]];
+  const seasons = SEASONS.map(([season, mons]) => {
+    const rows = ops.filter((o) => mons.includes(o.local_month));
+    const hourCounts = new Map();
+    for (const o of rows) hourCounts.set(o.local_hour, (hourCounts.get(o.local_hour) ?? 0) + 1);
+    const peak = [...hourCounts.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0];
+    return { season, operations: rows.length, share: rows.length / total, peakHour: peak ? peak[0] : null };
+  });
+
   const sources = [...new Set(ops.map((o) => o.source))].sort();
 
   await client.query(
     `INSERT INTO airport_insights
-       (airport_ident, window_start, window_end, sample_size, busiest_hours, busiest_days, runway_use, common_destinations, sources, computed_at)
-     VALUES ($1, (now() - ($2 || ' days')::interval)::date, now()::date, $3, $4, $5, $6, $7, $8, now())
+       (airport_ident, window_start, window_end, sample_size, busiest_hours, busiest_days, runway_use, by_month, by_season, common_destinations, sources, computed_at)
+     VALUES ($1, (now() - ($2 || ' days')::interval)::date, now()::date, $3, $4, $5, $6, $7, $8, $9, $10, now())
      ON CONFLICT (airport_ident) DO UPDATE SET
        window_start = EXCLUDED.window_start,
        window_end = EXCLUDED.window_end,
@@ -102,10 +114,12 @@ for (const { ident } of airports) {
        busiest_hours = EXCLUDED.busiest_hours,
        busiest_days = EXCLUDED.busiest_days,
        runway_use = EXCLUDED.runway_use,
+       by_month = EXCLUDED.by_month,
+       by_season = EXCLUDED.by_season,
        common_destinations = EXCLUDED.common_destinations,
        sources = EXCLUDED.sources,
        computed_at = EXCLUDED.computed_at`,
-    [ident, WINDOW_DAYS, total, JSON.stringify(hours), JSON.stringify(days), JSON.stringify(runways), JSON.stringify(destinations), sources],
+    [ident, WINDOW_DAYS, total, JSON.stringify(hours), JSON.stringify(days), JSON.stringify(runways), JSON.stringify(months), JSON.stringify(seasons), JSON.stringify(destinations), sources],
   );
   written++;
   console.log(`[airport-insights] ${ident}: ${total} operations`);

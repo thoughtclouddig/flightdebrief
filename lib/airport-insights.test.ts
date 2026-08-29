@@ -5,6 +5,7 @@ const op = (o: Partial<AirportOperation> = {}): AirportOperation => ({
   operationType: "arrival",
   localHour: 10,
   localDayOfWeek: 3,
+  localMonth: 4,
   runway: "27",
   ...o,
 });
@@ -60,6 +61,42 @@ describe("computeAirportInsights", () => {
   it("skips operations with no known runway instead of inventing one", () => {
     const insights = computeAirportInsights([op({ runway: "27" }), op({ runway: null })]);
     expect(insights.runwayUse).toEqual([{ runway: "27", operations: 1, share: 0.5 }]);
+  });
+});
+
+describe("seasonality", () => {
+  it("reports each season's own peak hour, not the annual one", () => {
+    // The whole point of the seasonal cut: a field that flies at dawn in
+    // summer and mid-morning in winter has no single meaningful "busy hour".
+    const insights = computeAirportInsights([
+      ...Array.from({ length: 5 }, () => op({ localMonth: 7, localHour: 6 })),
+      ...Array.from({ length: 2 }, () => op({ localMonth: 7, localHour: 10 })),
+      ...Array.from({ length: 6 }, () => op({ localMonth: 1, localHour: 10 })),
+    ]);
+    const summer = insights.bySeason.find((s) => s.season === "summer");
+    const winter = insights.bySeason.find((s) => s.season === "winter");
+    expect(summer?.peakHour).toBe(6);
+    expect(winter?.peakHour).toBe(10);
+  });
+
+  it("reports an absent season as absent rather than defaulting to midnight", () => {
+    const insights = computeAirportInsights([op({ localMonth: 4 })]);
+    expect(insights.bySeason.find((s) => s.season === "summer")).toEqual({
+      season: "summer",
+      operations: 0,
+      share: 0,
+      peakHour: null,
+    });
+  });
+
+  it("always returns all four seasons so a gap is visible", () => {
+    const insights = computeAirportInsights([op({ localMonth: 4 })]);
+    expect(insights.bySeason.map((s) => s.season)).toEqual(["winter", "spring", "summer", "fall"]);
+  });
+
+  it("puts December with January and February", () => {
+    const insights = computeAirportInsights([op({ localMonth: 12 })]);
+    expect(insights.bySeason.find((s) => s.season === "winter")?.operations).toBe(1);
   });
 });
 

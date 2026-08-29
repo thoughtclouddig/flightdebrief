@@ -2136,6 +2136,8 @@ function mapAirportInsights(row: Record<string, unknown>): AirportInsightsRecord
     busiestHours: (row.busiest_hours as AirportInsightsRecord["busiestHours"]) ?? [],
     busiestDays: (row.busiest_days as AirportInsightsRecord["busiestDays"]) ?? [],
     runwayUse: (row.runway_use as AirportInsightsRecord["runwayUse"]) ?? [],
+    byMonth: (row.by_month as AirportInsightsRecord["byMonth"]) ?? [],
+    bySeason: (row.by_season as AirportInsightsRecord["bySeason"]) ?? [],
     commonDestinations: (row.common_destinations as AirportInsightsRecord["commonDestinations"]) ?? [],
     sources: (row.sources as string[]) ?? [],
     computedAt: row.computed_at instanceof Date ? (row.computed_at as Date).toISOString() : String(row.computed_at),

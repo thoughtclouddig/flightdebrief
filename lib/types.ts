@@ -812,6 +812,8 @@ export interface AirportInsightsRecord {
   busiestHours: { hour: number; operations: number; share: number }[];
   busiestDays: { dayOfWeek: number; operations: number; share: number }[];
   runwayUse: { runway: string; operations: number; share: number }[];
+  byMonth: { month: number; operations: number; share: number }[];
+  bySeason: { season: string; operations: number; share: number; peakHour: number | null }[];
   commonDestinations: { airport: string; flights: number }[];
   /** Which data sources the window drew on, e.g. ["fr24"] or ["synthetic"]. */
   sources: string[];
