@@ -27,6 +27,14 @@ import type { ResourceTopic, Source, SourceType } from "@/lib/types";
 // or Sonnet 4.6. Sonnet 5 is the cheapest model that supports it.
 const MODEL = "claude-sonnet-5";
 
+/**
+ * A stalled upstream call used to spin forever: the job never completed and
+ * never failed, so the desk showed "researching" indefinitely and there was
+ * nothing in the log to read. A pass that gives up loudly is strictly better
+ * than one that hangs quietly.
+ */
+const REQUEST_TIMEOUT_MS = 180_000;
+
 const SOURCE_TYPES = [
   "faa_requirement",
   "faa_guidance",
@@ -142,12 +150,17 @@ export async function researchArticle(input: {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set -- cannot research an article");
 
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 1 });
+  console.log(`[research] searching: ${input.title}`);
+  const startedAt = Date.now();
   const response = await client.messages.create({
     model: MODEL,
     max_tokens: 8000,
     system: RESEARCH_SYSTEM,
-    tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 15 }],
+    // 15 was optimistic: each search pulls page content through the model, so
+    // a wide sweep is both slow and expensive. Six was enough to produce
+    // eight sourced findings in testing.
+    tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }],
     messages: [
       {
         role: "user",
@@ -169,13 +182,14 @@ Find what can be substantiated about it, and say plainly what cannot.`,
   let current = response;
   const history: Anthropic.MessageParam[] = [];
   let resumes = 0;
-  while (current.stop_reason === "pause_turn" && resumes < 4) {
+  while (current.stop_reason === "pause_turn" && resumes < 2) {
+    console.log(`[research] resuming a paused search loop (${resumes + 1})`);
     history.push({ role: "assistant", content: current.content });
     current = await client.messages.create({
       model: MODEL,
       max_tokens: 8000,
       system: RESEARCH_SYSTEM,
-      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 15 }],
+      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }],
       messages: [
         { role: "user", content: `Research this article: ${input.title}` },
         ...history,
@@ -215,7 +229,7 @@ Find what can be substantiated about it, and say plainly what cannot.`,
     }));
 
   console.log(
-    `[research] ${findings.length} findings, ${parsed.gaps.length} gaps (${parsed.findings.length - findings.length} dropped for a missing URL or quote)`,
+    `[research] done in ${Math.round((Date.now() - startedAt) / 1000)}s: ${findings.length} findings, ${parsed.gaps.length} gaps (${parsed.findings.length - findings.length} dropped for a missing URL or quote)`,
   );
 
   return { findings, gaps: parsed.gaps.map((g) => g.trim()).filter(Boolean) };

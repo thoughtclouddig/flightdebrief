@@ -24,10 +24,13 @@ import type { ArticleBody } from "@/lib/content/article-body";
 
 const MODEL = "claude-sonnet-4-5";
 
+/** No pass should be able to stall the whole job indefinitely. */
+const REQUEST_TIMEOUT_MS = 120_000;
+
 function client(): Anthropic {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set -- cannot run the editorial pipeline");
-  return new Anthropic({ apiKey });
+  return new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 1 });
 }
 
 /** One thing a pass changed, in language a person reviewing the draft can act on. */
@@ -84,6 +87,7 @@ async function runPass(
   /** Appended to the user turn -- the fact checker needs the sources. */
   context = "",
 ): Promise<EditorialResult> {
+  console.log(`[editorial] ${pass} started`);
   const response = await client().messages.create({
     model: MODEL,
     max_tokens: 5000,
@@ -107,6 +111,8 @@ async function runPass(
   // an unedited one.
   const revised = parsed.article;
   if (!revised.answer.trim() || revised.sections.length === 0) return { body, notes: [] };
+
+  console.log(`[editorial] ${pass} made ${parsed.changes.length} changes`);
 
   return {
     body: {

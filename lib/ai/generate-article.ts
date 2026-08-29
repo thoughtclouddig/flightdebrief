@@ -74,6 +74,8 @@ export async function generateArticleDraft(
     console.error("[content-pipeline] research failed:", err);
   }
 
+  console.log("[content-pipeline] writing");
+
   const client = new Anthropic({ apiKey });
   const response = await client.messages.create({
     model: "claude-sonnet-4-5",
@@ -154,7 +156,9 @@ export async function generateArticleDraft(
   // Separate passes because one model writing once has no incentive to catch
   // its own invented statistic -- a fabricated number makes the article more
   // persuasive, which is what the writer is optimising for.
+  console.log("[content-pipeline] written; reviewing");
   const reviewed = await reviewArticle(bodyBlocks, formatBrief(brief));
+  console.log("[content-pipeline] review complete");
 
   return {
     title: parsed.title.trim(),
