@@ -70,7 +70,7 @@ export async function generateArticleImage(input: {
     if (!b64) throw new Error("OpenAI image response contained no image data");
     lastPng = b64;
 
-    const verdict = await reviewPhotograph(b64);
+    const verdict = await reviewPhotograph(b64, brief);
     if (verdict.usable) return encodeHeroImage(Buffer.from(b64, "base64"));
 
     console.warn(

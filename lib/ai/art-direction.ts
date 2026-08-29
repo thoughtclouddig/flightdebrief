@@ -32,20 +32,14 @@ const REQUEST_TIMEOUT_MS = 30_000;
  * average of everything, which is the stock photo we're trying to avoid.
  */
 const SHOT_TYPES = [
-  "an aircraft airborne against sky and terrain, wing catching the sun, seen from outside",
-  "the airport as landscape: hangar row, taxiway, tiedowns, ramp stretching into the distance",
-  "the view over the cowling -- what a pilot sees, out toward open country",
-  "an aircraft on the ramp from outside, low angle, big sky, strong sunlight",
-  "weather as the subject: a windsock stiff in the breeze, cloud shadow crossing a runway, rain on a wing",
-  "the ground from a few thousand feet -- fields, desert, roads, a river, the shape of the terrain",
-  "maintenance and machinery: a cowling open, an oil bottle, tools on a wing, a fuel truck",
-  "small ground details: chocks, tiedown chains, a wheel fairing, a pitot cover, painted taxiway markings",
-  "an empty cockpit filled with light, sun through the windscreen across the seats",
-  "the shadow of an aircraft on the ramp or on terrain below",
-  "a runway from the threshold, centreline running to the horizon",
-  "a hangar interior with the doors open onto daylight",
-  "an object close and beautifully lit: a kneeboard, a fuel tester, keys on a wing, a headset on a seat",
-  "the airport at the edge of its landscape -- mountains, coastline, farmland beyond the fence",
+  "an empty cockpit filled with light -- sun through the windscreen, warm reflections on the glareshield",
+  "an object close up and beautifully lit: a headset on a seat, a kneeboard, a fuel tester, keys on a wing",
+  "an aircraft on the ramp from outside, clean air, big sky, strong sunlight",
+  "the view a pilot has -- out the windscreen, over the cowling, down a runway toward open country",
+  "the airport as landscape: hangar row, windsock, tiedowns, a taxiway leading somewhere",
+  "an aircraft airborne, seen against sky and terrain, wing catching the sun",
+  "somewhere that is not an airport at all: a kitchen table the night before a lesson, a hotel room on a cross-country, a hangar floor, a bookshelf, a whiteboard wiped clean",
+  "the weather or the ground the article is about: a gust front, a valley in haze, a mountain pass, a runway wet after rain has cleared",
 ] as const;
 
 /**
@@ -68,6 +62,8 @@ function shotTypeFor(title: string): string {
 const briefSchema = z.object({
   subject: z.string().default("").catch(""),
   light: z.string().default("").catch(""),
+  /** Why this picture belongs to this article. Carried through to the editor, which checks it. */
+  connection: z.string().default("").catch(""),
 });
 
 const SYSTEM = `You art-direct one photograph for a flight-training article. You do not write the article.
@@ -101,7 +97,7 @@ Be concrete. "A headset resting on the left seat of a Cessna 172, morning sun po
 
 Return ONLY this JSON, no fences:
 
-{"subject": "what is in frame, one sentence", "light": "time of day and weather, a few words"}`;
+{"subject": "what is in frame, one sentence", "light": "time of day and weather, a few words", "connection": "the specific thing in the article this picture is about, one short sentence"}`;
 
 /**
  * What the picture is about. The photographer decides how it is shot --
@@ -111,11 +107,23 @@ Return ONLY this JSON, no fences:
 export interface ArtBrief {
   subject: string;
   light: string;
+  /**
+   * What in the article this picture is about.
+   *
+   * Carried to the photo editor, which is the only step that sees the actual
+   * frame. Without it the editor can check for people, text and gloom but not
+   * for relevance -- which is how a run of handsome, interchangeable airport
+   * photographs got published.
+   */
+  connection: string;
+  /** The article this was directed for, so the editor can judge the fit. */
+  title: string;
 }
 
-const DEFAULT_BRIEF: ArtBrief = {
+const DEFAULT_BRIEF: Omit<ArtBrief, "title"> = {
   subject: "An empty general aviation cockpit, headset resting on the right seat, sunlight across the seats.",
   light: "Clear golden morning.",
+  connection: "",
 };
 
 /** Chooses the subject and the light for one article's photograph. */
@@ -126,7 +134,7 @@ export async function directArticleImage(input: {
   answer?: string;
 }): Promise<ArtBrief> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return DEFAULT_BRIEF;
+  if (!apiKey) return { ...DEFAULT_BRIEF, title: input.title };
 
   try {
     const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
@@ -154,11 +162,16 @@ Direct one photograph for it, within that shot type.`,
     const brief = briefSchema.parse(JSON.parse(extractJson(textBlock.text)));
     if (!brief.subject.trim()) throw new Error("no subject");
 
-    return { subject: brief.subject.trim(), light: brief.light.trim() || "Clear, bright mid-morning." };
+    return {
+      subject: brief.subject.trim(),
+      light: brief.light.trim() || "Clear, bright mid-morning.",
+      connection: brief.connection.trim(),
+      title: input.title,
+    };
   } catch (err) {
     // A generic-but-decent picture beats no picture, and beats blocking the
     // article on the art direction.
     console.error("[art-direction] failed, using the default subject:", err);
-    return DEFAULT_BRIEF;
+    return { ...DEFAULT_BRIEF, title: input.title };
   }
 }

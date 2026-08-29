@@ -145,6 +145,7 @@ REJECT it if any of these are true:
   - Landing gear. Three wheels, arranged either as two mains plus a nosewheel or two mains plus a tailwheel. Never both. Never floating clear of the airframe.
   - General geometry: a tail that attaches to nothing, a cabin with no way in, doubled or half-melted surfaces.
 - The aircraft is a Cessna 172 when the brief specified something else. The type in the brief is the type in the frame.
+- IT IS NOT ABOUT THIS ARTICLE. You are given the title and what the picture was commissioned to show. Ask whether a reader who read the article would recognise this photograph as belonging to it. Then ask the harder question: could this same image sit on top of a DIFFERENT article about flight training and work just as well? If it could, reject it -- an interchangeable image is a failed image however handsome it is, and a run of them is what made the last set of these look generic.
 
 Be strict. A borderline image is a reject -- these run at the top of the page and are the first thing a reader judges.
 
@@ -165,7 +166,7 @@ Return ONLY this JSON, no fences:
  * the article its picture -- this is a filter on quality, not a gate on
  * publishing.
  */
-export async function reviewPhotograph(pngBase64: string): Promise<PhotoVerdict> {
+export async function reviewPhotograph(pngBase64: string, brief?: ArtBrief): Promise<PhotoVerdict> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { usable: true, problems: [], fix: "" };
 
@@ -180,7 +181,15 @@ export async function reviewPhotograph(pngBase64: string): Promise<PhotoVerdict>
           role: "user",
           content: [
             { type: "image", source: { type: "base64", media_type: "image/png", data: pngBase64 } },
-            { type: "text", text: "Can this run?" },
+            {
+              type: "text",
+              text: brief
+                ? `This is the hero for an article titled "${brief.title}".\n` +
+                  `It was commissioned as: ${brief.subject}\n` +
+                  (brief.connection ? `Because: ${brief.connection}\n` : "") +
+                  `\nCan it run?`
+                : "Can this run?",
+            },
           ],
         },
       ],
