@@ -59,8 +59,25 @@ async function get(path, params) {
   }
 }
 
-/** Rows come back under `data` on every v3 endpoint seen so far; tolerate a bare array too. */
-const rowsOf = (body) => (Array.isArray(body) ? body : body?.data ?? []);
+/**
+ * The list of aircraft, wherever the envelope puts it.
+ *
+ * v3 wraps everything in {data, meta}, but `data` is an object rather than an
+ * array here -- it carries the rows under some key alongside its own
+ * metadata. Rather than hard-code a guess at that key, take the longest array
+ * one level down. If the shape changes, this keeps working; if there is no
+ * array at all, it returns empty and the caller says so.
+ */
+function rowsOf(body) {
+  if (Array.isArray(body)) return body;
+  const data = body?.data;
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    const arrays = Object.values(data).filter(Array.isArray);
+    return arrays.sort((a, b) => b.length - a.length)[0] ?? [];
+  }
+  return [];
+}
 
 console.log(`[windsock] ${IDENT}${DRY_RUN ? " — DRY RUN, nothing written" : ""}`);
 
@@ -88,10 +105,15 @@ if (PROBE) {
       const body = await get(path, params);
       const rows = rowsOf(body);
       console.log(`  OK    ${label} — ${rows.length} row(s)`);
+      const data = body?.data;
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        const shape = Object.entries(data)
+          .map(([k, v]) => `${k}${Array.isArray(v) ? `[${v.length}]` : `:${typeof v}`}`)
+          .join(", ");
+        console.log(`        data: ${shape}`);
+      }
       if (rows.length) {
-        console.log(`        fields: ${Object.keys(rows[0]).slice(0, 20).join(", ")}`);
-      } else {
-        console.log(`        body keys: ${Object.keys(body).join(", ")}`);
+        console.log(`        row fields: ${Object.keys(rows[0]).slice(0, 24).join(", ")}`);
       }
     } catch (err) {
       console.log(`  FAIL  ${label} — ${err.message.slice(0, 140)}`);
