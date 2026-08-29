@@ -853,6 +853,15 @@ CREATE TABLE IF NOT EXISTS airport_flights (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- When this flight's track was pulled, so a second track run adds to the
+-- sample rather than re-fetching flights already in it.
+--
+-- Recorded here rather than on airport_tracks because airport_tracks holds no
+-- flight id by design, and adding one to make re-runs cheap would trade the
+-- anonymity of the geometry for a convenience. The id is already on this row;
+-- marking it costs nothing and links nothing.
+ALTER TABLE airport_flights ADD COLUMN IF NOT EXISTS track_fetched_at timestamptz;
+
 CREATE INDEX IF NOT EXISTS airport_flights_airport_time_idx
   ON airport_flights (airport_ident, occurred_at);
 CREATE UNIQUE INDEX IF NOT EXISTS airport_flights_provider_idx

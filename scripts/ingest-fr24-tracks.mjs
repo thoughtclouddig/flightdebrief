@@ -71,6 +71,9 @@ const { rows: candidates } = await client.query(
       WHERE airport_ident = $1
         AND flight_kind = 'local'
         AND provider_flight_id IS NOT NULL
+        -- Additive: a second run extends the sample instead of paying again
+        -- for flights already in it.
+        AND track_fetched_at IS NULL
    )
    SELECT provider_flight_id, local_hour, local_month
      FROM local_flights
@@ -80,8 +83,19 @@ const { rows: candidates } = await client.query(
 );
 
 if (!candidates.length) {
-  console.error(`[tracks] No local flights recorded for ${IDENT}. Run the flight ingester first.`);
+  console.error(
+    `[tracks] No local flights left to sample for ${IDENT}. Either the flight ingester has not run,` +
+      ` or every local flight already has its track.`,
+  );
   process.exit(1);
+}
+
+const { rows: existing } = await client.query(
+  "SELECT count(*)::int AS n FROM airport_tracks WHERE airport_ident = $1",
+  [IDENT],
+);
+if (existing[0].n) {
+  console.log(`[tracks] ${existing[0].n} track(s) already stored. This run adds to them.`);
 }
 
 console.log(`[tracks] ${IDENT}: ${candidates.length} local flights sampled${DRY_RUN ? " — DRY RUN" : ""}`);
@@ -161,6 +175,16 @@ for (const [i, c] of candidates.entries()) {
     console.error(`  ${c.provider_flight_id}  FAILED: ${err.message}`);
     failed++;
     continue;
+  }
+
+  if (!DRY_RUN) {
+    // Marked whether or not the track turned out usable. A flight whose
+    // positions came back too sparse is still a flight we have paid for, and
+    // re-fetching it next run would buy the same nothing again.
+    await client.query(
+      "UPDATE airport_flights SET track_fetched_at = now() WHERE airport_ident = $1 AND provider_flight_id = $2",
+      [IDENT, c.provider_flight_id],
+    );
   }
 
   const points = thin(tracks);
