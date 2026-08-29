@@ -188,11 +188,33 @@ const filters = [
   { field_name: "location_point", condition: `within_${RADIUS_MI}`, value: `${LAT},${LON}` },
 ];
 
+/**
+ * Paginate on a stable sort, and de-duplicate.
+ *
+ * Two runs minutes apart disagreed -- 168 trainers then 174, median year 1979
+ * then 1978 -- because the default sort is by last-airborne time, which
+ * changes underneath a four-page walk. Rows shift between pages, so some are
+ * fetched twice and others never. Sorting on the tail number makes the walk
+ * deterministic, and the de-duplication is belt and braces: a figure that
+ * moves when nothing changed is not a figure worth publishing.
+ */
+const seen = new Set();
 const aircraft = [];
 for (let offset = 0; offset < MAX_ROWS; offset += PAGE) {
-  const body = await post("/api/v3/aircraft/search", { filters, limit: PAGE, offset });
+  const body = await post("/api/v3/aircraft/search", {
+    filters,
+    limit: PAGE,
+    offset,
+    sort_field: "tail_number",
+    sort_direction: "asc",
+  });
   const rows = rowsOf(body);
-  aircraft.push(...rows);
+  for (const row of rows) {
+    const key = row.id ?? row.tail_number;
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    aircraft.push(row);
+  }
   if (rows.length < PAGE) break;
 }
 
