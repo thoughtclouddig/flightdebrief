@@ -139,10 +139,46 @@ export function TrackDensityMap({
     return () => window.removeEventListener("keydown", onKey);
   }, [fullscreen]);
 
+  // Lock the page behind the overlay.
+  //
+  // Without this the figure going `fixed` takes 420px out of the document,
+  // the page gets shorter, and the browser chases the scroll position it can
+  // no longer honour -- which reads as the page scrolling itself upward while
+  // the map is open. Pinning the body at its current offset keeps the
+  // document the size it was and restores the exact position on exit.
+  useEffect(() => {
+    if (!fullscreen) return;
+    const { body } = document;
+    const scrollY = window.scrollY;
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overflow: body.style.overflow,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    return () => {
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.width = previous.width;
+      body.style.overflow = previous.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [fullscreen]);
+
   if (!tracks.length || !center || failed) return null;
 
   return (
-    <figure className={fullscreen ? "fixed inset-0 z-50 m-0 flex flex-col bg-white p-4 sm:p-6" : "mt-5"}>
+    <figure
+      className={
+        fullscreen
+          ? "fixed inset-0 z-50 m-0 flex flex-col overscroll-contain bg-white p-4 sm:p-6"
+          : "mt-5"
+      }
+    >
       <div className="relative flex-1">
         <div
           ref={containerRef}
