@@ -116,7 +116,7 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
     new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-5 py-12 sm:px-8 sm:py-16">
+    <main className="mx-auto w-full max-w-4xl px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-24">
       {provisional ? (
         <div className="mb-8 rounded-xl border border-amber-300/70 bg-amber-50 px-5 py-4">
           <p className="font-display text-sm font-bold uppercase tracking-[0.1em] text-[#7a4a05]">
@@ -130,15 +130,15 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
         </div>
       ) : null}
 
-      <p className="font-display text-sm font-bold uppercase tracking-[0.12em] text-[#68717D]">
+      <p className="font-display text-sm font-bold uppercase tracking-[0.12em] text-brand">
         <Link href="/field-notes" className="hover:underline">Field Notes</Link>
-        <span className="px-2">/</span>Airport reports
+        <span className="px-2 text-[#d9c4ae]">/</span>Airport reports
       </p>
 
       <h1 className="mt-4 font-display text-[clamp(2rem,6vw,3.25rem)] font-bold leading-[1.05] text-[#101727]">
         {airport.ident}: when it&rsquo;s busy, which runway, and where people go
       </h1>
-      <p className="mt-4 text-lg leading-relaxed text-[#3d4653]">
+      <p className="mt-4 text-lg leading-relaxed text-[#33383f]">
         {airport.name}
         {airport.municipality ? `, ${airport.municipality}` : ""}
         {airport.region ? `, ${airport.region}` : ""}.
@@ -153,7 +153,7 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
 
       {/* The attribution sits above the numbers rather than in a footnote:
           a figure whose window and sample size are hidden is an assertion. */}
-      <p className="mt-6 rounded-lg border border-hairline bg-[#fafafb] px-4 py-3 text-sm text-[#56636f]">
+      <p className="mt-7 rounded-xl border border-[#f2e2d2] bg-[#fdf7f1] px-5 py-4 text-sm text-[#4f5560]">
         Based on <strong className="font-semibold text-[#101727]">{insights.flightCount.toLocaleString("en-US")}</strong>{" "}
         flights recorded between {windowLabel(insights.windowStart)} and {windowLabel(insights.windowEnd)}
         {insights.sources.length ? <> · source: {insights.sources.join(", ")}</> : null}
@@ -181,7 +181,7 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
                   </span>
                 ) : null}
                 <span
-                  className={`block w-full rounded-t-[4px] ${isPeak ? "bg-[#101727]" : "bg-[#c7ccd4]"}`}
+                  className={`block w-full rounded-t-[4px] ${isPeak ? "bg-brand" : "bg-brand-light"}`}
                   style={{ height: `${Math.max(height, h.flights > 0 ? 2 : 0)}%` }}
                 />
               </li>
@@ -192,7 +192,7 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
             justify-between. They didn't before, so every label sat up to two
             hours off its bar -- a chart that reads the peak at the wrong hour
             is worse than no chart. */}
-        <div className="mt-2 grid gap-[3px] text-[11px] tabular-nums text-[#68717D]" style={HOUR_GRID}>
+        <div className="mt-2 grid gap-[3px] text-[11px] tabular-nums text-[#6b6156]" style={HOUR_GRID}>
           {Array.from({ length: 24 }, (_, h) => (
             <span
               key={h}
@@ -211,19 +211,19 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
         <dl className="mt-5 flex flex-col gap-2.5">
           {[...insights.busiestDays].sort((a, b) => a.dayOfWeek - b.dayOfWeek).map((d) => (
             <div key={d.dayOfWeek} className="flex items-center gap-4">
-              <dt className="w-24 shrink-0 text-sm text-[#56636f]">{DAY_NAMES[d.dayOfWeek]}</dt>
+              <dt className="w-24 shrink-0 text-sm text-[#4f5560]">{DAY_NAMES[d.dayOfWeek]}</dt>
               <dd className="flex flex-1 items-center gap-3">
                 <span
-                  className={`block h-2.5 rounded-full ${d.dayOfWeek === busiestDay?.dayOfWeek ? "bg-[#101727]" : "bg-[#c7ccd4]"}`}
+                  className={`block h-2.5 rounded-full ${d.dayOfWeek === busiestDay?.dayOfWeek ? "bg-brand" : "bg-brand-light"}`}
                   style={{ width: `${(d.share / (busiestDay?.share || 1)) * 100}%` }}
                 />
-                <span className="shrink-0 text-sm tabular-nums text-[#68717D]">{pct(d.share)}</span>
+                <span className="shrink-0 text-sm tabular-nums text-[#6b6156]">{pct(d.share)}</span>
               </dd>
             </div>
           ))}
         </dl>
         {busiestDay && quietestDay && busiestDay.dayOfWeek !== quietestDay.dayOfWeek ? (
-          <p className="mt-5 text-[15px] leading-relaxed text-[#3d4653]">
+          <p className="mt-5 text-[15px] leading-relaxed text-[#33383f]">
             {DAY_NAMES[busiestDay.dayOfWeek]} carries {pct(busiestDay.share)} of the week&rsquo;s traffic against{" "}
             {pct(quietestDay.share)} on {DAY_NAMES[quietestDay.dayOfWeek]} — roughly{" "}
             {(busiestDay.share / quietestDay.share).toFixed(1)}× the movement for the same hour of the day.
@@ -242,17 +242,17 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
         >
           <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {seasons.map((s) => (
-              <div key={s.season} className="rounded-xl border border-hairline bg-[#fafafb] px-4 py-3">
+              <div key={s.season} className="rounded-xl border border-[#f2e2d2] bg-[#fdf7f1] px-4 py-3">
                 <dt className="font-display text-lg font-bold text-[#101727]">
                   {SEASON_LABELS[s.season] ?? s.season}
-                  <span className="ml-2 text-xs font-semibold uppercase tracking-[0.08em] text-[#a0a7b0]">
+                  <span className="ml-2 text-xs font-semibold uppercase tracking-[0.08em] text-[#a8998a]">
                     {SEASON_MONTHS[s.season]}
                   </span>
                 </dt>
-                <dd className="mt-2 text-sm text-[#68717D]">
+                <dd className="mt-2 text-sm text-[#6b6156]">
                   <span className="tabular-nums text-[#101727]">{pct(s.share)}</span> of the year&rsquo;s flights
                 </dd>
-                <dd className="mt-1 text-sm text-[#68717D]">
+                <dd className="mt-1 text-sm text-[#6b6156]">
                   Busiest hour:{" "}
                   <span className="font-semibold text-[#101727]">
                     {s.peakHour === null ? "no flights" : hourLabel(s.peakHour)}
@@ -263,7 +263,7 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
           </dl>
 
           {peakSpread ? (
-            <p className="mt-5 text-[15px] leading-relaxed text-[#3d4653]">
+            <p className="mt-5 text-[15px] leading-relaxed text-[#33383f]">
               The busiest hour moves by {peakSpread.hours} hour{peakSpread.hours === 1 ? "" : "s"} across the
               year — {hourLabel(peakSpread.earliest.peakHour!)} in{" "}
               {(SEASON_LABELS[peakSpread.earliest.season] ?? "").toLowerCase()} against{" "}
@@ -275,7 +275,7 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
 
           {insights.byMonth.length > 1 ? (
             <div className="mt-8">
-              <p className="text-sm text-[#68717D]">Flights by month</p>
+              <p className="text-sm text-[#6b6156]">Flights by month</p>
               <ol className="mt-3 grid h-28 items-end gap-[3px]" style={MONTH_GRID} aria-label="Flights by month">
                 {insights.byMonth.map((m) => (
                   <li
@@ -284,13 +284,13 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
                     title={`${MONTH_NAMES[m.month - 1]} — ${m.flights.toLocaleString("en-US")} flights (${pct(m.share)})`}
                   >
                     <span
-                      className={`block w-full rounded-t-[4px] ${m.flights === peakMonthFlights ? "bg-[#101727]" : "bg-[#c7ccd4]"}`}
+                      className={`block w-full rounded-t-[4px] ${m.flights === peakMonthFlights ? "bg-brand" : "bg-brand-light"}`}
                       style={{ height: `${peakMonthFlights ? (m.flights / peakMonthFlights) * 100 : 0}%` }}
                     />
                   </li>
                 ))}
               </ol>
-              <div className="mt-2 grid gap-[3px] text-center text-[11px] text-[#68717D]" style={MONTH_GRID}>
+              <div className="mt-2 grid gap-[3px] text-center text-[11px] text-[#6b6156]" style={MONTH_GRID}>
                 {insights.byMonth.map((m) => (
                   <span key={m.month}>{MONTH_LABELS[m.month - 1]}</span>
                 ))}
@@ -310,25 +310,25 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
         note="A local flight departed and returned here — a lesson, pattern work, or a trip to the practice area. The rest went somewhere else or came from somewhere else."
       >
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-hairline bg-[#fafafb] px-5 py-4">
-            <p className="font-display text-[2.5rem] font-bold leading-none tabular-nums text-[#101727]">
+          <div className="rounded-xl border border-[#f2e2d2] bg-[#fdf7f1] px-5 py-4">
+            <p className="font-display text-[2.75rem] font-bold leading-none tabular-nums text-brand-dark">
               {pct(insights.localShare)}
             </p>
-            <p className="mt-2 text-sm text-[#68717D]">of flights departed and returned here</p>
+            <p className="mt-2 text-sm text-[#6b6156]">of flights departed and returned here</p>
           </div>
           {insights.medianLocalMinutes ? (
-            <div className="rounded-xl border border-hairline bg-[#fafafb] px-5 py-4">
-              <p className="font-display text-[2.5rem] font-bold leading-none tabular-nums text-[#101727]">
+            <div className="rounded-xl border border-[#f2e2d2] bg-[#fdf7f1] px-5 py-4">
+              <p className="font-display text-[2.75rem] font-bold leading-none tabular-nums text-brand-dark">
                 {insights.medianLocalMinutes}
-                <span className="ml-1 text-lg font-semibold text-[#68717D]">min</span>
+                <span className="ml-1 text-lg font-semibold text-[#6b6156]">min</span>
               </p>
-              <p className="mt-2 text-sm text-[#68717D]">median local flight, block to block</p>
+              <p className="mt-2 text-sm text-[#6b6156]">median local flight, block to block</p>
             </div>
           ) : null}
         </div>
 
         {insights.localShare >= 0.5 ? (
-          <p className="mt-5 text-[15px] leading-relaxed text-[#3d4653]">
+          <p className="mt-5 text-[15px] leading-relaxed text-[#33383f]">
             More than half of everything here goes up and comes back to the same field. That is what a
             training airport looks like from the outside, and it is worth knowing before you plan a stop:
             the pattern is the busy part.
@@ -337,18 +337,18 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
 
         {insights.topOperators.length ? (
           <div className="mt-8">
-            <p className="text-sm text-[#68717D]">Most active operators</p>
-            <ol className="mt-3 flex flex-col divide-y divide-[#eceef1]">
+            <p className="text-sm text-[#6b6156]">Most active operators</p>
+            <ol className="mt-3 flex flex-col divide-y divide-[#f0e6dc]">
               {insights.topOperators.map((o) => (
                 <li key={o.operator} className="flex items-baseline gap-4 py-2.5">
                   <span className="font-display text-lg font-bold text-[#101727]">{o.operator}</span>
-                  <span className="ml-auto text-sm tabular-nums text-[#68717D]">
+                  <span className="ml-auto text-sm tabular-nums text-[#6b6156]">
                     {pct(o.share)} of flights
                   </span>
                 </li>
               ))}
             </ol>
-            <p className="mt-3 text-xs leading-relaxed text-[#68717D]">
+            <p className="mt-3 text-xs leading-relaxed text-[#6b6156]">
               Callsign prefixes as filed. Flights without one — most privately owned aircraft — are counted in
               the totals above but not here.
             </p>
@@ -362,12 +362,12 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
           title="Where people go from here"
           note="Most common destinations on recorded departures. A reasonable shortlist for a first cross-country."
         >
-          <ol className="mt-5 flex flex-col divide-y divide-[#eceef1]">
+          <ol className="mt-5 flex flex-col divide-y divide-[#f0e6dc]">
             {insights.commonDestinations.map((d, i) => (
               <li key={d.airport} className="flex items-baseline gap-4 py-2.5">
-                <span className="w-6 shrink-0 text-sm tabular-nums text-[#a0a7b0]">{i + 1}</span>
+                <span className="w-6 shrink-0 text-sm font-semibold tabular-nums text-brand">{i + 1}</span>
                 <span className="font-display text-lg font-bold text-[#101727]">{d.airport}</span>
-                <span className="ml-auto text-sm tabular-nums text-[#68717D]">
+                <span className="ml-auto text-sm tabular-nums text-[#6b6156]">
                   {d.flights.toLocaleString("en-US")} departures
                 </span>
               </li>
@@ -388,8 +388,8 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
         note="Which practice areas get used, which way traffic leaves the field, and how far the pattern gets pushed by terrain and airspace."
       >
         <div className="mt-5 flex h-56 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 px-6 text-center">
-          <p className="text-sm text-[#56636f]">No published tracks for this field yet.</p>
-          <p className="max-w-md text-xs leading-relaxed text-[#68717D]">
+          <p className="text-sm text-[#4f5560]">No published tracks for this field yet.</p>
+          <p className="max-w-md text-xs leading-relaxed text-[#6b6156]">
             This is drawn from real ADS-B position history, never illustrated. It is the local knowledge a
             transferring student can&rsquo;t get from a chart: where everyone actually goes for airwork, and the
             corridor they take to get there.
@@ -399,7 +399,7 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
 
       {/* --- Method ------------------------------------------------------- */}
       <Section title="How this was measured">
-        <div className="mt-4 flex flex-col gap-3 text-[15px] leading-relaxed text-[#3d4653]">
+        <div className="mt-4 flex flex-col gap-3 text-[15px] leading-relaxed text-[#33383f]">
           <p>
             Each figure counts one flight, not one movement. A lesson that departs, flies a dozen
             touch-and-goes and lands is one flight here, because that is what the data source records. Any
@@ -440,9 +440,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-12 border-t border-hairline pt-8">
+    <section className="mt-12 border-t border-[#ece4dc] pt-10">
       <h2 className="font-display text-2xl font-bold text-[#101727]">{title}</h2>
-      {note ? <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#68717D]">{note}</p> : null}
+      {note ? <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#6b6156]">{note}</p> : null}
       {children}
     </section>
   );
