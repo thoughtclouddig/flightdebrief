@@ -414,7 +414,7 @@ export default async function StudentHomePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Radio className="size-4" />
-              Calls you&apos;ve practiced
+              Radio Calls you&apos;ve practiced
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-1">
