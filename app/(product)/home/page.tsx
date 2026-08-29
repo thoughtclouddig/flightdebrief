@@ -22,6 +22,7 @@ import { computeDebriefProgress } from "@/lib/debrief-progress";
 import { computeDebriefStreak, computeTotalCaptured } from "@/lib/milestones";
 import { suggestStudyReferences } from "@/lib/topics";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
+import { cn } from "@/lib/utils";
 import { formatDurationShort, formatFlightContext } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,13 @@ export default async function StudentHomePage() {
     repo.listMilestones(studentId),
   ]);
   const pendingRadioPractice = radioPractice.filter((a) => a.status === "assigned");
+  // Completed calls stay reachable. Finishing every assignment used to empty
+  // the card back to "none assigned yet", which reads as though the work
+  // vanished -- and the calls a student got wrong are exactly the ones worth
+  // going back to.
+  const completedRadioPractice = radioPractice
+    .filter((a) => a.status === "completed")
+    .slice(0, 5);
 
   const debriefedFlights = flights.filter((f) => f.debriefStatus === "complete");
   const recentDebriefs = debriefedFlights.slice(0, 3);
@@ -392,10 +400,50 @@ export default async function StudentHomePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-foreground-faint">No radio-communications practice assigned yet.</p>
+            <p className="text-sm text-foreground-faint">
+              {completedRadioPractice.length > 0
+                ? "Nothing new assigned. Your finished calls are below -- run any of them again."
+                : "No radio-communications practice assigned yet."}
+            </p>
           </CardContent>
         </Card>
       )}
+
+      {completedRadioPractice.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Radio className="size-4" />
+              Calls you&apos;ve practiced
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-1">
+            {completedRadioPractice.map((a) => {
+              const scenario = RADIO_PRACTICE_SCENARIOS.find((sc) => sc.id === a.scenarioId);
+              if (!scenario) return null;
+              return (
+                <Link
+                  key={a.id}
+                  href={`/practice/${a.id}`}
+                  className="-mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-2 transition-colors hover:bg-surface-sunken"
+                >
+                  <span className="text-sm text-foreground">{scenario.title}</span>
+                  {/* The result, not just the fact that it's done: the ones
+                      that went badly are the reason to come back here. */}
+                  <span
+                    className={cn(
+                      "shrink-0 text-xs font-semibold",
+                      a.correct ? "text-good" : "text-danger",
+                    )}
+                  >
+                    {a.correct ? "Correct" : "Review"}
+                  </span>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {!brief.lastFlight && !brief.upcomingReservation && !pendingFlight ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-hairline p-10 text-center text-foreground-soft">

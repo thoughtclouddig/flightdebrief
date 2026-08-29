@@ -52,23 +52,42 @@ export interface RadioEffectHandle {
  * short one-off playback, not worth the complexity of a shared/reusable
  * graph.
  */
+/**
+ * Controllers talk faster than a TTS narrator.
+ *
+ * Deepgram reads at an even, explanatory pace, which is the wrong register
+ * for a clearance: a student who only ever hears a call at narration speed is
+ * unprepared for the real one, and the practice teaches the wrong expectation.
+ * 1.18 lands close to a busy-but-not-rushed controller without the chipmunk
+ * artefacts that start around 1.3.
+ */
+const ATC_PLAYBACK_RATE = 1.18;
+
 export function playWithRadioEffect(audioUrl: string): { finished: Promise<void>; handle: RadioEffectHandle } {
   const audioEl = new Audio(audioUrl);
+  audioEl.playbackRate = ATC_PLAYBACK_RATE;
+  // Keeps the pitch where it belongs while the rate goes up -- without this,
+  // faster playback raises the voice and it stops sounding like a controller.
+  audioEl.preservesPitch = true;
   const AudioContextCtor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   const ctx = new AudioContextCtor();
 
   const source = ctx.createMediaElementSource(audioEl);
   const highpass = ctx.createBiquadFilter();
   highpass.type = "highpass";
-  highpass.frequency.value = 300;
+  // A real aircraft radio is narrower than this filter used to be: 300-3000Hz
+  // still passes enough low end and sibilance to sound like a clean recording
+  // with a mild filter on it. The band a VHF set actually reproduces is
+  // tighter, and tightening it is most of what makes the effect audible.
+  highpass.frequency.value = 400;
   const lowpass = ctx.createBiquadFilter();
   lowpass.type = "lowpass";
-  lowpass.frequency.value = 3000;
+  lowpass.frequency.value = 2600;
   const shaper = ctx.createWaveShaper();
   // Float32Array's generic buffer type doesn't structurally match
   // WaveShaperNode.curve's expected ArrayBuffer-backed variant in this
   // lib.dom.d.ts version even though the runtime value is fine -- cast.
-  shaper.curve = makeSoftClipCurve(12) as Float32Array<ArrayBuffer>;
+  shaper.curve = makeSoftClipCurve(22) as Float32Array<ArrayBuffer>;
   const voiceGain = ctx.createGain();
   voiceGain.gain.value = 1.15;
 
@@ -86,7 +105,10 @@ export function playWithRadioEffect(audioUrl: string): { finished: Promise<void>
   staticFilter.frequency.value = 1500;
   staticFilter.Q.value = 0.6;
   const staticGain = ctx.createGain();
-  staticGain.gain.value = 0.012;
+  // Was 0.012 -- present in the waveform, inaudible in practice. Still well
+  // under the voice; the point is a bed you notice when it cuts out, not
+  // noise you fight to hear through.
+  staticGain.gain.value = 0.03;
   staticSource.connect(staticFilter).connect(staticGain).connect(ctx.destination);
 
   let stopped = false;
