@@ -35,7 +35,15 @@ async function call(path, params) {
   const text = await res.text();
   let body;
   try { body = JSON.parse(text); } catch { body = text; }
-  return { ok: res.ok, status: res.status, body };
+  // Whatever the response says about cost. Reported rather than assumed --
+  // guessing at the billing unit is what emptied the account: credits are
+  // charged per record returned, not per request, and a wide query is
+  // therefore expensive in a way the call count never shows.
+  const credits = {};
+  res.headers.forEach((v, k) => {
+    if (/credit|quota|usage|limit|remaining/i.test(k)) credits[k] = v;
+  });
+  return { ok: res.ok, status: res.status, body, credits };
 }
 
 const fmt = (d) => d.toISOString().replace(/\.\d{3}Z$/, "");
@@ -55,6 +63,7 @@ console.log("  This is the call an ingestion pipeline would make in bulk.\n");
 
 const seen = [];
 let blocked = null;
+let costHeaders = {};
 
 for (let d = 1; d <= DAYS; d++) {
   const to = new Date(Date.now() - (d - 1) * 86400000);
@@ -72,6 +81,7 @@ for (let d = 1; d <= DAYS; d++) {
     break;
   }
   const rows = r.body?.data ?? [];
+  costHeaders = r.credits;
   seen.push(...rows);
   console.log(`  ${fmt(from).slice(0, 10)}  ->  ${rows.length} flights returned (limit 100)`);
 }
@@ -81,6 +91,14 @@ if (blocked) {
   console.log(`  That is the answer: bulk airport pulls need the data-services agreement,`);
   console.log(`  not a bigger API tier. Nothing else here will work around it.`);
   process.exit(0);
+}
+
+console.log(`\n=== 2b. What it cost ============================================`);
+if (Object.keys(costHeaders).length) {
+  for (const [k, v] of Object.entries(costHeaders)) console.log(`  ${k}: ${v}`);
+} else {
+  console.log("  The response carries no credit headers. Read the balance on the account");
+  console.log("  page before and after a run instead -- that is the only reliable number.");
 }
 
 console.log(`\n=== 3. What came back ============================================`);
