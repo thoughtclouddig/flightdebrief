@@ -11,11 +11,16 @@
  * matters because the API rate-limits hard -- a 429 here comes back asking
  * for a 31-second wait, which at one call per day would be three hours.
  *
- * Chunk size is bounded by the page limit, not by politeness. A chunk that
- * returns PAGE_LIMIT records has silently truncated the tail of its range, so
- * that case is reported and the chunk is not recorded as pulled. At a field
- * flying ~20 a day, 14 days is ~280 records and has comfortable headroom; a
- * busier field needs a smaller --chunk.
+ * Chunk size is bounded by the response cap, not by politeness, and the cap
+ * is enforced by the server rather than by our `limit` -- asking for 500
+ * returns at most RESPONSE_CAP. A chunk that comes back at the cap has
+ * silently lost the tail of its range, which is the most dangerous failure
+ * available here: the data looks fine and the window quietly under-reports.
+ *
+ * So chunks are not trusted to be the right size. A range that returns the
+ * cap is split in half and both halves are re-fetched, recursively, down to a
+ * single day. Guessing a --chunk that works in August does not work in
+ * February, when the same field flies several times the traffic.
  *
  * This is still cheap because we are NOT pulling tracks. Runway use would
  * need one /api/flight-tracks call per flight, which is a different order of
@@ -71,7 +76,7 @@ const delayFlag = argv.indexOf("--delay");
 /** Milliseconds between calls. Tuned down from "as fast as possible", which the API rejects. */
 const DELAY_MS = delayFlag === -1 ? 2500 : Number(argv[delayFlag + 1]);
 const chunkFlag = argv.indexOf("--chunk");
-/** Days per API call. Bounded by PAGE_LIMIT, not by rate limits. */
+/** Days per API call to start with. Ranges that overflow the response cap are split automatically. */
 const CHUNK_DAYS = chunkFlag === -1 ? 14 : Number(argv[chunkFlag + 1]);
 const DRY_RUN = argv.includes("--dry-run");
 const REFRESH = argv.includes("--refresh");
@@ -81,7 +86,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const BASE = "https://fr24api.flightradar24.com";
 const SOURCE = "fr24";
-const PAGE_LIMIT = 500;
+/**
+ * The most records the API will return for one range, regardless of `limit`.
+ * Observed, not documented: every wide range comes back at exactly this many.
+ * Treated as a truncation signal rather than a page size.
+ */
+const RESPONSE_CAP = 300;
+const REQUEST_LIMIT = 500;
 
 const client = new pg.Client({ connectionString });
 await client.connect();
@@ -140,7 +151,7 @@ async function fetchDay(from, to) {
   url.searchParams.set("airports", `both:${IDENT}`);
   url.searchParams.set("flight_datetime_from", fmt(from));
   url.searchParams.set("flight_datetime_to", fmt(to));
-  url.searchParams.set("limit", String(PAGE_LIMIT));
+  url.searchParams.set("limit", String(REQUEST_LIMIT));
 
   for (let attempt = 0; ; attempt++) {
     const res = await fetch(url, {
@@ -267,6 +278,33 @@ for (let d = 1; d <= DAYS; d += CHUNK_DAYS) {
   chunks.push({ from, to, days: daysIn(from, to) });
 }
 
+/**
+ * Fetch one range, splitting it when the response comes back at the cap.
+ *
+ * Returns the records, or null when even a single day overflows -- that day
+ * cannot be fully retrieved through this endpoint and must not be recorded as
+ * pulled, because doing so would bake a permanent hole into the window.
+ */
+async function fetchRange(from, to, depth = 0) {
+  if (calls > 0) await sleep(DELAY_MS);
+  const records = await fetchDay(from, to);
+  calls++;
+
+  if (records.length < RESPONSE_CAP) return records;
+
+  const spanDays = Math.round((to.getTime() - from.getTime()) / 86400000);
+  if (spanDays <= 1) {
+    console.warn(`  ${fmt(from).slice(0, 10)}  single day returned the ${RESPONSE_CAP}-record cap — cannot be fully covered.`);
+    return null;
+  }
+
+  const mid = new Date(from.getTime() + Math.floor(spanDays / 2) * 86400000);
+  console.log(`${"  ".repeat(depth + 1)}${fmt(from).slice(0, 10)}..${fmt(to).slice(0, 10)} hit the cap — splitting`);
+  const [a, b] = [await fetchRange(from, mid, depth + 1), await fetchRange(mid, to, depth + 1)];
+  if (a === null || b === null) return null;
+  return [...a, ...b];
+}
+
 for (const [i, chunk] of chunks.entries()) {
   const label = `${chunk.days[0]}..${chunk.days[chunk.days.length - 1]}`;
   const missing = REFRESH ? chunk.days : chunk.days.filter((day) => !alreadyDone.has(day));
@@ -275,41 +313,31 @@ for (const [i, chunk] of chunks.entries()) {
     continue;
   }
 
-  // Spacing before the request, so a resumed run doesn't burst through its
-  // first few chunks.
-  if (calls > 0) await sleep(DELAY_MS);
-
   let records;
   try {
-    records = await fetchDay(chunk.from, chunk.to);
-    calls++;
+    records = await fetchRange(chunk.from, chunk.to);
   } catch (err) {
     if (err.planLimit) {
       // Everything older fails identically. Stop and say so plainly: this is
       // a subscription boundary, not a transient error, and no amount of
       // retrying or waiting changes it.
       console.log(`\n[ingest] Reached the end of the plan's history at ${err.planLimit}.`);
-      console.log(`[ingest] Chunks older than that were not attempted. A longer --days buys nothing`);
-      console.log(`[ingest] without a plan that includes deeper history.`);
+      console.log(`[ingest] Chunks older than that were not attempted.`);
       break;
     }
-    // One bad chunk shouldn't lose the rest of the year. Collected and
+    // One bad chunk shouldn't lose the rest of the window. Collected and
     // reported at the end rather than swallowed -- a window with invisible
     // holes is a window whose published sample size under-reports.
     console.error(`  ${label}  FAILED: ${err.message}`);
     failedChunks.push(label);
     continue;
   }
-  fetched += records.length;
 
-  if (records.length >= PAGE_LIMIT) {
-    // The range was truncated, so some of these days are only partly covered.
-    // Not recorded as pulled: re-running with a smaller --chunk fixes it, and
-    // marking it done would bake the gap in permanently.
-    console.warn(`  ${label}  hit the ${PAGE_LIMIT} record limit — truncated. Re-run with a smaller --chunk.`);
+  if (records === null) {
     truncatedChunks.push(label);
     continue;
   }
+  fetched += records.length;
 
   const rows = records.map(toRow).filter(Boolean);
   skipped += records.length - rows.length;
@@ -381,8 +409,9 @@ if (failedChunks.length || truncatedChunks.length) {
     console.log(`[ingest] ${failedChunks.slice(0, 5).join(", ")}`);
   }
   if (truncatedChunks.length) {
-    console.log(`\n[ingest] ${truncatedChunks.length} chunk(s) hit the record limit and were discarded.`);
-    console.log(`[ingest] re-run with a smaller --chunk to cover them: ${truncatedChunks.slice(0, 5).join(", ")}`);
+    console.log(`\n[ingest] ${truncatedChunks.length} chunk(s) could not be fully covered even split to single days.`);
+    console.log(`[ingest] They are NOT recorded as pulled. This endpoint cannot return everything for:`);
+    console.log(`[ingest] ${truncatedChunks.slice(0, 5).join(", ")}`);
   }
 }
 
