@@ -46,6 +46,10 @@ const SOURCE = "windsock";
 /** Types a training field actually operates, for the utilisation figure. */
 const TRAINER_PATTERN = /^(172|152|PA-?28|PA28|DA40|DA20|SR20|SR22|177|182|AA-?5|C1[578]2)/i;
 
+/** The airport's own coordinates, needed for the registry radius search. */
+let LAT = null;
+let LON = null;
+
 async function get(path, params) {
   const url = new URL(path, BASE);
   for (const [k, v] of Object.entries(params ?? {})) url.searchParams.set(k, String(v));
@@ -81,6 +85,18 @@ function rowsOf(body) {
 
 console.log(`[windsock] ${IDENT}${DRY_RUN ? " — DRY RUN, nothing written" : ""}`);
 
+// The airport record carries its coordinates, runways and frequencies. The
+// coordinates are what the registry search needs; the runways are worth
+// having in their own right, since deriving runway use from tracks gives a
+// heading and this gives the identifier actually painted on it.
+const airportBody = await get(`/api/v3/airports/${IDENT}`);
+const airport = airportBody?.data ?? {};
+LAT = airport.lat ?? null;
+LON = airport.lon ?? null;
+if (!PROBE) {
+  console.log(`  ${airport.airport_name ?? IDENT} — ${airport.runways_count ?? "?"} runway(s), elevation ${airport.elevation_ft ?? "?"} ft`);
+}
+
 /**
  * Find the request the endpoint actually accepts.
  *
@@ -91,14 +107,8 @@ console.log(`[windsock] ${IDENT}${DRY_RUN ? " — DRY RUN, nothing written" : ""
  */
 if (PROBE) {
   const variants = [
-    ["airport detail (is the ident right at all?)", `/api/v3/airports/${IDENT}`, undefined],
-    ["no parameters", `/api/v3/airports/${IDENT}/nearby-aircraft`, undefined],
-    ["radius_nm", `/api/v3/airports/${IDENT}/nearby-aircraft`, { radius_nm: 10 }],
-    ["radius", `/api/v3/airports/${IDENT}/nearby-aircraft`, { radius: 10 }],
-    ["distance", `/api/v3/airports/${IDENT}/nearby-aircraft`, { distance: 10 }],
-    ["per_page", `/api/v3/airports/${IDENT}/nearby-aircraft`, { per_page: 50 }],
-    ["limit only", `/api/v3/airports/${IDENT}/nearby-aircraft`, { limit: 50 }],
-    ["local ident, no K", `/api/v3/airports/${IDENT.replace(/^K/, "")}/nearby-aircraft`, undefined],
+    ["airport detail", `/api/v3/airports/${IDENT}`, undefined],
+    ["nearby-aircraft (airborne now, not the based fleet)", `/api/v3/airports/${IDENT}/nearby-aircraft`, { limit: 50 }],
   ];
   for (const [label, path, params] of variants) {
     try {
@@ -119,6 +129,24 @@ if (PROBE) {
       console.log(`  FAIL  ${label} — ${err.message.slice(0, 140)}`);
     }
   }
+  // The registry census lives on a POST endpoint with a filter grammar, so
+  // it needs its own probe -- and the body shape is a guess until it answers.
+  const searchBodies = [
+    ["filters + limit", { filters: [{ field_name: "location_point", condition: "within_10", value: `${LAT},${LON}` }], limit: 5 }],
+    ["filters only", { filters: [{ field_name: "location_point", condition: "within_10", value: `${LAT},${LON}` }] }],
+  ];
+  for (const [label, body] of searchBodies) {
+    try {
+      const res = await post("/api/v3/aircraft/search", body);
+      const rows = rowsOf(res);
+      console.log(`  OK    aircraft/search — ${label} — ${rows.length} row(s)`);
+      if (rows.length) console.log(`        row fields: ${Object.keys(rows[0]).slice(0, 30).join(", ")}`);
+      break;
+    } catch (err) {
+      console.log(`  FAIL  aircraft/search — ${label} — ${err.message.slice(0, 160)}`);
+    }
+  }
+
   console.log(`\n[windsock] Re-run with --dry-run once a variant works, and tell me which.`);
   process.exit(0);
 }
