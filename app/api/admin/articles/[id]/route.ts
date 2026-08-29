@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
+import { blocksPublish } from "@/lib/content/publish-guard";
 import { authorizeSuperadmin } from "@/lib/auth/guard";
 import { recordNotFound } from "@/lib/auth/guard";
 import type { ArticleStatus, Source } from "@/lib/types";
@@ -26,6 +27,13 @@ export async function PATCH(request: Request, context: RouteContext<"/api/admin/
   const repo = getRepository();
   const existing = await repo.getArticle(id);
   if (!existing) return recordNotFound();
+
+  // Sources may be edited in the same request that publishes, so check what
+  // the article WILL have, not what it has now.
+  if (body.status === "published") {
+    const blocked = blocksPublish(body.sources ?? existing.sources);
+    if (blocked) return NextResponse.json({ error: blocked }, { status: 422 });
+  }
 
   const article = await repo.updateArticle(id, {
     title: body.title?.trim(),

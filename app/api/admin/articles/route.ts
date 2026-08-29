@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRepository } from "@/lib/data";
 import { authorizeSuperadmin } from "@/lib/auth/guard";
+import { blocksPublish } from "@/lib/content/publish-guard";
 import type { Source } from "@/lib/types";
 
 interface CreateArticleBody {
@@ -23,6 +24,13 @@ export async function POST(request: Request) {
 
   const auth = await authorizeSuperadmin();
   if (auth.response) return auth.response;
+
+  // Checked before anything is written, so a blocked publish does not leave a
+  // half-made article behind.
+  if (body.status === "published") {
+    const blocked = blocksPublish(body.sources);
+    if (blocked) return NextResponse.json({ error: blocked }, { status: 422 });
+  }
 
   const repo = getRepository();
   const article = await repo.createArticle({
