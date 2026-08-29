@@ -526,6 +526,15 @@ export class PostgresRepository implements Repository {
     return rows.map(mapAirport);
   }
 
+  async listAirportTracks(ident: string): Promise<[number, number][][]> {
+    const db = await this.db();
+    const { rows } = await db.query(
+      "SELECT points FROM airport_tracks WHERE airport_ident = $1",
+      [ident.toUpperCase()],
+    );
+    return rows.map((r) => r.points as [number, number][]);
+  }
+
   async listResourceTopics(): Promise<ResourceTopic[]> {
     const db = await this.db();
     const { rows } = await db.query("SELECT * FROM resource_topics ORDER BY name");

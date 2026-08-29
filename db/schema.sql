@@ -872,6 +872,36 @@ CREATE TABLE IF NOT EXISTS airport_ingest_days (
   PRIMARY KEY (airport_ident, day, source)
 );
 
+-- Sampled ground tracks, for the density map of where flying from this field
+-- actually happens.
+--
+-- A SAMPLE, not a census: the track endpoint costs one call per flight, and a
+-- few hundred local flights already show where the practice areas are and
+-- which corridor everyone takes out. Thirty thousand would show the same
+-- thing for a hundred times the cost.
+--
+-- Deliberately anonymous. No registration, no callsign, no flight id, no
+-- timestamps beyond the month. The published artefact is the composite --
+-- where the lines pile up -- and that is a real finding about a place. Four
+-- hundred identifiable aircraft paths is surveillance of the local flying
+-- community, is a much harder thing to defend under a data licence, and is a
+-- worse product. Storing the identifiers "just in case" would mean the only
+-- thing standing between the two is a SELECT list.
+CREATE TABLE IF NOT EXISTS airport_tracks (
+  id text PRIMARY KEY,
+  airport_ident text NOT NULL REFERENCES airports(ident) ON DELETE CASCADE,
+  -- Simplified [[lon, lat], ...] in display order.
+  points jsonb NOT NULL,
+  -- Kept because seasonal and time-of-day differences in where people fly are
+  -- interesting, and neither identifies a flight.
+  local_month smallint CHECK (local_month BETWEEN 1 AND 12),
+  local_hour smallint CHECK (local_hour BETWEEN 0 AND 23),
+  source text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS airport_tracks_airport_idx ON airport_tracks (airport_ident);
+
 CREATE TABLE IF NOT EXISTS airport_insights (
   airport_ident text PRIMARY KEY REFERENCES airports(ident) ON DELETE CASCADE,
   -- The window these numbers cover. Published on the page: a figure without a

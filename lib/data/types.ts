@@ -264,6 +264,8 @@ export interface Repository {
   getAirport(ident: string): Promise<Airport | null>;
   getAirportInsights(ident: string): Promise<AirportInsightsRecord | null>;
   listAirportsWithInsights(): Promise<Airport[]>;
+  /** Sampled, anonymous ground tracks for the density figure. */
+  listAirportTracks(ident: string): Promise<[number, number][][]>;
   getResourceTopicBySlug(slug: string): Promise<ResourceTopic | null>;
   listArticles(filter: { status?: ArticleStatus; topicId?: string }): Promise<Article[]>;
   getArticleBySlug(slug: string): Promise<Article | null>;
