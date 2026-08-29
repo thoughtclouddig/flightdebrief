@@ -81,18 +81,33 @@ export interface RadioScenario {
 export const RADIO_PRACTICE_SCENARIOS: RadioScenario[] = [
   // --- Getting the flight going ------------------------------------------
   {
+    // Rewritten. This scenario used to ask for the ATIS letter, the runway,
+    // AND the altimeter -- the things you write on a kneeboard -- while
+    // grading them against a call to Ground. Nobody reads the altimeter back
+    // to Ground, so a student who made the correct call was marked wrong for
+    // omitting something no pilot says. Copying the ATIS and calling Ground
+    // are two different tasks; this one is the call.
     id: "initial-atis",
     phase: "initial_contact",
     skill: "RADIO_COMMUNICATIONS",
-    title: "Copying ATIS before calling ground",
-    setup: "You're ready to start the engine and want to copy the current ATIS before calling for taxi.",
+    title: "Calling Ground after copying the ATIS",
+    setup:
+      "You've copied the ATIS and you're at the ramp, ready to taxi for a VFR departure to the northwest.",
     atcCall:
       "Metro Airport information Kilo. One four five three Zulu. Wind two seven zero at eight. Visibility one zero. Ceiling four thousand five hundred broken. Temperature two two, dew point one two. Altimeter three zero one zero. Landing and departing Runway two seven. Advise on initial contact you have information Kilo.",
-    requiredElements: ["Current ATIS letter (Kilo)", "Active runway (two seven)", "Altimeter setting (three zero one zero)"],
+    // What the call to Ground actually contains: who you are, where you are,
+    // what you want, and the acknowledgement the ATIS explicitly asked for.
+    requiredElements: [
+      "Your callsign",
+      "Your position (at the ramp)",
+      "That you have information Kilo",
+      "Your request (taxi for takeoff)",
+    ],
     scoringPhrases: [
-      ["kilo"],
-      ["two seven", "runway two seven", "27"],
-      ["three zero one zero", "three oh one oh", "30.10", "3010"],
+      ["three alpha bravo", "3 alpha bravo", "one two three alpha bravo", "123 alpha bravo"],
+      ["ramp", "at the ramp", "transient", "fbo"],
+      ["information kilo", "with kilo", "have kilo", "kilo"],
+      ["taxi", "ready to taxi", "taxi for takeoff"],
     ],
     modelReadback:
       "Ground, Cessna one two three Alpha Bravo, at the ramp with information Kilo, ready to taxi for takeoff, VFR to the northwest.",

@@ -23,9 +23,22 @@ import type { ResourceTopic, Source, SourceType } from "@/lib/types";
  * These URLs came back from a search, so they can be published.
  */
 
-// web_search_20260209 (dynamic filtering) needs Opus 5/4.8/4.7/4.6, Sonnet 5,
-// or Sonnet 4.6. Sonnet 5 is the cheapest model that supports it.
 const MODEL = "claude-sonnet-5";
+
+/**
+ * The basic search tool, deliberately, not web_search_20260209.
+ *
+ * The _20260209 variant filters results dynamically by running code under the
+ * hood, so it draws on a code-execution quota as well as search. In practice
+ * that quota ran out: the first run returned eight sourced findings and every
+ * run afterwards failed with "Server tool use limit exceeded during code
+ * execution", producing articles with no sources at all.
+ *
+ * The basic tool has no such dependency. It returns unfiltered results, which
+ * costs some precision -- but a researcher that works is worth more than one
+ * that filters well twice a month.
+ */
+const SEARCH_TOOL = { type: "web_search_20250305", name: "web_search", max_uses: 6 } as const;
 
 /**
  * A stalled upstream call used to spin forever: the job never completed and
@@ -129,7 +142,7 @@ export async function researchArticle(input: {
     // 15 was optimistic: each search pulls page content through the model, so
     // a wide sweep is both slow and expensive. Six was enough to produce
     // eight sourced findings in testing.
-    tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }],
+    tools: [SEARCH_TOOL],
     messages: [
       {
         role: "user",
@@ -150,6 +163,7 @@ Find what can be substantiated about it, and say plainly what cannot.`,
   // user message -- the API sees the trailing server_tool_use and continues.
   let current = response;
   const history: Anthropic.MessageParam[] = [];
+  let searches = response.usage?.server_tool_use?.web_search_requests ?? 0;
   let resumes = 0;
   while (current.stop_reason === "pause_turn" && resumes < 2) {
     console.log(`[research] resuming a paused search loop (${resumes + 1})`);
@@ -158,12 +172,13 @@ Find what can be substantiated about it, and say plainly what cannot.`,
       model: MODEL,
       max_tokens: 8000,
       system: RESEARCH_SYSTEM,
-      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 6 }],
+      tools: [SEARCH_TOOL],
       messages: [
         { role: "user", content: `Research this article: ${input.title}` },
         ...history,
       ],
     });
+    searches += current.usage?.server_tool_use?.web_search_requests ?? 0;
     resumes += 1;
   }
 
@@ -181,6 +196,14 @@ Find what can be substantiated about it, and say plainly what cannot.`,
     console.error("[research] could not parse the researcher's reply:", err);
     console.error("[research] reply began:", textBlock.text.slice(0, 400));
     throw new Error("The researcher's reply could not be parsed.");
+  }
+
+  // Zero searches means the tool never ran -- a quota, an outage, a rejected
+  // tool definition. Returning "no findings" for that is the silent failure
+  // that produced unsourced articles for a day: it looks identical to a
+  // subject nothing has been written about.
+  if (searches === 0) {
+    throw new Error("Web search did not run -- no sources could be gathered.");
   }
 
   const findings = parsed.findings

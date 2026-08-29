@@ -12,6 +12,7 @@ import { readStoredVoice } from "@/lib/tts-voices";
 import { cn } from "@/lib/utils";
 import type { RadioScenario } from "@/lib/radio-practice-scenarios";
 import type { RadioPracticeAssignment } from "@/lib/types";
+import { aimSectionUrl } from "@/lib/aim-links";
 
 type Phase = "ready" | "call-playing" | "call-played" | "recording" | "submitting" | "done";
 
@@ -20,14 +21,19 @@ interface SubmitResult {
   matchedElements: { description: string; matched: boolean }[];
   modelReadback: string;
   transcript: string;
+  /** An instructor's note on this readback. Null when there's nothing to add. */
+  coaching: string | null;
 }
 
 export function RadioPracticeSession({
   assignment,
   scenario,
+  next,
 }: {
   assignment: RadioPracticeAssignment;
   scenario: RadioScenario;
+  /** The student's next unfinished assignment, if they have one. */
+  next: { id: string; title: string } | null;
 }) {
   const router = useRouter();
   const transcription = useTranscription();
@@ -40,6 +46,9 @@ export function RadioPracticeSession({
           matchedElements: assignment.matchedElements,
           modelReadback: scenario.modelReadback,
           transcript: assignment.transcript ?? "",
+          // Coaching isn't stored, so a completed assignment revisited later
+          // shows the score without it rather than inventing one.
+          coaching: null,
         }
       : null,
   );
@@ -103,6 +112,7 @@ export function RadioPracticeSession({
         matchedElements: data.assignment.matchedElements,
         modelReadback: data.modelReadback,
         transcript,
+        coaching: data.coaching ?? null,
       });
       setPhase("done");
     } catch (err) {
@@ -203,19 +213,49 @@ export function RadioPracticeSession({
               {result.correct ? "Nailed it." : "Not quite -- here's a model readback:"}
             </p>
             <p className="text-sm text-foreground-soft">{result.modelReadback}</p>
-            <p className="mt-1 text-xs text-foreground-faint">Source: {scenario.source}</p>
+            {result.coaching ? (
+              <p className="mt-1 text-sm text-foreground-soft">{result.coaching}</p>
+            ) : null}
+            <p className="mt-1 text-xs text-foreground-faint">
+              Source:{" "}
+              {aimSectionUrl(scenario.source) ? (
+                <a
+                  href={aimSectionUrl(scenario.source)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground-soft"
+                >
+                  {scenario.source}
+                </a>
+              ) : (
+                scenario.source
+              )}
+            </p>
           </CardContent>
         </Card>
       ) : null}
 
       {phase === "done" ? (
-        <div className="flex gap-2">
-          {!result?.correct ? (
-            <Button onClick={tryAgain} className="flex-1">
-              Try Again
-            </Button>
-          ) : null}
-          <Button variant="outline" onClick={() => router.push("/home")} className={result?.correct ? "flex-1" : undefined}>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            {!result?.correct ? (
+              <Button onClick={tryAgain} className="flex-1">
+                Try Again
+              </Button>
+            ) : null}
+            {/* Straight to the next assigned call. A student working through
+                three of these shouldn't have to go home and find each one. */}
+            {next ? (
+              <Button
+                onClick={() => router.push(`/practice/${next.id}`)}
+                variant={result?.correct ? "default" : "outline"}
+                className="flex-1"
+              >
+                Next: {next.title}
+              </Button>
+            ) : null}
+          </div>
+          <Button variant="ghost" onClick={() => router.push("/home")}>
             Back to Home
           </Button>
         </div>

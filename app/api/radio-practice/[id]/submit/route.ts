@@ -3,6 +3,7 @@ import { authorize, recordNotFound } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { scoreRadioTranscript } from "@/lib/radio-practice-scoring";
+import { judgeRadioTranscript } from "@/lib/ai/radio-judge";
 
 interface SubmitBody {
   transcript: string;
@@ -37,12 +38,34 @@ export async function POST(request: Request, { params }: RouteContext<"/api/radi
   const body = (await request.json().catch(() => ({}))) as SubmitBody;
   const transcript = typeof body.transcript === "string" ? body.transcript : "";
 
-  const score = scoreRadioTranscript(scenario, transcript);
+  // Judged by an instructor-shaped grader first, with keyword scoring as the
+  // fallback. Keyword matching fails a correct transmission phrased in a
+  // different order -- "three alpha bravo, taxi two seven via alpha" contains
+  // every required element and misses a substring check written around the
+  // model's word order -- and telling a student they were wrong when they
+  // were right is the worst thing this page can do.
+  let coaching: string | null = null;
+  let score = null as Awaited<ReturnType<typeof judgeRadioTranscript>> | null;
+  try {
+    score = await judgeRadioTranscript(scenario, transcript);
+    if (score?.scenarioConcern) {
+      // Never shown to the student: it's a note about the exercise, not their
+      // flying. The bank is hand-written, and a scenario that asks for
+      // something no pilot would say has already shipped once.
+      console.warn(`[radio-practice] ${scenario.id}: ${score.scenarioConcern}`);
+    }
+    coaching = score?.coaching ?? null;
+  } catch (err) {
+    console.error("[radio-practice] judge failed, falling back to keyword scoring:", err);
+  }
+
+  const result = score ?? scoreRadioTranscript(scenario, transcript);
+
   const updated = await repo.completeRadioPracticeAssignment(id, {
     transcript,
-    correct: score.correct,
-    matchedElements: score.elements,
+    correct: result.correct,
+    matchedElements: result.elements,
   });
 
-  return NextResponse.json({ assignment: updated, modelReadback: scenario.modelReadback });
+  return NextResponse.json({ assignment: updated, modelReadback: scenario.modelReadback, coaching });
 }
