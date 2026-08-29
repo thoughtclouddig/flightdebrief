@@ -228,14 +228,47 @@ Find what can be substantiated about it, and say plainly what cannot.`,
 }
 
 /**
- * Maps whatever label came back onto the stored vocabulary. Unrecognised
- * values become expert_opinion -- the weakest classification, so a
- * mislabelled source is under-claimed rather than over-claimed.
+ * Maps whatever label came back onto the stored vocabulary.
+ *
+ * The researcher describes its sources in its own words however precisely the
+ * contract lists the options -- real replies have included "peer-reviewed
+ * journal", "14 CFR / FAA regulatory standard (ACS)", and "other (journalism
+ * reporting on in-progress academic research)". Those are good descriptions;
+ * they just aren't the enum. Matching on the words rather than demanding the
+ * exact token keeps a Journal of Applied Psychology meta-analysis labelled as
+ * research instead of demoting it to one person's opinion.
+ *
+ * Order matters: the first match wins, so the more specific patterns come
+ * first. Anything unrecognised falls to expert_opinion, the weakest
+ * classification -- a mislabelled source is under-claimed, never over-claimed.
  */
 function toSourceType(value: string): SourceType {
-  const normalised = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
-  const match = SOURCE_TYPES.find((t) => t === normalised);
-  return match ?? "expert_opinion";
+  // "non-regulatory" contains "regulat", which matched the requirement rule
+  // and promoted an industry safety publication to a binding FAA standard --
+  // the exact direction of error this function must never make. The negation
+  // is stripped before anything is matched.
+  const text = value.trim().toLowerCase().replace(/\bnon.?regulatory\b/g, "");
+
+  const exact = SOURCE_TYPES.find((t) => t === text.replace(/[\s-]+/g, "_"));
+  if (exact) return exact;
+
+  // Journalism first: a news piece about a study says "research" and
+  // "academic" and is not itself research. The researcher labels these
+  // honestly ("journalism reporting on in-progress academic research"), and
+  // taking it at its word beats matching the topic words inside it.
+  if (/journalis|magazine|news|blog|reporting on/.test(text)) return "expert_opinion";
+
+  if (/ntsb|accident report/.test(text)) return "ntsb";
+  if (/nasa|asrs/.test(text)) return "nasa";
+  if (/peer.?review|journal|meta.?analys|study|academic/.test(text)) return "peer_reviewed_research";
+  // Requirement before guidance: an ACS or a CFR part is binding, an AC or
+  // the AIM is not, and calling the second the first is the error that
+  // matters to a checkride.
+  if (/cfr|far\b|acs\b|pts\b|regulat|requirement/.test(text)) return "faa_requirement";
+  if (/faa|advisory circular|\bac\b|aim\b|handbook|guidance/.test(text)) return "faa_guidance";
+  if (/industry|standard|association|aopa|nbaa/.test(text)) return "industry_standard";
+
+  return "expert_opinion";
 }
 
 /** The findings as prompt material for the writer and the fact checker. */
@@ -263,3 +296,6 @@ export function sourcesFrom(brief: ResearchBrief): Source[] {
   for (const finding of brief.findings) byUrl.set(finding.source.url, finding.source);
   return [...byUrl.values()];
 }
+
+/** Exported for tests only -- the mapping is worth pinning, the call is not. */
+export const __testing = { toSourceType };
