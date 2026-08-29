@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AssessmentProgress } from "@/components/debrief/assessment-progress";
 import { TaskRatingCard } from "@/components/debrief/task-rating-card";
+import { partitionTasks } from "@/lib/universal-tasks";
 import { formatFlightContext } from "@/lib/utils";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
 import type { AssessmentRole, FlightWithRelations } from "@/lib/types";
@@ -13,6 +14,8 @@ import type { AssessmentRole, FlightWithRelations } from "@/lib/types";
 interface TaskInput {
   id: string;
   label: string;
+  /** Needed to tell the lesson's tasks from the every-flight ones. */
+  taskCode: string;
 }
 
 export function AssessmentForm({
@@ -44,6 +47,7 @@ export function AssessmentForm({
 
   const ratedCount = Object.keys(ratings).length;
   const allRated = ratedCount === tasks.length;
+  const { lesson, universal } = partitionTasks(tasks);
 
   async function rate(taskId: string, level: PerformanceLevelCode) {
     setRatings((r) => ({ ...r, [taskId]: level }));
@@ -95,8 +99,11 @@ export function AssessmentForm({
 
       <AssessmentProgress rated={ratedCount} total={tasks.length} />
 
+      {/* The lesson, then the every-flight block. Split rather than run
+          together so the fixed three read as a standing check rather than as
+          three more things that happened to be on today's list. */}
       <div className="flex flex-col gap-3">
-        {tasks.map((task) => (
+        {lesson.map((task) => (
           <TaskRatingCard
             key={task.id}
             label={task.label}
@@ -106,6 +113,26 @@ export function AssessmentForm({
           />
         ))}
       </div>
+
+      {universal.length ? (
+        <div className="flex flex-col gap-3">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground-soft">Every flight</h2>
+            <p className="mt-0.5 text-sm text-foreground-soft">
+              These happen whatever the lesson was, so they are rated every time.
+            </p>
+          </div>
+          {universal.map((task) => (
+            <TaskRatingCard
+              key={task.id}
+              label={task.label}
+              value={ratings[task.id] ?? null}
+              onChange={(level) => rate(task.id, level)}
+              disabled={saving === task.id}
+            />
+          ))}
+        </div>
+      ) : null}
 
       <textarea
         value={reflection}

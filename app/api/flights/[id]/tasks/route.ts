@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withUniversalTasks } from "@/lib/universal-tasks";
 import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 
@@ -27,9 +28,19 @@ export async function POST(request: Request, { params }: RouteContext<"/api/flig
     return NextResponse.json({ error: "Each task needs a code and a label" }, { status: 400 });
   }
 
+  // Preflight, radio and situational awareness are appended here rather than
+  // left to the picker. They happen on every flight whatever the lesson was,
+  // and a CFI selecting today's objective never picks them -- so they were
+  // never rated, on any flight. See lib/universal-tasks.ts.
   const tasks = await repo.setFlightTasks(
     id,
-    body.tasks.map((t) => ({ taskCode: t.taskCode, label: t.label, source: "instructor_selected" as const })),
+    withUniversalTasks(
+      body.tasks.map((t) => ({
+        taskCode: t.taskCode,
+        label: t.label,
+        source: "instructor_selected" as const,
+      })),
+    ),
   );
 
   return NextResponse.json({ tasks });

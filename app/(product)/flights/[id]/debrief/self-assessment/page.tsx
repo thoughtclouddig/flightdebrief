@@ -75,7 +75,7 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
         flightId={id}
         flight={flight}
         role="student"
-        tasks={tasks.map((t) => ({ id: t.id, label: t.label }))}
+        tasks={tasks.map((t) => ({ id: t.id, label: t.label, taskCode: t.taskCode }))}
         initialRatings={initialRatings}
         redirectTo={`/flights/${id}/debrief/self-assessment`}
         title="How do you think it went?"
