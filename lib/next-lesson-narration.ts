@@ -11,7 +11,7 @@
  * independently telling the student what to do -- attribute it to the
  * instructor by first name when known, "your instructor" otherwise.
  */
-import { speakList } from "@/lib/narration";
+import { speakList, toSecondPerson } from "@/lib/narration";
 
 export interface NextLessonNarrationInput {
   studentFirstName: string;
@@ -40,19 +40,19 @@ export function buildNextLessonNarration(input: NextLessonNarrationInput): strin
   lines.push(`Hey ${input.studentFirstName}, quick brief before you fly.`);
 
   if (input.focus.length > 0) {
-    lines.push(`${cfiOrFallback === "your instructor" ? "Your instructor" : cfiOrFallback} wants you to focus on ${speakList(input.focus)} today.`);
+    lines.push(`${cfiOrFallback === "your instructor" ? "Your instructor" : cfiOrFallback} wants you to focus on ${speakList(input.focus.map(toSecondPerson))} today.`);
   }
 
   if (input.whatWeDid.length > 0) {
-    lines.push(`Last time, on ${dateLabel}, you worked on ${speakList(input.whatWeDid)}, and that's carrying forward.`);
+    lines.push(`Last time, on ${dateLabel}, you worked on ${speakList(input.whatWeDid.map(toSecondPerson))}, and that's carrying forward.`);
   }
 
   if (input.keepWorkingOn.length > 0) {
-    lines.push(`Keep an eye on ${speakList(input.keepWorkingOn)} -- you're already making progress there.`);
+    lines.push(`Keep an eye on ${speakList(input.keepWorkingOn.map(toSecondPerson))} -- you're already making progress there.`);
   }
 
   if (input.beforeToday.length > 0) {
-    lines.push(`One more thing before you go: ${speakList(input.beforeToday)}.`);
+    lines.push(`One more thing before you go: ${speakList(input.beforeToday.map(toSecondPerson))}.`);
   }
 
   lines.push(

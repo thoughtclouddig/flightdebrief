@@ -1,4 +1,4 @@
-import { speakList } from "@/lib/narration";
+import { speakList, toSecondPerson } from "@/lib/narration";
 import type { InstructorGuidance, StudyReference } from "@/lib/types";
 
 /**
@@ -77,7 +77,11 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   // becomes a transcript read aloud -- the full set is still on screen, where
   // skimming works. This also keeps most scripts inside one TTS request.
   for (const g of input.instructorGuidance.slice(0, MAX_SPOKEN_GUIDANCE)) {
-    sections.push(`${g.instructorName} said: ${g.quote}`);
+    // "X said: <first-person quote>" put the student's own words in the
+    // instructor's mouth when the quote came from the student's side of the
+    // debrief. Attributing the point rather than the sentence is both more
+    // accurate and better to listen to.
+    sections.push(`${g.instructorName} pointed out: ${toSecondPerson(g.quote)}`);
   }
 
   if (input.actionItems.length > 0) {

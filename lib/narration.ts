@@ -74,3 +74,49 @@ export function speakList(items: string[]): string {
   if (cleaned.length === 2) return `${cleaned[0]} and ${cleaned[1]}`;
   return `${cleaned.slice(0, -1).join(", ")}, and ${cleaned[cleaned.length - 1]}`;
 }
+
+/**
+ * Rewrites first-person text into second person for a spoken brief.
+ *
+ * Items carried into a brief are pulled from a debrief, where somebody said
+ * them out loud in the first person: "Nina had me work on getting configured
+ * earlier on downwind, so I'm not rushed on base." Spoken back to the student
+ * by a narrator, that lands as the narrator claiming the student's own
+ * experience -- the effect the user described as "he's saying it as if Nina
+ * said it". The information is right; the person is wrong.
+ *
+ * Deliberately a small, testable substitution rather than a model call. This
+ * runs on every brief, adds no latency, and cannot invent anything: it only
+ * ever changes pronouns. Text already in second person passes through
+ * untouched, so an item written as guidance stays as written.
+ *
+ * Doesn't handle everything English can do -- "myself" mid-clause, reported
+ * speech nested two deep. It handles what debrief sentences actually contain,
+ * and anything it misses is left alone rather than mangled.
+ */
+const PERSON_SUBSTITUTIONS: [RegExp, string][] = [
+  // Contractions before bare pronouns: "I'm" must not be reached by the "I"
+  // rule first, which would leave "you'm".
+  [/\bI'm\b/gi, "you're"],
+  [/\bI've\b/gi, "you've"],
+  [/\bI'll\b/gi, "you'll"],
+  [/\bI'd\b/gi, "you'd"],
+  [/\bI\b/g, "you"],
+  // "my" before "me": otherwise "my" is untouched and reads as the narrator's.
+  [/\bmyself\b/gi, "yourself"],
+  [/\bmine\b/gi, "yours"],
+  [/\bmy\b/gi, "your"],
+  [/\bme\b/gi, "you"],
+  // Verb agreement follows the pronoun swap: "I was" -> "you was" without it.
+  [/\byou was\b/g, "you were"],
+  [/\byou am\b/g, "you are"],
+];
+
+export function toSecondPerson(text: string): string {
+  let out = text;
+  for (const [pattern, replacement] of PERSON_SUBSTITUTIONS) {
+    out = out.replace(pattern, replacement);
+  }
+  // A sentence that began "I" now begins "you" mid-capitalisation.
+  return out.charAt(0).toUpperCase() + out.slice(1);
+}
