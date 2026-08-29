@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { runwayFromTrack, runwayNumber, summarizeRunways, type RunwayTrack } from "./airport-runways";
+import { runwayFromTrack, runwayNumber, snapToRunway, summarizeRunways, type RunwayTrack } from "./airport-runways";
 import type { TrackPoints } from "./airport-tracks";
 
 const KFFZ = { lat: 33.4608, lon: -111.7283 };
@@ -110,5 +110,26 @@ describe("summarizeRunways", () => {
     expect(runways[0].share).toBe(1);
     expect(classified).toBe(4);
     expect(unclassified).toBe(1);
+  });
+});
+
+describe("snapToRunway", () => {
+  it("picks the field's own runway rather than rounding to any number", () => {
+    // 47 true would round to 05; this field only has 04 and 22, so 04 it is.
+    expect(snapToRunway(47, ["4L/22R", "4R/22L"])).toBe("04");
+    expect(snapToRunway(228, ["4L/22R"])).toBe("22");
+  });
+
+  it("drops the parallel suffix, which a track cannot resolve", () => {
+    expect(snapToRunway(45, ["4L/22R", "4R/22L"])).toBe("04");
+  });
+
+  it("refuses when nothing is close enough to be that runway", () => {
+    // Lined up on 180 at a field with only 04/22 is not a landing here.
+    expect(snapToRunway(180, ["4L/22R"])).toBeNull();
+  });
+
+  it("returns null rather than guessing when no runways are known", () => {
+    expect(snapToRunway(45, [])).toBeNull();
   });
 });

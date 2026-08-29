@@ -827,3 +827,23 @@ export interface AirportInsightsRecord {
   sources: string[];
   computedAt: string;
 }
+
+
+/**
+ * What is registered near an airport, from Windsock's registry.
+ *
+ * "Registered near" is not "based at" -- the coordinate on a registry row is
+ * the registrant's mailing address. The page states the radius and never
+ * claims otherwise.
+ */
+export interface AirportFleetRecord {
+  airportIdent: string;
+  aircraftCount: number;
+  medianYear: number | null;
+  topTypes: { type: string; count: number; share: number }[];
+  radiusMi: number;
+  /** Runway identifiers as painted, e.g. ["4L/22R", "4R/22L"]. */
+  runways: string[];
+  source: string;
+  computedAt: string;
+}

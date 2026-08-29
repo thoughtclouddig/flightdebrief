@@ -7,6 +7,7 @@ import { appOrigin } from "@/lib/email";
 import type { AirportInsightsRecord } from "@/lib/types";
 import { TrackDensityMap } from "@/components/marketing/track-density-map";
 import { describeTracks, summarizeTracks, PATTERN_RADIUS_NM } from "@/lib/airport-tracks";
+import { summarizeRunways } from "@/lib/airport-runways";
 
 export const dynamic = "force-dynamic";
 
@@ -76,10 +77,11 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
 
   const { ident } = await props.params;
   const repo = getRepository();
-  const [airport, insights, tracks] = await Promise.all([
+  const [airport, insights, tracks, fleet] = await Promise.all([
     repo.getAirport(ident),
     repo.getAirportInsights(ident),
     repo.listAirportTracks(ident),
+    repo.getAirportFleet(ident),
   ]);
 
   // No insights row means the airport never cleared the sample floor. That is
@@ -105,6 +107,24 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
   // the airport, which the reader already knew; the finding is which sectors
   // the flying goes to and how far out. Computed from the same tracks the
   // figure draws, so the words and the picture cannot disagree.
+  // Runway use, computed from the same tracks the map draws rather than
+  // stored. It is cheap over a few hundred tracks and it cannot go stale
+  // against them, which a second table could.
+  //
+  // Headings snap to the runways the field actually has -- Windsock returns
+  // them -- so this needs no per-airport magnetic variation. Every track in
+  // the sample is a local flight, so each one votes at both ends.
+  const runwayStats =
+    airport.latitude !== null && airport.longitude !== null && tracks.length && fleet?.runways.length
+      ? summarizeRunways(
+          tracks.map((points) => ({ points, kind: "local" as const })),
+          { lat: airport.latitude, lon: airport.longitude },
+          0,
+          fleet.runways,
+        )
+      : null;
+  const runways = runwayStats?.runways.filter((r) => r.share >= 0.02) ?? [];
+
   const trackStats =
     airport.latitude !== null && airport.longitude !== null && tracks.length
       ? summarizeTracks(tracks, { lat: airport.latitude, lon: airport.longitude })
@@ -390,6 +410,39 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
         </Section>
       ) : null}
 
+      {/* --- Runways -------------------------------------------------------
+          Restored after being cut. FR24's flight summary carries no runway,
+          which is why this went; the tracks bought for the map turned out to
+          contain it all along, in the direction of travel on final. */}
+      {runways.length ? (
+        <Section
+          title="Which runway you actually get"
+          note="Read from the direction of travel on final and on climb-out. Parallel runways share a heading, so they are counted together."
+        >
+          <dl className="mt-5 grid gap-3 sm:grid-cols-2">
+            {runways.map((r) => (
+              <div key={r.runway} className="rounded-xl border border-hairline px-5 py-4">
+                <dt className="font-display text-3xl font-bold tabular-nums text-[#101727]">{r.runway}</dt>
+                <dd className="mt-1.5 text-sm text-[#5b6472]">
+                  <span className="font-semibold tabular-nums text-brand-dark">{pct(r.share)}</span> of movements
+                  <span className="text-[#98a0aa]">
+                    {" "}· {r.arrivals} in, {r.departures} out
+                  </span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          {runwayStats ? (
+            <p className="mt-4 text-xs leading-relaxed text-[#5b6472]">
+              From {runwayStats.classified} movements that lined up on a runway.
+              {runwayStats.unclassified > 0
+                ? ` ${runwayStats.unclassified} more passed near the field without settling on a heading — go-arounds, circuits, and overflights — and are not counted.`
+                : ""}
+            </p>
+          ) : null}
+        </Section>
+      ) : null}
+
       {/* --- Where the flying happens -------------------------------------
           Deliberately not "what the pattern looks like": every pattern is a
           rectangle, and drawing one here would tell a student nothing they
@@ -480,6 +533,54 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
         )}
       </Section>
 
+      {/* --- Fleet ----------------------------------------------------------
+          Registered near, not based at: the coordinate on a registry row is
+          the registrant's mailing address. Stated plainly rather than
+          softened, because the difference is the whole caveat. */}
+      {fleet ? (
+        <Section
+          title="What&rsquo;s registered nearby"
+          note={`Aircraft whose registered address is within ${fleet.radiusMi} miles of the field. That is where the owner gets their post, not necessarily where the aircraft is tied down.`}
+        >
+          <div className="mt-5 flex flex-wrap gap-x-10 gap-y-5">
+            <div>
+              <p className="font-display text-[2.25rem] font-bold leading-none tabular-nums text-brand-dark">
+                {fleet.aircraftCount.toLocaleString("en-US")}
+              </p>
+              <p className="mt-1.5 text-sm text-[#5b6472]">aircraft registered within {fleet.radiusMi} mi</p>
+            </div>
+            {fleet.medianYear ? (
+              <div>
+                <p className="font-display text-[2.25rem] font-bold leading-none tabular-nums text-brand-dark">
+                  {fleet.medianYear}
+                </p>
+                <p className="mt-1.5 text-sm text-[#5b6472]">median year built</p>
+              </div>
+            ) : null}
+          </div>
+
+          {fleet.topTypes.length ? (
+            <div className="mt-6 border-t border-hairline pt-5">
+              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-[#5b6472]">
+                Most common types
+              </p>
+              <ol className="mt-3 flex flex-col divide-y divide-[#e9ebee]">
+                {fleet.topTypes.slice(0, 6).map((t, i) => (
+                  <li key={t.type} className="flex items-baseline gap-4 py-2.5">
+                    <span className="w-6 shrink-0 text-sm font-semibold tabular-nums text-brand">{i + 1}</span>
+                    <span className="text-[15px] text-[#33383f]">{t.type}</span>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-3 text-xs leading-relaxed text-[#5b6472]">
+                Ranked from a sample of the registry. The ranking is stable; the exact counts move slightly
+                between reads, so they are not published.
+              </p>
+            </div>
+          ) : null}
+        </Section>
+      ) : null}
+
       {/* --- Method ------------------------------------------------------- */}
       <Section title="How this was measured">
         <div className="mt-4 flex flex-col gap-3 text-[15px] leading-relaxed text-[#33383f]">
@@ -502,6 +603,18 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
             Seasons are whole calendar months — December through February is winter — because that is what
             training activity tracks and what a reader can check. Each season&rsquo;s busiest hour is computed
             within that season alone, not read off the annual chart.
+          </p>
+          <p>
+            Runway use is read from the tracks rather than reported by the data source, which carries no
+            runway at all: an aeroplane on final is tracking the centreline, so its direction of travel over
+            the last two miles is the runway heading. Headings snap to the runways this field actually has.
+            Anything that passed nearby without settling on a heading is counted as unclassified rather than
+            assigned to the closest runway.
+          </p>
+          <p>
+            The registry figures describe aircraft whose REGISTERED ADDRESS is near the field. That is a
+            reasonable proxy for a local fleet and it is not a list of based aircraft — a flight school&rsquo;s
+            aeroplanes are often registered to a corporate address somewhere else entirely.
           </p>
           <p>
             The track figure is a sample of local flights spread across hours and months, not every flight and

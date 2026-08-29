@@ -88,6 +88,8 @@ export function runwayFromTrack(
   airport: LatLon,
   magneticVariationDeg: number,
   end: "arrival" | "departure",
+  /** When the field's real runways are known, snap to them instead of rounding. */
+  runwayIdents?: string[],
 ): string | null {
   const ordered = end === "arrival" ? [...points] : [...points].reverse();
 
@@ -122,7 +124,48 @@ export function runwayFromTrack(
 
   // A departure was read backwards, so the heading points the wrong way.
   const heading = end === "departure" ? (mean + 180) % 360 : mean;
+  if (runwayIdents?.length) return snapToRunway(heading, runwayIdents);
   return runwayNumber(heading, magneticVariationDeg);
+}
+
+/**
+ * Snap a measured heading to a runway the field actually has.
+ *
+ * This removes the need for a precise magnetic variation. Converting a true
+ * bearing to a runway number needs the local variation, which we do not store
+ * and which would be one more per-airport fact to get wrong. But a field's
+ * runway identifiers are known -- Windsock returns them -- and they are far
+ * apart: at a two-runway field the nearest candidate is unambiguous even if
+ * the variation is ten degrees out.
+ *
+ * Returns null when nothing is within tolerance, which is the honest answer
+ * for a track that lined up with no runway here.
+ */
+export function snapToRunway(trueHeading: number, runwayIdents: string[]): string | null {
+  // "4L/22R" describes two directions; each end is its own candidate, and the
+  // L/R suffix is dropped because parallels share a heading and cannot be
+  // told apart from a track.
+  const candidates = new Set<string>();
+  for (const ident of runwayIdents) {
+    for (const part of ident.split("/")) {
+      const number = part.trim().match(/^(\d{1,2})/)?.[1];
+      if (number) candidates.add(String(Number(number)).padStart(2, "0"));
+    }
+  }
+  if (!candidates.size) return null;
+
+  let best: string | null = null;
+  let bestDiff = Infinity;
+  for (const candidate of candidates) {
+    const diff = angleDiff(trueHeading, Number(candidate) * 10);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = candidate;
+    }
+  }
+  // Runway numbers are magnetic and this heading is true, so some slop is
+  // expected -- but 30 degrees is not slop, it is a different runway.
+  return bestDiff <= 30 ? best : null;
 }
 
 export interface RunwayTrack {
@@ -135,6 +178,8 @@ export function summarizeRunways(
   tracks: RunwayTrack[],
   airport: LatLon,
   magneticVariationDeg: number,
+  /** The field's actual runway identifiers. When given, headings snap to these. */
+  runwayIdents?: string[],
 ): { runways: RunwayUse[]; classified: number; unclassified: number } {
   const counts = new Map<string, { arrivals: number; departures: number }>();
   let classified = 0;
@@ -156,10 +201,10 @@ export function summarizeRunways(
     // legitimately vote for different runways if the wind shifted during the
     // lesson.
     if (track.kind === "local" || track.kind === "departure") {
-      record(runwayFromTrack(track.points, airport, magneticVariationDeg, "departure"), "departures");
+      record(runwayFromTrack(track.points, airport, magneticVariationDeg, "departure", runwayIdents), "departures");
     }
     if (track.kind === "local" || track.kind === "arrival") {
-      record(runwayFromTrack(track.points, airport, magneticVariationDeg, "arrival"), "arrivals");
+      record(runwayFromTrack(track.points, airport, magneticVariationDeg, "arrival", runwayIdents), "arrivals");
     }
   }
 

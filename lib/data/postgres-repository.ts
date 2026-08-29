@@ -4,6 +4,7 @@ import type { Pool, PoolClient } from "pg";
 import type {
   Aircraft,
   Airport,
+  AirportFleetRecord,
   AirportInsightsRecord,
   Article,
   ArticleIdea,
@@ -533,6 +534,26 @@ export class PostgresRepository implements Repository {
       [ident.toUpperCase()],
     );
     return rows.map((r) => r.points as [number, number][]);
+  }
+
+  async getAirportFleet(ident: string): Promise<AirportFleetRecord | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM airport_fleet WHERE airport_ident = $1", [
+      ident.toUpperCase(),
+    ]);
+    if (!rows[0]) return null;
+    const row = rows[0];
+    return {
+      airportIdent: row.airport_ident as string,
+      aircraftCount: Number(row.aircraft_count),
+      medianYear: row.median_year === null ? null : Number(row.median_year),
+      topTypes: (row.top_types as AirportFleetRecord["topTypes"]) ?? [],
+      radiusMi: Number(row.radius_mi ?? 10),
+      runways: (row.runways as string[]) ?? [],
+      source: row.source as string,
+      computedAt:
+        row.computed_at instanceof Date ? (row.computed_at as Date).toISOString() : String(row.computed_at),
+    };
   }
 
   async listResourceTopics(): Promise<ResourceTopic[]> {

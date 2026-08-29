@@ -2,6 +2,7 @@ import type { ArticleBody } from "@/lib/content/article-body";
 import type {
   Aircraft,
   Airport,
+  AirportFleetRecord,
   AirportInsightsRecord,
   Article,
   ArticleIdea,
@@ -266,6 +267,7 @@ export interface Repository {
   listAirportsWithInsights(): Promise<Airport[]>;
   /** Sampled, anonymous ground tracks for the density figure. */
   listAirportTracks(ident: string): Promise<[number, number][][]>;
+  getAirportFleet(ident: string): Promise<AirportFleetRecord | null>;
   getResourceTopicBySlug(slug: string): Promise<ResourceTopic | null>;
   listArticles(filter: { status?: ArticleStatus; topicId?: string }): Promise<Article[]>;
   getArticleBySlug(slug: string): Promise<Article | null>;
