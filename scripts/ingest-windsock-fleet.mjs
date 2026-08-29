@@ -63,6 +63,22 @@ async function get(path, params) {
   }
 }
 
+/** POST with the same key auth. The registry search is a POST with a filter body. */
+async function post(path, body) {
+  const res = await fetch(new URL(path, BASE), {
+    method: "POST",
+    headers: { "X-API-Key": KEY, Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`${res.status} ${path}: ${text.slice(0, 300)}`);
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`${path} returned non-JSON: ${text.slice(0, 200)}`);
+  }
+}
+
 /**
  * The list of aircraft, wherever the envelope puts it.
  *
