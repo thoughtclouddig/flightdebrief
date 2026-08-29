@@ -45,11 +45,37 @@ export function decodeDataUrl(url: string): DecodedImage | null {
 }
 
 /**
+ * A short fingerprint of the stored image, used to bust the cache when it
+ * changes.
+ *
+ * The media route sends immutable caching, which was fine while an image was
+ * only ever set once. Regeneration broke that assumption: the URL stays the
+ * same while the bytes change, so a regenerated image kept rendering as the
+ * old one -- it had saved correctly and was simply invisible. Cheap and
+ * non-cryptographic on purpose; this only needs to differ when the image
+ * differs.
+ */
+function fingerprint(dataUrl: string): string {
+  let hash = 0;
+  // The tail: two AVIF encodings of different pictures share a long identical
+  // header, so hashing the front would collide on exactly the case that
+  // matters.
+  const sample = dataUrl.slice(-2048);
+  for (let i = 0; i < sample.length; i++) {
+    hash = (hash * 31 + sample.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+/**
  * What to put in an <img src>. External URLs pass through untouched -- someone
  * pasting a normal https:// link into the CMS should keep it.
  */
 export function heroImageSrc(kind: "articles" | "research", id: string, imageUrl: string | null): string | null {
   if (!imageUrl) return null;
   if (!imageUrl.startsWith("data:")) return imageUrl;
-  return `/api/media/${kind}/${id}`;
+  // The version makes a replaced image a different URL, which is what lets
+  // the response stay immutable -- the right combination for a file that
+  // rarely changes but must be seen immediately when it does.
+  return `/api/media/${kind}/${id}?v=${fingerprint(imageUrl)}`;
 }

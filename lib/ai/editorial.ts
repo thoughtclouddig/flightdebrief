@@ -210,13 +210,19 @@ YOUR VOCABULARY, and when each earns its place:
 - steps: an ordered procedure, 2 or more. Leave existing ones alone unless they aren't really sequential.
 - tip: at most one in the whole article.
 
+HOW MUCH
+
+Aim for a device on roughly every other section, and use at least three different kinds across the article. A page of headings and paragraphs with one tip in it is the failure mode -- a reader scrolling it sees an undifferentiated grey column and leaves, which is the whole problem you were brought in to solve.
+
+Being timid is the more likely mistake here, not being excessive. If a section has a genuine procedure in it, pull the steps out. If it turns on a distinction, build the comparison. If it has a sentence a reader should leave with, mark it as a pull quote. Look for the device the copy already contains rather than waiting for an obvious one.
+
 RULES
 
-- A section with fewer than 120 words needs nothing. Leave it alone.
+- A section under 120 words needs nothing. Leave it alone.
 - Never put two devices in the same section.
 - Never use the same device in two consecutive sections.
-- Remove any device already present that doesn't meet these rules. Taking one away is as valid a decision as adding one, and an over-decorated page is worse than a plain one.
-- Change no wording anywhere. If you want a pull quote, it must already exist as a sentence.
+- Remove a device that doesn't meet these rules. Taking one away is as valid as adding one.
+- Change no wording anywhere. A pull quote must already exist as a sentence in that section's body.
 
 Return ONLY this JSON, no fences, no commentary:
 
