@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
 import type {
   Aircraft,
+  Airport,
+  AirportInsightsRecord,
   Article,
   ArticleIdea,
   ArticleIdeaStatus,
@@ -500,6 +502,29 @@ export class PostgresRepository implements Repository {
   }
 
   // --- Content Engine Phase 1: public resources hub ---
+
+  async getAirport(ident: string): Promise<Airport | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM airports WHERE ident = $1", [ident.toUpperCase()]);
+    return rows[0] ? mapAirport(rows[0]) : null;
+  }
+
+  async getAirportInsights(ident: string): Promise<AirportInsightsRecord | null> {
+    const db = await this.db();
+    const { rows } = await db.query("SELECT * FROM airport_insights WHERE airport_ident = $1", [ident.toUpperCase()]);
+    return rows[0] ? mapAirportInsights(rows[0]) : null;
+  }
+
+  async listAirportsWithInsights(): Promise<Airport[]> {
+    const db = await this.db();
+    // Joined rather than filtered on a flag: an airport is publishable
+    // because a recompute cleared the sample floor for it, not because
+    // someone ticked a box.
+    const { rows } = await db.query(
+      `SELECT a.* FROM airports a JOIN airport_insights i ON i.airport_ident = a.ident ORDER BY a.ident`,
+    );
+    return rows.map(mapAirport);
+  }
 
   async listResourceTopics(): Promise<ResourceTopic[]> {
     const db = await this.db();
@@ -2085,5 +2110,34 @@ function mapSubscription(row: Row): Subscription {
     currentPeriodStart: iso(row.current_period_start),
     currentPeriodEnd: row.current_period_end ? iso(row.current_period_end) : null,
     createdAt: iso(row.created_at),
+  };
+}
+
+
+function mapAirport(row: Record<string, unknown>): Airport {
+  return {
+    ident: row.ident as string,
+    name: row.name as string,
+    municipality: (row.municipality as string) ?? null,
+    region: (row.region as string) ?? null,
+    latitude: row.latitude === null ? null : Number(row.latitude),
+    longitude: row.longitude === null ? null : Number(row.longitude),
+    isTrainingField: Boolean(row.is_training_field),
+  };
+}
+
+function mapAirportInsights(row: Record<string, unknown>): AirportInsightsRecord {
+  const asDate = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : String(v));
+  return {
+    airportIdent: row.airport_ident as string,
+    windowStart: asDate(row.window_start),
+    windowEnd: asDate(row.window_end),
+    sampleSize: Number(row.sample_size),
+    busiestHours: (row.busiest_hours as AirportInsightsRecord["busiestHours"]) ?? [],
+    busiestDays: (row.busiest_days as AirportInsightsRecord["busiestDays"]) ?? [],
+    runwayUse: (row.runway_use as AirportInsightsRecord["runwayUse"]) ?? [],
+    commonDestinations: (row.common_destinations as AirportInsightsRecord["commonDestinations"]) ?? [],
+    sources: (row.sources as string[]) ?? [],
+    computedAt: row.computed_at instanceof Date ? (row.computed_at as Date).toISOString() : String(row.computed_at),
   };
 }

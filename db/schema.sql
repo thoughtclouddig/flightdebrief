@@ -812,6 +812,10 @@ CREATE TABLE IF NOT EXISTS airport_operations (
   local_hour smallint NOT NULL CHECK (local_hour BETWEEN 0 AND 23),
   local_day_of_week smallint NOT NULL CHECK (local_day_of_week BETWEEN 0 AND 6),
   runway text,
+  -- Where a departure went. Null on arrivals and pattern work: counting the
+  -- arrival leg too would double every round trip and make the busiest
+  -- "destination" the airport itself.
+  destination_ident text,
   aircraft_type text,
   -- Where the observation came from ("fr24", "afterflight"), so a finding can
   -- state its provenance and a source can be excluded wholesale if its terms
@@ -837,5 +841,10 @@ CREATE TABLE IF NOT EXISTS airport_insights (
   busiest_days jsonb NOT NULL DEFAULT '[]'::jsonb,
   runway_use jsonb NOT NULL DEFAULT '[]'::jsonb,
   common_destinations jsonb NOT NULL DEFAULT '[]'::jsonb,
+  -- Which sources the window drew on. The page reads this: a summary built
+  -- from synthetic or sample data must not be able to render looking like a
+  -- real finding, and provenance is the only thing that can tell it apart
+  -- once the numbers are aggregated.
+  sources text[] NOT NULL DEFAULT '{}',
   computed_at timestamptz NOT NULL DEFAULT now()
 );

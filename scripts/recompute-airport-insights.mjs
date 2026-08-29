@@ -50,7 +50,7 @@ const skipped = [];
 
 for (const { ident } of airports) {
   const { rows: ops } = await client.query(
-    `SELECT operation_type, local_hour, local_day_of_week, runway
+    `SELECT operation_type, local_hour, local_day_of_week, runway, destination_ident, source
        FROM airport_operations
       WHERE airport_ident = $1
         AND occurred_at >= now() - ($2 || ' days')::interval`,
@@ -79,10 +79,22 @@ for (const { ident } of airports) {
   const days = tally("local_day_of_week").map((r) => ({ dayOfWeek: r.value, operations: r.operations, share: r.share }));
   const runways = tally("runway").map((r) => ({ runway: r.value, operations: r.operations, share: r.share }));
 
+  const dest = new Map();
+  for (const o of ops) {
+    if (o.operation_type !== "departure" || !o.destination_ident) continue;
+    dest.set(o.destination_ident, (dest.get(o.destination_ident) ?? 0) + 1);
+  }
+  const destinations = [...dest.entries()]
+    .map(([airport, flights]) => ({ airport, flights }))
+    .sort((a, b) => b.flights - a.flights || a.airport.localeCompare(b.airport))
+    .slice(0, 10);
+
+  const sources = [...new Set(ops.map((o) => o.source))].sort();
+
   await client.query(
     `INSERT INTO airport_insights
-       (airport_ident, window_start, window_end, sample_size, busiest_hours, busiest_days, runway_use, common_destinations, computed_at)
-     VALUES ($1, (now() - ($2 || ' days')::interval)::date, now()::date, $3, $4, $5, $6, '[]'::jsonb, now())
+       (airport_ident, window_start, window_end, sample_size, busiest_hours, busiest_days, runway_use, common_destinations, sources, computed_at)
+     VALUES ($1, (now() - ($2 || ' days')::interval)::date, now()::date, $3, $4, $5, $6, $7, $8, now())
      ON CONFLICT (airport_ident) DO UPDATE SET
        window_start = EXCLUDED.window_start,
        window_end = EXCLUDED.window_end,
@@ -90,8 +102,10 @@ for (const { ident } of airports) {
        busiest_hours = EXCLUDED.busiest_hours,
        busiest_days = EXCLUDED.busiest_days,
        runway_use = EXCLUDED.runway_use,
+       common_destinations = EXCLUDED.common_destinations,
+       sources = EXCLUDED.sources,
        computed_at = EXCLUDED.computed_at`,
-    [ident, WINDOW_DAYS, total, JSON.stringify(hours), JSON.stringify(days), JSON.stringify(runways)],
+    [ident, WINDOW_DAYS, total, JSON.stringify(hours), JSON.stringify(days), JSON.stringify(runways), JSON.stringify(destinations), sources],
   );
   written++;
   console.log(`[airport-insights] ${ident}: ${total} operations`);

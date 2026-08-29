@@ -787,3 +787,33 @@ export interface ReferralSummary {
   bySource: { source: ReferralSource; count: number }[];
   byPath: { path: string; source: ReferralSource; count: number }[];
 }
+
+
+/** A field we publish an insights report for. */
+export interface Airport {
+  ident: string;
+  name: string;
+  municipality: string | null;
+  region: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  isTrainingField: boolean;
+}
+
+/**
+ * The recomputed summary an airport report renders. Never computed at request
+ * time -- see lib/airport-insights.ts and scripts/recompute-airport-insights.mjs.
+ */
+export interface AirportInsightsRecord {
+  airportIdent: string;
+  windowStart: string;
+  windowEnd: string;
+  sampleSize: number;
+  busiestHours: { hour: number; operations: number; share: number }[];
+  busiestDays: { dayOfWeek: number; operations: number; share: number }[];
+  runwayUse: { runway: string; operations: number; share: number }[];
+  commonDestinations: { airport: string; flights: number }[];
+  /** Which data sources the window drew on, e.g. ["fr24"] or ["synthetic"]. */
+  sources: string[];
+  computedAt: string;
+}
