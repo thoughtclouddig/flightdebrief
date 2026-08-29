@@ -32,13 +32,38 @@ const REQUEST_TIMEOUT_MS = 30_000;
  * average of everything, which is the stock photo we're trying to avoid.
  */
 const SHOT_TYPES = [
-  "an empty cockpit filled with light -- sun through the windscreen, warm reflections on the glareshield",
-  "an object close up and beautifully lit: a headset on a seat, a kneeboard, a fuel tester, keys on a wing",
-  "an aircraft on the ramp from outside, clean air, big sky, strong sunlight",
-  "the view a pilot has -- out the windscreen, over the cowling, down a runway toward open country",
-  "the airport as landscape: hangar row, windsock, tiedowns, a taxiway leading somewhere",
-  "an aircraft airborne, seen against sky and terrain, wing catching the sun",
+  "an aircraft airborne against sky and terrain, wing catching the sun, seen from outside",
+  "the airport as landscape: hangar row, taxiway, tiedowns, ramp stretching into the distance",
+  "the view over the cowling -- what a pilot sees, out toward open country",
+  "an aircraft on the ramp from outside, low angle, big sky, strong sunlight",
+  "weather as the subject: a windsock stiff in the breeze, cloud shadow crossing a runway, rain on a wing",
+  "the ground from a few thousand feet -- fields, desert, roads, a river, the shape of the terrain",
+  "maintenance and machinery: a cowling open, an oil bottle, tools on a wing, a fuel truck",
+  "small ground details: chocks, tiedown chains, a wheel fairing, a pitot cover, painted taxiway markings",
+  "an empty cockpit filled with light, sun through the windscreen across the seats",
+  "the shadow of an aircraft on the ramp or on terrain below",
+  "a runway from the threshold, centreline running to the horizon",
+  "a hangar interior with the doors open onto daylight",
+  "an object close and beautifully lit: a kneeboard, a fuel tester, keys on a wing, a headset on a seat",
+  "the airport at the edge of its landscape -- mountains, coastline, farmland beyond the fence",
 ] as const;
+
+/**
+ * Which shot type this article gets.
+ *
+ * Assigned rather than chosen. Given a list and a free hand, the director
+ * converged on the same two or three pictures -- cockpit interiors and
+ * headsets -- because those are the most obvious answer to almost any flight
+ * training subject. The same collapse as every aircraft being a 172.
+ *
+ * Hashed off the title so it is stable for a given article (a redraft gets
+ * the same treatment) while spreading across the list as articles accumulate.
+ */
+function shotTypeFor(title: string): string {
+  let hash = 0;
+  for (let i = 0; i < title.length; i++) hash = (hash * 31 + title.charCodeAt(i)) | 0;
+  return SHOT_TYPES[Math.abs(hash) % SHOT_TYPES.length];
+}
 
 const briefSchema = z.object({
   subject: z.string().default("").catch(""),
@@ -49,8 +74,11 @@ const SYSTEM = `You art-direct one photograph for a flight-training article. You
 
 Pick a subject that belongs to THIS article specifically. An article about chair-flying is not the same picture as one about crosswind landings, and the difference should be visible.
 
-SHOT TYPES -- choose one:
-${SHOT_TYPES.map((s) => `- ${s}`).join("\n")}
+YOUR SHOT TYPE IS ASSIGNED, NOT CHOSEN
+
+You will be given one shot type. Use it. Do not substitute a different one because it seems to fit the article better -- it is assigned precisely so that a hundred articles do not all end up as the same photograph, and "what fits best" is how they do.
+
+Interpret it specifically for THIS article. The assignment is the kind of picture; the subject within it is yours.
 
 NO PEOPLE
 
@@ -113,7 +141,9 @@ export async function directArticleImage(input: {
 Topic: ${input.topicName}
 ${input.answer ? `What it says: ${input.answer}` : ""}
 
-Direct one photograph for it.`,
+YOUR ASSIGNED SHOT TYPE: ${shotTypeFor(input.title)}
+
+Direct one photograph for it, within that shot type.`,
         },
       ],
     });
