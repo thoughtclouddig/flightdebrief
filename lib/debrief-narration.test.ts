@@ -105,3 +105,43 @@ describe("person conversion covers every spoken field", () => {
     expect(script).toContain("practice your radio calls");
   });
 });
+
+describe("solo pilots", () => {
+  it("does not attribute anything to an instructor who does not exist", () => {
+    const script = buildDebriefNarration({
+      ...BASE_INPUT,
+      instructorFirstName: null,
+      soloPilot: true,
+      narrativeRecap: undefined,
+      wentWell: ["your radio calls were confident"],
+      needsWork: ["holding centerline through rollout"],
+      actionItems: ["short-field landings"],
+    });
+    // "Your instructor noted" to someone the product recruited with "no CFI
+    // needed" describes a conversation that did not happen.
+    expect(script).not.toContain("instructor");
+    expect(script).toContain("What went well");
+  });
+
+  it("still credits the instructor for a student who has one", () => {
+    const script = buildDebriefNarration({
+      ...BASE_INPUT,
+      instructorFirstName: "Jake",
+      narrativeRecap: undefined,
+      wentWell: ["your radio calls were confident"],
+    });
+    expect(script).toContain("Jake noted that");
+  });
+
+  it("keeps the generic fallback for a student whose CFI is not named", () => {
+    // Null instructorFirstName without soloPilot is a student, not a solo
+    // pilot -- the two cases look identical and must not read identically.
+    const script = buildDebriefNarration({
+      ...BASE_INPUT,
+      instructorFirstName: null,
+      narrativeRecap: undefined,
+      wentWell: ["your radio calls were confident"],
+    });
+    expect(script).toContain("Your instructor noted");
+  });
+});

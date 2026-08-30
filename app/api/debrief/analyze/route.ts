@@ -204,7 +204,16 @@ export async function POST(request: Request) {
     })),
   );
 
-  void prewarmDebriefAudio(flight.id, flight.userId, resolveCfiFirstName(flight.instructor), structured);
+  void prewarmDebriefAudio(
+    flight.id,
+    flight.userId,
+    resolveCfiFirstName(flight.instructor),
+    // Threaded in rather than re-fetched: the pre-warm builds the same script
+    // the audio route builds, and any difference between them writes a cache
+    // entry that route never reads.
+    organization?.kind === "individual",
+    structured,
+  );
 
   return NextResponse.json({ debrief });
 }
@@ -223,6 +232,7 @@ async function prewarmDebriefAudio(
   flightId: string,
   studentId: string,
   instructorFirstName: string | null,
+  soloPilot: boolean,
   structured: StructuredDebrief,
 ): Promise<void> {
   const apiKey = process.env.DEEPGRAM_API_KEY;
@@ -236,6 +246,11 @@ async function prewarmDebriefAudio(
     const script = buildDebriefNarration({
         studentFirstName: student?.name.split(" ")[0] ?? "there",
         instructorFirstName,
+        // An individual org has no instructor by construction, which is a
+        // different thing from a student whose CFI is not named on this
+        // flight -- both leave instructorFirstName null and need different
+        // narration. Must match the audio route, which writes the same key.
+        soloPilot,
         // Must match what GET /api/flights/[id]/debrief/audio builds, because
         // this writes to the same cache key that route reads first. Omitting
         // it here meant the pre-warm cached the templated bullet-by-bullet

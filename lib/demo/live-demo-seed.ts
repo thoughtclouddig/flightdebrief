@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 import { getRepository } from "@/lib/data";
+import { buildDebriefNarration } from "@/lib/debrief-narration";
+import { synthesizeSpeech } from "@/lib/deepgram-tts";
+import { toPilotSpeak } from "@/lib/narration";
+import { audioCacheKey, getCachedAudio, setCachedAudio } from "@/lib/audio-cache";
+import { DEFAULT_TTS_VOICE } from "@/lib/tts-voices";
 import { localIsoDate } from "@/lib/date";
 import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
@@ -273,6 +278,70 @@ async function seedHistoricalFlights(
  * not one overall). This matters for /api/demo/start's response time, which
  * is otherwise a long chain of sequential round trips to a remote database.
  */
+/**
+ * Renders the recap audio for the debrief each persona will actually open.
+ *
+ * The live product never pays this in front of a user: analyze fires
+ * prewarmDebriefAudio the moment a debrief is ready, so the first "Listen"
+ * click is a cache hit. Seeded debriefs skip analyze entirely -- they are
+ * written straight to the database -- so nothing warms them and the first
+ * visitor to press Listen waits ten to fifteen seconds on Deepgram. On a demo
+ * that is the difference between "this is slick" and "this is broken".
+ *
+ * Only the LATEST debrief per student, and only the default voice. That is
+ * what the home page and results screen link to, so it is what gets played;
+ * warming every historical flight would spend forty Deepgram calls per demo
+ * start to cover pages nobody opens.
+ *
+ * Never throws. A failed warm just restores the old behaviour for that one
+ * recap -- slow, not broken -- and must not take the demo down with it.
+ */
+async function warmDemoRecapAudio(records: HistoricalFlightRecord[]): Promise<void> {
+  const apiKey = process.env.DEEPGRAM_API_KEY;
+  if (!apiKey || records.length === 0) return;
+
+  const repo = getRepository();
+  const latestPerStudent = new Map<string, HistoricalFlightRecord>();
+  for (const record of records) latestPerStudent.set(record.studentId, record);
+
+  await Promise.all(
+    Array.from(latestPerStudent.values()).map(async (record) => {
+      try {
+        const [student, organization] = await Promise.all([
+          repo.getUser(record.studentId),
+          record.organizationId ? repo.getOrganization(record.organizationId) : Promise.resolve(null),
+        ]);
+        const instructor = record.instructorId ? await repo.getUser(record.instructorId) : null;
+
+        // Built exactly as app/api/flights/[id]/debrief/audio/route.ts builds
+        // it, because that route keys the cache on the script. Any difference
+        // -- a missing field, a different instructor name, the wrong solo
+        // flag -- writes an entry it will never read, and the warm silently
+        // buys nothing. That has already happened once on this cache.
+        const script = buildDebriefNarration({
+          studentFirstName: student?.name.split(" ")[0] ?? "there",
+          instructorFirstName: instructor?.name.split(" ")[0] ?? null,
+          soloPilot: organization?.kind === "individual",
+          narrativeRecap: record.structured.narrativeRecap,
+          whatWeDid: record.structured.whatWeDid,
+          wentWell: record.structured.wentWell,
+          needsWork: record.structured.needsWork,
+          instructorGuidance: record.structured.instructorGuidance,
+          actionItems: record.structured.actionItems,
+          studyReferences: record.structured.studyReferences,
+        });
+
+        const key = audioCacheKey(`debrief:${record.flightId}`, DEFAULT_TTS_VOICE, script);
+        if (await getCachedAudio(key)) return;
+        const audio = await synthesizeSpeech(toPilotSpeak(script), apiKey, DEFAULT_TTS_VOICE);
+        await setCachedAudio(key, audio);
+      } catch (err) {
+        console.error("[demo-seed] recap audio warm failed for", record.flightId, err);
+      }
+    }),
+  );
+}
+
 async function seedDerivedContent(records: HistoricalFlightRecord[]): Promise<void> {
   if (records.length === 0) return;
   const repo = getRepository();
@@ -469,7 +538,11 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
     );
 
     await client.query("COMMIT");
-    await Promise.all([seedDerivedContent(historicalRecords), seedRadioPractice(orgId, userId, null)]);
+    await Promise.all([
+      seedDerivedContent(historicalRecords),
+      seedRadioPractice(orgId, userId, null),
+      warmDemoRecapAudio(historicalRecords),
+    ]);
     return {
       organizationId: orgId,
       loginUserId: userId,
@@ -841,6 +914,7 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       seedDerivedContent(historicalRecords),
       seedRecurringInsightSignal(historicalRecords.filter((r) => r.studentId === primaryStudentId)),
       ...studentIds.map((studentId) => seedRadioPractice(orgId, studentId, instructorUserId)),
+      warmDemoRecapAudio(historicalRecords),
     ]);
 
     return persona === "cfi"
