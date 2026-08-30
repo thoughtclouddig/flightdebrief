@@ -30,7 +30,11 @@ async function columnsOf(table: string): Promise<Set<string>> {
   return new Set(rows.map((r) => r.column_name));
 }
 
-async function upsert(table: string, rows: Record<string, unknown>[]): Promise<{ written: number; skippedColumns: string[] }> {
+async function upsert(
+  table: string,
+  conflictColumn: string,
+  rows: Record<string, unknown>[],
+): Promise<{ written: number; skippedColumns: string[] }> {
   if (!rows.length) return { written: 0, skippedColumns: [] };
   const target = await columnsOf(table);
   if (!target.size) throw new Error(`Table ${table} does not exist in this database.`);
@@ -38,13 +42,15 @@ async function upsert(table: string, rows: Record<string, unknown>[]): Promise<{
   const present = Object.keys(rows[0]);
   const shared = present.filter((c) => target.has(c));
   const skippedColumns = present.filter((c) => !target.has(c));
-  if (!shared.includes("slug")) throw new Error(`Bundle rows for ${table} have no slug to match on.`);
+  if (!shared.includes(conflictColumn)) {
+    throw new Error(`Bundle rows for ${table} have no ${conflictColumn} to match on.`);
+  }
 
-  const updates = shared.filter((c) => c !== "id" && c !== "slug");
+  const updates = shared.filter((c) => c !== "id" && c !== conflictColumn);
   const placeholders = shared.map((_, i) => `$${i + 1}`).join(",");
   const sql =
     `INSERT INTO ${table} (${shared.join(",")}) VALUES (${placeholders}) ` +
-    `ON CONFLICT (slug) DO UPDATE SET ${updates.map((c) => `${c} = EXCLUDED.${c}`).join(", ")}`;
+    `ON CONFLICT (${conflictColumn}) DO UPDATE SET ${updates.map((c) => `${c} = EXCLUDED.${c}`).join(", ")}`;
 
   for (const row of rows) {
     // jsonb columns arrive as parsed JSON; pg needs them stringified.
@@ -63,7 +69,12 @@ export async function POST(request: NextRequest) {
   const { response } = await authorizeSuperadmin();
   if (response) return response;
 
-  let bundle: { topics?: Record<string, unknown>[]; articles?: Record<string, unknown>[]; research?: Record<string, unknown>[] };
+  let bundle: {
+    topics?: Record<string, unknown>[];
+    articles?: Record<string, unknown>[];
+    research?: Record<string, unknown>[];
+    ideas?: Record<string, unknown>[];
+  };
   try {
     bundle = await request.json();
   } catch {
@@ -76,6 +87,7 @@ export async function POST(request: NextRequest) {
   const topics = bundle.topics ?? [];
   const allArticles = bundle.articles ?? [];
   const research = bundle.research ?? [];
+  const ideas = bundle.ideas ?? [];
 
   // The same rule the publish routes enforce. An unsourced article is written
   // from the model's memory and reviewed by a fact-checker with no search
@@ -92,17 +104,38 @@ export async function POST(request: NextRequest) {
   });
 
   try {
-    // Topics first: articles reference them.
-    const t = await upsert("resource_topics", topics);
-    const a = await upsert("articles", articles);
-    const r = await upsert("research_reports", research);
+    // Topics first: articles reference them. Ideas last: a drafted idea
+    // points at the article it became.
+    const t = await upsert("resource_topics", "slug", topics);
+    const a = await upsert("articles", "slug", articles);
+    const r = await upsert("research_reports", "slug", research);
+
+    // An idea whose article did not come over -- it was a draft and the
+    // bundle was published-only -- would fail the foreign key and take the
+    // whole run with it. The idea itself is still worth having, so it lands
+    // unlinked rather than not at all.
+    const linked = await getDb().query<{ id: string }>(`SELECT id FROM articles`);
+    const existing = new Set(linked.rows.map((row) => row.id));
+    const unlinked: string[] = [];
+    for (const idea of ideas) {
+      if (idea.article_id && !existing.has(String(idea.article_id))) {
+        unlinked.push(String(idea.title));
+        idea.article_id = null;
+      }
+    }
+    const i = await upsert("article_ideas", "id", ideas);
+
     return NextResponse.json({
       ok: true,
       topics: t.written,
       articles: a.written,
       research: r.written,
+      ideas: i.written,
+      unlinked,
       refused,
-      skippedColumns: [...new Set([...t.skippedColumns, ...a.skippedColumns, ...r.skippedColumns])],
+      skippedColumns: [
+        ...new Set([...t.skippedColumns, ...a.skippedColumns, ...r.skippedColumns, ...i.skippedColumns]),
+      ],
     });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);

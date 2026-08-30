@@ -17,6 +17,9 @@ interface ImportResult {
   topics: number;
   articles: number;
   research: number;
+  ideas: number;
+  /** Ideas whose drafted article wasn't in the bundle, so they arrived unlinked. */
+  unlinked: string[];
   refused: string[];
   skippedColumns: string[];
 }
@@ -73,8 +76,12 @@ export function ImportContentButton() {
       {error ? <p className="max-w-xs text-right text-xs text-danger">{error}</p> : null}
       {result ? (
         <p className="max-w-xs text-right text-xs text-white/50">
-          {result.articles} article{result.articles === 1 ? "" : "s"}, {result.topics} topic
-          {result.topics === 1 ? "" : "s"}, {result.research} report{result.research === 1 ? "" : "s"} written.
+          {result.articles} article{result.articles === 1 ? "" : "s"}, {result.ideas} idea
+          {result.ideas === 1 ? "" : "s"}, {result.topics} topic{result.topics === 1 ? "" : "s"},{" "}
+          {result.research} report{result.research === 1 ? "" : "s"} written.
+          {result.unlinked.length
+            ? ` ${result.unlinked.length} idea${result.unlinked.length === 1 ? "" : "s"} arrived unlinked -- their drafts weren't in the bundle.`
+            : ""}
           {result.refused.length
             ? ` Refused ${result.refused.length} unsourced: ${result.refused.join(", ")}.`
             : ""}
