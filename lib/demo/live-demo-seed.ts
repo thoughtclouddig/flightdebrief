@@ -7,7 +7,7 @@ import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { evaluateAndAwardMilestones } from "@/lib/milestones";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { DEMO_HISTORY } from "@/lib/demo/video-demo-data";
-import { REAL_DEMO_FLIGHTS } from "@/lib/demo/real-flight-fixtures";
+import { completeDemoFlights } from "@/lib/demo/real-flight-fixtures";
 import type { StructuredDebrief, TrackPosition } from "@/lib/types";
 
 /**
@@ -100,9 +100,13 @@ async function insertDemoAircraft(
  * and different orgs/visitors don't all draw flights in the same order.
  * Wraps around if more flights are needed than were fetched.
  */
-let realFlightCursor = Math.floor(Math.random() * REAL_DEMO_FLIGHTS.length);
+// Only tracks that begin and end on the ground. Three fixtures stop on final
+// where ADS-B coverage ends, and drawn on a map they read as an aeroplane
+// ending in a neighbourhood. See isCompleteTrack().
+const DEMO_FLIGHTS = completeDemoFlights();
+let realFlightCursor = Math.floor(Math.random() * DEMO_FLIGHTS.length);
 function nextRealFlight() {
-  const flight = REAL_DEMO_FLIGHTS[realFlightCursor % REAL_DEMO_FLIGHTS.length];
+  const flight = DEMO_FLIGHTS[realFlightCursor % DEMO_FLIGHTS.length];
   realFlightCursor++;
   return flight;
 }
@@ -482,10 +486,36 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
   }
 }
 
+/**
+ * The school's roster.
+ *
+ * Three students, each with an identical four-flight history, made the
+ * insights page read as a toy: "most common training issues" over twelve
+ * flights that were the same four flights three times. A prospect looking at
+ * a school demo is asking whether this tells them anything about a real
+ * school, and three identical students cannot.
+ *
+ * Eight now, with DIFFERENT amounts of history -- `flights` is how many of
+ * DEMO_HISTORY's entries each one gets. That variation is the point:
+ *
+ *   - the deep ones give the aggregate something to aggregate
+ *   - the thin ones are what an admin actually needs to see. A student with
+ *     two debriefs is the one whose progress nobody can judge yet, and the
+ *     insights page saying so is more use than another averaged bar.
+ *
+ * Capped at DEMO_HISTORY's ten entries. Ask for more and the slice silently
+ * returns fewer, which is how a "six flight" student quietly becomes a
+ * four-flight one.
+ */
 const SCHOOL_STUDENTS = [
-  { name: "Riley Student", certificateType: "PRIVATE" as const },
-  { name: "Sam Trainee", certificateType: "PRIVATE" as const },
-  { name: "Casey Learner", certificateType: null },
+  { name: "Riley Student", certificateType: "PRIVATE" as const, flights: 6 },
+  { name: "Sam Trainee", certificateType: "PRIVATE" as const, flights: 2 },
+  { name: "Casey Learner", certificateType: null, flights: 5 },
+  { name: "Priya Raman", certificateType: "PRIVATE" as const, flights: 8 },
+  { name: "Marcus Webb", certificateType: null, flights: 4 },
+  { name: "Dana Osei", certificateType: "PRIVATE" as const, flights: 7 },
+  { name: "Tomas Ruiz", certificateType: null, flights: 3 },
+  { name: "Ellie Hart", certificateType: null, flights: 2 },
 ];
 
 export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Date): Promise<LiveDemoResult> {
@@ -595,11 +625,16 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
 
     for (const student of students) {
 
-      // Last 4 entries for every student -- same reasoning as the pilot
-      // persona above (see its comment): that's where DEMO_HISTORY's
-      // narrative actually converges on one repeated skill, which is what
-      // Progress's recurring-themes card needs to ever populate.
-      const transcripts = DEMO_HISTORY.slice(-4).map((e) => e.transcript);
+      // Each student gets their own depth of history -- see SCHOOL_STUDENTS.
+      //
+      // Taken from the END of DEMO_HISTORY, as the pilot persona does and for
+      // the same reason: that is where the narrative converges on one repeated
+      // skill, which is what Progress's recurring-themes card needs before it
+      // will populate at all. A student with only two flights therefore has
+      // too little for a theme to emerge, which is correct -- that is exactly
+      // what "limited feedback" means on the insights page.
+      const wanted = Math.min(student.flights, DEMO_HISTORY.length);
+      const transcripts = DEMO_HISTORY.slice(-wanted).map((e) => e.transcript);
       historicalRecords.push(
         ...(await seedHistoricalFlights(client, transcripts, {
           studentId: student.userId,
@@ -630,18 +665,26 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
     const now = new Date();
     const scheduledStart = new Date(now.getTime() - 2 * 60 * 60 * 1000);
     const scheduledEnd = new Date(now.getTime() - 60 * 60 * 1000);
-    const laterSlots = [
-      [3, 4],
-      [5, 6],
-    ] as const;
+    // Only some of the roster flies today, at spread times.
+    //
+    // The old version had a two-slot table and fell back to the last entry for
+    // everyone beyond it -- fine for three students, but the roster is eight
+    // now and six of them would have been booked into the identical hour. A
+    // schedule where most of the day is one time is worse than a short one.
+    //
+    // Four fly today: the primary student already flew (their reservation is
+    // in the past, matching the "today" flight and its guided debrief below),
+    // and three are booked at two-hour intervals ahead. The rest have history
+    // but nothing on the schedule, which is what a real day looks like.
+    const FLYING_TODAY = 4;
     const reservationRows: [string, Date, Date][] = [
       [primaryStudentId, scheduledStart, scheduledEnd],
-      ...studentIds.slice(1).map((studentId, i): [string, Date, Date] => {
-        const [startHours, endHours] = laterSlots[i] ?? laterSlots[laterSlots.length - 1];
+      ...studentIds.slice(1, FLYING_TODAY).map((studentId, i): [string, Date, Date] => {
+        const startHours = 2 + i * 2;
         return [
           studentId,
           new Date(now.getTime() + startHours * 60 * 60 * 1000),
-          new Date(now.getTime() + endHours * 60 * 60 * 1000),
+          new Date(now.getTime() + (startHours + 1) * 60 * 60 * 1000),
         ];
       }),
     ];
@@ -688,22 +731,70 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       ],
     );
 
-    const flightTaskId = `flight-task-demo-${randomUUID()}`;
-    await client.query(
-      `INSERT INTO flight_tasks (id, flight_id, task_code, label, source, sort_order)
-       VALUES ($1,$2,'LANDINGS','Traffic Pattern & Landings','instructor_selected',0)`,
-      [flightTaskId, todayFlightId],
-    );
+    // The lesson's task, plus the three every-flight items the real task
+    // route appends (lib/universal-tasks.ts). Seeded here rather than going
+    // through that route, so they have to be repeated -- if that list
+    // changes, this one needs the same change.
+    const demoTasks: { code: string; label: string; source: string }[] = [
+      { code: "LANDINGS", label: "Traffic Pattern & Landings", source: "instructor_selected" },
+      { code: "PREFLIGHT_INSPECTION", label: "Preflight & preparation", source: "syllabus" },
+      { code: "RADIO_COMMUNICATIONS", label: "Radio communication", source: "syllabus" },
+      { code: "SITUATIONAL_AWARENESS", label: "Situational awareness", source: "syllabus" },
+    ];
+    const taskIds: string[] = [];
+    for (const [i, task] of demoTasks.entries()) {
+      const id = `flight-task-demo-${randomUUID()}`;
+      taskIds.push(id);
+      await client.query(
+        `INSERT INTO flight_tasks (id, flight_id, task_code, label, source, sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [id, todayFlightId, task.code, task.label, task.source, i],
+      );
+    }
+
+    const studentAssessmentId = `assessment-demo-${randomUUID()}`;
+    const instructorAssessmentId = `assessment-demo-${randomUUID()}`;
     await client.query(
       `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, status, submitted_at)
        VALUES ($1,$2,'student',$3,'submitted',now())`,
-      [`assessment-demo-${randomUUID()}`, todayFlightId, primaryStudentId],
+      [studentAssessmentId, todayFlightId, primaryStudentId],
     );
     await client.query(
       `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, status, submitted_at)
        VALUES ($1,$2,'instructor',$3,'submitted',now())`,
-      [`assessment-demo-${randomUUID()}`, todayFlightId, instructorUserId],
+      [instructorAssessmentId, todayFlightId, instructorUserId],
     );
+
+    // The ratings themselves, which were missing entirely: the demo marked
+    // both assessments submitted and stored nothing under them, so the
+    // Compare screen rendered its header row over an empty table. The whole
+    // point of that screen is the disagreement, and there was none to show.
+    //
+    // Deliberately not identical. The student rates the landings harder on
+    // themselves than the CFI does, and the CFI is the one who flags the
+    // radio work -- which is exactly the "differences mean there's something
+    // worth talking through" the page promises, and it demonstrates the
+    // every-flight items earning their place at the same time.
+    const demoRatings: [string, string, string][] = [
+      // [task code, student rating, instructor rating]
+      ["LANDINGS", "LEARNING", "NEEDS_COACHING"],
+      ["PREFLIGHT_INSPECTION", "INDEPENDENT", "INDEPENDENT"],
+      ["RADIO_COMMUNICATIONS", "INDEPENDENT", "NEEDS_COACHING"],
+      ["SITUATIONAL_AWARENESS", "NEEDS_COACHING", "NEEDS_COACHING"],
+    ];
+    for (const [code, studentRating, instructorRating] of demoRatings) {
+      const taskId = taskIds[demoTasks.findIndex((t) => t.code === code)];
+      await client.query(
+        `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
+         VALUES ($1,$2,$3,$4)`,
+        [`rating-demo-${randomUUID()}`, studentAssessmentId, taskId, studentRating],
+      );
+      await client.query(
+        `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
+         VALUES ($1,$2,$3,$4)`,
+        [`rating-demo-${randomUUID()}`, instructorAssessmentId, taskId, instructorRating],
+      );
+    }
 
     const cards: { category: string; title: string; prompt: string; followUps: string[] }[] = [
       {

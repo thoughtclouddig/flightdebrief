@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { ArticleImagePrompt } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,10 @@ export function ArticleForm({ topics, article }: { topics: ResourceTopic[]; arti
     imageUrl: article?.imageUrl ?? "",
     status: (article?.status ?? "draft") as ArticleStatus,
   });
+  // The shot brief lives outside `form` because the image route writes it as
+  // a side effect of generating -- it is not a field the editor types into
+  // and then saves, it round-trips through the generator.
+  const [imagePrompt, setImagePrompt] = useState<ArticleImagePrompt | null>(article?.imagePrompt ?? null);
   const [slugTouched, setSlugTouched] = useState(Boolean(article));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +45,12 @@ export function ArticleForm({ topics, article }: { topics: ResourceTopic[]; arti
     setSaving(true);
     setError(null);
     try {
-      const payload = { ...form, imageUrl: form.imageUrl.trim() || null, status: nextStatus ?? form.status };
+      const payload = {
+        ...form,
+        imageUrl: form.imageUrl.trim() || null,
+        imagePrompt,
+        status: nextStatus ?? form.status,
+      };
       const res = await fetch(article ? `/api/admin/articles/${article.id}` : "/api/admin/articles", {
         method: article ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -137,6 +147,8 @@ export function ArticleForm({ topics, article }: { topics: ResourceTopic[]; arti
       </div>
 
       <ArticleImageField
+        prompt={imagePrompt}
+        onPromptChange={setImagePrompt}
         articleId={article?.id ?? null}
         value={form.imageUrl}
         onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}

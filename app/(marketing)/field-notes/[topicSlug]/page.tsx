@@ -1,4 +1,5 @@
 import { isContentPublic } from "@/lib/content/visibility";
+import { formatHeadline } from "@/lib/headline";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -85,7 +86,7 @@ export default async function ResourceTopicPage(props: PageProps<"/field-notes/[
                       />
                     ) : null}
                     <div>
-                      <p className="font-display text-xl font-bold text-[#101727] group-hover:text-brand">{article.title}</p>
+                      <p className="font-display text-xl font-bold text-[#101727] group-hover:text-brand">{formatHeadline(article.title)}</p>
                       {article.dek ? <p className="mt-1 text-[#68717D]">{article.dek}</p> : null}
                     </div>
                   </Link>

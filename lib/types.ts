@@ -685,6 +685,16 @@ export type SourceType =
   | "afterflight_recommendation"
   | "afterflight_capability";
 
+/** The editable shot brief behind an article's hero image. See lib/ai/image-prompt.ts. */
+export interface ArticleImagePrompt {
+  scene: string;
+  subjects: string;
+  aircraft: string;
+  light: string;
+  camera: string;
+  rationale: string;
+}
+
 export interface Source {
   label: string;
   url: string;
@@ -725,6 +735,8 @@ export interface Article {
   sources: Source[];
   /** https:// or data: URL -- see db/schema.sql's comment on articles.image_url. */
   imageUrl: string | null;
+  /** The editable shot brief the hero image was generated from. Null for older articles. */
+  imagePrompt: ArticleImagePrompt | null;
   /** Structured body; null for articles written before it existed, which render from `body`. */
   bodyBlocks: ArticleBody | null;
   publishedAt: string | null;

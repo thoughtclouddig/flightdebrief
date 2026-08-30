@@ -1,4 +1,5 @@
 import { isContentPublic } from "@/lib/content/visibility";
+import { formatHeadline, toTitleCase } from "@/lib/headline";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -46,7 +47,7 @@ export async function generateMetadata(
   const origin = appOrigin();
   const canonical = origin ? `${origin}/field-notes/${topicSlug}/${articleSlug}` : undefined;
   return {
-    title: `${article.title} — AfterFlight`,
+    title: `${toTitleCase(article.title)} — AfterFlight`,
     description: article.dek || undefined,
     alternates: canonical ? { canonical } : undefined,
     openGraph: {
@@ -158,7 +159,7 @@ export default async function ArticlePage(props: PageProps<"/field-notes/[topicS
             className="font-display mt-3 text-balance text-[2.75rem] font-bold leading-[1.05] tracking-normal text-[#101727] sm:text-[3.5rem]"
             style={{ textTransform: "none" }}
           >
-            {article.title}
+            {formatHeadline(article.title)}
           </h1>
           {/* Stepped down and narrowed. The dek frames the piece; the lead
               answer below delivers it. At the old size the two competed, and
@@ -247,7 +248,7 @@ export default async function ArticlePage(props: PageProps<"/field-notes/[topicS
                     </div>
                     <div className="flex flex-1 flex-col p-4">
                       <p className="font-display text-pretty text-[16px] font-bold leading-[1.3] text-[#101727] group-hover:text-brand">
-                        {a.title}
+                        {formatHeadline(a.title)}
                       </p>
                       {a.dek ? (
                         <p className="mt-2 line-clamp-2 text-[14px] leading-relaxed text-[#68717D]">{a.dek}</p>

@@ -3,6 +3,7 @@ import { getRepository } from "@/lib/data";
 import { authorizeSuperadmin } from "@/lib/auth/guard";
 import { pickNextTopic, generateArticleDraft } from "@/lib/ai/generate-article";
 import { generateArticleImage } from "@/lib/ai/generate-article-image";
+import type { ImagePromptParts } from "@/lib/ai/image-prompt";
 import { hasContentPipelineSecret } from "@/lib/content/pipeline-auth";
 import { startDraftJob } from "@/lib/content/draft-jobs";
 
@@ -65,12 +66,17 @@ export async function POST(request: Request) {
 
     report("Generating the image");
     let imageUrl: string | null = null;
+    let imagePrompt: ImagePromptParts | null = null;
     try {
-      imageUrl = await generateArticleImage({
+      const generated = await generateArticleImage({
         title: draft.title,
         topicName: topic.name,
         answer: draft.bodyBlocks.answer,
       });
+      imageUrl = generated.imageUrl;
+      // Kept with the article so the editor can adjust one element of the
+      // shot rather than re-rolling a prompt they cannot see.
+      imagePrompt = generated.parts;
     } catch (err) {
       // The article is still worth keeping without an image -- log and move on.
       console.error("[content-pipeline] image generation failed:", err);
@@ -89,6 +95,7 @@ export async function POST(request: Request) {
       // worse than no citation at all.
       sources: draft.sources,
       imageUrl,
+      imagePrompt,
       bodyBlocks: draft.bodyBlocks,
     });
 

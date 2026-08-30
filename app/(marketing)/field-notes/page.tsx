@@ -1,4 +1,5 @@
 import { isContentPublic } from "@/lib/content/visibility";
+import { formatHeadline } from "@/lib/headline";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -182,7 +183,7 @@ export default async function FieldNotesHubPage(props: PageProps<"/field-notes">
                         </span>
                       ) : null}
                       <h2 className="font-display mt-3 text-pretty text-[19px] font-bold leading-[1.3] text-[#101727] group-hover:text-brand">
-                        {item.title}
+                        {formatHeadline(item.title)}
                       </h2>
                       {item.dek ? (
                         <p className="mt-2 line-clamp-3 text-pretty text-[15px] leading-relaxed text-[#68717D]">

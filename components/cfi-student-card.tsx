@@ -48,11 +48,25 @@ export function CfiStudentCard({
           </div>
         ) : null}
 
+        {/* One button when both go to the same place.
+            "Open Brief" was pointing at the student's profile for anyone with
+            no flight to debrief -- the identical destination as the Profile
+            button beside it. Two buttons, same label difference, same result:
+            a control that lies about what it does. */}
         <div className="flex gap-2 pt-1">
-          <Link href={openBriefHref} className={buttonVariants({ size: "sm", className: "flex-1" })}>
-            Open Brief
-          </Link>
-          <Link href={profileHref} className={buttonVariants({ size: "sm", variant: "outline" })}>
+          {openBriefHref !== profileHref ? (
+            <Link href={openBriefHref} className={buttonVariants({ size: "sm", className: "flex-1" })}>
+              Open Brief
+            </Link>
+          ) : null}
+          <Link
+            href={profileHref}
+            className={buttonVariants({
+              size: "sm",
+              variant: openBriefHref !== profileHref ? "outline" : "default",
+              className: openBriefHref !== profileHref ? undefined : "flex-1",
+            })}
+          >
             Profile
           </Link>
         </div>
