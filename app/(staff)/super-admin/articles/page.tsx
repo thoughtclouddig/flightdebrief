@@ -14,12 +14,43 @@ export const dynamic = "force-dynamic";
 export default async function ContentDeskPage(props: PageProps<"/super-admin/articles">) {
   const { tab } = await props.searchParams;
   const repo = getRepository();
-  const [articles, reports, ideas, topics] = await Promise.all([
-    repo.listArticles({}),
-    repo.listResearchReports({}),
-    repo.listArticleIdeas(),
-    repo.listResourceTopics(),
-  ]);
+
+  // Loaded inside a try so a failure here reads as a failure.
+  //
+  // When one of these queries threw in production, the console rendered
+  // Next's error path and a browser showed what looked like being signed out
+  // -- so a data problem presented as an auth problem, which is the single
+  // most misleading thing a screen can do. The layout above has already
+  // proved the viewer is staff by the time this runs; nothing on this page
+  // can log anyone out.
+  let articles, reports, ideas, topics;
+  try {
+    [articles, reports, ideas, topics] = await Promise.all([
+      repo.listArticles({}),
+      repo.listResearchReports({}),
+      repo.listArticleIdeas(),
+      repo.listResourceTopics(),
+    ]);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[content-desk] failed to load:", detail);
+    return (
+      <div className="mx-auto max-w-2xl">
+        <h1 className="font-display text-2xl font-bold text-white">Content desk unavailable</h1>
+        <p className="mt-2 text-sm text-white/60">
+          The desk could not load its content. You are still signed in -- this is a data problem, not an access
+          one.
+        </p>
+        <pre className="mt-4 overflow-x-auto whitespace-pre-wrap rounded-lg bg-black/40 p-4 text-xs text-red-300">
+          {detail}
+        </pre>
+        <p className="mt-4 text-xs text-white/40">
+          A missing table or column is the usual cause on a freshly deployed database. Running the build applies
+          db/schema.sql, which creates and alters both.
+        </p>
+      </div>
+    );
+  }
   const topicById = new Map(topics.map((t) => [t.id, t]));
 
   const articleRows: ContentRow[] = [
