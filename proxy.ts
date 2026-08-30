@@ -37,7 +37,15 @@ export async function proxy(request: NextRequest) {
   const session = token ? await verifySessionJwt(token) : null;
 
   if (!session) {
+    // Carry the reason and the path. A bounce to /login is indistinguishable
+    // from a logout when you are looking at it in a browser, and we spent an
+    // afternoon on a production bounce that could have been one glance at the
+    // URL: no cookie is a different bug from a cookie that will not verify,
+    // and "which path" is the difference between a route problem and a
+    // session problem.
     const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("from", pathname);
+    loginUrl.searchParams.set("reason", token ? "invalid-session" : "no-cookie");
     return NextResponse.redirect(loginUrl);
   }
 
