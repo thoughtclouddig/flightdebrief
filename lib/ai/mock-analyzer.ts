@@ -16,8 +16,14 @@ export function analyzeMock(input: AnalyzeDebriefInput): StructuredDebriefResult
   // a critique first -- keep it in needsWork only, not duplicated into wentWell.
   const wentWell = sentences.filter((s) => matches(s, POSITIVE_CUES) && !matches(s, NEGATIVE_CUES));
   const needsWork = sentences.filter((s) => matches(s, NEGATIVE_CUES));
-  const instructorGuidance = extractInstructorGuidance(sentences, instructorName);
-  const instructorAssistance = extractInstructorAssistance(sentences, instructorName);
+  // A flight with no instructor on it cannot have instructor guidance. The
+  // heuristics below key off the word "instructor" and a name, both of which
+  // a solo pilot can perfectly well say in a debrief ("my instructor used to
+  // tell me...") -- and attributing that to a CFI who was not on the flight
+  // puts words in a real person's mouth on the pilot's own record.
+  const soloFlight = !input.flightMeta.instructorName;
+  const instructorGuidance = soloFlight ? [] : extractInstructorGuidance(sentences, instructorName);
+  const instructorAssistance = soloFlight ? [] : extractInstructorAssistance(sentences, instructorName);
   const riskManagementNotes = sentences.filter((s) => matches(s, RISK_CUES));
   const actionItems = buildActionItems(needsWork, whatWeDid, input.previousActionItems);
   const nextLessonFocus = buildNextLessonFocus(whatWeDid, needsWork);
