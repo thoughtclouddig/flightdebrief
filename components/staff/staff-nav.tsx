@@ -41,9 +41,19 @@ export function StaffNav({ name, email }: { name: string; email: string }) {
             <span className="hidden text-sm text-white/60 sm:inline" title={email}>
               {name}
             </span>
-            <Link href="/api/auth/logout" className="text-sm font-medium text-white/60 hover:text-white">
+            {/*
+              A plain anchor, NOT next/link. Link prefetches its href the
+              moment it enters the viewport, and this href is a GET that
+              deletes the session cookie -- so rendering this header signed
+              you out, and the next navigation redirected to /login while the
+              page you were already looking at kept working. Took a long time
+              to find because it presents as "sub-pages require a login the
+              parent doesn't". components/user-menu.tsx avoids it the same
+              way, via window.location.
+            */}
+            <a href="/api/auth/logout" className="text-sm font-medium text-white/60 hover:text-white">
               Sign out
-            </Link>
+            </a>
           </div>
         </div>
         <nav className="-mx-1 flex flex-wrap gap-0.5">
