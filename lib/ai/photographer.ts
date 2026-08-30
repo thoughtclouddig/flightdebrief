@@ -145,6 +145,7 @@ REJECT it if any of these are true:
   - Landing gear. Three wheels, arranged either as two mains plus a nosewheel or two mains plus a tailwheel. Never both. Never floating clear of the airframe.
   - General geometry: a tail that attaches to nothing, a cabin with no way in, doubled or half-melted surfaces.
 - The aircraft is a Cessna 172 when the brief specified something else. The type in the brief is the type in the frame.
+- THE CONNECTION IS A METAPHOR RATHER THAN A SUBJECT. You are told why the picture was commissioned. If that reason is symbolic -- a lone aircraft "reflecting" isolation, open sky "evoking" freedom -- reject it. The picture must show something the article literally discusses. A generic photograph with a poetic justification is the commonest way a wrong image gets published, precisely because it reads as intentional.
 - IT IS NOT ABOUT THIS ARTICLE. You are given the title and what the picture was commissioned to show. Ask whether a reader who read the article would recognise this photograph as belonging to it. Then ask the harder question: could this same image sit on top of a DIFFERENT article about flight training and work just as well? If it could, reject it -- an interchangeable image is a failed image however handsome it is, and a run of them is what made the last set of these look generic.
 
 Be strict. A borderline image is a reject -- these run at the top of the page and are the first thing a reader judges.

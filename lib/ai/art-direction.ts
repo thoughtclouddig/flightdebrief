@@ -31,16 +31,55 @@ const REQUEST_TIMEOUT_MS = 30_000;
  * convincing human. Named explicitly because "be creative" produces the
  * average of everything, which is the stock photo we're trying to avoid.
  */
-const SHOT_TYPES = [
+/**
+ * Shot types for articles about FLYING an aeroplane -- technique, procedure,
+ * weather, the aircraft itself.
+ */
+const FLYING_SHOTS = [
   "an empty cockpit filled with light -- sun through the windscreen, warm reflections on the glareshield",
   "an object close up and beautifully lit: a headset on a seat, a kneeboard, a fuel tester, keys on a wing",
   "an aircraft on the ramp from outside, clean air, big sky, strong sunlight",
   "the view a pilot has -- out the windscreen, over the cowling, down a runway toward open country",
-  "the airport as landscape: hangar row, windsock, tiedowns, a taxiway leading somewhere",
   "an aircraft airborne, seen against sky and terrain, wing catching the sun",
-  "somewhere that is not an airport at all: a kitchen table the night before a lesson, a hotel room on a cross-country, a hangar floor, a bookshelf, a whiteboard wiped clean",
   "the weather or the ground the article is about: a gust front, a valley in haze, a mountain pass, a runway wet after rain has cleared",
 ] as const;
+
+/**
+ * Shot types for articles about PEOPLE -- instructors, students, schools,
+ * money, scheduling, decisions.
+ *
+ * There is no photograph of an aeroplane that is about a student changing
+ * instructors, and asking for one produces a stock aircraft shot with a
+ * metaphor attached. These are the rooms and objects where those things
+ * actually happen, empty.
+ */
+const GROUND_SHOTS = [
+  "two chairs at a briefing table, one pushed back, morning light across it",
+  "an empty briefing room or crew room, the light good, nobody in it yet",
+  "a desk after a lesson: headset down, notebook closed, a cold coffee",
+  "the walk out to the ramp seen from the doorway, aircraft small in the distance",
+  "a hangar office or a schedule wall, worn and specific, no legible writing",
+  "a kitchen table the night before a lesson, or a hotel room on a cross-country",
+] as const;
+
+/**
+ * Which pool an article draws from.
+ *
+ * The rotation exists so a hundred articles are not the same photograph, but
+ * hashing across ONE list ignores what the article is about -- which is how a
+ * piece on noticing a student is leaving you drew "an aircraft airborne" and
+ * the director, told not to substitute, wrote a poem to justify it.
+ *
+ * Keyword matching rather than a model call: it runs on the title, it is
+ * cheap, and the failure mode is mild. A people-article mistakenly given a
+ * flying shot is the status quo; a flying-article given a briefing room is a
+ * duller picture, not a wrong one.
+ */
+const PEOPLE_SUBJECT = /\b(instructor|cfi|student|school|hire|hiring|switch|switching|quit|leave|leaving|cost|costs|price|pricing|money|budget|business|schedule|scheduling|book|booking|retention|churn|customer|client|manage|managing|staff|team|communicat|relationship|expectation|feedback|debrief|syllabus|curriculum|checkride prep|career)\b/i;
+
+export function isPeopleSubject(title: string): boolean {
+  return PEOPLE_SUBJECT.test(title);
+}
 
 /**
  * Which shot type this article gets.
@@ -54,9 +93,10 @@ const SHOT_TYPES = [
  * the same treatment) while spreading across the list as articles accumulate.
  */
 function shotTypeFor(title: string): string {
+  const pool: readonly string[] = isPeopleSubject(title) ? GROUND_SHOTS : FLYING_SHOTS;
   let hash = 0;
   for (let i = 0; i < title.length; i++) hash = (hash * 31 + title.charCodeAt(i)) | 0;
-  return SHOT_TYPES[Math.abs(hash) % SHOT_TYPES.length];
+  return pool[Math.abs(hash) % pool.length];
 }
 
 const briefSchema = z.object({
@@ -92,6 +132,17 @@ LIGHT -- this matters as much as the subject
 Bright, warm, and open. Golden hour, clear high-desert morning, sun breaking across a ramp, big blue sky with structured cloud. The feeling is early in a good flying day.
 
 Never overcast, grey, rainy, dim, night, or fog. Not because those aren't real, but because this illustrates articles about getting better at flying, and a reader should want to be there. An article about improving should not look like an article about loss.
+
+NO METAPHOR. THIS IS THE RULE THAT KEEPS GETTING BROKEN.
+
+The connection you give must be LITERAL: the picture shows a thing the article actually talks about. Never symbolic. Never an image chosen first and explained afterwards.
+
+This was a real answer, for an article about noticing that a student is switching instructors because of you:
+
+  subject:    "A Cessna 172 banked in a turn, alone in the frame with no other traffic nearby"
+  connection: "the solitary aircraft, disconnected from any ground crew, reflects the quiet, unspoken distance that grows between an instructor and a student who is drifting away"
+
+That is a generic aeroplane photograph with a poem attached. The aircraft is not lonely. Nothing in that frame is about instructors. If your connection contains "reflects", "represents", "symbolises", "evokes", "speaks to", or "mirrors", you have written an excuse instead of finding a picture. Start again.
 
 Be concrete. "A headset resting on the left seat of a Cessna 172, morning sun pouring through the side window" is a photograph. "Aviation training concept" is not.
 
