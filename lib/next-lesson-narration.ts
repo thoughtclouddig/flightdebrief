@@ -11,7 +11,7 @@
  * independently telling the student what to do -- attribute it to the
  * instructor by first name when known, "your instructor" otherwise.
  */
-import { speakList, speakItems, toSecondPerson } from "@/lib/narration";
+import { speakList, speakItems, toSecondPerson, stripSpokenActionLabel } from "@/lib/narration";
 
 export interface NextLessonNarrationInput {
   studentFirstName: string;
@@ -40,7 +40,7 @@ export function buildNextLessonNarration(input: NextLessonNarrationInput): strin
   lines.push(`Hey ${input.studentFirstName}, quick brief before you fly.`);
 
   if (input.focus.length > 0) {
-    lines.push(`${cfiOrFallback === "your instructor" ? "Your instructor" : cfiOrFallback} wants you to focus on ${speakList(input.focus.map(toSecondPerson))} today.`);
+    lines.push(`${cfiOrFallback === "your instructor" ? "Your instructor" : cfiOrFallback} wants you to focus on ${speakList(input.focus.map((f) => stripSpokenActionLabel(toSecondPerson(f))))} today.`);
   }
 
   if (input.whatWeDid.length > 0) {
