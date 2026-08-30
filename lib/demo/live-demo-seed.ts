@@ -12,6 +12,7 @@ import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { evaluateAndAwardMilestones } from "@/lib/milestones";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { DEMO_HISTORY } from "@/lib/demo/video-demo-data";
+import { SOLO_DEMO_HISTORY } from "@/lib/demo/solo-demo-history";
 import { completeDemoFlights } from "@/lib/demo/real-flight-fixtures";
 import type { StructuredDebrief, TrackPosition } from "@/lib/types";
 
@@ -489,16 +490,15 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
       organizationId: orgId,
     });
 
-    // Last 5, not first 5 -- DEMO_HISTORY's transcripts are a deliberate
-    // narrative arc that only converges on one persistent theme (flare/
-    // centerline control) toward the end (see lib/demo/video-demo-data.ts's
-    // own doc comment); the early entries each describe a different evolving
-    // issue. Progress's recurring-themes card only surfaces a theme once the
-    // same skill is flagged in 2+ of the last 4 completed flights, so the
-    // early slice never actually triggered it.
+    // SOLO_DEMO_HISTORY, not DEMO_HISTORY: the student set names an
+    // instructor inside the transcripts, and seeding it here gave a pilot
+    // with no CFI a debrief record quoting one. Same converging arc -- the
+    // recurring-themes card only surfaces a theme once the same skill is
+    // flagged in 2+ of the last 4 completed flights, so the history has to
+    // keep repeating one.
     const historicalRecords = await seedHistoricalFlights(
       client,
-      DEMO_HISTORY.slice(-5).map((e) => e.transcript),
+      SOLO_DEMO_HISTORY.map((e) => e.transcript),
       {
         studentId: userId,
         organizationId: orgId,
@@ -700,8 +700,10 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
 
       // Each student gets their own depth of history -- see SCHOOL_STUDENTS.
       //
-      // Taken from the END of DEMO_HISTORY, as the pilot persona does and for
-      // the same reason: that is where the narrative converges on one repeated
+      // Taken from the END of DEMO_HISTORY -- these students have a CFI, so
+      // the instructor-voiced transcripts are right here (the solo persona
+      // uses SOLO_DEMO_HISTORY instead). The end, because that is where the
+      // narrative converges on one repeated
       // skill, which is what Progress's recurring-themes card needs before it
       // will populate at all. A student with only two flights therefore has
       // too little for a theme to emerge, which is correct -- that is exactly
