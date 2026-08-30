@@ -94,7 +94,7 @@ You will be given one aircraft type. Use it, and name it exactly as given. Do no
 
 It is assigned because asking for variety does not produce variety: told to vary the type, the answer came back "Cessna 172" three times running. The 172 is the most defensible answer to almost any training subject, and a publication where every aeroplane is a 172 reads as though nobody involved has been to an airport.
 
-The one exception is a hard requirement in the subject. If the article is explicitly about multi-engine work and you are handed a single, say so in `avoid` -- but do not silently swap the type.
+The one exception is a hard requirement in the subject. If the article is explicitly about multi-engine work and you are handed a single, say so in the avoid field -- but do not silently swap the type.
 
 DESCRIBE THE CONFIGURATION
 
