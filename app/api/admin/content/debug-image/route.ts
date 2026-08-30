@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Pass ?title=" }, { status: 400 });
   }
 
-  const prompt = await writeImagePrompt({
+  const written = await writeImagePrompt({
     title,
     topicName: url.searchParams.get("topic")?.trim() || "Flight training",
     answer: url.searchParams.get("answer")?.trim() || undefined,
@@ -30,7 +30,11 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     title,
-    prompt,
+    // "fallback" means the model never ran and this is the canned scene --
+    // the thing that made a broken pipeline look like a bad prompt.
+    source: written.source,
+    error: written.error,
+    prompt: written.prompt,
     theTest: "Is this a scene this specific article could be about, or would it fit any article on the site?",
   });
 }

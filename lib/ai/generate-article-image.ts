@@ -32,9 +32,19 @@ export async function generateArticleImage(input: {
 
   // One call writes the whole scene. See lib/ai/image-prompt.ts for why the
   // four-stage chain that used to live here is gone.
-  const prompt = await writeImagePrompt(input);
+  const written = await writeImagePrompt(input);
+  if (written.source === "fallback") {
+    // Loud, because generating from the canned scene produces exactly the
+    // "all the images look the same" symptom while looking like a working
+    // pipeline.
+    console.warn(`[article-image] prompt writer fell back: ${written.error ?? "unknown"}`);
+  }
 
-  const response = await client.images.generate({ model: "gpt-image-1", prompt, size: "1024x1024" });
+  const response = await client.images.generate({
+    model: "gpt-image-1",
+    prompt: written.prompt,
+    size: "1024x1024",
+  });
   const b64 = response.data?.[0]?.b64_json;
   if (!b64) throw new Error("OpenAI image response contained no image data");
 

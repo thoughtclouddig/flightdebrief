@@ -53,6 +53,22 @@ Return the prompt itself as plain prose. No preamble, no JSON, no quotation mark
 const FALLBACK =
   "A flight school briefing room in late afternoon, low sun through a west-facing window laying a bright band across a wooden table. Two chairs pulled up at an angle to each other, one slightly pushed back. A Cessna 172 -- high wing, wing struts, fixed nosewheel, single propeller on the nose -- visible through the window on the ramp beyond, softly out of focus. Shot at 35mm from across the table, shallow depth of field so the far wall falls away. Warm, natural, unposed. No legible text or readable instruments anywhere in frame.";
 
+export interface ImagePrompt {
+  prompt: string;
+  /**
+   * Whether a model actually wrote this, or it is the canned scene.
+   *
+   * Surfaced rather than swallowed. The chain this replaced fell back to a
+   * hardcoded cockpit on failure and only logged it, so a run of identical
+   * generic images looked like a prompt that needed rewriting -- and four
+   * rounds of rewriting a prompt that had not run followed. A fallback that
+   * cannot be told apart from a result is worse than an error.
+   */
+  source: "model" | "fallback";
+  /** Why the model call failed, when it did. */
+  error?: string;
+}
+
 export async function writeImagePrompt(input: {
   title: string;
   topicName: string;
@@ -60,9 +76,15 @@ export async function writeImagePrompt(input: {
   answer?: string;
   /** A human's steer, which outranks everything the model would have chosen. */
   direction?: string;
-}): Promise<string> {
+}): Promise<ImagePrompt> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return withDirection(FALLBACK, input.direction);
+  if (!apiKey) {
+    return {
+      prompt: withDirection(FALLBACK, input.direction),
+      source: "fallback",
+      error: "ANTHROPIC_API_KEY is not set",
+    };
+  }
 
   try {
     const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
@@ -87,11 +109,13 @@ Write the photograph.`,
     if (!textBlock || textBlock.type !== "text") throw new Error("no text");
     const prompt = textBlock.text.trim();
     if (prompt.length < 80) throw new Error("prompt too short to be a scene");
-    return prompt;
+    return { prompt: withDirection(prompt, input.direction), source: "model" };
   } catch (err) {
-    // A decent generic scene beats blocking the article on the prompt writer.
-    console.error("[image-prompt] failed, using the fallback scene:", err);
-    return withDirection(FALLBACK, input.direction);
+    // A decent generic scene beats blocking the article on the prompt writer,
+    // but the caller is told, and the debug route prints it.
+    const error = err instanceof Error ? err.message : String(err);
+    console.error("[image-prompt] MODEL CALL FAILED, using the canned scene:", error);
+    return { prompt: withDirection(FALLBACK, input.direction), source: "fallback", error };
   }
 }
 
