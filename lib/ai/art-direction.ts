@@ -71,6 +71,16 @@ An article about the cost of repeating a lesson:
 
 Compare the failure this replaced: "a lone aircraft, disconnected from any ground crew, reflecting the quiet distance between instructor and student". The aircraft is not a consequence of anything. It is an arbitrary object with a mood attached, which is what a picture looks like when nobody asked the question above.
 
+THESE OBJECTS ARE USED UP
+
+Headsets, kneeboards, logbooks, aviator sunglasses, a coffee cup beside a checklist. Do not photograph them. Not as the subject, not on the table in the background.
+
+They are the aviation equivalent of the Cessna 172: the most available answer to "an aviation object", so every article converges on them and the page ends up looking like one photograph taken twelve times. Two of the last three came back as headsets on a table.
+
+The only exception is an article literally about the object -- a piece about choosing a headset may photograph a headset.
+
+If the consequence you found is a headset, you have not finished the work. Ask again: what ELSE would be different? A logbook page is not the answer either. Chairs, doors, whiteboards, schedule blocks, car keys, a thermos, a folded chart, an empty parking space, a light left on, a door propped open, the second cup nobody poured.
+
 BE SPECIFIC, AND DO NOT REACH FOR THE AIRPORT BY DEFAULT
 
 A hangar, a ramp, a parked aeroplane, a windsock: these are what this comes out as when the question has not been answered. They are only right when the article is literally about them. Most of these articles happen in crew rooms, at kitchen tables, on desks, in cars, in the ten minutes before a lesson -- photograph there.

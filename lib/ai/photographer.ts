@@ -134,7 +134,7 @@ export interface PhotoVerdict {
 const PHOTO_EDITOR = `You are a photo editor. You are looking at one generated image intended to run as the hero on a flight-training article. Decide whether it can be published.
 
 REJECT it if any of these are true:
-- A person is visible. Any person: a pilot, a figure at distance, a hand, a silhouette, a reflection of one.
+- A person is visible. ANY part of one. A hand holding a pen is a person. Fingers at the edge of frame are a person. A forearm, a shoulder, a leg, a silhouette, a reflection in glass or metal -- all people. This is the rule that gets broken most often and it is not a matter of degree: if any human body part is in the frame, reject it. Look at the hands specifically before deciding, because a hand entering frame to hold or write something is the commonest version and the easiest to read past.
 - Text appears anywhere and is legible or half-legible: signage, placards, avionics readouts, tail numbers, watermarks. Garbled lettering is worse than none.
 - An instrument panel or avionics display is readable enough to look wrong.
 - It is dark, grey, gloomy, washed out, or flat. The brief is bright and cinematic.
@@ -199,7 +199,11 @@ export async function reviewPhotograph(pngBase64: string, brief?: ArtBrief): Pro
     if (!textBlock || textBlock.type !== "text") throw new Error("no text");
     return verdictSchema.parse(JSON.parse(extractJson(textBlock.text)));
   } catch (err) {
-    console.error("[photo-editor] review failed, accepting the image:", err);
-    return { usable: true, problems: [], fix: "" };
+    // Accepting on failure is deliberate -- a review that cannot run should
+    // not cost the article its picture -- but it must not look like a pass.
+    // A silently-accepted image is indistinguishable from a checked one, and
+    // that is how a photograph with a hand in it reached the page.
+    console.error("[photo-editor] review FAILED TO RUN, accepting unchecked:", err);
+    return { usable: true, problems: ["photo editor did not run -- image is unchecked"], fix: "" };
   }
 }
