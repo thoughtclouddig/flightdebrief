@@ -21,6 +21,13 @@ export interface DebriefNarrationInput {
   /** Resolved via lib/instructor-attribution.ts's resolveCfiFirstName(). Null when no instructor is assigned to this flight. */
   instructorFirstName: string | null;
   /**
+   * True when this pilot flies without an instructor at all -- an individual
+   * account rather than a student whose CFI simply is not named on this
+   * flight. The two cases both leave instructorFirstName null and need
+   * completely different narration.
+   */
+  soloPilot?: boolean;
+  /**
    * Claude's own natural-language recap of the debrief (see lib/ai/prompt.ts),
    * grounded in the same fields below -- when present, this replaces the
    * templated middle section entirely so the audio sounds like a real recap
@@ -44,6 +51,16 @@ const MAX_SPOKEN_GUIDANCE = 4;
 
 export function buildDebriefNarration(input: DebriefNarrationInput): string {
   const cfi = input.instructorFirstName;
+
+  // Null instructorFirstName means two different things, and the old fallback
+  // treated them as one: a STUDENT whose instructor is not named on this
+  // flight -- "your instructor" is right for them -- and a SOLO pilot, who
+  // has none. Saying "your instructor noted" to someone the product recruited
+  // with "no CFI needed" describes a conversation that did not happen.
+  //
+  // A solo debrief is the pilot's own. So the lines are rewritten in their
+  // voice rather than having a name removed from them.
+  const solo = input.soloPilot === true;
   const cfiOrFallback = cfi ?? "your instructor";
   const cfiOrFallbackCapitalized = cfi ?? "Your instructor";
   const opening = `Hey ${input.studentFirstName}, here's your debrief -- let's walk through today's flight together.`;
@@ -66,7 +83,11 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   }
 
   if (input.wentWell.length > 0) {
-    sections.push(`${cfiOrFallbackCapitalized} noted that ${speakList(input.wentWell.map(toSecondPerson))}.`);
+    sections.push(
+      solo
+        ? `What went well: ${speakList(input.wentWell.map(toSecondPerson))}.`
+        : `${cfiOrFallbackCapitalized} noted that ${speakList(input.wentWell.map(toSecondPerson))}.`,
+    );
   }
 
   if (input.needsWork.length > 0) {
@@ -74,8 +95,8 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
       // Same shape problem as the brief's "Keep an eye on": "...was X" wants
       // a noun phrase, and needsWork items are often whole sentences.
       readsAsSentence(input.needsWork[0]!)
-        ? `The biggest thing you and ${cfiOrFallback} identified during the debrief: ${toSecondPerson(input.needsWork[0]!)}`
-        : `The biggest thing you and ${cfiOrFallback} identified during the debrief was ${toSecondPerson(input.needsWork[0]!)}.`,
+        ? `The biggest thing ${solo ? "you flagged" : `you and ${cfiOrFallback} identified`} during the debrief: ${toSecondPerson(input.needsWork[0]!)}`
+        : `The biggest thing ${solo ? "you flagged" : `you and ${cfiOrFallback} identified`} during the debrief was ${toSecondPerson(input.needsWork[0]!)}.`,
     );
   }
 
@@ -93,12 +114,18 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   }
 
   if (input.actionItems.length > 0) {
-    sections.push(`For your next flight, ${cfiOrFallback} wants you to focus on ${toSecondPerson(input.actionItems[0]!)}.`);
+    sections.push(
+      solo
+        ? `For your next flight, you're focusing on ${toSecondPerson(input.actionItems[0]!)}.`
+        : `For your next flight, ${cfiOrFallback} wants you to focus on ${toSecondPerson(input.actionItems[0]!)}.`,
+    );
   }
 
   if (input.studyReferences.length > 0) {
     sections.push(
-      `AfterFlight has also added a few study resources to your list, based on what you and ${cfiOrFallback} discussed.`,
+      solo
+        ? "AfterFlight has also added a few study resources to your list, based on what came up in this debrief."
+        : `AfterFlight has also added a few study resources to your list, based on what you and ${cfiOrFallback} discussed.`,
     );
   }
 

@@ -40,10 +40,15 @@ export async function GET(request: Request, { params }: RouteContext<"/api/fligh
   }
 
   const student = await repo.getUser(flight.userId);
+  // See the same call in app/api/debrief/analyze/route.ts: both build the
+  // script that keys the audio cache, so a difference between them means the
+  // pre-warmed audio and the played audio are different recordings.
+  const organization = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
 
   const script = buildDebriefNarration({
     studentFirstName: student?.name.split(" ")[0] ?? "there",
     instructorFirstName: resolveCfiFirstName(flight.instructor),
+    soloPilot: organization?.kind === "individual",
     narrativeRecap: debrief.structuredResult.narrativeRecap,
     whatWeDid: debrief.structuredResult.whatWeDid,
     wentWell: debrief.structuredResult.wentWell,
