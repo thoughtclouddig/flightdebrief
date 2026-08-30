@@ -7,7 +7,7 @@ import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { evaluateAndAwardMilestones } from "@/lib/milestones";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { DEMO_HISTORY } from "@/lib/demo/video-demo-data";
-import { REAL_DEMO_FLIGHTS } from "@/lib/demo/real-flight-fixtures";
+import { completeDemoFlights } from "@/lib/demo/real-flight-fixtures";
 import type { StructuredDebrief, TrackPosition } from "@/lib/types";
 
 /**
@@ -100,9 +100,13 @@ async function insertDemoAircraft(
  * and different orgs/visitors don't all draw flights in the same order.
  * Wraps around if more flights are needed than were fetched.
  */
-let realFlightCursor = Math.floor(Math.random() * REAL_DEMO_FLIGHTS.length);
+// Only tracks that begin and end on the ground. Three fixtures stop on final
+// where ADS-B coverage ends, and drawn on a map they read as an aeroplane
+// ending in a neighbourhood. See isCompleteTrack().
+const DEMO_FLIGHTS = completeDemoFlights();
+let realFlightCursor = Math.floor(Math.random() * DEMO_FLIGHTS.length);
 function nextRealFlight() {
-  const flight = REAL_DEMO_FLIGHTS[realFlightCursor % REAL_DEMO_FLIGHTS.length];
+  const flight = DEMO_FLIGHTS[realFlightCursor % DEMO_FLIGHTS.length];
   realFlightCursor++;
   return flight;
 }

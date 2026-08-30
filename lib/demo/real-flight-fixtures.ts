@@ -20,6 +20,40 @@ export interface RealDemoFlight {
  * flights. Regenerate by re-running the fetch script if these ever go stale
  * (FR24 only serves the last 14 days).
  */
+/**
+ * Whether a track covers the whole flight, wheels to wheels.
+ *
+ * ADS-B coverage drops on final at low-lying fields, so a track can simply
+ * stop a mile out at approach speed and a few hundred feet up. Drawn on a
+ * map that reads as an aircraft ending in a neighbourhood -- one of these
+ * fixtures looked like a crash on the demo, which is not a thing to show a
+ * prospect.
+ *
+ * Detected from the data rather than from airport coordinates: an aeroplane
+ * that has landed is doing taxi speed. One that vanished on final is doing
+ * seventy knots. Three of the ten fixtures fail this, ending at 69-105 kt
+ * and 475-2425 ft.
+ *
+ * Both ends are checked. A track that starts airborne is missing its takeoff,
+ * which is less alarming but still not a flight.
+ */
+const GROUND_SPEED_KT = 40;
+
+export function isCompleteTrack(flight: RealDemoFlight): boolean {
+  const track = flight.track;
+  if (track.length < 200) return false;
+  const first = track[0];
+  const last = track[track.length - 1];
+  return (
+    (first.groundSpeedKt ?? 999) < GROUND_SPEED_KT && (last.groundSpeedKt ?? 999) < GROUND_SPEED_KT
+  );
+}
+
+/** Only the fixtures that begin and end on the ground. What the demo should draw. */
+export function completeDemoFlights(): RealDemoFlight[] {
+  return REAL_DEMO_FLIGHTS.filter(isCompleteTrack);
+}
+
 export const REAL_DEMO_FLIGHTS: RealDemoFlight[] = [
   {
     "tailNumber": "N28949",
