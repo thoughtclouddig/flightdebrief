@@ -1,4 +1,4 @@
-import type { StructuredDebrief } from "@/lib/types";
+import type { StructuredDebrief, TrainingCategory, TrainingSkill } from "@/lib/types";
 
 /**
  * Fixed, deterministic identifiers for the Video Demo Mode persona and
@@ -18,6 +18,21 @@ export const DEMO_INSTRUCTOR_EMAIL = "demo-sarah-mitchell@afterflight.internal";
 
 export const DEMO_STUDENT_NAME = "Alex Morgan";
 export const DEMO_INSTRUCTOR_NAME = "Sarah Mitchell";
+
+/**
+ * The PREVIOUS instructor, who flew the early half of this student's
+ * training before leaving for the airlines.
+ *
+ * Exists so the demo can show the one thing no competitor can compute: a
+ * weakness that outlived a change of instructor. With a single CFI on every
+ * flight, cross-instructor recurrence is unreachable by construction, and
+ * the product's sharpest claim has nothing to render.
+ */
+export const DEMO_PRIOR_INSTRUCTOR_ID = "user-video-demo-marcus";
+export const DEMO_PRIOR_INSTRUCTOR_NAME = "Marcus Reyes";
+export const DEMO_PRIOR_INSTRUCTOR_EMAIL = "demo-marcus-reyes@afterflight.internal";
+/** History entries before this index belong to Marcus; the rest to Sarah. */
+export const DEMO_INSTRUCTOR_HANDOVER_INDEX = 5;
 export const DEMO_AIRCRAFT_TAIL = "N842DA";
 export const DEMO_AIRCRAFT_TYPE = "Diamond DA40 NG";
 export const DEMO_AIRPORT = "KSDL";
@@ -34,7 +49,26 @@ export const DEMO_TODAY_DURATION_MINUTES = 72; // 1.2 hours
  * (below) opens with -- floating/fast approaches, then narrowing to flare
  * and centerline control specifically.
  */
-export const DEMO_HISTORY: { daysAgo: number; durationMinutes: number; transcript: string }[] = [
+export interface DemoHistoryEntry {
+  daysAgo: number;
+  durationMinutes: number;
+  transcript: string;
+  /**
+   * Skills this lesson should be guaranteed to flag, on top of whatever the
+   * mock analyzer extracts from the transcript.
+   *
+   * Needed because the analyzer only produces a `needsWork` line for some of
+   * these transcripts, and names a different skill each time -- so nothing
+   * ever recurs and the recurrence view is permanently empty in the demo.
+   * The narrative arc in the transcripts is real; this makes the derived
+   * signals match it deterministically instead of depending on keyword luck.
+   *
+   * Demo data only. Nothing outside lib/demo reads this.
+   */
+  guaranteedNeedsWork?: { skill: TrainingSkill; category: TrainingCategory; statement: string }[];
+}
+
+export const DEMO_HISTORY: DemoHistoryEntry[] = [
   {
     daysAgo: 49,
     durationMinutes: 68,
@@ -59,6 +93,13 @@ export const DEMO_HISTORY: { daysAgo: number; durationMinutes: number; transcrip
     durationMinutes: 76,
     transcript:
       "Practiced go-arounds and normal landings. Radio confidence is much better, handled a runway change from tower without hesitating. Still ballooning a little in the flare when I round out too high.",
+    guaranteedNeedsWork: [
+      {
+        skill: "CROSSWIND_LANDING",
+        category: "LANDINGS",
+        statement: "Still ballooning a little in the flare when I round out too high.",
+      },
+    ],
   },
   {
     daysAgo: 23,
@@ -71,6 +112,13 @@ export const DEMO_HISTORY: { daysAgo: number; durationMinutes: number; transcrip
     durationMinutes: 73,
     transcript:
       "Worked crosswind landings. Airspeed on final was right where it needed to be all four landings. Radio calls were confident and clear. Flare timing is still inconsistent -- ballooned once, landed flat once.",
+    guaranteedNeedsWork: [
+      {
+        skill: "CROSSWIND_LANDING",
+        category: "LANDINGS",
+        statement: "Flare timing is still inconsistent -- ballooned once, landed flat once.",
+      },
+    ],
   },
   {
     daysAgo: 12,
@@ -83,6 +131,13 @@ export const DEMO_HISTORY: { daysAgo: number; durationMinutes: number; transcrip
     durationMinutes: 75,
     transcript:
       "Solid flight. Checklist usage is second nature now. Radio calls are confident, no repeats needed all flight. Still working on nailing the flare timing to avoid ballooning and holding centerline through rollout.",
+    guaranteedNeedsWork: [
+      {
+        skill: "CROSSWIND_LANDING",
+        category: "LANDINGS",
+        statement: "Still working on the flare timing and holding centerline through rollout.",
+      },
+    ],
   },
 ];
 

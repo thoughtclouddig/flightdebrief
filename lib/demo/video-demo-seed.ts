@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db";
 import { localIsoDate } from "@/lib/date";
 import { generatePatternTrack } from "@/lib/geo";
+import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import {
   DEMO_AIRCRAFT_ID,
@@ -12,6 +13,10 @@ import {
   DEMO_HISTORY,
   DEMO_INSTRUCTOR_EMAIL,
   DEMO_INSTRUCTOR_ID,
+  DEMO_INSTRUCTOR_HANDOVER_INDEX,
+  DEMO_PRIOR_INSTRUCTOR_ID,
+  DEMO_PRIOR_INSTRUCTOR_NAME,
+  DEMO_PRIOR_INSTRUCTOR_EMAIL,
   DEMO_INSTRUCTOR_NAME,
   DEMO_ORG_ID,
   DEMO_ORG_NAME,
@@ -63,6 +68,23 @@ export async function ensureVideoDemoSeeded(): Promise<void> {
     [`member-video-demo-sarah`, DEMO_ORG_ID, DEMO_INSTRUCTOR_ID],
   );
 
+  // The departed CFI. Still a member of the org -- a school does not delete
+  // an instructor's record when they leave, and the student's earlier
+  // lessons have to keep resolving to a real name.
+  await db.query(
+    "INSERT INTO users (id, name, email, profile_completed) VALUES ($1,$2,$3,true) ON CONFLICT (id) DO NOTHING",
+    [DEMO_PRIOR_INSTRUCTOR_ID, DEMO_PRIOR_INSTRUCTOR_NAME, DEMO_PRIOR_INSTRUCTOR_EMAIL],
+  );
+  await db.query(
+    `INSERT INTO organization_members (id, organization_id, user_id, role)
+     VALUES ($1,$2,$3,'instructor') ON CONFLICT (id) DO NOTHING`,
+    [`member-video-demo-marcus`, DEMO_ORG_ID, DEMO_PRIOR_INSTRUCTOR_ID],
+  );
+  await db.query(
+    "INSERT INTO instructors (id, name, organization_id) VALUES ($1,$2,$3) ON CONFLICT (id) DO NOTHING",
+    [DEMO_PRIOR_INSTRUCTOR_ID, DEMO_PRIOR_INSTRUCTOR_NAME, DEMO_ORG_ID],
+  );
+
   await db.query(
     "INSERT INTO instructors (id, name, organization_id) VALUES ($1,$2,$3) ON CONFLICT (id) DO NOTHING",
     [DEMO_INSTRUCTOR_ID, DEMO_INSTRUCTOR_NAME, DEMO_ORG_ID],
@@ -88,6 +110,10 @@ export async function ensureVideoDemoSeeded(): Promise<void> {
   for (let i = 0; i < DEMO_HISTORY.length; i++) {
     const entry = DEMO_HISTORY[i];
     const flightId = `flight-video-demo-history-${i}`;
+    // DEMO_HISTORY is ordered oldest-first, so the early indices are the
+    // departed CFI's lessons. This is what makes the recurring theme cross
+    // an instructor change instead of sitting under one name.
+    const flightInstructorId = i < DEMO_INSTRUCTOR_HANDOVER_INDEX ? DEMO_PRIOR_INSTRUCTOR_ID : DEMO_INSTRUCTOR_ID;
     const debriefId = `debrief-video-demo-history-${i}`;
     const flightDate = daysAgoIso(entry.daysAgo);
     const createdAt = new Date(Date.now() - entry.daysAgo * 24 * 60 * 60 * 1000).toISOString();
@@ -104,7 +130,7 @@ export async function ensureVideoDemoSeeded(): Promise<void> {
        ) VALUES ($1,$2,$3,$4,$5,$5,$6,$7,$8,'complete',$9,$10) ON CONFLICT (id) DO NOTHING`,
       [
         flightId, DEMO_STUDENT_ID, DEMO_ORG_ID, DEMO_AIRCRAFT_ID, DEMO_AIRPORT,
-        flightDate, entry.durationMinutes, DEMO_INSTRUCTOR_ID, JSON.stringify(track), createdAt,
+        flightDate, entry.durationMinutes, flightInstructorId, JSON.stringify(track), createdAt,
       ],
     );
 
@@ -128,6 +154,47 @@ export async function ensureVideoDemoSeeded(): Promise<void> {
        VALUES ($1,$2,$3,$4,$5,'mock',$6) ON CONFLICT (id) DO NOTHING`,
       [debriefId, flightId, entry.transcript, Math.round(entry.durationMinutes * 0.6), JSON.stringify(result), createdAt],
     );
+
+    // Training signals, the same way app/api/debrief/analyze/route.ts writes
+    // them for a real debrief. Without these the seeded history produces no
+    // recurring theme at all -- and the recurrence view, which is the whole
+    // point of a two-instructor demo, renders empty on a freshly reset demo.
+    // instructor_id carries the CFI who actually flew that lesson, which is
+    // what makes the cross-instructor count real rather than staged.
+    const drafts = [
+      ...classifyTrainingSignals(result),
+      ...(entry.guaranteedNeedsWork ?? []).map((g) => ({
+        category: g.category,
+        skill: g.skill,
+        status: "NEEDS_COACHING" as const,
+        source: "STUDENT_AND_INSTRUCTOR" as const,
+        statement: g.statement,
+      })),
+    ];
+    for (const [n, draft] of drafts.entries()) {
+      await db.query(
+        `INSERT INTO training_signals (
+           id, organization_id, student_id, instructor_id, aircraft_id, flight_id, debrief_id,
+           flight_date, category, skill, status, source, statement, created_at
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT (id) DO NOTHING`,
+        [
+          `signal-video-demo-${i}-${n}`,
+          DEMO_ORG_ID,
+          DEMO_STUDENT_ID,
+          flightInstructorId,
+          DEMO_AIRCRAFT_ID,
+          flightId,
+          debriefId,
+          flightDate,
+          draft.category,
+          draft.skill,
+          draft.status,
+          draft.source,
+          draft.statement,
+          createdAt,
+        ],
+      );
+    }
   }
 
   await seedTodayFlight(DEMO_STUDENT_ID);

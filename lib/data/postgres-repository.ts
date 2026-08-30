@@ -1,5 +1,6 @@
 import type { ArticleBody } from "@/lib/content/article-body";
 import { randomUUID } from "node:crypto";
+import { CONSENT_POLICY_VERSION } from "@/lib/consent";
 import type { Pool, PoolClient } from "pg";
 import type {
   Aircraft,
@@ -866,6 +867,35 @@ export class PostgresRepository implements Repository {
     return rows.map((r) => r.url as string);
   }
 
+  // --- Transcript retention (see lib/consent.ts) ---
+
+  async purgeExpiredTranscripts(organizationId: string, retentionDays: number): Promise<number> {
+    const db = await this.db();
+    // Blanks the transcript; structured_result is untouched. That column is
+    // the student's training record -- clearing it would delete the history
+    // this product exists to keep, which is not what a retention policy means.
+    const { rowCount } = await db.query(
+      `UPDATE debriefs d
+          SET transcript = '', transcript_purged_at = now()
+         FROM flights f
+        WHERE d.flight_id = f.id
+          AND f.organization_id = $1
+          AND d.transcript_purged_at IS NULL
+          AND d.transcript <> ''
+          AND d.created_at < now() - ($2 || ' days')::interval`,
+      [organizationId, String(retentionDays)],
+    );
+    return rowCount ?? 0;
+  }
+
+  async purgeDebriefTranscript(debriefId: string): Promise<void> {
+    const db = await this.db();
+    await db.query(
+      `UPDATE debriefs SET transcript = '', transcript_purged_at = now() WHERE id = $1 AND transcript_purged_at IS NULL`,
+      [debriefId],
+    );
+  }
+
   // --- Radio-communications practice ---
 
   async createRadioPracticeAssignment(input: {
@@ -1491,12 +1521,23 @@ export class PostgresRepository implements Repository {
     participantUserId: string;
     participantRole: "student" | "instructor";
     status: "granted" | "declined";
+    policyVersion?: string;
   }): Promise<ConsentRecord> {
     const db = await this.db();
+    // policy_version defaults at the call site rather than in SQL so the
+    // stored value is always the version the caller actually rendered --
+    // a DB default would silently stamp new text onto an old acceptance.
     const { rows } = await db.query(
-      `INSERT INTO consent_records (id, flight_id, participant_user_id, participant_role, status)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [randomUUID(), input.flightId, input.participantUserId, input.participantRole, input.status],
+      `INSERT INTO consent_records (id, flight_id, participant_user_id, participant_role, status, policy_version)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [
+        randomUUID(),
+        input.flightId,
+        input.participantUserId,
+        input.participantRole,
+        input.status,
+        input.policyVersion ?? CONSENT_POLICY_VERSION,
+      ],
     );
     return mapConsentRecord(rows[0]);
   }
@@ -1730,6 +1771,7 @@ function mapOrganization(row: Row): Organization {
     name: row.name as string,
     kind: row.kind as Organization["kind"],
     defaultGuidanceMode: row.default_guidance_mode as Organization["defaultGuidanceMode"],
+    transcriptRetentionDays: (row.transcript_retention_days as number | null) ?? null,
     stripeCustomerId: (row.stripe_customer_id as string | null) ?? null,
     stripeSubscriptionId: (row.stripe_subscription_id as string | null) ?? null,
     subscriptionStatus: (row.subscription_status as string | null) ?? null,
@@ -2134,6 +2176,7 @@ function mapConsentRecord(row: Row): ConsentRecord {
     participantUserId: row.participant_user_id as string,
     participantRole: row.participant_role as ConsentRecord["participantRole"],
     status: row.status as ConsentRecord["status"],
+    policyVersion: (row.policy_version as string | null) ?? "",
     recordedAt: iso(row.recorded_at),
     createdAt: iso(row.created_at),
   };

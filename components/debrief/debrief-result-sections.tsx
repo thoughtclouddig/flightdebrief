@@ -13,7 +13,8 @@ import {
 import { AcsBadge } from "@/components/acs-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
-import { ComparisonTable, type ComparisonRow } from "@/components/debrief/comparison-table";
+import { PerceptionGapList } from "@/components/debrief/perception-gap-list";
+import type { PerceptionGapRow } from "@/lib/perception-gap";
 import { FlightMap } from "@/components/flight-map";
 import { SkillProgressList } from "@/components/skill-progress-list";
 import { EditableTrainingItemList } from "@/components/debrief/editable-training-item-list";
@@ -44,7 +45,7 @@ export function DebriefResultSections({
   editableTrainingItems,
 }: {
   result: StructuredDebrief;
-  differenceRows: ComparisonRow[];
+  differenceRows: PerceptionGapRow[];
   displayTrack: TrackPosition[] | null;
   /** False for a hand-logged flight, so the empty map doesn't claim an ADS-B lookup happened. */
   hasAdsbLookup?: boolean;
@@ -138,11 +139,11 @@ export function DebriefResultSections({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShieldAlert className="size-4 text-amber" />
-                Where Your Perceptions Differed
+                Where You and Your Instructor Saw It Differently
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ComparisonTable rows={differenceRows} />
+              <PerceptionGapList rows={differenceRows} />
             </CardContent>
           </Card>
         ) : null}

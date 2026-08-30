@@ -114,8 +114,13 @@ export default async function ProgressPage() {
             {brief.recurringThemes.map((theme, i) => (
               <div key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <p className="text-sm text-foreground-soft">
-                  <span className="font-semibold text-foreground">{theme.theme}</span> has come up in{" "}
-                  {theme.count} of your last {theme.consideredFlights} debriefs.
+                  <span className="font-semibold text-foreground">{theme.theme}</span> has come up in {theme.count}{" "}
+                  {theme.count === 1 ? "lesson" : "lessons"}
+                  {/* The instructor count is the whole point when it's >1: a
+                      weakness that outlived a change of instructor is about
+                      the skill, not about whoever was teaching. Stated as
+                      persistence, never as anyone failing to fix it. */}
+                  {theme.instructorCount >= 2 ? ` with ${theme.instructorCount} instructors` : ""}.
                 </p>
                 <AcsBadge skill={theme.skill} certificateType={certificateType} />
               </div>

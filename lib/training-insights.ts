@@ -193,39 +193,21 @@ export async function trainingCoverage(repo: Repository, organizationId: string,
     .sort((a, b) => b.occurrences - a.occurrences);
 }
 
-export interface LimitedFeedbackStudent {
-  student: User;
-  flightsChecked: number;
-}
+/*
+ * REMOVED: "Limited Feedback" -- students whose recent debriefs captured no
+ * instructor guidance quotes.
+ *
+ * It read as a student-level signal but it was computed entirely from what an
+ * instructor said (or didn't) during their own debriefs, which makes it a
+ * debrief-quality score with a student's name on it. AfterFlight does not
+ * grade debriefs or instructors: a CFI who believes the tool is measuring
+ * them stops recording, and the capture is the product. An empty-guidance
+ * debrief is also frequently a transcription or a quiet-lesson artifact
+ * rather than an instructional failure, so the signal was never as clean as
+ * its label implied.
+ */
 
-/** Students whose last `lookback` debriefs captured zero instructor guidance quotes. */
-async function limitedFeedbackStudents(
-  repo: Repository,
-  organizationId: string,
-  lookback = 3,
-): Promise<LimitedFeedbackStudent[]> {
-  const studentMembers = await repo.listMembers(organizationId, "student");
-  const results: LimitedFeedbackStudent[] = [];
-
-  for (const member of studentMembers) {
-    const flights = await repo.listFlights({ studentId: member.userId, organizationId });
-    const recentCompleted = [...flights]
-      .filter((f) => f.debriefStatus === "complete")
-      .sort((a, b) => b.flightDate.localeCompare(a.flightDate))
-      .slice(0, lookback);
-    if (recentCompleted.length < lookback) continue; // not enough data to call this a pattern yet
-
-    const debriefs = await Promise.all(recentCompleted.map((f) => repo.getDebriefByFlight(f.id)));
-    const allEmpty = debriefs.every((d) => (d?.structuredResult.instructorGuidance.length ?? 0) === 0);
-    if (!allEmpty) continue;
-
-    const student = await repo.getUser(member.userId);
-    if (student) results.push({ student, flightsChecked: recentCompleted.length });
-  }
-  return results;
-}
-
-export type NeedsReviewReason = "Repeated Deficiency" | "Repeated Carry-Forward" | "Limited Feedback";
+export type NeedsReviewReason = "Repeated Deficiency" | "Repeated Carry-Forward";
 
 export interface NeedsReviewEntry {
   student: User;
@@ -236,16 +218,17 @@ export interface NeedsReviewEntry {
 /**
  * A queue of patterns worth a chief instructor's attention -- not an
  * automated disciplinary system and not a verdict on any student or
- * instructor. Two signal types from the request aren't computed here yet,
+ * instructor -- and deliberately contains nothing derived from how well an
+ * instructor debriefs (see the removal note above). Two signal types from the
+ * request aren't computed here yet,
  * by design: "Possible Training Gap" needs syllabus data (explicitly future
  * work), and "Student/Instructor Disconnect" needs per-speaker transcript
  * attribution this single-narrator transcript can't reliably provide.
  */
 export async function needsReviewQueue(repo: Repository, organizationId: string): Promise<NeedsReviewEntry[]> {
-  const [recurring, carried, limited] = await Promise.all([
+  const [recurring, carried] = await Promise.all([
     recurringStudentIssues(repo, organizationId, 3),
     objectivesCarriedForward(repo, organizationId, 3),
-    limitedFeedbackStudents(repo, organizationId, 3),
   ]);
 
   const entries: NeedsReviewEntry[] = [];
@@ -261,13 +244,6 @@ export async function needsReviewQueue(repo: Repository, organizationId: string)
       student: c.student,
       reason: "Repeated Carry-Forward",
       detail: `"${c.description}" has carried forward across ${c.streak} consecutive lessons without resolving.`,
-    });
-  }
-  for (const l of limited) {
-    entries.push({
-      student: l.student,
-      reason: "Limited Feedback",
-      detail: `The last ${l.flightsChecked} debriefs contain little to no captured instructor guidance.`,
     });
   }
   return entries;

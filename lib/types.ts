@@ -49,6 +49,18 @@ export interface Organization {
   kind: OrganizationKind;
   /** One default guidance mode per org for now -- see DebriefGuidanceMode below. */
   defaultGuidanceMode: DebriefGuidanceMode;
+  /**
+   * How long verbatim debrief transcripts are kept, in days. Null means keep
+   * indefinitely; undefined (column unset) falls back to the product default.
+   * See lib/consent.ts -- deliberately per-org and configurable, because a
+   * school with its own counsel will have its own number.
+   *
+   * Optional rather than required so the many places that construct an
+   * Organization (seeds, tests, auth store) don't all have to opt in to a
+   * setting almost none of them care about -- effectiveRetentionDays()
+   * resolves undefined to the product default.
+   */
+  transcriptRetentionDays?: number | null;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   /** Mirrors Stripe's own subscription status strings verbatim (active/past_due/canceled/etc.) -- null before a first checkout. Stripe is the source of truth; only the webhook handler writes this. */
@@ -433,6 +445,12 @@ export interface ConsentRecord {
   participantUserId: string;
   participantRole: ConsentRole;
   status: ConsentStatus;
+  /**
+   * Version of the consent copy that was on screen when this was accepted
+   * (lib/consent.ts). Empty string for rows written before versioning
+   * existed -- those backfilled to a sentinel in the schema.
+   */
+  policyVersion: string;
   recordedAt: string;
   createdAt: string;
 }
