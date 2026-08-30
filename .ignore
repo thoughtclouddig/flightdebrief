@@ -1,0 +1,30 @@
+# Dependencies are installed during the deployment build.
+node_modules/
+
+# Only .next-build is produced and used by the production build. Exclude all
+# local/generated Next.js output from the source payload; the build recreates
+# the required production output inside the deployment environment.
+.next/
+.next-build/
+.next-e2e*/
+out/
+build/
+
+# Local caches and test artifacts are not needed at runtime.
+.cache/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+tts-check.mp3
+
+# Agent/workspace metadata is not application runtime content.
+.agents/
+.local/
+.claude/
+.git/
+
+# Creative-production source media is versioned with the project but is not
+# imported or served by the AfterFlight web application.
+ad-studio/
+attached_assets/
