@@ -3,6 +3,7 @@ import { getRepository } from "@/lib/data";
 import { ContentDesk, type ContentRow } from "@/components/staff/content-desk";
 import { GenerateDraftButton } from "@/components/admin/generate-draft-button";
 import { ImportContentButton } from "@/components/staff/import-content-button";
+import { ProposeIdeasButton } from "@/components/staff/propose-ideas-button";
 
 export const dynamic = "force-dynamic";
 
@@ -114,6 +115,7 @@ export default async function ContentDeskPage(props: PageProps<"/super-admin/art
           >
             New article
           </Link>
+          <ProposeIdeasButton />
           <GenerateDraftButton />
           <ImportContentButton />
         </div>
