@@ -133,6 +133,12 @@ Bright, warm, and open. Golden hour, clear high-desert morning, sun breaking acr
 
 Never overcast, grey, rainy, dim, night, or fog. Not because those aren't real, but because this illustrates articles about getting better at flying, and a reader should want to be there. An article about improving should not look like an article about loss.
 
+NEVER NAME AN AIRCRAFT TYPE
+
+Not "a Cessna 172", not "a Skyhawk", not "a Cherokee". Say "a single-engine trainer", "a training aeroplane", "a light twin" -- or better, describe what it is doing rather than what it is.
+
+Someone else picks the type, after you, and their choice is the one the photographer receives. If you name one too, the prompt carries two different aeroplanes and contradicts itself. It is also how every picture ended up a 172: naming the obvious type is exactly the reflex the assignment exists to defeat.
+
 NO METAPHOR. THIS IS THE RULE THAT KEEPS GETTING BROKEN.
 
 The connection you give must be LITERAL: the picture shows a thing the article actually talks about. Never symbolic. Never an image chosen first and explained afterwards.
