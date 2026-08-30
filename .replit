@@ -15,6 +15,10 @@ localPort = 3101
 externalPort = 3001
 
 [[ports]]
+localPort = 4010
+externalPort = 3002
+
+[[ports]]
 localPort = 5099
 externalPort = 3000
 
@@ -89,3 +93,4 @@ timeoutMs = 180000
 
 [userenv.shared]
 INVITE_EMAIL_FROM = "AfterFlight <debrief@getafterflight.com>"
+GIT_EDITOR = "true"

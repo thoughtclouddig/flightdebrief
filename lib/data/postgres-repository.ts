@@ -1560,10 +1560,11 @@ export class PostgresRepository implements Repository {
 
 /**
  * Demo seeding is strictly opt-in: it requires SEED_DEMO_DATA to be set to a
- * truthy value ("1"/"true"/"yes") and never runs inside a Replit deployment,
- * so a fresh production database starts empty except for real identity data.
+ * truthy value ("1"/"true"/"yes") and never runs during a production build or
+ * inside a Replit deployment, so production identity data is never mutated.
  */
 export function shouldSeedDemoData(): boolean {
+  if (process.env.AFTERFLIGHT_BUILD) return false;
   if (process.env.REPLIT_DEPLOYMENT) return false;
   const flag = (process.env.SEED_DEMO_DATA ?? "").trim().toLowerCase();
   return flag === "1" || flag === "true" || flag === "yes";
