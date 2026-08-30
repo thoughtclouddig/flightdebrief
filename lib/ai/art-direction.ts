@@ -32,72 +32,17 @@ const REQUEST_TIMEOUT_MS = 30_000;
  * average of everything, which is the stock photo we're trying to avoid.
  */
 /**
- * Shot types for articles about FLYING an aeroplane -- technique, procedure,
- * weather, the aircraft itself.
+ * There is no shot list any more, and that is the point.
+ *
+ * It started as five airport scenes to stop every image being a cockpit, grew
+ * to eight, then split into two pools routed by subject. Every version
+ * produced the same complaint: the pictures all look like each other, because
+ * a list of subjects IS a list of the same subjects.
+ *
+ * What replaced it is one instruction -- photograph the physical CONSEQUENCE
+ * of what the article describes -- and that generates variety intrinsically.
+ * Two articles cannot share an object unless they share an argument.
  */
-const FLYING_SHOTS = [
-  "an empty cockpit filled with light -- sun through the windscreen, warm reflections on the glareshield",
-  "an object close up and beautifully lit: a headset on a seat, a kneeboard, a fuel tester, keys on a wing",
-  "an aircraft on the ramp from outside, clean air, big sky, strong sunlight",
-  "the view a pilot has -- out the windscreen, over the cowling, down a runway toward open country",
-  "an aircraft airborne, seen against sky and terrain, wing catching the sun",
-  "the weather or the ground the article is about: a gust front, a valley in haze, a mountain pass, a runway wet after rain has cleared",
-] as const;
-
-/**
- * Shot types for articles about PEOPLE -- instructors, students, schools,
- * money, scheduling, decisions.
- *
- * There is no photograph of an aeroplane that is about a student changing
- * instructors, and asking for one produces a stock aircraft shot with a
- * metaphor attached. These are the rooms and objects where those things
- * actually happen, empty.
- */
-const GROUND_SHOTS = [
-  "two chairs at a briefing table, one pushed back, morning light across it",
-  "an empty briefing room or crew room, the light good, nobody in it yet",
-  "a desk after a lesson: headset down, notebook closed, a cold coffee",
-  "the walk out to the ramp seen from the doorway, aircraft small in the distance",
-  "a hangar office or a schedule wall, worn and specific, no legible writing",
-  "a kitchen table the night before a lesson, or a hotel room on a cross-country",
-] as const;
-
-/**
- * Which pool an article draws from.
- *
- * The rotation exists so a hundred articles are not the same photograph, but
- * hashing across ONE list ignores what the article is about -- which is how a
- * piece on noticing a student is leaving you drew "an aircraft airborne" and
- * the director, told not to substitute, wrote a poem to justify it.
- *
- * Keyword matching rather than a model call: it runs on the title, it is
- * cheap, and the failure mode is mild. A people-article mistakenly given a
- * flying shot is the status quo; a flying-article given a briefing room is a
- * duller picture, not a wrong one.
- */
-const PEOPLE_SUBJECT = /\b(instructor|cfi|student|school|hire|hiring|switch|switching|quit|leave|leaving|cost|costs|price|pricing|money|budget|business|schedule|scheduling|book|booking|retention|churn|customer|client|manage|managing|staff|team|communicat|relationship|expectation|feedback|debrief|syllabus|curriculum|checkride prep|career)\b/i;
-
-export function isPeopleSubject(title: string): boolean {
-  return PEOPLE_SUBJECT.test(title);
-}
-
-/**
- * Which shot type this article gets.
- *
- * Assigned rather than chosen. Given a list and a free hand, the director
- * converged on the same two or three pictures -- cockpit interiors and
- * headsets -- because those are the most obvious answer to almost any flight
- * training subject. The same collapse as every aircraft being a 172.
- *
- * Hashed off the title so it is stable for a given article (a redraft gets
- * the same treatment) while spreading across the list as articles accumulate.
- */
-function shotTypeFor(title: string): string {
-  const pool: readonly string[] = isPeopleSubject(title) ? GROUND_SHOTS : FLYING_SHOTS;
-  let hash = 0;
-  for (let i = 0; i < title.length; i++) hash = (hash * 31 + title.charCodeAt(i)) | 0;
-  return pool[Math.abs(hash) % pool.length];
-}
 
 const briefSchema = z.object({
   subject: z.string().default("").catch(""),
@@ -110,11 +55,27 @@ const SYSTEM = `You art-direct one photograph for a flight-training article. You
 
 Pick a subject that belongs to THIS article specifically. An article about chair-flying is not the same picture as one about crosswind landings, and the difference should be visible.
 
-YOUR SHOT TYPE IS ASSIGNED, NOT CHOSEN
+FIND THE PHYSICAL CONSEQUENCE
 
-You will be given one shot type. Use it. Do not substitute a different one because it seems to fit the article better -- it is assigned precisely so that a hundred articles do not all end up as the same photograph, and "what fits best" is how they do.
+This is the whole job. Ask: if what this article describes is happening, what OBJECT in the world would exist differently? Photograph that.
 
-Interpret it specifically for THIS article. The assignment is the kind of picture; the subject within it is yours.
+An article about noticing a student has quietly switched instructors:
+  A wall of headset hooks in a crew room, three headsets hanging, one hook bare.
+The hook is empty BECAUSE a student stopped coming. That is a consequence, not a symbol.
+
+An article about chair-flying:
+  A kitchen chair pulled out from the table at an angle no one sits at, a checklist face-down beside it.
+
+An article about the cost of repeating a lesson:
+  Two identical fuel receipts on a desk, one on top of the other.
+
+Compare the failure this replaced: "a lone aircraft, disconnected from any ground crew, reflecting the quiet distance between instructor and student". The aircraft is not a consequence of anything. It is an arbitrary object with a mood attached, which is what a picture looks like when nobody asked the question above.
+
+BE SPECIFIC, AND DO NOT REACH FOR THE AIRPORT BY DEFAULT
+
+A hangar, a ramp, a parked aeroplane, a windsock: these are what this comes out as when the question has not been answered. They are only right when the article is literally about them. Most of these articles happen in crew rooms, at kitchen tables, on desks, in cars, in the ten minutes before a lesson -- photograph there.
+
+If an aircraft genuinely belongs in the frame, do not name a type. Someone downstream chooses it, and naming one too makes the prompt contradict itself.
 
 NO PEOPLE
 
@@ -139,9 +100,9 @@ Not "a Cessna 172", not "a Skyhawk", not "a Cherokee". Say "a single-engine trai
 
 Someone else picks the type, after you, and their choice is the one the photographer receives. If you name one too, the prompt carries two different aeroplanes and contradicts itself. It is also how every picture ended up a 172: naming the obvious type is exactly the reflex the assignment exists to defeat.
 
-NO METAPHOR. THIS IS THE RULE THAT KEEPS GETTING BROKEN.
+NO METAPHOR
 
-The connection you give must be LITERAL: the picture shows a thing the article actually talks about. Never symbolic. Never an image chosen first and explained afterwards.
+The connection you give must name the consequence: THIS object is like this BECAUSE of what the article describes. Never a mood, never a resemblance, never an image chosen first and explained afterwards.
 
 This was a real answer, for an article about noticing that a student is switching instructors because of you:
 
@@ -206,7 +167,6 @@ export async function directArticleImage(input: {
 Topic: ${input.topicName}
 ${input.answer ? `What it says: ${input.answer}` : ""}
 
-YOUR ASSIGNED SHOT TYPE: ${shotTypeFor(input.title)}
 
 Direct one photograph for it, within that shot type.`,
         },

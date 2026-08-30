@@ -182,7 +182,12 @@ How must it be built, and how do image models get this airframe wrong?`,
  * deliberately about something else.
  */
 export function needsAircraft(brief: ArtBrief): boolean {
-  return /aircraft|airplane|aeroplane|plane|cessna|piper|cockpit|cowling|wing|propeller|ramp|tiedown|hangar|taxiway|runway/i.test(
-    `${brief.subject} ${brief.light}`,
+  // Only when an aeroplane is actually the thing being photographed. The
+  // earlier version matched "ramp", "hangar" and "runway" too, so a crew room
+  // that happened to mention the ramp through a window pulled in a full
+  // airframe specification -- and a paragraph about strut placement in the
+  // prompt makes the aircraft the subject whether or not it was meant to be.
+  return /\baircraft|airplane|aeroplane|\bplane\b|cockpit|cowling|propeller|trainer\b/i.test(
+    brief.subject,
   );
 }
