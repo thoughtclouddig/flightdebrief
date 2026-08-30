@@ -21,8 +21,13 @@ import { DEFAULT_TTS_VOICE, isValidTtsVoice } from "@/lib/tts-voices";
  * "debrief:<id>:<voice>" while the routes had moved to hashing the script.
  * Same code path, or no warming at all.
  *
- *   POST /api/admin/radio-audio/warm            # the default voice
- *   POST /api/admin/radio-audio/warm?voice=xyz  # one specific voice
+ *   /api/admin/radio-audio/warm            # the default voice
+ *   /api/admin/radio-audio/warm?voice=xyz  # one specific voice
+ *
+ * GET as well as POST. It is a superadmin-gated maintenance endpoint that
+ * writes only to a cache, and in practice it gets run by pasting the URL into
+ * a signed-in browser -- where the address bar can only issue a GET. Making
+ * it POST-only meant the documented way to run it did not work.
  */
 export async function POST(request: Request) {
   const auth = await authorizeSuperadmin();
@@ -69,3 +74,5 @@ export async function POST(request: Request) {
     failed,
   });
 }
+
+export const GET = POST;

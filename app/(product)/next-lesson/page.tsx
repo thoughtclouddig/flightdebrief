@@ -43,6 +43,13 @@ export default async function NextLessonPage() {
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
   const instructorFirstName = resolveCfiFirstName(brief.lastInstructor);
   const cfi = instructorFirstName ?? "your instructor";
+
+  // A solo pilot has no instructor, and saying "your instructor wanted you to
+  // work on" to someone the product told "no CFI needed" contradicts the page
+  // they signed up from. resolveCfiFirstName returns null when no instructor
+  // is attached to the last debrief, which is the same condition -- it just
+  // was not being asked.
+  const hasInstructor = instructorFirstName !== null;
   const focusToday = brief.focusAreas.slice(0, 2);
   const viewedUrls = studyReferences.length > 0 ? new Set(await repo.listViewedStudyResourceUrls(viewer.user.id)) : new Set<string>();
   // Same fields the CFI's per-student page shows -- if every one of them is
@@ -91,7 +98,7 @@ export default async function NextLessonPage() {
       {!hasAnyContent ? (
         <Card>
           <CardContent className="py-6 text-center text-sm text-foreground-soft">
-            {cfi === "your instructor"
+            {!hasInstructor
               ? "Nothing to prepare yet -- this fills in once your last debrief is finished."
               : `${cfi} hasn't set anything to focus on from your last debrief yet.`}
           </CardContent>
@@ -137,9 +144,11 @@ export default async function NextLessonPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="size-4 text-brand" />
-              Your Instructor Wanted You To Work On
+              {hasInstructor ? "Your Instructor Wanted You To Work On" : "What To Work On"}
             </CardTitle>
-            <CardDescription>From your debrief with {cfi}</CardDescription>
+            <CardDescription>
+              {hasInstructor ? `From your debrief with ${cfi}` : "From your last debrief"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="flex flex-col gap-2">
