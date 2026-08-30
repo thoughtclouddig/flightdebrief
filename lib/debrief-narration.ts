@@ -1,4 +1,4 @@
-import { speakList, toSecondPerson, readsAsSentence } from "@/lib/narration";
+import { speakList, toSecondPerson, readsAsSentence, stripSpokenActionLabel } from "@/lib/narration";
 import type { InstructorGuidance, StudyReference } from "@/lib/types";
 
 /**
@@ -116,8 +116,10 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   if (input.actionItems.length > 0) {
     sections.push(
       solo
-        ? `For your next flight, you're focusing on ${toSecondPerson(input.actionItems[0]!)}.`
-        : `For your next flight, ${cfiOrFallback} wants you to focus on ${toSecondPerson(input.actionItems[0]!)}.`,
+        // stripSpokenActionLabel: the item arrives labelled for the results
+        // card ("Work on: ..."), and both frames here already say it.
+        ? `For your next flight, you're focusing on ${stripSpokenActionLabel(toSecondPerson(input.actionItems[0]!))}.`
+        : `For your next flight, ${cfiOrFallback} wants you to focus on ${stripSpokenActionLabel(toSecondPerson(input.actionItems[0]!))}.`,
     );
   }
 

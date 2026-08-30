@@ -106,6 +106,42 @@ describe("person conversion covers every spoken field", () => {
   });
 });
 
+describe("spoken action-item labels", () => {
+  // The analyzers prefix an action item with "Work on: " so it reads as an
+  // instruction on the results card. Spoken behind "you're focusing on", TTS
+  // read the label out loud.
+  it("does not say the label twice for a solo pilot", () => {
+    const script = buildDebriefNarration({
+      ...BASE_INPUT,
+      instructorFirstName: null,
+      soloPilot: true,
+      actionItems: ["Work on: Getting configured earlier in the pattern"],
+    });
+    expect(script).toContain("you're focusing on getting configured earlier in the pattern.");
+    expect(script).not.toMatch(/work on/i);
+  });
+
+  it("does the same in the instructor-attributed frame", () => {
+    const script = buildDebriefNarration({
+      ...BASE_INPUT,
+      instructorFirstName: "Jake",
+      actionItems: ["Work on tower readbacks"],
+    });
+    expect(script).toContain("Jake wants you to focus on tower readbacks.");
+    expect(script).not.toMatch(/work on/i);
+  });
+
+  it("leaves an item that only begins with another verb alone", () => {
+    const script = buildDebriefNarration({
+      ...BASE_INPUT,
+      instructorFirstName: null,
+      soloPilot: true,
+      actionItems: ["Practice holding target airspeed on final"],
+    });
+    expect(script).toContain("Practice holding target airspeed on final");
+  });
+});
+
 describe("solo pilots", () => {
   it("does not attribute anything to an instructor who does not exist", () => {
     const script = buildDebriefNarration({

@@ -183,3 +183,32 @@ function endWithPeriod(text: string): string {
   const trimmed = text.trim();
   return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
 }
+
+/**
+ * Drops a leading "Work on:" / "Focus on:" label from an item before it is
+ * spoken inside a frame that already says the same thing.
+ *
+ * The analyzers label an action item so it reads as an instruction on the
+ * results card ("Work on: Getting configured earlier on downwind") -- that
+ * heading is right on screen. The scripts then slot the same string into
+ * "you're focusing on ...", and TTS reads the label out loud: "you're
+ * focusing on work on getting configured earlier". Stripped here rather
+ * than at the analyzer, because the label is only wrong when spoken.
+ *
+ * Only the frame's own words are removed. An item that merely begins with
+ * some other verb is left exactly as written.
+ */
+const SPOKEN_ACTION_LABEL = /^(?:work|focus)(?:ing)?\s+on\b[:,\-–—\s]*/i;
+
+export function stripSpokenActionLabel(text: string): string {
+  const stripped = text.replace(SPOKEN_ACTION_LABEL, "").trim();
+  // Nothing but the label (an item literally reading "Work on it") leaves no
+  // sentence to speak, so keep the original rather than emitting a fragment.
+  if (!stripped) return text.trim();
+  if (stripped === text.trim()) return stripped;
+  // The label was capitalised as a heading; what follows it now lands
+  // mid-sentence. Left alone when the next characters are an acronym or a
+  // name ("ATC instructions", "Nina's callout"), which stay capitalised.
+  if (/^[A-Z][a-z]/.test(stripped)) return stripped.charAt(0).toLowerCase() + stripped.slice(1);
+  return stripped;
+}
