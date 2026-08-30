@@ -35,15 +35,25 @@ export async function POST(request: Request, context: RouteContext<"/api/admin/a
   const topics = await repo.listResourceTopics();
   const topic = topics.find((t) => t.id === article.topicId);
 
-  const imageUrl = await generateArticleImage({
+  let imageUrl: string;
+  try {
+    imageUrl = await generateArticleImage({
     title: article.title,
     topicName: topic?.name ?? "Flight training",
     // The lead answer is the most concrete sentence in the article, which is
     // what the art direction needs to pick a subject specific to this piece
     // rather than a generic training scene.
     answer: article.bodyBlocks?.answer,
-    direction: direction || undefined,
-  });
+      direction: direction || undefined,
+    });
+  } catch (err) {
+    // The generation chain has several stages that can fail for reasons worth
+    // reading -- a content-policy rejection names what it objected to, a rate
+    // limit says to wait. Returning the detail beats a bare 500.
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[article-image] generation failed:", detail);
+    return NextResponse.json({ error: "Failed to generate an image.", detail }, { status: 502 });
+  }
 
   // Saved immediately: the editor shows what's stored, and an image sitting
   // in a form that was never saved is the kind of thing you lose by

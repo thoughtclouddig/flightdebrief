@@ -41,12 +41,21 @@ export function ArticleImageField({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ direction }),
       });
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) {
+        // Surface what the server said. "Try again" is not actionable, and
+        // the generation chain fails for reasons a person can act on -- a
+        // content-policy rejection, a rate limit, a missing key -- all of
+        // which were being thrown away here.
+        const body = (await response.json().catch(() => null)) as
+          | { error?: string; detail?: string }
+          | null;
+        throw new Error(body?.detail || body?.error || `Image generation failed (${response.status})`);
+      }
       const data = (await response.json()) as { imageUrl: string | null };
       if (data.imageUrl) onChange(data.imageUrl);
       setDirection("");
-    } catch {
-      setError("Couldn't generate an image. Try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't generate an image. Try again.");
     } finally {
       setBusy(false);
     }
