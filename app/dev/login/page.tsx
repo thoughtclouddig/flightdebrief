@@ -56,6 +56,18 @@ function staffEmails(): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Rendered per request, not prerendered.
+ *
+ * The REPLIT_DEPLOYMENT guard below is only a guard if it runs at request
+ * time. Without this the page is static, the check evaluates during the
+ * BUILD -- where REPLIT_DEPLOYMENT is never set -- and the login form gets
+ * baked into HTML that production then serves to everyone. The build output
+ * said so plainly: this route was marked static while the API route beside
+ * it, carrying the identical check, was dynamic.
+ */
+export const dynamic = "force-dynamic";
+
 export default function DevLoginPage() {
   if (process.env.REPLIT_DEPLOYMENT) notFound();
   const staff = staffEmails();
