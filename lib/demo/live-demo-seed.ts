@@ -688,22 +688,70 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       ],
     );
 
-    const flightTaskId = `flight-task-demo-${randomUUID()}`;
-    await client.query(
-      `INSERT INTO flight_tasks (id, flight_id, task_code, label, source, sort_order)
-       VALUES ($1,$2,'LANDINGS','Traffic Pattern & Landings','instructor_selected',0)`,
-      [flightTaskId, todayFlightId],
-    );
+    // The lesson's task, plus the three every-flight items the real task
+    // route appends (lib/universal-tasks.ts). Seeded here rather than going
+    // through that route, so they have to be repeated -- if that list
+    // changes, this one needs the same change.
+    const demoTasks: { code: string; label: string; source: string }[] = [
+      { code: "LANDINGS", label: "Traffic Pattern & Landings", source: "instructor_selected" },
+      { code: "PREFLIGHT_INSPECTION", label: "Preflight & preparation", source: "syllabus" },
+      { code: "RADIO_COMMUNICATIONS", label: "Radio communication", source: "syllabus" },
+      { code: "SITUATIONAL_AWARENESS", label: "Situational awareness", source: "syllabus" },
+    ];
+    const taskIds: string[] = [];
+    for (const [i, task] of demoTasks.entries()) {
+      const id = `flight-task-demo-${randomUUID()}`;
+      taskIds.push(id);
+      await client.query(
+        `INSERT INTO flight_tasks (id, flight_id, task_code, label, source, sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [id, todayFlightId, task.code, task.label, task.source, i],
+      );
+    }
+
+    const studentAssessmentId = `assessment-demo-${randomUUID()}`;
+    const instructorAssessmentId = `assessment-demo-${randomUUID()}`;
     await client.query(
       `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, status, submitted_at)
        VALUES ($1,$2,'student',$3,'submitted',now())`,
-      [`assessment-demo-${randomUUID()}`, todayFlightId, primaryStudentId],
+      [studentAssessmentId, todayFlightId, primaryStudentId],
     );
     await client.query(
       `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, status, submitted_at)
        VALUES ($1,$2,'instructor',$3,'submitted',now())`,
-      [`assessment-demo-${randomUUID()}`, todayFlightId, instructorUserId],
+      [instructorAssessmentId, todayFlightId, instructorUserId],
     );
+
+    // The ratings themselves, which were missing entirely: the demo marked
+    // both assessments submitted and stored nothing under them, so the
+    // Compare screen rendered its header row over an empty table. The whole
+    // point of that screen is the disagreement, and there was none to show.
+    //
+    // Deliberately not identical. The student rates the landings harder on
+    // themselves than the CFI does, and the CFI is the one who flags the
+    // radio work -- which is exactly the "differences mean there's something
+    // worth talking through" the page promises, and it demonstrates the
+    // every-flight items earning their place at the same time.
+    const demoRatings: [string, string, string][] = [
+      // [task code, student rating, instructor rating]
+      ["LANDINGS", "LEARNING", "NEEDS_COACHING"],
+      ["PREFLIGHT_INSPECTION", "INDEPENDENT", "INDEPENDENT"],
+      ["RADIO_COMMUNICATIONS", "INDEPENDENT", "NEEDS_COACHING"],
+      ["SITUATIONAL_AWARENESS", "NEEDS_COACHING", "NEEDS_COACHING"],
+    ];
+    for (const [code, studentRating, instructorRating] of demoRatings) {
+      const taskId = taskIds[demoTasks.findIndex((t) => t.code === code)];
+      await client.query(
+        `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
+         VALUES ($1,$2,$3,$4)`,
+        [`rating-demo-${randomUUID()}`, studentAssessmentId, taskId, studentRating],
+      );
+      await client.query(
+        `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
+         VALUES ($1,$2,$3,$4)`,
+        [`rating-demo-${randomUUID()}`, instructorAssessmentId, taskId, instructorRating],
+      );
+    }
 
     const cards: { category: string; title: string; prompt: string; followUps: string[] }[] = [
       {
