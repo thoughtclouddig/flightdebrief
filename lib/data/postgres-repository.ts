@@ -5,6 +5,7 @@ import type {
   Aircraft,
   Airport,
   AirportFleetRecord,
+  ArticleImagePrompt,
   AirportInsightsRecord,
   Article,
   ArticleIdea,
@@ -653,8 +654,8 @@ export class PostgresRepository implements Repository {
   async createArticle(input: CreateArticleInput): Promise<Article> {
     const db = await this.db();
     const { rows } = await db.query(
-      `INSERT INTO articles (id, slug, topic_id, title, dek, body, author_name, sources, image_url, body_blocks)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      `INSERT INTO articles (id, slug, topic_id, title, dek, body, author_name, sources, image_url, body_blocks, image_prompt)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
       [
         randomUUID(),
         input.slug,
@@ -666,6 +667,7 @@ export class PostgresRepository implements Repository {
         JSON.stringify(input.sources ?? []),
         input.imageUrl ?? null,
         input.bodyBlocks ? JSON.stringify(input.bodyBlocks) : null,
+        input.imagePrompt ? JSON.stringify(input.imagePrompt) : null,
       ],
     );
     return mapArticle(rows[0]);
@@ -683,7 +685,8 @@ export class PostgresRepository implements Repository {
 
     const { rows } = await db.query(
       `UPDATE articles SET slug = $2, topic_id = $3, title = $4, dek = $5, body = $6, author_name = $7,
-         sources = $8, image_url = $9, status = $10, published_at = $11, body_blocks = $12, updated_at = now()
+         sources = $8, image_url = $9, status = $10, published_at = $11, body_blocks = $12,
+         image_prompt = $13, updated_at = now()
        WHERE id = $1 RETURNING *`,
       [
         id,
@@ -700,6 +703,9 @@ export class PostgresRepository implements Repository {
         input.bodyBlocks === undefined
           ? current.bodyBlocks && JSON.stringify(current.bodyBlocks)
           : input.bodyBlocks && JSON.stringify(input.bodyBlocks),
+        input.imagePrompt === undefined
+          ? current.imagePrompt && JSON.stringify(current.imagePrompt)
+          : input.imagePrompt && JSON.stringify(input.imagePrompt),
       ],
     );
     return mapArticle(rows[0]);
@@ -2044,6 +2050,7 @@ function mapArticle(row: Row): Article {
     authorName: row.author_name as string,
     sources: (row.sources as Source[] | null) ?? [],
     imageUrl: (row.image_url as string | null) ?? null,
+    imagePrompt: (row.image_prompt as ArticleImagePrompt | null) ?? null,
     bodyBlocks: (row.body_blocks as ArticleBody | null) ?? null,
     publishedAt: row.published_at ? iso(row.published_at) : null,
     updatedAt: iso(row.updated_at),

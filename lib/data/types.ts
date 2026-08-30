@@ -3,6 +3,7 @@ import type {
   Aircraft,
   Airport,
   AirportFleetRecord,
+  ArticleImagePrompt,
   AirportInsightsRecord,
   Article,
   ArticleIdea,
@@ -156,6 +157,7 @@ export interface CreateArticleInput {
   authorName: string;
   sources?: Source[];
   imageUrl?: string | null;
+  imagePrompt?: ArticleImagePrompt | null;
   bodyBlocks?: ArticleBody | null;
 }
 
@@ -168,6 +170,7 @@ export interface UpdateArticleInput {
   authorName?: string;
   sources?: Source[];
   imageUrl?: string | null;
+  imagePrompt?: ArticleImagePrompt | null;
   bodyBlocks?: ArticleBody | null;
   status?: ArticleStatus;
 }
@@ -188,6 +191,7 @@ export interface CreateResearchReportInput {
   reviewerName?: string | null;
   sources?: Source[];
   imageUrl?: string | null;
+  imagePrompt?: ArticleImagePrompt | null;
 }
 
 export interface UpdateResearchReportInput extends Partial<CreateResearchReportInput> {

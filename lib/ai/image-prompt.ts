@@ -1,125 +1,152 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { z } from "zod";
+import { extractJson } from "./extract-json";
 
 /**
- * Writes the image prompt for an article. One call, one complete scene.
+ * Writes the image prompt for an article, as separate parts of a shot.
  *
- * This replaces a four-stage chain -- art director, aircraft adviser,
- * photographer, then a reviewer -- that I built up one constraint at a time as
- * each run of images disappointed. No people, no legible text, no naming an
- * aircraft type, an assigned shot type from a fixed list, an assigned airframe,
- * banned props. Every layer was a reasonable response to a real failure, and
- * together they made the output narrower and more uniform: the pictures all
- * looked like each other because there was almost nothing left to choose.
+ * Structured rather than one paragraph so a person can change one element
+ * without rewriting the whole thing -- swap the aircraft, move it to dusk,
+ * pull the camera back -- and so the edit form has something to put in
+ * labelled fields. The parts are composed into the final prompt at generation
+ * time by composeImagePrompt().
  *
- * A person writing a prompt for a specific headline does not work that way.
- * They picture the scene -- who is in it, what the light is doing, what
- * aeroplane, what time of day -- and describe it. So that is what this asks
- * for, in one pass, with the article's own subject as the only real input.
- *
- * People are allowed. Aircraft can be named. The remaining rules are the two
- * things image models genuinely cannot do rather than matters of taste.
+ * NO FALLBACK. This used to substitute a hardcoded scene when the model call
+ * failed, log it, and return it as though it had worked -- so an unknown
+ * number of "all the images look the same" complaints were the same canned
+ * string, and four rounds of prompt rewriting chased a prompt that had never
+ * run. A failure that looks like a result is worse than an error, so this
+ * throws and the caller reports it.
  */
 
 const MODEL = "claude-sonnet-5";
 const REQUEST_TIMEOUT_MS = 30_000;
 
-const SYSTEM = `You write the prompt for one photograph illustrating a flight-training article. You write the prompt only -- someone else generates the image.
+export interface ImagePromptParts {
+  /** Where it happens, and what is in the room. */
+  scene: string;
+  /** Who is in frame and what they are doing. Empty when the shot has nobody in it. */
+  subjects: string;
+  /** The aircraft and its correct configuration. Empty when no aeroplane belongs. */
+  aircraft: string;
+  /** Time of day, direction, quality. */
+  light: string;
+  /** Focal length, distance, angle, depth of field. */
+  camera: string;
+  /** Why this scene belongs to this article, in one line. Not part of the image. */
+  rationale: string;
+}
 
-Write a single paragraph that describes a complete scene, the way a photographer would brief it. Cover:
+const partsSchema = z.object({
+  scene: z.string().default("").catch(""),
+  subjects: z.string().default("").catch(""),
+  aircraft: z.string().default("").catch(""),
+  light: z.string().default("").catch(""),
+  camera: z.string().default("").catch(""),
+  rationale: z.string().default("").catch(""),
+});
 
-WHO IS IN IT and what they are doing. A student and instructor at a briefing table. A pilot alone doing a walkaround. Nobody at all, if the scene is better empty. Say their posture and where they are looking -- "leaning over the table, both looking at the same page" is a photograph; "two people talking" is not.
+const SYSTEM = `You brief one photograph for a flight-training article. You do not generate the image and you do not write the article.
 
-WHERE, precisely. A flight school briefing room, a hangar, the left seat, a ramp at a small field, a kitchen table at home. Name the surfaces and what is on them.
+Break the shot into its parts. Each is a separate field so an editor can change one without rewriting the rest.
 
-THE AIRCRAFT, if one is in frame. Name a type and describe it correctly: a Cessna 172 is a high-wing single with wing struts, a fixed nosewheel, and one propeller on the nose; a Cherokee is a low-wing single; a Seminole is a twin with one engine on each wing. Vary the type across articles -- not everything is a 172. If no aeroplane belongs in the picture, leave it out.
+SCENE -- where it happens and what is in it. A flight school briefing room with a scarred wooden table and mismatched chairs. A hangar floor. The left seat. A kitchen table at home. Name the surfaces and the objects on them.
 
-THE LIGHT. Time of day, direction, quality. Low sun through a west-facing window. Overcast noon on a ramp. Warm lamplight in a briefing room after dark.
+SUBJECTS -- who is in frame and what they are doing. A student and instructor leaning over the same page. A pilot alone walking the wing. Give posture and where they are looking; "two people talking" is not a photograph. Leave this EMPTY if the picture is better with nobody in it -- an empty room can be the point.
 
-THE CAMERA. Focal length, distance, angle, depth of field. 35mm from across the table, shallow enough that the far wall goes soft.
+AIRCRAFT -- the type and its correct configuration, when one is in frame. A Cessna 172 is a high-wing single with wing struts, fixed nosewheel, one propeller on the nose. A Cherokee is a low-wing single. A Seminole is a twin with one engine on each wing. Vary the type across articles -- not everything is a 172. Leave EMPTY if no aeroplane belongs in the picture.
+
+LIGHT -- time of day, direction, quality. Low sun through a west-facing window. Overcast noon. Warm lamplight after dark.
+
+CAMERA -- focal length, distance, angle, depth of field. "35mm from across the table, shallow enough that the far wall goes soft."
+
+RATIONALE -- one line on why this scene belongs to THIS article specifically. This is for the editor, not the image.
 
 MAKE IT BELONG TO THIS ARTICLE
 
-The scene should be one this specific article could be about, not a generic aviation picture. An article about a student switching instructors is a scene about two people, or about a room where a conversation is happening or failing to. An article about crosswind technique is a scene about wind and an aeroplane. If the scene would fit equally on any other article on the site, write a different one.
+An article about a student switching instructors is a scene about two people, or a room where a conversation is or is not happening. An article about crosswind technique is a scene about wind and an aeroplane. If the scene would sit equally well on any other article on the site, write a different one.
 
-TWO HARD LIMITS -- these are what image models actually get wrong
+TWO HARD LIMITS -- what image models actually get wrong
 
-No legible text anywhere: no signage, no writing on a whiteboard, no instrument markings, no tail numbers in focus. Models render text as convincing gibberish and it is the first thing a reader spots. Paper and screens can be in frame, just turned away, blurred, or out of focus.
+No legible text anywhere: signage, whiteboards, instrument markings, tail numbers in focus. Models render text as convincing gibberish and it is the first thing a reader spots. Paper and screens may be in frame, turned away or out of focus.
 
 No readable instrument panels or avionics displays, for the same reason.
 
-Return the prompt itself as plain prose. No preamble, no JSON, no quotation marks around it.`;
+Return ONLY this JSON, no fences:
 
-/** A decent, specific scene for when the model is unavailable. */
-const FALLBACK =
-  "A flight school briefing room in late afternoon, low sun through a west-facing window laying a bright band across a wooden table. Two chairs pulled up at an angle to each other, one slightly pushed back. A Cessna 172 -- high wing, wing struts, fixed nosewheel, single propeller on the nose -- visible through the window on the ramp beyond, softly out of focus. Shot at 35mm from across the table, shallow depth of field so the far wall falls away. Warm, natural, unposed. No legible text or readable instruments anywhere in frame.";
-
-export interface ImagePrompt {
-  prompt: string;
-  /**
-   * Whether a model actually wrote this, or it is the canned scene.
-   *
-   * Surfaced rather than swallowed. The chain this replaced fell back to a
-   * hardcoded cockpit on failure and only logged it, so a run of identical
-   * generic images looked like a prompt that needed rewriting -- and four
-   * rounds of rewriting a prompt that had not run followed. A fallback that
-   * cannot be told apart from a result is worse than an error.
-   */
-  source: "model" | "fallback";
-  /** Why the model call failed, when it did. */
-  error?: string;
-}
+{"scene": "...", "subjects": "...", "aircraft": "...", "light": "...", "camera": "...", "rationale": "..."}`;
 
 export async function writeImagePrompt(input: {
   title: string;
   topicName: string;
   /** The article's lead answer -- the most concrete sentence in the piece. */
   answer?: string;
-  /** A human's steer, which outranks everything the model would have chosen. */
+  /** A human's steer, which outranks anything the model would choose. */
   direction?: string;
-}): Promise<ImagePrompt> {
+}): Promise<ImagePromptParts> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return {
-      prompt: withDirection(FALLBACK, input.direction),
-      source: "fallback",
-      error: "ANTHROPIC_API_KEY is not set",
-    };
-  }
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set -- cannot write an image prompt");
 
-  try {
-    const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
-    const response = await client.messages.create({
-      model: MODEL,
-      max_tokens: 700,
-      system: SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `Article title: "${input.title}"
+  const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 800,
+    system: SYSTEM,
+    messages: [
+      {
+        role: "user",
+        content: `Article title: "${input.title}"
 Topic: ${input.topicName}
 ${input.answer ? `What the article says: ${input.answer}` : ""}
 ${input.direction ? `\nThe editor asked for this specifically, and it overrides your own judgement: ${input.direction}` : ""}
 
-Write the photograph.`,
-        },
-      ],
-    });
+Brief the photograph.`,
+      },
+    ],
+  });
 
-    const textBlock = response.content.find((b) => b.type === "text");
-    if (!textBlock || textBlock.type !== "text") throw new Error("no text");
-    const prompt = textBlock.text.trim();
-    if (prompt.length < 80) throw new Error("prompt too short to be a scene");
-    return { prompt: withDirection(prompt, input.direction), source: "model" };
-  } catch (err) {
-    // A decent generic scene beats blocking the article on the prompt writer,
-    // but the caller is told, and the debug route prints it.
-    const error = err instanceof Error ? err.message : String(err);
-    console.error("[image-prompt] MODEL CALL FAILED, using the canned scene:", error);
-    return { prompt: withDirection(FALLBACK, input.direction), source: "fallback", error };
+  const textBlock = response.content.find((b) => b.type === "text");
+  if (!textBlock || textBlock.type !== "text") throw new Error("The prompt writer returned no text");
+
+  const parts = partsSchema.parse(JSON.parse(extractJson(textBlock.text)));
+  // Scene and light are the two that every photograph needs. Subjects and
+  // aircraft are legitimately empty sometimes; camera without them is a
+  // lens with nothing to point at.
+  if (!parts.scene.trim() || !parts.light.trim()) {
+    throw new Error("The prompt writer returned no scene or no light");
   }
+  return parts;
 }
 
-/** The human steer still applies when the model didn't run. */
-function withDirection(prompt: string, direction?: string): string {
-  return direction ? `${prompt}\n\nSpecific direction, follow this above all: ${direction}` : prompt;
+/**
+ * Assembles the parts into the string the image model receives.
+ *
+ * Kept separate so an edited set of parts composes exactly the same way a
+ * generated one does -- there is no second path where a hand-edited prompt
+ * behaves differently from a written one.
+ */
+export function composeImagePrompt(parts: ImagePromptParts, direction?: string): string {
+  return [
+    "Photograph, natural light, shot on film.",
+    parts.scene,
+    parts.subjects,
+    parts.aircraft,
+    parts.light,
+    parts.camera,
+    "No legible text anywhere in frame. No readable instrument panels or avionics displays.",
+    direction ? `Specific direction, follow this above all: ${direction}` : "",
+  ]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(" ");
 }
+
+/** An empty set, for a form that has nothing stored yet. */
+export const EMPTY_IMAGE_PROMPT: ImagePromptParts = {
+  scene: "",
+  subjects: "",
+  aircraft: "",
+  light: "",
+  camera: "",
+  rationale: "",
+};

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import type { ArticleImagePrompt } from "@/lib/types";
 import { Label } from "@/components/ui/label";
 
 /**
@@ -15,17 +16,41 @@ import { Label } from "@/components/ui/label";
  * field only appears for the case it's actually good at: pasting an https://
  * link to a picture from somewhere else.
  */
+const PART_FIELDS: { key: keyof ArticleImagePrompt; label: string; hint: string }[] = [
+  { key: "scene", label: "Scene", hint: "Where it happens and what is in it" },
+  { key: "subjects", label: "Subjects", hint: "Who is in frame and what they are doing — blank for an empty scene" },
+  { key: "aircraft", label: "Aircraft", hint: "Type and configuration — blank if no aeroplane belongs" },
+  { key: "light", label: "Light", hint: "Time of day, direction, quality" },
+  { key: "camera", label: "Camera", hint: "Focal length, distance, angle, depth of field" },
+];
+
+const EMPTY: ArticleImagePrompt = {
+  scene: "",
+  subjects: "",
+  aircraft: "",
+  light: "",
+  camera: "",
+  rationale: "",
+};
+
 export function ArticleImageField({
   articleId,
   value,
+  prompt,
   onChange,
+  onPromptChange,
 }: {
   /** Null before the article exists -- regeneration needs something to attach to. */
   articleId: string | null;
   value: string;
+  /** The shot brief the current image came from, if there is one. */
+  prompt: ArticleImagePrompt | null;
   onChange: (next: string) => void;
+  onPromptChange: (next: ArticleImagePrompt | null) => void;
 }) {
   const [direction, setDirection] = useState("");
+  const [parts, setParts] = useState<ArticleImagePrompt>(prompt ?? EMPTY);
+  const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const trimmed = value.trim();
@@ -39,7 +64,11 @@ export function ArticleImageField({
       const response = await fetch(`/api/admin/articles/${articleId}/image`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ direction }),
+        // Send the edited brief when the editor has been in it. The writer
+        // is skipped entirely then -- someone who changed the light should
+        // get exactly that, not a fresh scene that happens to be lit
+        // differently.
+        body: JSON.stringify({ direction, parts: editing ? parts : undefined }),
       });
       if (!response.ok) {
         // Surface what the server said. "Try again" is not actionable, and
@@ -51,8 +80,15 @@ export function ArticleImageField({
           | null;
         throw new Error(body?.detail || body?.error || `Image generation failed (${response.status})`);
       }
-      const data = (await response.json()) as { imageUrl: string | null };
+      const data = (await response.json()) as {
+        imageUrl: string | null;
+        parts: ArticleImagePrompt | null;
+      };
       if (data.imageUrl) onChange(data.imageUrl);
+      if (data.parts) {
+        setParts(data.parts);
+        onPromptChange(data.parts);
+      }
       setDirection("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't generate an image. Try again.");
@@ -111,6 +147,48 @@ export function ArticleImageField({
       )}
 
       {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
+
+      {/* The shot brief, as separate parts. Editable because regenerating an
+          unchanged prompt returns the same idea with different pixels -- what
+          someone rejecting an image usually wants is one element changed, and
+          they could not previously see, let alone change, any of them. */}
+      {articleId ? (
+        <details className="mt-3" open={editing}>
+          <summary
+            className="cursor-pointer text-xs text-foreground-faint hover:text-foreground-soft"
+            onClick={() => setEditing(true)}
+          >
+            Shot brief {prompt ? "" : "-- generate an image to fill this in"}
+          </summary>
+
+          {prompt?.rationale ? (
+            <p className="mt-2 text-xs italic text-foreground-faint">{prompt.rationale}</p>
+          ) : null}
+
+          <div className="mt-2 flex flex-col gap-2">
+            {PART_FIELDS.map((field) => (
+              <label key={field.key} className="flex flex-col gap-1">
+                <span className="text-xs font-semibold text-foreground-soft">{field.label}</span>
+                <textarea
+                  value={parts[field.key]}
+                  onChange={(e) => {
+                    setEditing(true);
+                    setParts((p) => ({ ...p, [field.key]: e.target.value }));
+                  }}
+                  rows={2}
+                  placeholder={field.hint}
+                  className="w-full rounded-lg border border-hairline bg-transparent p-2 text-sm text-foreground placeholder:text-foreground-faint focus:outline-none focus:ring-2 focus:ring-brand"
+                />
+              </label>
+            ))}
+          </div>
+
+          <p className="mt-2 text-xs text-foreground-faint">
+            Edit any part and press Regenerate -- the edited brief is used exactly as written, and the writer
+            is skipped.
+          </p>
+        </details>
+      ) : null}
 
       <details className="mt-3">
         <summary className="cursor-pointer text-xs text-foreground-faint hover:text-foreground-soft">

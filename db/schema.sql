@@ -946,6 +946,11 @@ CREATE TABLE IF NOT EXISTS airport_fleet (
 -- explicit ALTER. This is the fourth time this file has caught me out the
 -- same way; the rule is that a new column in a CREATE block above always
 -- needs a line down here too.
+-- The shot brief behind an article's hero image, as editable parts (scene,
+-- subjects, aircraft, light, camera). Stored so an editor can adjust one
+-- element and regenerate rather than re-rolling a prompt they cannot see.
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS image_prompt jsonb;
+
 ALTER TABLE airport_fleet ADD COLUMN IF NOT EXISTS radius_mi integer NOT NULL DEFAULT 10;
 ALTER TABLE airport_fleet ADD COLUMN IF NOT EXISTS runways text[] NOT NULL DEFAULT '{}';
 
