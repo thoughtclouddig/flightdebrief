@@ -16,10 +16,25 @@ const ERROR_MESSAGES: Record<string, string> = {
   "auth-failed": "Sign-in failed. Please try again.",
 };
 
+/**
+ * Why proxy.ts sent you here, when it did. A redirect to the sign-in page
+ * looks the same whether the cookie was missing, expired, or unreadable, and
+ * the person staring at it reads all three as "it logged me out" -- which
+ * sends them looking for a permissions bug that isn't there.
+ */
+const BOUNCE_MESSAGES: Record<string, string> = {
+  "no-cookie": "You aren't signed in on this browser. Sign in to continue.",
+  "invalid-session": "Your session expired or couldn't be read. Sign in again to continue.",
+};
+
 function LoginContent() {
   const searchParams = useSearchParams();
   const errorCode = searchParams.get("error");
-  const error = errorCode ? (ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES["auth-failed"]) : null;
+  const bounceReason = searchParams.get("reason");
+  const bounceFrom = searchParams.get("from");
+  const error = errorCode
+    ? (ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES["auth-failed"])
+    : (bounceReason ? BOUNCE_MESSAGES[bounceReason] ?? null : null);
 
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
@@ -83,9 +98,14 @@ function LoginContent() {
       </div>
 
       {error && !sent ? (
-        <p className="rounded-lg bg-red-500/10 px-4 py-3 text-center text-sm text-red-600 dark:text-red-400">
-          {error}
-        </p>
+        <div className="rounded-lg bg-red-500/10 px-4 py-3 text-center text-sm text-red-600 dark:text-red-400">
+          <p>{error}</p>
+          {bounceFrom ? (
+            <p className="mt-1 text-xs opacity-80">
+              Requested page: <span className="font-mono">{bounceFrom}</span>
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       {sent ? (
