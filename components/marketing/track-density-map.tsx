@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minus, Plus, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Hundreds of ground tracks drawn over each other, so density is the message.
@@ -15,6 +14,15 @@ import { Maximize2, Minus, Plus, X } from "lucide-react";
  * Rendered on canvas rather than as SVG paths or map layers: 400 tracks at
  * 120 points each is 48,000 points, which is nothing to fill on a canvas and
  * a lot of DOM nodes otherwise.
+ *
+ * FULL SCREEN
+ * MapLibre's own control, not a hand-rolled overlay. I built the overlay
+ * twice and it drifted both times, for two different reasons -- pinning the
+ * body moved the layout origin out from under the map's cached container
+ * offset, and hiding overflow still left the container resizing underneath a
+ * live map. The library's control uses the browser's native Fullscreen API,
+ * which changes no document layout at all, and it is the path the library
+ * actually tests. Three attempts at a solved problem is two too many.
  */
 
 const BASEMAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
@@ -34,14 +42,7 @@ export function TrackDensityMap({
   label: string;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<{ zoomIn: () => void; zoomOut: () => void; resize: () => void } | null>(null);
   const [failed, setFailed] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
-
-  const zoom = useCallback((direction: 1 | -1) => {
-    if (direction === 1) mapRef.current?.zoomIn();
-    else mapRef.current?.zoomOut();
-  }, []);
 
   useEffect(() => {
     if (!containerRef.current || !center || !tracks.length) return;
@@ -51,6 +52,10 @@ export function TrackDensityMap({
     (async () => {
       try {
         const maplibre = await import("maplibre-gl");
+        // The library's own controls are unstyled without this, which is how
+        // the first version shipped a full-screen button that was an
+        // invisible square.
+        await import("maplibre-gl/dist/maplibre-gl.css");
         if (cancelled || !containerRef.current) return;
 
         const instance = new maplibre.Map({
@@ -71,8 +76,12 @@ export function TrackDensityMap({
           touchPitch: false,
         });
         instance.scrollZoom.disable(); // Page scroll should not become map zoom.
+        // Zoom buttons and full screen from the library. The zoom controls
+        // matter because scroll zoom is off, so without them the only way in
+        // is a double-click.
+        instance.addControl(new maplibre.NavigationControl({ showCompass: false }), "top-right");
+        instance.addControl(new maplibre.FullscreenControl(), "top-right");
         map = instance;
-        mapRef.current = instance as unknown as typeof mapRef.current;
 
         instance.on("load", () => {
           if (cancelled) return;
@@ -121,109 +130,21 @@ export function TrackDensityMap({
     };
   }, [tracks, center]);
 
-  // The container changes size when it goes full screen, and MapLibre only
-  // learns that if it is told. Observed rather than guessed with a timeout:
-  // a single delayed resize races the CSS transition and leaves the map
-  // measuring a box it no longer occupies.
-  useEffect(() => {
-    const node = containerRef.current;
-    if (!node || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => mapRef.current?.resize());
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  // Escape is what people press. Without it, full screen is a trap on a page
-  // whose own controls have just scrolled out of reach.
-  useEffect(() => {
-    if (!fullscreen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setFullscreen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [fullscreen]);
-
-  // Lock the page behind the overlay.
-  //
-  // Not by pinning the body: `position: fixed` on the body moves the layout
-  // origin out from under MapLibre, whose cached container offset then no
-  // longer matches reality, and every pointer event resolves to the wrong
-  // place -- which showed up as the map creeping upward on its own. Hiding
-  // overflow on the root element stops the page scrolling without moving
-  // anything, so the map's geometry stays true.
-  useEffect(() => {
-    if (!fullscreen) return;
-    const root = document.documentElement;
-    const previousOverflow = root.style.overflow;
-    const previousGutter = root.style.scrollbarGutter;
-    root.style.overflow = "hidden";
-    // Without this the page jumps sideways by the scrollbar width when it
-    // disappears, which reads as the layout twitching every time the map opens.
-    root.style.scrollbarGutter = "stable";
-    return () => {
-      root.style.overflow = previousOverflow;
-      root.style.scrollbarGutter = previousGutter;
-    };
-  }, [fullscreen]);
-
   if (!tracks.length || !center || failed) return null;
 
   return (
-    <figure
-      className={
-        fullscreen
-          ? "fixed inset-0 z-50 m-0 flex flex-col overscroll-contain bg-white p-4 sm:p-6"
-          : "mt-5"
-      }
-    >
-      <div className="relative flex-1">
-        <div
-          ref={containerRef}
-          className={`w-full overflow-hidden rounded-xl border border-hairline ${
-            fullscreen ? "h-full" : "h-[420px]"
-          }`}
-          role="img"
-          aria-label={label}
-        />
-        <div className="absolute right-3 top-3 flex flex-col gap-1.5">
-          <MapButton onClick={() => zoom(1)} label="Zoom in"><Plus size={16} /></MapButton>
-          <MapButton onClick={() => zoom(-1)} label="Zoom out"><Minus size={16} /></MapButton>
-          <MapButton
-            onClick={() => setFullscreen((v) => !v)}
-            label={fullscreen ? "Exit full screen" : "View full screen"}
-          >
-            {fullscreen ? <X size={16} /> : <Maximize2 size={16} />}
-          </MapButton>
-        </div>
-      </div>
-      <figcaption className="mt-3 shrink-0 text-xs leading-relaxed text-[#5b6472]">
+    <figure className="mt-5">
+      <div
+        ref={containerRef}
+        className="h-[420px] w-full overflow-hidden rounded-xl border border-hairline"
+        role="img"
+        aria-label={label}
+      />
+      <figcaption className="mt-3 text-xs leading-relaxed text-[#5b6472]">
         {tracks.length.toLocaleString("en-US")} local flights, drawn over each other. Brighter areas are where
-        aircraft from this field spend the most time. Drag to pan, and use the controls to zoom. Individual
-        flights are not identified.
+        aircraft from this field spend the most time. Drag to pan; use the controls to zoom or go full screen.
+        Individual flights are not identified.
       </figcaption>
     </figure>
-  );
-}
-
-function MapButton({
-  onClick,
-  label,
-  children,
-}: {
-  onClick: () => void;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className="flex h-8 w-8 items-center justify-center rounded-lg border border-hairline bg-white/95 text-[#33383f] shadow-sm transition-colors hover:bg-white hover:text-brand"
-    >
-      {children}
-    </button>
   );
 }
