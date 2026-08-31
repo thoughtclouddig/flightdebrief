@@ -10,6 +10,7 @@
     "start": "NEXT_DIST_DIR=.next-build next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",
     "test": "vitest run",
+    "test:integration:tts": "LIVE_TTS_INTEGRATION=1 vitest run",
     "test:e2e:auth": "node e2e/auth-journey.mjs",
     "test:e2e:flight-map": "node e2e/flight-map-defer.mjs"
   },

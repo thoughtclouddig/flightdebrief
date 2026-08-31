@@ -5,10 +5,10 @@ import { synthesizeSpeech } from "./deepgram-tts";
 import { buildDebriefNarration } from "./debrief-narration";
 
 /**
- * Hits the REAL Deepgram API. Skipped unless DEEPGRAM_API_KEY is set, so it
- * never runs in a normal `npm test` -- run it on Replit, where the key lives:
+ * Hits the REAL Deepgram API. Integration specs are excluded from the default
+ * deterministic suite. Run this explicitly on Replit, where the key lives:
  *
- *   npx vitest run lib/deepgram-tts.integration
+ *   npm run test:integration:tts
  *
  * This exists because the unit tests in tts-chunks.test.ts prove the splitting
  * is correct but prove nothing about the two things that can only fail against
@@ -19,7 +19,14 @@ import { buildDebriefNarration } from "./debrief-narration";
  */
 const KEY = process.env.DEEPGRAM_API_KEY;
 
-describe.skipIf(!KEY)("Deepgram TTS against the live API", () => {
+if (!KEY) {
+  throw new Error(
+    "DEEPGRAM_API_KEY is required for the live TTS integration test. " +
+      "This is a third-party availability check, not part of the default application test suite.",
+  );
+}
+
+describe("Deepgram TTS against the live API", () => {
   it("sends a realistic narrativeRecap debrief as a single request", async () => {
     // A recap the prompt would actually produce -- it caps this at 120-220
     // words, which is why debrief length barely moves the script length.
