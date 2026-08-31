@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ClipboardList, Mic, PlaneTakeoff, Sparkles } from "lucide-react";
-import { AcsBadge, BackLink, Card, PageTitle, Screen, Section, SectionLabel, SkillMeter } from "@/components/prototype/ui";
+import { AcsBadge, BackLink, Card, PageTitle, Screen, Section, SkillMeter } from "@/components/prototype/ui";
 import { ACS_AREAS } from "@/lib/prototype/vector-data";
 
 export const metadata: Metadata = { title: "How AfterFlight works — AfterFlight", robots: { index: false, follow: false } };
@@ -42,8 +42,7 @@ export default function GuidePage() {
       <BackLink href="/prototype/vector/profile">Profile</BackLink>
       <PageTitle kicker="The short version">How AfterFlight works</PageTitle>
 
-      <Section>
-        <SectionLabel>The loop</SectionLabel>
+      <Section title={<>The loop</>}>
         <ol className="flex flex-col gap-5">
           {STEPS.map((s, i) => (
             <li key={s.title} className="flex gap-4">
@@ -61,8 +60,7 @@ export default function GuidePage() {
         </ol>
       </Section>
 
-      <Section>
-        <SectionLabel>What Vector is</SectionLabel>
+      <Section title={<>What Vector is</>} flush>
         <Card className="flex flex-col gap-3">
           <div className="flex items-center gap-1.5">
             <Sparkles className="size-4 text-brand" aria-hidden />
@@ -80,8 +78,7 @@ export default function GuidePage() {
         </Card>
       </Section>
 
-      <Section>
-        <SectionLabel>What the scores mean</SectionLabel>
+      <Section title={<>What the scores mean</>} flush>
         <Card className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <SkillMeter score={3} max={4} state="Improving" />
@@ -105,8 +102,7 @@ export default function GuidePage() {
         </Card>
       </Section>
 
-      <Section>
-        <SectionLabel>Your audio</SectionLabel>
+      <Section title={<>Your audio</>}>
         <p className="text-[15px] leading-relaxed text-foreground-soft">
           Recordings are transcribed and then discarded. AfterFlight keeps the training record, not the recording.
         </p>

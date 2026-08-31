@@ -8,7 +8,6 @@ import {
   PrimaryButton,
   Screen,
   Section,
-  SectionLabel,
   SecondaryButton,
   SkillMeter,
   StateLabel,
@@ -53,15 +52,13 @@ export default async function SkillDetail({ params }: { params: Promise<{ skill:
         </div>
       </div>
 
-      <Section>
-        <SectionLabel>Latest evidence</SectionLabel>
+      <Section title={<>Latest evidence</>}>
         <Evidence label={INSTRUCTOR.firstName} tone="instructor" text={skill.instructorEvidence} />
         {skill.studentTake ? <Evidence label="You" tone="student" quoted={false} text={skill.studentTake} /> : null}
       </Section>
 
       {skill.recurring ? (
-        <Section>
-          <SectionLabel>Still showing up</SectionLabel>
+        <Section title={<>Still showing up</>}>
           {/*
            * The cross-instructor count is the load-bearing number here: one
            * instructor flagging something twice is a coaching thread, two
@@ -74,13 +71,11 @@ export default async function SkillDetail({ params }: { params: Promise<{ skill:
         </Section>
       ) : null}
 
-      <Section>
-        <SectionLabel>Trend</SectionLabel>
+      <Section title={<>Trend</>}>
         <TrendStrip points={skill.trend.map((t) => ({ ...t, max: skill.max }))} />
       </Section>
 
-      <Section>
-        <SectionLabel>Vector&rsquo;s read</SectionLabel>
+      <Section title={<>Vector&rsquo;s read</>}>
         <Evidence label="Vector" tone="vector" quoted={false} text={skill.vectorRead} />
       </Section>
 

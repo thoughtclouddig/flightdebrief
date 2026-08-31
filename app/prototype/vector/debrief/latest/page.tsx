@@ -12,7 +12,6 @@ import {
   PrimaryButton,
   Screen,
   Section,
-  SectionLabel,
 } from "@/components/prototype/ui";
 import { cn } from "@/lib/utils";
 import {
@@ -54,8 +53,7 @@ export default function DebriefDetail() {
         </span>
       </Card>
 
-      <Section>
-        <SectionLabel>Went well</SectionLabel>
+      <Section title={<>Went well</>}>
         <ul className="flex flex-col gap-3">
           {WENT_WELL.map((w) => (
             <li key={w} className="flex items-start gap-3 text-[17px] leading-snug text-foreground">
@@ -66,8 +64,7 @@ export default function DebriefDetail() {
         </ul>
       </Section>
 
-      <Section>
-        <SectionLabel>Work on</SectionLabel>
+      <Section title={<>Work on</>}>
         <ul className="flex flex-col gap-3">
           {WORK_ON.map((w) => (
             <li key={w} className="flex items-start gap-3 text-[17px] leading-snug text-foreground">
@@ -81,8 +78,7 @@ export default function DebriefDetail() {
         <AcsBadge area={ACS_AREAS.landings} />
       </Section>
 
-      <Section>
-        <SectionLabel>{INSTRUCTOR.firstName} wants next</SectionLabel>
+      <Section title={<>{INSTRUCTOR.firstName} wants next</>}>
         <div className="flex flex-col gap-3">
           {STRUCTURED.instructorEmphasis.map((e) => (
             <Evidence key={e.quote} label={INSTRUCTOR.firstName} tone="instructor" text={e.quote} />
@@ -90,8 +86,7 @@ export default function DebriefDetail() {
         </div>
       </Section>
 
-      <Section>
-        <SectionLabel>Where you and {INSTRUCTOR.firstName} landed</SectionLabel>
+      <Section title={<>Where you and {INSTRUCTOR.firstName} landed</>} flush>
         <Card className="flex flex-col gap-4">
           <Evidence label="You" tone="student" text="Crosswinds felt pretty good." />
           <Evidence

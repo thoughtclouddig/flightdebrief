@@ -1,19 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LifeBuoy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { STUDENT } from "@/lib/prototype/vector-data";
+import { ThemeToggle } from "@/components/prototype/theme-toggle";
+import { Avatar } from "@/components/prototype/avatar";
 
 /**
- * Profile and support, parked in a header rather than the tab bar.
+ * The app's navigation header: help, appearance, and the account.
  *
- * The bottom bar is for the four things a student does; account and help are
- * things they need occasionally and want to find in the same place every
- * time. Putting them in the top-right corner is the native convention, and it
- * keeps the tab bar at four -- a fifth tab would have made Progress narrower
- * to make room for something nobody opens twice a week.
+ * These live here rather than in the tab bar because the bar is for the four
+ * things a student does every week. A fifth tab would have narrowed all of
+ * them to make room for the one nobody opens twice, and the top-right corner
+ * is where every native app already puts the account.
  *
  * Hidden inside the debrief capture flow, which is deliberately chrome-free.
  */
@@ -22,29 +23,31 @@ export function AppHeader() {
   if (pathname.startsWith("/prototype/vector/debrief/new")) return null;
 
   const onProfile = pathname.startsWith("/prototype/vector/profile");
-  const initials = STUDENT.fullName
-    .split(" ")
-    .map((n) => n[0])
-    .join("");
 
   return (
-    <div className="flex items-center justify-end gap-1 px-5 pt-3">
+    <div className="flex items-center gap-0.5 px-4 pb-1 pt-2">
+      {/* The lockup already exists in two cuts -- dark ink for paper, white
+          for a dark ground. Both render and CSS picks, so the header is
+          correct before hydration and when the theme is still the OS's. */}
+      <Link href="/prototype/vector" aria-label="AfterFlight home" className="mr-auto flex shrink-0 items-center">
+        <Image src="/brand/afterflight-lockup-dark.svg" alt="AfterFlight" width={132} height={21} priority className="dark:hidden" />
+        <Image src="/brand/afterflight-lockup-light.svg" alt="AfterFlight" width={132} height={21} priority className="hidden dark:block" />
+      </Link>
+
+      <ThemeToggle />
       <Link
         href="/prototype/vector/profile/support"
         aria-label="Support"
         className="flex size-11 items-center justify-center rounded-full text-foreground-faint transition-colors hover:text-foreground"
       >
-        <LifeBuoy className="size-[22px]" strokeWidth={1.8} aria-hidden />
+        <LifeBuoy className="size-[22px]" strokeWidth={2} aria-hidden />
       </Link>
       <Link
         href="/prototype/vector/profile"
         aria-label="Profile"
-        className={cn(
-          "flex size-10 items-center justify-center rounded-full text-[15px] font-semibold transition-colors",
-          onProfile ? "bg-brand text-on-brand" : "bg-surface-sunken text-foreground-soft",
-        )}
+        className={cn("ml-1 rounded-full transition-shadow", onProfile && "ring-2 ring-brand ring-offset-2 ring-offset-surface-sunken")}
       >
-        {initials}
+        <Avatar size={36} />
       </Link>
     </div>
   );

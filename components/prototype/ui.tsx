@@ -24,13 +24,51 @@ import type { SkillState } from "@/lib/prototype/vector-data";
 
 /* ------------------------------------------------------------------ layout */
 
-/** Vertical rhythm between major sections, applied once at the page level. */
+/**
+ * Vertical rhythm between major sections, applied once at the page level.
+ *
+ * The canvas is sunken so the grouped sections below can be white cards that
+ * physically separate from it. Before this the whole screen was one white
+ * sheet with headings floating in it, and the sections ran together -- a
+ * heading and the paragraph above it looked like the same block.
+ */
 export function Screen({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-8 px-6 pb-10 pt-5">{children}</div>;
+  return <div className="flex flex-col gap-7 bg-surface-sunken px-4 pb-10 pt-4">{children}</div>;
 }
 
-export function Section({ children }: { children: ReactNode }) {
-  return <section className="flex flex-col gap-3">{children}</section>;
+/**
+ * A grouped section: a label outside, its content inside a white card.
+ *
+ * This is the iOS Settings/Health shape, and it is the fix for "everything
+ * runs together". Whitespace alone cannot separate sections on a screen that
+ * is already mostly whitespace; a surface change can. Pass `title` rather
+ * than nesting a SectionLabel, so the label always sits outside the card and
+ * the relationship reads the same on every screen.
+ *
+ * `flush` opts out of the card for content that supplies its own surface --
+ * a Panel, or a stack of Evidence quotes that would look boxed twice.
+ */
+export function Section({
+  children,
+  title,
+  action,
+  flush = false,
+}: {
+  children: ReactNode;
+  title?: ReactNode;
+  action?: ReactNode;
+  flush?: boolean;
+}) {
+  return (
+    <section className="flex flex-col gap-2.5">
+      {title ? <SectionLabel action={action}>{title}</SectionLabel> : null}
+      {flush ? (
+        children
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-hairline bg-surface px-5 py-4">{children}</div>
+      )}
+    </section>
+  );
 }
 
 /** Page title. One per screen, and nothing else at this size. */
@@ -54,8 +92,8 @@ export function PageTitle({ children, kicker }: { children: ReactNode; kicker?: 
  */
 export function SectionLabel({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <h2 className="text-[13px] font-bold uppercase tracking-[0.1em] text-foreground">{children}</h2>
+    <div className="flex items-baseline justify-between gap-3 px-1.5">
+      <h2 className="text-[14px] font-bold uppercase tracking-[0.08em] text-foreground-soft">{children}</h2>
       {action}
     </div>
   );
@@ -270,7 +308,7 @@ export function VectorMark({ subtitle, context, onPanel = false }: { subtitle?: 
         <p className={cn("text-[15px]", onPanel ? "text-panel-foreground-soft" : "text-foreground-soft")}>{subtitle}</p>
       ) : null}
       {context ? (
-        <p className={cn("text-[13px] leading-relaxed", onPanel ? "text-panel-foreground-soft" : "text-foreground-faint")}>
+        <p className={cn("text-[14px] leading-relaxed", onPanel ? "text-panel-foreground-soft" : "text-foreground-faint")}>
           {context}
         </p>
       ) : null}
@@ -310,7 +348,7 @@ export function Evidence({
       <p className={cn("text-[13px] font-medium", onPanel ? "text-panel-foreground-soft" : "text-foreground-faint")}>{label}</p>
       <p
         className={cn(
-          "mt-0.5 text-[15px] leading-relaxed",
+          "mt-0.5 text-[16px] leading-relaxed",
           onPanel ? "text-panel-foreground" : "text-foreground-soft",
           quoted && "italic",
         )}
@@ -390,7 +428,7 @@ export function SkillMeter({
 }
 
 export function StateLabel({ state, onPanel = false }: { state: SkillState; onPanel?: boolean }) {
-  return <span className={cn("text-[13px] font-medium", stateTone(state, onPanel).text)}>{state}</span>;
+  return <span className={cn("text-[14px] font-medium", stateTone(state, onPanel).text)}>{state}</span>;
 }
 
 /**
@@ -403,7 +441,7 @@ export function StateLabel({ state, onPanel = false }: { state: SkillState; onPa
  */
 export function AcsBadge({ area, code, onPanel = false }: { area: string; code?: string; onPanel?: boolean }) {
   return (
-    <p className={cn("text-[13px] leading-snug", onPanel ? "text-panel-foreground-soft" : "text-foreground-faint")}>
+    <p className={cn("text-[14px] leading-snug", onPanel ? "text-panel-foreground-soft" : "text-foreground-faint")}>
       <span className="font-semibold uppercase tracking-[0.06em]">FAA ACS</span>
       <span className="px-1.5 opacity-40">·</span>
       {area}
@@ -429,7 +467,7 @@ export function TrendStrip({ points }: { points: { label: string; score: number;
                 return <span key={i} className={cn("h-3 flex-1 rounded-[3px]", filled ? tone.fill : "bg-hairline/60")} />;
               })}
             </div>
-            <span className="text-[13px] tabular-nums text-foreground-faint">{p.label}</span>
+            <span className="text-[14px] tabular-nums text-foreground-faint">{p.label}</span>
           </div>
         );
       })}

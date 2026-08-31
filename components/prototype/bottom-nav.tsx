@@ -34,11 +34,15 @@ export function BottomNav() {
               href={t.href}
               /* 56px tall: a real tap target, not a link. */
               className={cn(
-                "flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-tight transition-colors",
-                active ? "text-brand" : "text-foreground-faint",
+                "flex min-h-[56px] flex-1 cursor-pointer flex-col items-center justify-center gap-1 text-[11px] font-semibold tracking-tight transition-colors",
+                active ? "text-brand" : "text-foreground-soft",
               )}
             >
-              <Icon className="size-[22px]" strokeWidth={active ? 2.2 : 1.7} />
+              {/* Weight carries the active state alongside colour, so the tab
+                  bar still reads for anyone who can't separate the two hues.
+                  1.7 was hairline-thin at this size and made every icon look
+                  provisional. */}
+              <Icon className="size-[25px]" strokeWidth={active ? 2.4 : 2} aria-hidden />
               {t.label}
             </Link>
           );

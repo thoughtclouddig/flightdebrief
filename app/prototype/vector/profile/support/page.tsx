@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { BookOpen, Mail, MessageSquare } from "lucide-react";
-import { BackLink, Card, PageTitle, QuietRow, Screen, Section, SectionLabel } from "@/components/prototype/ui";
+import { BackLink, Card, PageTitle, QuietRow, Screen, Section } from "@/components/prototype/ui";
 
 export const metadata: Metadata = { title: "Support — AfterFlight", robots: { index: false, follow: false } };
 
@@ -32,8 +32,7 @@ export default function SupportPage() {
       <BackLink href="/prototype/vector/profile">Profile</BackLink>
       <PageTitle kicker="We answer within a day">Support</PageTitle>
 
-      <Section>
-        <SectionLabel>Common questions</SectionLabel>
+      <Section title={<>Common questions</>} flush>
         <div className="flex flex-col gap-3">
           {FAQ.map((f) => (
             <Card key={f.q}>
@@ -44,8 +43,7 @@ export default function SupportPage() {
         </div>
       </Section>
 
-      <Section>
-        <SectionLabel>Still stuck</SectionLabel>
+      <Section title={<>Still stuck</>}>
         <div className="flex flex-col">
           <QuietRow
             href="mailto:support@getafterflight.com"

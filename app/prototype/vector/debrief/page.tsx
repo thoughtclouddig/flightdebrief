@@ -9,7 +9,6 @@ import {
   QuietRow,
   Screen,
   Section,
-  SectionLabel,
 } from "@/components/prototype/ui";
 import { DEBRIEFS } from "@/lib/prototype/vector-data";
 
@@ -41,8 +40,7 @@ export default function DebriefHub() {
         </div>
       </Panel>
 
-      <Section>
-        <SectionLabel>Latest</SectionLabel>
+      <Section title={<>Latest</>}>
         <div className="flex flex-col">
           <QuietRow
             href="/prototype/vector/debrief/latest"
@@ -59,8 +57,7 @@ export default function DebriefHub() {
         </div>
       </Section>
 
-      <Section>
-        <SectionLabel>Earlier</SectionLabel>
+      <Section title={<>Earlier</>}>
         <div className="flex flex-col">
           {history.map((d) => (
             <QuietRow

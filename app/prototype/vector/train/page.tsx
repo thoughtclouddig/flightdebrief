@@ -18,7 +18,6 @@ import {
   SkillMeter,
   Screen,
   Section,
-  SectionLabel,
   SecondaryButton,
   StateLabel,
   stateTone,
@@ -97,8 +96,7 @@ export default function TrainPage() {
         context={`Vector starts where your last flight ended · ${LAST_FLIGHT.lesson} · ${INSTRUCTOR.firstName}`}
       />
 
-      <Section>
-        <SectionLabel>Today Vector recommends</SectionLabel>
+      <Section title={<>Today Vector recommends</>} flush>
         <Panel>
           <PanelEyebrow className={stateTone(recommended.state, true).text}>{recommended.state}</PanelEyebrow>
           <PanelHeadline>{recommended.skill}</PanelHeadline>
@@ -137,8 +135,7 @@ export default function TrainPage() {
         </Panel>
       </Section>
 
-      <Section>
-        <SectionLabel>Still working on</SectionLabel>
+      <Section title={<>Still working on</>}>
         <div className="flex flex-col">
           {open.map((s) => (
             <Link

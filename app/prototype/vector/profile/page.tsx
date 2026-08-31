@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { BookOpen, LifeBuoy, LogOut, ShieldCheck, UserRound } from "lucide-react";
-import { PageTitle, QuietRow, Screen, Section, SectionLabel } from "@/components/prototype/ui";
+import { BookOpen, LifeBuoy, LogOut, ShieldCheck } from "lucide-react";
+import { Avatar } from "@/components/prototype/avatar";
+import { QuietRow, Screen, Section } from "@/components/prototype/ui";
 import { INSTRUCTOR, SKILL_SCORES, STUDENT } from "@/lib/prototype/vector-data";
 
 export const metadata: Metadata = { title: "Profile — AfterFlight", robots: { index: false, follow: false } };
@@ -21,23 +22,23 @@ export default function ProfilePage() {
 
   return (
     <Screen>
-      <div className="flex items-center gap-4">
-        <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-[22px] font-semibold text-foreground-soft">
-          <UserRound className="size-7" strokeWidth={1.8} aria-hidden />
-        </span>
+      <div className="flex flex-col gap-4 px-1.5">
+        <Avatar size={76} editable />
         <div className="min-w-0">
-          <PageTitle kicker={STUDENT.certificate}>{STUDENT.fullName}</PageTitle>
+          <p className="text-[15px] text-foreground-faint">{STUDENT.certificate}</p>
+          <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.02em] text-foreground">
+            {STUDENT.fullName}
+          </h1>
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-2.5">
         <Stat value={`${STUDENT.hours}`} label="Hours logged" />
         <Stat value={`${SKILL_SCORES.length}`} label="Skills tracked" />
         <Stat value={`${open}`} label="Still open" />
       </div>
 
-      <Section>
-        <SectionLabel>Training</SectionLabel>
+      <Section title={<>Training</>}>
         <div className="flex flex-col">
           <QuietRow href="/prototype/vector/progress" label="My progress" meta={`${SKILL_SCORES.length} skills`} />
           <QuietRow href="/prototype/vector/debrief" label="My debriefs" meta="3" />
@@ -45,8 +46,7 @@ export default function ProfilePage() {
         </div>
       </Section>
 
-      <Section>
-        <SectionLabel>Help</SectionLabel>
+      <Section title={<>Help</>}>
         <div className="flex flex-col">
           <QuietRow
             href="/prototype/vector/profile/guide"
@@ -88,7 +88,7 @@ export default function ProfilePage() {
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex-1 rounded-2xl bg-surface-sunken px-4 py-4">
+    <div className="flex-1 rounded-2xl border border-hairline bg-surface px-4 py-4">
       <p className="text-[26px] font-semibold leading-none tabular-nums tracking-tight text-foreground">{value}</p>
       <p className="mt-1.5 text-[13px] leading-snug text-foreground-faint">{label}</p>
     </div>

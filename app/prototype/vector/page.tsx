@@ -12,7 +12,6 @@ import {
   QuietRow,
   Screen,
   Section,
-  SectionLabel,
   SecondaryButton,
 } from "@/components/prototype/ui";
 import { INSTRUCTOR, NEXT_LESSON, PENDING_FLIGHT, STRUCTURED, STUDENT } from "@/lib/prototype/vector-data";
@@ -111,8 +110,7 @@ function BetweenFlights() {
         </div>
       </Panel>
 
-      <Section>
-        <SectionLabel>{INSTRUCTOR.firstName}&rsquo;s key reminder</SectionLabel>
+      <Section title={<>{INSTRUCTOR.firstName}&rsquo;s key reminder</>}>
         <Evidence label={INSTRUCTOR.firstName} tone="instructor" text={STRUCTURED.instructorEmphasis[0]!.quote} />
       </Section>
 

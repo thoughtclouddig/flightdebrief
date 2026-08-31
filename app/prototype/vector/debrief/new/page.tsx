@@ -15,7 +15,6 @@ import {
   PrimaryButton,
   Screen,
   Section,
-  SectionLabel,
   SecondaryButton,
 } from "@/components/prototype/ui";
 import { cn } from "@/lib/utils";
@@ -72,8 +71,7 @@ function Who({ onPick }: { onPick: (v: Voice) => void }) {
   return (
     <>
       <PageTitle kicker={`${PENDING_FLIGHT.lesson} · ${PENDING_FLIGHT.date}`}>Start debrief</PageTitle>
-      <Section>
-        <SectionLabel>Who is giving feedback?</SectionLabel>
+      <Section title={<>Who is giving feedback?</>} flush>
         <div className="flex flex-col gap-3">
           <Choice
             icon={<UserRound className="size-5" aria-hidden />}
@@ -282,8 +280,7 @@ function Review() {
         </p>
       </Panel>
 
-      <Section>
-        <SectionLabel>Went well</SectionLabel>
+      <Section title={<>Went well</>}>
         <ul className="flex flex-col gap-3">
           {STRUCTURED.wentWell.map((w) => (
             <li key={w} className="flex items-start gap-3 text-[17px] leading-snug text-foreground">
@@ -294,8 +291,7 @@ function Review() {
         </ul>
       </Section>
 
-      <Section>
-        <SectionLabel>Work on</SectionLabel>
+      <Section title={<>Work on</>}>
         <ul className="flex flex-col gap-3">
           {STRUCTURED.needsWork.map((w) => (
             <li key={w} className="flex items-start gap-3 text-[17px] leading-snug text-foreground">
@@ -307,8 +303,7 @@ function Review() {
         <AcsBadge area={ACS_AREAS.landings} />
       </Section>
 
-      <Section>
-        <SectionLabel>{INSTRUCTOR.firstName} wants next</SectionLabel>
+      <Section title={<>{INSTRUCTOR.firstName} wants next</>}>
         <div className="flex flex-col gap-3">
           {STRUCTURED.instructorEmphasis.map((e) => (
             <Evidence key={e.quote} label={INSTRUCTOR.firstName} tone="instructor" text={e.quote} />
