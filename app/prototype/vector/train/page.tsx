@@ -15,6 +15,7 @@ import {
   PanelButton,
   PanelEyebrow,
   PanelHeadline,
+  InfoTip,
   SkillMeter,
   Screen,
   Section,
@@ -96,8 +97,30 @@ export default function TrainPage() {
               Standing alone above the card it had nothing to align to and
               read as a page header; here it reads as the byline on a specific
               piece of advice, which is what it actually is. */}
-          <div className="border-b border-panel-hairline pb-5">
+          <div className="flex items-start justify-between gap-2 border-b border-panel-hairline pb-5">
             <VectorMark subtitle="Your AI flight trainer" onPanel />
+            {/* "Chair-fly" is jargon and "5-minute review" is a promise, not
+                a description. Both need one tap of explanation available. */}
+            <InfoTip label="What Vector can do here" onPanel>
+              <span className="flex flex-col gap-2.5">
+                <span>
+                  <strong className="font-semibold text-foreground">5-minute review</strong> &mdash; a short
+                  explanation of this one skill in plain language, ending with a check that it stuck.
+                </span>
+                <span>
+                  <strong className="font-semibold text-foreground">Quiz</strong> &mdash; three questions drawn from
+                  your own flight, not a written-test bank.
+                </span>
+                <span>
+                  <strong className="font-semibold text-foreground">Chair-fly</strong> &mdash; fly the scenario in
+                  your head. Vector stops at each decision point and asks what you&rsquo;d do.
+                </span>
+                <span>
+                  <strong className="font-semibold text-foreground">Ask</strong> &mdash; anything about this flight,
+                  this skill, or what your instructor meant.
+                </span>
+              </span>
+            </InfoTip>
           </div>
 
           <p className="mt-5 text-[15px] leading-relaxed text-panel-foreground-soft">

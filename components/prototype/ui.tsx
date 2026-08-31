@@ -2,7 +2,8 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Info, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SkillState } from "@/lib/prototype/vector-data";
 
@@ -472,6 +473,91 @@ export function TrendStrip({ points }: { points: { label: string; score: number;
         );
       })}
     </div>
+  );
+}
+
+/**
+ * A tap-to-open explanation.
+ *
+ * Not a hover tooltip: this is a phone product, there is no hover, and the
+ * things that need explaining ("chair-fly", a 3/4 meter, an ACS area) are
+ * exactly the terms a first-time student has never met. The disclosure is a
+ * real popover rather than an always-visible caption, so the vocabulary is
+ * available without every screen carrying a glossary.
+ *
+ * Closes on Escape and on any outside tap, because a popover you cannot
+ * dismiss by looking away is worse than no popover.
+ */
+export function InfoTip({
+  label,
+  children,
+  onPanel = false,
+  align = "right",
+}: {
+  label: string;
+  children: ReactNode;
+  onPanel?: boolean;
+  align?: "left" | "right";
+}) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  const wrap = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent | TouchEvent) {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <span ref={wrap} className="relative inline-flex">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label={label}
+        aria-expanded={open}
+        aria-controls={id}
+        className={cn(
+          "flex size-11 cursor-pointer items-center justify-center rounded-full transition-colors",
+          onPanel ? "text-panel-foreground-soft hover:text-panel-foreground" : "text-foreground-faint hover:text-foreground",
+        )}
+      >
+        <Info className="size-[18px]" strokeWidth={2} aria-hidden />
+      </button>
+
+      {open ? (
+        <span
+          id={id}
+          role="dialog"
+          aria-label={label}
+          className={cn(
+            "absolute top-full z-30 mt-1 w-[min(19rem,calc(100vw-3rem))] rounded-2xl border border-hairline bg-surface p-4 text-left shadow-xl shadow-black/15",
+            align === "right" ? "right-0" : "left-0",
+          )}
+        >
+          <span className="flex items-start justify-between gap-3">
+            <span className="text-[15px] font-semibold text-foreground">{label}</span>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Close"
+              className="-mr-1 -mt-1 flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-foreground-faint"
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          </span>
+          <span className="mt-2 block text-[15px] leading-relaxed text-foreground-soft">{children}</span>
+        </span>
+      ) : null}
+    </span>
   );
 }
 

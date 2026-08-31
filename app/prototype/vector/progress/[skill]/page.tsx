@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import {
   AcsBadge,
   BackLink,
+  InfoTip,
   Evidence,
   PrimaryButton,
   Screen,
@@ -43,9 +44,15 @@ export default async function SkillDetail({ params }: { params: Promise<{ skill:
 
       <div>
         <h1 className="text-[32px] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">{skill.skill}</h1>
-        <div className="mt-4 flex items-center gap-4">
+        <div className="mt-4 flex items-center gap-3">
           <SkillMeter score={skill.score} max={skill.max} state={skill.state} size="lg" />
           <StateLabel state={skill.state} />
+          <InfoTip label="What this means" align="left">
+            Four levels, from &ldquo;needs work&rdquo; to &ldquo;meets standard&rdquo;, for this one skill. It comes
+            from what {INSTRUCTOR.firstName} said about it &mdash; the sentence is right below. There&rsquo;s no
+            overall score, and no readiness percentage: whether you&rsquo;re ready to solo is your
+            instructor&rsquo;s call.
+          </InfoTip>
         </div>
         <div className="mt-3">
           <AcsBadge area={skill.acsArea} code={skill.acsCode} />

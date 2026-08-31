@@ -77,6 +77,30 @@ export function BrandMoment() {
         </p>
       </Reveal>
 
+      {/*
+       * Deliberately small and chrome-free. These three lines exist to name
+       * the problem the video is about, not to compete with it -- as cards
+       * they were three more objects fighting the one thing this section is
+       * built around. A rule and a numeral is enough structure.
+       */}
+      <Reveal delay={450} className="relative mt-10 w-full max-w-3xl sm:mt-12">
+        <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-3">
+          {PROBLEMS.map((p, i) => (
+            <div key={p.title} className="border-t border-[#101727]/12 pt-4">
+              <dt className="flex items-baseline gap-2">
+                <span className="font-display text-xs font-extrabold tabular-nums tracking-[0.1em] text-brand">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="font-display text-[15px] font-bold uppercase tracking-wide text-[#101727]">
+                  {p.title}
+                </span>
+              </dt>
+              <dd className="text-pretty mt-1.5 text-[15px] leading-relaxed text-[#4b545d]">{p.copy}</dd>
+            </div>
+          ))}
+        </dl>
+      </Reveal>
+
       <Reveal delay={300} className="relative mt-12 w-full max-w-2xl sm:mt-16">
         <div
           className="overflow-hidden rounded-xl border border-black/[0.06] bg-black/5 shadow-[0_16px_40px_-12px_rgba(16,23,39,0.25)]"
@@ -94,22 +118,6 @@ export function BrandMoment() {
         </div>
       </Reveal>
 
-      <Reveal delay={450} className="relative mt-12 grid w-full max-w-3xl grid-cols-1 gap-4 sm:mt-14 sm:grid-cols-3">
-        {PROBLEMS.map((p, i) => (
-          <div
-            key={p.title}
-            className="rounded-2xl border border-black/[0.06] bg-white/85 p-5 backdrop-blur-sm"
-          >
-            <p className="font-display text-xs font-extrabold tabular-nums tracking-[0.1em] text-brand">
-              {String(i + 1).padStart(2, "0")}
-            </p>
-            <h3 className="font-display mt-1.5 text-balance text-base font-bold uppercase tracking-wide text-[#101727]">
-              {p.title}
-            </h3>
-            <p className="text-pretty mt-2 text-[15px] leading-relaxed text-[#4b545d]">{p.copy}</p>
-          </div>
-        ))}
-      </Reveal>
     </section>
   );
 }
