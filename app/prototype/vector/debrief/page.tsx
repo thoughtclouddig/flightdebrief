@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, ChevronDown, Volume2 } from "lucide-react";
+import { Check, ChevronDown, Play } from "lucide-react";
 import { VectorPanel } from "@/components/prototype/vector-panel";
+import { Card, Evidence, PageTitle, PrimaryButton, Screen, Section, SectionLabel } from "@/components/prototype/ui";
 import { cn } from "@/lib/utils";
 import {
   INSTRUCTOR,
   INSTRUCTOR_DEBRIEF,
   LAST_FLIGHT,
-  PERCEPTION_GAPS,
   STRUCTURED,
   STUDENT_REFLECTION,
   SUGGESTED,
@@ -17,99 +17,103 @@ import {
 /**
  * Debrief answers: what happened last flight?
  *
- * Three short lists, one perception-gap card, the replay, and Vector. The
- * raw transcript is behind a tap -- it is the least useful artifact on the
- * screen and putting it inline was a large part of what made the previous
- * version feel like a record rather than a product.
+ * Copy is aggressively shortened -- the seeded strings are full sentences
+ * because the analyzer produces sentences, but a list on a phone wants
+ * phrases. Long form is one tap away in the transcript, which stays closed.
  */
+const WENT_WELL = ["Better centerline control", "Strong short-field technique"];
+const WORK_ON = ["Crosswind correction through touchdown", "Stabilized approach speed"];
+
 export default function DebriefPage() {
   const [showTranscript, setShowTranscript] = useState(false);
-  // One gap, not the full history: the significant one is the point.
-  const gap = PERCEPTION_GAPS.find((g) => g.takeaway)!;
+  const [asking, setAsking] = useState(false);
 
   return (
-    <div className="flex flex-col gap-6 px-5 pt-6">
-      <div>
-        <h1 className="text-[32px] font-semibold leading-none tracking-tight text-foreground">Debrief</h1>
-        <p className="mt-1.5 text-sm text-foreground-faint">
-          {LAST_FLIGHT.date} &middot; {LAST_FLIGHT.lesson} &middot; {INSTRUCTOR.firstName}
-        </p>
-      </div>
+    <Screen>
+      <PageTitle kicker={`${LAST_FLIGHT.date} · ${INSTRUCTOR.firstName}`}>Debrief</PageTitle>
 
-      <button className="flex items-center gap-3 rounded-xl border border-hairline px-4 py-4 text-left transition-colors hover:border-brand">
-        <Volume2 className="size-5 shrink-0 text-brand" />
-        <span className="flex-1 text-[15px] font-medium text-foreground">Listen again</span>
-        <span className="text-sm text-foreground-faint">1:12</span>
-      </button>
+      <Card onClick={() => {}} className="flex items-center gap-4 py-4">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand">
+          <Play className="size-4 fill-brand-foreground text-brand-foreground" />
+        </span>
+        <span className="flex-1">
+          <span className="block text-[17px] font-medium text-foreground">Listen again</span>
+          <span className="block text-[13px] text-foreground-faint">Your debrief, 1:12</span>
+        </span>
+      </Card>
 
-      <List label="Went well" items={STRUCTURED.wentWell} good />
-      <List label="Work on" items={STRUCTURED.needsWork} />
-      <List label={`${INSTRUCTOR.firstName} wants next`} items={STRUCTURED.instructorEmphasis.map((e) => e.quote)} quoted />
+      <Section>
+        <SectionLabel>Went well</SectionLabel>
+        <ul className="flex flex-col gap-3">
+          {WENT_WELL.map((w) => (
+            <li key={w} className="flex items-start gap-3 text-[17px] leading-snug text-foreground">
+              <Check className="mt-1 size-4 shrink-0 text-good" />
+              {w}
+            </li>
+          ))}
+        </ul>
+      </Section>
 
-      <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground-faint">
-          Where you landed differently
-        </h2>
-        <div className="mt-3 rounded-2xl border border-hairline p-5">
-          <p className="text-[15px] font-semibold text-foreground">{gap.task}</p>
-          <div className="mt-3 border-l-2 border-good pl-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-good">You</p>
-            <p className="mt-0.5 text-sm text-foreground-soft">{gap.studentView}</p>
-          </div>
-          <div className="mt-2.5 border-l-2 border-brand pl-3">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-brand">{INSTRUCTOR.firstName}</p>
-            <p className="mt-0.5 text-sm text-foreground-soft">{gap.instructorView}</p>
-          </div>
-          <p className="mt-3 rounded-xl bg-surface-sunken px-3.5 py-3 text-sm text-foreground-soft">{gap.takeaway}</p>
+      <Section>
+        <SectionLabel>Work on</SectionLabel>
+        <ul className="flex flex-col gap-3">
+          {WORK_ON.map((w) => (
+            <li key={w} className="flex items-start gap-3 text-[17px] leading-snug text-foreground">
+              <span className="mt-2 size-1.5 shrink-0 rounded-full bg-amber" />
+              {w}
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section>
+        <SectionLabel>{INSTRUCTOR.firstName} wants next</SectionLabel>
+        <div className="flex flex-col gap-3">
+          {STRUCTURED.instructorEmphasis.map((e) => (
+            <Evidence key={e.quote} label={INSTRUCTOR.firstName} tone="instructor" text={e.quote} />
+          ))}
         </div>
-      </section>
+      </Section>
 
-      <VectorPanel context={`${LAST_FLIGHT.lesson} · ${INSTRUCTOR.firstName} · ${LAST_FLIGHT.date}`} suggestions={SUGGESTED.afterDebrief} />
+      <Section>
+        <SectionLabel>Where you and {INSTRUCTOR.firstName} landed</SectionLabel>
+        <Card className="flex flex-col gap-4">
+          <Evidence label="You" tone="student" text="Crosswinds felt pretty good." />
+          <Evidence
+            label={INSTRUCTOR.firstName}
+            tone="instructor"
+            text="Centerline improved. Correction still needs consistency through touchdown."
+          />
+          <p className="rounded-xl bg-surface-sunken px-4 py-3.5 text-[15px] leading-relaxed text-foreground-soft">
+            You both saw progress. {INSTRUCTOR.firstName} still wants more consistency through touchdown.
+          </p>
+        </Card>
+      </Section>
 
-      {/* Last, and collapsed. */}
-      <div className="border-t border-hairline pt-4">
+      {asking ? (
+        <VectorPanel
+          context={`${LAST_FLIGHT.lesson} · ${INSTRUCTOR.firstName} · ${LAST_FLIGHT.date}`}
+          suggestions={SUGGESTED.afterDebrief}
+        />
+      ) : (
+        <PrimaryButton onClick={() => setAsking(true)}>Ask Vector about this</PrimaryButton>
+      )}
+
+      <div>
         <button
           onClick={() => setShowTranscript(!showTranscript)}
-          className="flex w-full items-center gap-2 text-sm font-medium text-foreground-faint hover:text-foreground-soft"
+          className="flex min-h-[44px] w-full items-center gap-2 text-[15px] font-medium text-foreground-faint"
         >
           View transcript
-          <ChevronDown className={cn("size-3.5 transition-transform", showTranscript && "rotate-180")} />
+          <ChevronDown className={cn("size-4 transition-transform", showTranscript && "rotate-180")} />
         </button>
         {showTranscript ? (
-          <div className="mt-3 flex flex-col gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-brand">{INSTRUCTOR.firstName}</p>
-              <p className="mt-0.5 text-sm text-foreground-soft">{INSTRUCTOR_DEBRIEF}</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-good">You</p>
-              <p className="mt-0.5 text-sm text-foreground-soft">{STUDENT_REFLECTION}</p>
-            </div>
+          <div className="flex flex-col gap-4 pb-2">
+            <Evidence label={INSTRUCTOR.firstName} tone="instructor" quoted={false} text={INSTRUCTOR_DEBRIEF} />
+            <Evidence label="You" tone="student" quoted={false} text={STUDENT_REFLECTION} />
           </div>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-function List({ label, items, good, quoted }: { label: string; items: string[]; good?: boolean; quoted?: boolean }) {
-  return (
-    <section>
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground-faint">{label}</h2>
-      <ul className="mt-3 flex flex-col gap-2.5">
-        {items.map((item) => (
-          <li key={item} className="flex items-start gap-2.5 text-[15px] leading-relaxed text-foreground">
-            {good ? (
-              <CheckCircle2 className="mt-1 size-4 shrink-0 text-good" />
-            ) : (
-              <span className={cn("mt-2 size-1.5 shrink-0 rounded-full", quoted ? "bg-brand" : "bg-amber")} />
-            )}
-            <span className={quoted ? "italic text-foreground-soft" : undefined}>
-              {quoted ? `"${item}"` : item}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
+    </Screen>
   );
 }

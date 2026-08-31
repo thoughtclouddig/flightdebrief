@@ -1,85 +1,79 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronRight, Plane } from "lucide-react";
+import { Evidence, PageTitle, PrimaryButton, PrimaryCard, Screen, Section, SectionLabel } from "@/components/prototype/ui";
 import { INSTRUCTOR, NEXT_LESSON, STRUCTURED, STUDENT } from "@/lib/prototype/vector-data";
 
 export const metadata: Metadata = { title: "Home — AfterFlight", robots: { index: false, follow: false } };
 
 /**
- * Home answers exactly one question: what should I do before I fly again?
+ * Home answers one question: what should I do before I fly again?
  *
- * Everything that is not an answer to that question has moved to Train,
- * Debrief or Progress. The previous version showed every capability at once
- * in a flat stack of equal-weight cards, which is why it read as a long page
- * instead of a product -- there was nothing to look at first.
- *
- * Above the fold: who, when, the two things that matter, one quote from the
- * instructor, one primary action.
+ * The Next Flight card is dark with an orange edge rather than a full orange
+ * slab. The slab was the loudest thing on screen and it was not the thing to
+ * tap, which left the actual primary action looking secondary.
  */
 export default function PrototypeHome() {
   return (
-    <div className="flex flex-col gap-6 px-5 pt-6">
-      <div>
-        <p className="text-sm text-foreground-faint">Good afternoon</p>
-        <h1 className="text-[32px] font-semibold leading-none tracking-tight text-foreground">{STUDENT.firstName}</h1>
-      </div>
+    <Screen>
+      <PageTitle kicker="Good afternoon">{STUDENT.firstName}</PageTitle>
 
-      {/* The one card that matters. Visually dominant on purpose. */}
-      <section className="rounded-2xl bg-brand p-5 text-brand-foreground">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-80">Next flight</p>
-        <p className="mt-1.5 text-2xl font-semibold leading-tight">
-          {NEXT_LESSON.date} &middot; {NEXT_LESSON.time}
+      <PrimaryCard>
+        <div className="flex items-center gap-1.5 text-brand">
+          <Plane className="size-3.5" />
+          <span className="text-[13px] font-semibold uppercase tracking-[0.1em]">Next flight</span>
+        </div>
+        <p className="mt-2 text-[28px] font-semibold leading-tight tracking-tight">
+          {NEXT_LESSON.date} · {NEXT_LESSON.time}
         </p>
-        <p className="mt-1 text-sm opacity-85">
-          {INSTRUCTOR.firstName} &middot; Crosswind / Short Field
+        <p className="mt-1 text-[15px] opacity-70">
+          {INSTRUCTOR.firstName} · Crosswind + Short Field
         </p>
-      </section>
+      </PrimaryCard>
 
-      <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground-faint">Focus on 2 things</h2>
-        <div className="mt-3 flex flex-col gap-2.5">
+      <Section>
+        <SectionLabel>Focus on 2 things</SectionLabel>
+        <div className="flex flex-col">
           {STRUCTURED.nextFlightFocus.map((f, i) => (
-            <div key={f} className="flex items-center gap-3 rounded-xl border border-hairline px-4 py-3.5">
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-xs font-semibold tabular-nums text-foreground-soft">
-                {i + 1}
-              </span>
-              <span className="text-[15px] font-medium text-foreground">{f}</span>
+            <div key={f} className="flex items-start gap-4 border-b border-hairline py-4 last:border-b-0">
+              <span className="text-[15px] font-semibold tabular-nums text-brand">{i + 1}</span>
+              <span className="text-[17px] leading-snug text-foreground">{f}</span>
             </div>
           ))}
         </div>
-      </section>
+      </Section>
 
-      <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground-faint">
-          {INSTRUCTOR.firstName}&rsquo;s key reminder
-        </h2>
-        <blockquote className="mt-3 border-l-2 border-brand pl-4 text-[15px] italic leading-relaxed text-foreground-soft">
-          &ldquo;{STRUCTURED.instructorEmphasis[0]!.quote}&rdquo;
-        </blockquote>
-      </section>
+      <Section>
+        <SectionLabel>{INSTRUCTOR.firstName}&rsquo;s key reminder</SectionLabel>
+        <Evidence label={INSTRUCTOR.firstName} tone="instructor" text={STRUCTURED.instructorEmphasis[0]!.quote} />
+      </Section>
 
-      {/* One obvious action. */}
-      <Link
-        href="/prototype/vector/train"
-        className="flex items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-4 text-[15px] font-semibold text-surface"
-      >
-        Train with Vector
-        <ArrowRight className="size-4" />
-      </Link>
+      <div className="flex flex-col gap-2.5">
+        <PrimaryButton href="/prototype/vector/train">
+          Train with Vector
+          <ArrowRight className="size-[18px]" />
+        </PrimaryButton>
+        {/* Vector is a brand name a first-time student cannot define. Say what
+            it is at the point they are asked to tap it. */}
+        <p className="px-1 text-[13px] leading-relaxed text-foreground-faint">
+          Vector is your AI flight trainer. It knows what {INSTRUCTOR.firstName} flagged and helps you prepare before{" "}
+          {NEXT_LESSON.date}.
+        </p>
+      </div>
 
       <div className="flex flex-col">
-        <SecondaryLink href="/prototype/vector/debrief" label="Review last debrief" meta="Aug 29" />
-        <SecondaryLink href="/prototype/vector/progress" label="See progress" meta="4 skills" />
+        <Quiet href="/prototype/vector/debrief" label="Review last debrief" meta="Aug 29" />
+        <Quiet href="/prototype/vector/progress" label="See progress" meta="4 skills" />
       </div>
-    </div>
+    </Screen>
   );
 }
 
-function SecondaryLink({ href, label, meta }: { href: string; label: string; meta: string }) {
+function Quiet({ href, label, meta }: { href: string; label: string; meta: string }) {
   return (
-    <Link href={href} className="flex items-center gap-3 border-b border-hairline py-4 last:border-b-0">
-      <span className="flex-1 text-[15px] text-foreground">{label}</span>
-      <span className="text-sm text-foreground-faint">{meta}</span>
+    <Link href={href} className="flex min-h-[52px] items-center gap-3 border-b border-hairline last:border-b-0">
+      <span className="flex-1 text-[17px] text-foreground">{label}</span>
+      <span className="text-[15px] text-foreground-faint">{meta}</span>
       <ChevronRight className="size-4 text-foreground-faint" />
     </Link>
   );

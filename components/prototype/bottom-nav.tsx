@@ -23,7 +23,7 @@ const TABS = [
 export function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-surface/95 backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-surface/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-lg items-stretch">
         {TABS.map((t) => {
           const active = pathname === t.href;
@@ -34,11 +34,11 @@ export function BottomNav() {
               href={t.href}
               /* 56px tall: a real tap target, not a link. */
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors",
-                active ? "text-brand" : "text-foreground-faint hover:text-foreground-soft",
+                "flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium tracking-tight transition-colors",
+                active ? "text-brand" : "text-foreground-faint",
               )}
             >
-              <Icon className={cn("size-5", active && "stroke-[2.25]")} />
+              <Icon className="size-[22px]" strokeWidth={active ? 2.2 : 1.7} />
               {t.label}
             </Link>
           );
