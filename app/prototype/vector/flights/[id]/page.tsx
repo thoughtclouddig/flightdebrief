@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, Mic, Sparkles } from "lucide-react";
+import { ChevronRight, LineChart, Mic, Sparkles } from "lucide-react";
 import { FlightMap } from "@/components/flight-map";
 import {
   AcsBadge,
@@ -25,6 +25,7 @@ import {
   statusLabel,
 } from "@/lib/prototype/flights";
 import { ACS_AREAS, INSTRUCTOR, SKILL_SCORES, STRUCTURED } from "@/lib/prototype/vector-data";
+import { analysisFor } from "@/lib/prototype/moments";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -53,6 +54,10 @@ export default async function FlightDetail({ params }: { params: Promise<{ id: s
   const needsDebrief = flight.status === "NEEDS_DEBRIEF" || flight.status === "DEBRIEF_STARTED";
   // Only the flight this prototype's debrief actually belongs to shows skills.
   const skills = flight.id === "aug-29" ? SKILL_SCORES.filter((s) => s.state !== "Meets Standard") : [];
+  // Only offered when there is genuinely something to analyse. A screen that
+  // advertises Flight Analysis and then explains it has no data is worse than
+  // one that never mentioned it.
+  const analysis = analysisFor(flight.id);
 
   return (
     <Screen>
@@ -91,6 +96,13 @@ export default async function FlightDetail({ params }: { params: Promise<{ id: s
         </div>
         <p className="px-1.5 pt-2 text-[14px] text-foreground-faint">{sourceLabel(flight)}</p>
       </Section>
+
+      {analysis ? (
+        <SecondaryButton href={`/prototype/vector/flights/${flight.id}/analysis`}>
+          <LineChart className="size-[18px]" aria-hidden />
+          View flight analysis
+        </SecondaryButton>
+      ) : null}
 
       {flight.debriefId ? (
         <Section title={<>Debrief</>}>

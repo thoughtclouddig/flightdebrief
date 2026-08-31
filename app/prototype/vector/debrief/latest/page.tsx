@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { Check, ChevronDown, Play } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Play } from "lucide-react";
 import { VectorPanel } from "@/components/prototype/vector-panel";
 import {
   AcsBadge,
@@ -23,6 +24,8 @@ import {
   STUDENT_REFLECTION,
   SUGGESTED,
 } from "@/lib/prototype/vector-data";
+import { analysisFor } from "@/lib/prototype/moments";
+import { momentTone } from "@/lib/prototype/telemetry";
 
 /**
  * One debrief, answering: what happened last flight?
@@ -33,6 +36,9 @@ import {
  */
 const WENT_WELL = ["Better centerline control", "Strong short-field technique"];
 const WORK_ON = ["Crosswind correction through touchdown", "Stabilized approach speed"];
+
+/** Derived from the same analysis the Flight Analysis screen renders. */
+const MOMENTS = analysisFor("aug-29")?.moments ?? [];
 
 export default function DebriefDetail() {
   const [showTranscript, setShowTranscript] = useState(false);
@@ -85,6 +91,50 @@ export default function DebriefDetail() {
           ))}
         </div>
       </Section>
+
+      {/*
+       * Flight Moments in the normal debrief, so a student never has to open
+       * Flight Analysis to discover that telemetry context exists. Compact on
+       * purpose -- this is a pointer into the deeper surface, not the surface
+       * itself, and the debrief must not become an engineering dashboard.
+       */}
+      {MOMENTS.length > 0 ? (
+        <Section title={<>Flight moments</>} flush>
+          <div className="flex flex-col gap-3">
+            {MOMENTS.map((m) => (
+              <Link
+                key={m.id}
+                href="/prototype/vector/flights/aug-29/replay"
+                className="flex items-start gap-3 rounded-2xl border border-hairline bg-surface p-5"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2.5">
+                    <span className="text-[17px] font-semibold text-foreground">{m.title}</span>
+                    <span
+                      className={cn(
+                        "text-[14px] font-medium",
+                        momentTone(m.type) === "attention"
+                          ? "text-state-attention"
+                          : momentTone(m.type) === "good"
+                            ? "text-state-good"
+                            : "text-foreground-faint",
+                      )}
+                    >
+                      {m.type === "NEEDS_ATTENTION" ? "Needs attention" : m.type === "BEST_ATTEMPT" ? "Best attempt" : "Improved"}
+                    </span>
+                  </span>
+                  {m.flightData[0] ? (
+                    <span className="mt-2 block text-[15px] leading-relaxed text-foreground-soft">
+                      <span className="font-medium text-foreground">Flight data:</span> {m.flightData[0].value}
+                    </span>
+                  ) : null}
+                </span>
+                <ChevronRight className="mt-1 size-4 shrink-0 text-foreground-faint" aria-hidden />
+              </Link>
+            ))}
+          </div>
+        </Section>
+      ) : null}
 
       <Section title={<>Where you and {INSTRUCTOR.firstName} landed</>} flush>
         <Card className="flex flex-col gap-6">

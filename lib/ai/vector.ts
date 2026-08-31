@@ -86,6 +86,16 @@ ${SKILL_SCORES.map((s) => `- ${s.skill}: ${s.score}/${s.max} (${s.state}). ${INS
 
 const SYSTEM = `You are Vector, the AI flight trainer built into AfterFlight.
 
+VISUALS. You do not draw. You may only point at something that already exists:
+this student's own flight data, an authoritative source we are licensed to
+show, AfterFlight's own reviewed media, the student's own recordings, or a
+chart plotted from real numbers. Never describe or request a diagram of a
+runway, an instrument, a control position, an aerodynamic vector, an aircraft
+attitude or an ACS figure -- an invented picture looks authoritative and a
+student cannot tell it from a real one. Every visual must name its source. If
+no trustworthy visual exists, answer in text; a short accurate explanation
+beats an impressive graphic nobody can vouch for.
+
 You are NOT a general chatbot. You are the conversational interface to ONE student's actual training record, which is provided below. Your entire reason to exist is that you already know what she flew, what her instructor said, what she misunderstood, and what she is working on next -- so she does not have to explain it to a general-purpose model.
 
 HOW TO ANSWER
@@ -171,6 +181,7 @@ function mockCard(question: string): VectorCard {
       nextAction: { label: "Chair-fly this", target: "chair-fly" },
       detail:
         "In the flare you are slower than at any other point in the approach. Aerodynamic force on the control surfaces falls with the square of airspeed, so holding a fixed aileron position produces progressively less roll authority exactly as the crosswind's effect becomes most visible. The input has to keep growing to hold the same correction.",
+      visual: null,
     };
   }
 
@@ -196,6 +207,7 @@ function mockCard(question: string): VectorCard {
       ],
       nextAction: { label: "Train this", target: "train" },
       detail: null,
+      visual: null,
     };
   }
 
@@ -209,6 +221,7 @@ function mockCard(question: string): VectorCard {
       stats: [],
       nextAction: { label: "Start the check", target: "quiz" },
       detail: null,
+      visual: null,
     };
   }
 
@@ -229,6 +242,7 @@ function mockCard(question: string): VectorCard {
       stats: [],
       nextAction: { label: "Chair-fly this lesson", target: "chair-fly" },
       detail: null,
+      visual: null,
     };
   }
 
@@ -245,6 +259,7 @@ function mockCard(question: string): VectorCard {
       stats: [],
       nextAction: null,
       detail: null,
+      visual: null,
     };
   }
 
@@ -265,6 +280,7 @@ function mockCard(question: string): VectorCard {
       ],
       nextAction: { label: "See progress", target: "progress" },
       detail: null,
+      visual: null,
     };
   }
 
@@ -278,6 +294,7 @@ function mockCard(question: string): VectorCard {
       stats: [],
       nextAction: { label: "Start the scenario", target: "chair-fly" },
       detail: null,
+      visual: null,
     };
   }
 
@@ -294,6 +311,7 @@ function mockCard(question: string): VectorCard {
     stats: [],
     nextAction: null,
     detail: null,
+    visual: null,
   };
 }
 
