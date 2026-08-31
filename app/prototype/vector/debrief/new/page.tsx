@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Check, Mic, PenLine, Square, UserRound } from "lucide-react";
 import {
@@ -19,6 +20,17 @@ import {
 } from "@/components/prototype/ui";
 import { cn } from "@/lib/utils";
 import { ACS_AREAS, INSTRUCTOR, PENDING_FLIGHT, STRUCTURED } from "@/lib/prototype/vector-data";
+import { flightById, formatHours } from "@/lib/prototype/flights";
+
+/**
+ * The flight this debrief belongs to.
+ *
+ * Every debrief carries a flight id -- there is no orphan-debrief path. The
+ * debrief is the interpretation of a specific hour in a specific airplane, and
+ * a summary that cannot say which flight it came from cannot feed recurrence,
+ * carry-forward, or Vector's context.
+ */
+const FLIGHT = flightById("aug-29")!;
 
 type Stage = "who" | "ready" | "recording" | "processing" | "review" | "reflection" | "done";
 type Voice = "instructor" | "student";
@@ -71,6 +83,23 @@ function Who({ onPick }: { onPick: (v: Voice) => void }) {
   return (
     <>
       <PageTitle kicker={`${PENDING_FLIGHT.lesson} · ${PENDING_FLIGHT.date}`}>Start debrief</PageTitle>
+
+      {/* The flight, stated before anything is recorded, so it is obvious
+          what this debrief will be attached to. */}
+      <Card className="flex items-center gap-3">
+        <span className="min-w-0 flex-1">
+          <span className="block text-[17px] font-medium text-foreground">
+            {FLIGHT.departureAirport} &rarr; {FLIGHT.arrivalAirport} · {formatHours(FLIGHT.durationMinutes)} hr
+          </span>
+          <span className="mt-0.5 block text-[15px] text-foreground-faint">
+            {PENDING_FLIGHT.date} · {FLIGHT.aircraftType} · {FLIGHT.tailNumber}
+          </span>
+        </span>
+        <Link href="/prototype/vector/flights/new" className="shrink-0 text-[15px] font-medium text-brand">
+          Change
+        </Link>
+      </Card>
+
       <Section title={<>Who is giving feedback?</>} flush>
         <div className="flex flex-col gap-3">
           <Choice

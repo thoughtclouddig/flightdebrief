@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowRight, Mic, PlaneLanding, PlaneTakeoff } from "lucide-react";
+import { ArrowRight, Mic, Plus, Radar, PlaneLanding, PlaneTakeoff } from "lucide-react";
 import {
   Evidence,
   PageTitle,
@@ -15,6 +15,7 @@ import {
   SecondaryButton,
 } from "@/components/prototype/ui";
 import { INSTRUCTOR, NEXT_LESSON, PENDING_FLIGHT, STRUCTURED, STUDENT } from "@/lib/prototype/vector-data";
+import { DETECTED_FLIGHT, formatHours } from "@/lib/prototype/flights";
 
 export const metadata: Metadata = { title: "Home — AfterFlight", robots: { index: false, follow: false } };
 
@@ -33,7 +34,49 @@ export const metadata: Metadata = { title: "Home — AfterFlight", robots: { ind
  */
 export default async function PrototypeHome({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
   const { state } = await searchParams;
-  return state === "flown" ? <JustFlew /> : <BetweenFlights />;
+  if (state === "detected") return <DetectedFlight />;
+  if (state === "flown") return <JustFlew />;
+  return <BetweenFlights />;
+}
+
+/* ------------------------------------------ STATE B: detected, unconfirmed */
+
+/**
+ * ADS-B matched a flight and the student has not said it is theirs.
+ *
+ * Confirmation is a real step, not a formality: the match is on tail number
+ * and time, and a shared training aircraft flies several students a day. Every
+ * number downstream -- tracked hours, recurrence, Vector's context -- inherits
+ * whatever is confirmed here, so a wrong flight is worse than no flight.
+ */
+function DetectedFlight() {
+  const d = DETECTED_FLIGHT;
+  return (
+    <Screen>
+      <PageTitle kicker="Good afternoon">{STUDENT.firstName}</PageTitle>
+
+      <Panel>
+        <PanelEyebrow icon={<Radar className="size-3.5" aria-hidden />}>We found your flight</PanelEyebrow>
+        <PanelHeadline>
+          {d.departureAirport} &rarr; {d.arrivalAirport}
+        </PanelHeadline>
+        <PanelMeta>
+          {d.dateLabel} · {d.aircraftType} · {d.tailNumber} · {formatHours(d.durationMinutes)} hr detected
+        </PanelMeta>
+        <div className="mt-6 flex flex-col gap-2.5">
+          <PanelButton href="/prototype/vector/flights/new">Confirm flight</PanelButton>
+          <SecondaryButton href="/prototype/vector/flights/new" onPanel>
+            Not my flight
+          </SecondaryButton>
+        </div>
+      </Panel>
+
+      <div className="flex flex-col">
+        <QuietRow href="/prototype/vector/flights" label="My flights" meta="5" />
+        <QuietRow href="/prototype/vector/progress" label="See progress" meta="4 skills" />
+      </div>
+    </Screen>
+  );
 }
 
 /* -------------------------------------------------- STATE A: needs debrief */
@@ -58,16 +101,21 @@ function JustFlew() {
             <Mic className="size-[18px]" aria-hidden />
             Start debrief
           </PanelButton>
-          <SecondaryButton href="/prototype/vector/debrief/new?mode=reflection" onPanel>
-            Add my reflection
-          </SecondaryButton>
+          <div className="flex gap-2.5">
+            <SecondaryButton href="/prototype/vector/debrief/new?mode=reflection" onPanel>
+              My reflection
+            </SecondaryButton>
+            <SecondaryButton href="/prototype/vector/flights/aug-29" onPanel>
+              View flight
+            </SecondaryButton>
+          </div>
         </div>
       </Panel>
 
       {/* Nothing else competes. Everything below is navigation, not action. */}
       <div className="flex flex-col">
+        <QuietRow href="/prototype/vector/flights" label="My flights" meta="5" />
         <QuietRow href="/prototype/vector/debrief" label="Past debriefs" meta="3" />
-        <QuietRow href="/prototype/vector/progress" label="See progress" meta="4 skills" />
       </div>
 
       <p className="text-[13px] leading-relaxed text-foreground-faint">
@@ -127,7 +175,16 @@ function BetweenFlights() {
         </p>
       </div>
 
+      {/* "I just flew" has to be reachable from Home at all times -- the
+          detection path only fires when ADS-B saw the aircraft, and a student
+          who flew a non-equipped airplane still needs a way in. */}
+      <SecondaryButton href="/prototype/vector/flights/new">
+        <Plus className="size-[18px]" aria-hidden />
+        I just flew — add a flight
+      </SecondaryButton>
+
       <div className="flex flex-col">
+        <QuietRow href="/prototype/vector/flights" label="My flights" meta="5" />
         <QuietRow href="/prototype/vector/debrief/latest" label="Review last debrief" meta="Aug 29" />
         <QuietRow href="/prototype/vector/progress" label="See progress" meta="4 skills" />
       </div>

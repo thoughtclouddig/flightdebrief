@@ -16,14 +16,17 @@ export function DemoStateSwitch() {
   const pathname = usePathname();
   const params = useSearchParams();
   if (pathname !== "/prototype/vector") return null;
-  const flown = params.get("state") === "flown";
+  const state = params.get("state");
   return (
     <div className="flex items-center gap-1 rounded-full bg-surface-sunken p-0.5">
-      <Opt href="/prototype/vector?state=flown" active={flown}>
+      <Opt href="/prototype/vector?state=detected" active={state === "detected"}>
+        Detected
+      </Opt>
+      <Opt href="/prototype/vector?state=flown" active={state === "flown"}>
         Just flew
       </Opt>
-      <Opt href="/prototype/vector" active={!flown}>
-        Between flights
+      <Opt href="/prototype/vector" active={!state}>
+        Between
       </Opt>
     </div>
   );

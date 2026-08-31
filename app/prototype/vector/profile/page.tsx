@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { BookOpen, LifeBuoy, LogOut, ShieldCheck } from "lucide-react";
 import { Avatar } from "@/components/prototype/avatar";
-import { QuietRow, Screen, Section } from "@/components/prototype/ui";
+import { FLIGHTS, TRACKED_HOURS_DISCLAIMER, trackedHours } from "@/lib/prototype/flights";
+import { InfoTip, QuietRow, Screen, Section } from "@/components/prototype/ui";
 import { INSTRUCTOR, SKILL_SCORES, STUDENT } from "@/lib/prototype/vector-data";
 
 export const metadata: Metadata = { title: "Profile — AfterFlight", robots: { index: false, follow: false } };
@@ -33,13 +34,17 @@ export default function ProfilePage() {
       </div>
 
       <div className="flex gap-2.5">
-        <Stat value={`${STUDENT.hours}`} label="Hours logged" />
-        <Stat value={`${SKILL_SCORES.length}`} label="Skills tracked" />
+        {/* "Hours logged" was a number with no source behind it, which breaks
+            this product's own rule. Tracked hours is computed from confirmed
+            flights and carries its qualification with it. */}
+        <Stat value={trackedHours()} label="Tracked hours" info={TRACKED_HOURS_DISCLAIMER} />
+        <Stat value={`${FLIGHTS.length}`} label="Flights" />
         <Stat value={`${open}`} label="Still open" />
       </div>
 
       <Section title={<>Training</>}>
         <div className="flex flex-col">
+          <QuietRow href="/prototype/vector/flights" label="My flights" meta={`${FLIGHTS.length}`} />
           <QuietRow href="/prototype/vector/progress" label="My progress" meta={`${SKILL_SCORES.length} skills`} />
           <QuietRow href="/prototype/vector/debrief" label="My debriefs" meta="3" />
           <QuietRow href="/prototype/vector/profile" label="Instructor" meta={INSTRUCTOR.fullName} />
@@ -86,10 +91,13 @@ export default function ProfilePage() {
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
+function Stat({ value, label, info }: { value: string; label: string; info?: string }) {
   return (
     <div className="flex-1 rounded-2xl border border-hairline bg-surface px-4 py-4">
-      <p className="text-[26px] font-semibold leading-none tabular-nums tracking-tight text-foreground">{value}</p>
+      <div className="flex items-start justify-between">
+        <p className="text-[26px] font-semibold leading-none tabular-nums tracking-tight text-foreground">{value}</p>
+        {info ? <InfoTip label={label}>{info}</InfoTip> : null}
+      </div>
       <p className="mt-1.5 text-[13px] leading-snug text-foreground-faint">{label}</p>
     </div>
   );
