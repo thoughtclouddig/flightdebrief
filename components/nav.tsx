@@ -18,6 +18,7 @@ import {
   PlaneTakeoff,
   Plus,
   Settings,
+  ShieldCheck,
   TrendingUp,
   UserCog,
   Users,
@@ -67,6 +68,10 @@ const ADMIN_ITEMS = [
   { href: "/admin/instructors", label: "CFIs", icon: UserCog },
   { href: "/admin/aircraft", label: "Aircraft", icon: PlaneTakeoff },
   { href: "/admin/activity", label: "Activity", icon: Activity },
+  // Sits in the nav rather than buried in Settings because it exists to be
+  // FOUND -- it is the page a school owner is sent to when they ask where
+  // the audio lives, and an answer nobody can navigate to is not an answer.
+  { href: "/admin/data-handling", label: "Data & Consent", icon: ShieldCheck },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
