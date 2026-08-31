@@ -102,6 +102,23 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
         interim_results: true,
         punctuate: true,
         diarize: true,
+        // Opts this stream out of Deepgram's Model Improvement Program, so
+        // the audio is retained only as long as it takes to transcribe and
+        // is never used for training.
+        //
+        // Load-bearing, not hygiene: /data-handling and /how-it-works both
+        // tell school owners that a debrief leaves no stored recording.
+        // AfterFlight itself never writes one (the chunks below are streamed
+        // and dropped), but without this flag the transcription provider
+        // could retain what it was sent, and the promise would be true only
+        // about our own database -- which is not how anyone reading it would
+        // understand it.
+        //
+        // NOTE: opting out forgoes Deepgram's 50% MIP discount. That is a
+        // deliberate trade of unit cost for a claim we can defend. Set
+        // NEXT_PUBLIC_DEEPGRAM_ALLOW_MIP=true to opt back in -- and if you
+        // do, correct those two pages first.
+        mip_opt_out: process.env.NEXT_PUBLIC_DEEPGRAM_ALLOW_MIP !== "true",
       });
       connectionRef.current = connection;
 
