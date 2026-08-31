@@ -175,25 +175,82 @@ export const FLIGHTS: Flight[] = [
 ];
 
 /**
- * A flight ADS-B has matched but the student has not confirmed.
+ * A candidate flight returned by an ADS-B lookup on a tail number.
  *
- * This is the state the shipped app cannot currently reach -- the FR24 client
- * exists but nothing polls for a landing -- so it is seeded rather than fetched.
- * The shape is exactly what `FlightCandidate` (lib/flight-data/types.ts)
- * returns, so wiring it to the live provider is a swap, not a rewrite.
+ * Shape matches `FlightCandidate` in lib/flight-data/types.ts, which is what
+ * the shipped FR24 provider already returns from
+ * searchFlightsByTailNumber() -- so replacing this seeded list with a live
+ * call is a swap, not a rewrite.
  */
-export const DETECTED_FLIGHT = {
-  providerFlightId: "fr24-today",
-  tailNumber: "N4521P",
-  aircraftType: "C172S",
-  departureAirport: "KSQL",
-  arrivalAirport: "KSQL",
-  dateLabel: "Today",
-  departedAt: "1:02 PM",
-  landedAt: "2:14 PM",
-  durationMinutes: 78,
-  track: track("KSQL", 78, 91),
-} as const;
+export interface FlightCandidate {
+  providerFlightId: string;
+  tailNumber: string;
+  aircraftType: string;
+  departureAirport: string;
+  arrivalAirport: string;
+  dateLabel: string;
+  departedAt: string;
+  landedAt: string;
+  durationMinutes: number;
+  track: TrackPosition[];
+}
+
+/**
+ * Flights ADS-B saw for a tail number today.
+ *
+ * The student picks theirs. This is the only honest shape for the feature:
+ * ADS-B tracks an AIRPLANE, not a person, and a club trainer flies three or
+ * four students between breakfast and sunset. A product that says "we found
+ * YOUR flight" is claiming knowledge it does not have, and every number
+ * downstream -- tracked hours, recurrence, what Vector thinks you flew -- would
+ * inherit the guess.
+ *
+ * So the flow is the V1 flow: give us the tail number, here is what that
+ * aircraft did today, tell us which one was you.
+ */
+export function candidatesForTail(tailNumber: string): FlightCandidate[] {
+  const aircraft = FLIGHT_DEFAULTS.recentAircraft.find(
+    (a) => a.tailNumber.toUpperCase() === tailNumber.toUpperCase(),
+  );
+  if (!aircraft) return [];
+  const base = {
+    tailNumber: aircraft.tailNumber,
+    aircraftType: aircraft.type,
+    dateLabel: "Today",
+  };
+  return [
+    {
+      ...base,
+      providerFlightId: `${aircraft.tailNumber}-1`,
+      departureAirport: "KSQL",
+      arrivalAirport: "KSQL",
+      departedAt: "8:12 AM",
+      landedAt: "9:20 AM",
+      durationMinutes: 68,
+      track: track("KSQL", 68, 7),
+    },
+    {
+      ...base,
+      providerFlightId: `${aircraft.tailNumber}-2`,
+      departureAirport: "KSQL",
+      arrivalAirport: "KSQL",
+      departedAt: "1:02 PM",
+      landedAt: "2:20 PM",
+      durationMinutes: 78,
+      track: track("KSQL", 78, 91),
+    },
+    {
+      ...base,
+      providerFlightId: `${aircraft.tailNumber}-3`,
+      departureAirport: "KSQL",
+      arrivalAirport: "KHAF",
+      departedAt: "4:40 PM",
+      landedAt: "5:32 PM",
+      durationMinutes: 52,
+      track: track("KSQL", 52, 33),
+    },
+  ];
+}
 
 /** Recent values, so Add Flight is confirmation rather than data entry. */
 export const FLIGHT_DEFAULTS = {

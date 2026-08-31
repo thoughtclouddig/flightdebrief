@@ -15,7 +15,7 @@ import {
   SecondaryButton,
 } from "@/components/prototype/ui";
 import { INSTRUCTOR, NEXT_LESSON, PENDING_FLIGHT, STRUCTURED, STUDENT } from "@/lib/prototype/vector-data";
-import { DETECTED_FLIGHT, formatHours } from "@/lib/prototype/flights";
+import { FLIGHT_DEFAULTS } from "@/lib/prototype/flights";
 
 export const metadata: Metadata = { title: "Home — AfterFlight", robots: { index: false, follow: false } };
 
@@ -34,40 +34,40 @@ export const metadata: Metadata = { title: "Home — AfterFlight", robots: { ind
  */
 export default async function PrototypeHome({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
   const { state } = await searchParams;
-  if (state === "detected") return <DetectedFlight />;
+  if (state === "landed") return <JustLanded />;
   if (state === "flown") return <JustFlew />;
   return <BetweenFlights />;
 }
 
-/* ------------------------------------------ STATE B: detected, unconfirmed */
+/* --------------------------------------------- STATE B: flew, not added yet */
 
 /**
- * ADS-B matched a flight and the student has not said it is theirs.
+ * The student flew and AfterFlight has no record of it.
  *
- * Confirmation is a real step, not a formality: the match is on tail number
- * and time, and a shared training aircraft flies several students a day. Every
- * number downstream -- tracked hours, recurrence, Vector's context -- inherits
- * whatever is confirmed here, so a wrong flight is worse than no flight.
+ * Note what this screen does NOT say. An earlier version said "we found your
+ * flight" and showed one ADS-B match -- but ADS-B tracks an AIRPLANE, not a
+ * person, and a club trainer flies three or four students a day. AfterFlight
+ * cannot know which of those was Mia, so it does not claim to. It offers to do
+ * the typing, and asks her to do the identifying, which is the only part
+ * nobody else can do.
  */
-function DetectedFlight() {
-  const d = DETECTED_FLIGHT;
+function JustLanded() {
   return (
     <Screen>
       <PageTitle kicker="Good afternoon">{STUDENT.firstName}</PageTitle>
 
       <Panel>
-        <PanelEyebrow icon={<Radar className="size-3.5" aria-hidden />}>We found your flight</PanelEyebrow>
-        <PanelHeadline>
-          {d.departureAirport} &rarr; {d.arrivalAirport}
-        </PanelHeadline>
-        <PanelMeta>
-          {d.dateLabel} · {d.aircraftType} · {d.tailNumber} · {formatHours(d.durationMinutes)} hr detected
-        </PanelMeta>
-        <div className="mt-6 flex flex-col gap-2.5">
-          <PanelButton href="/prototype/vector/flights/new">Confirm flight</PanelButton>
-          <SecondaryButton href="/prototype/vector/flights/new" onPanel>
-            Not my flight
-          </SecondaryButton>
+        <PanelEyebrow icon={<Radar className="size-3.5" aria-hidden />}>Flew today?</PanelEyebrow>
+        <PanelHeadline>Add it while it&rsquo;s fresh</PanelHeadline>
+        <p className="mt-3 text-[15px] leading-relaxed text-panel-foreground-soft">
+          Give us the tail number and we&rsquo;ll pull up what {FLIGHT_DEFAULTS.recentAircraft[0]!.tailNumber} and
+          your other aircraft flew today. You pick which one was yours.
+        </p>
+        <div className="mt-6">
+          <PanelButton href="/prototype/vector/flights/new">
+            <Plus className="size-[18px]" aria-hidden />
+            Add flight
+          </PanelButton>
         </div>
       </Panel>
 

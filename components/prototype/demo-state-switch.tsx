@@ -19,8 +19,8 @@ export function DemoStateSwitch() {
   const state = params.get("state");
   return (
     <div className="flex items-center gap-1 rounded-full bg-surface-sunken p-0.5">
-      <Opt href="/prototype/vector?state=detected" active={state === "detected"}>
-        Detected
+      <Opt href="/prototype/vector?state=landed" active={state === "landed"}>
+        Just landed
       </Opt>
       <Opt href="/prototype/vector?state=flown" active={state === "flown"}>
         Just flew
