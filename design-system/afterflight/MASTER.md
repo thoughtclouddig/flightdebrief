@@ -72,7 +72,7 @@ not a dark app, and not a light app with a dark theme bolted on.
 | Panel text, secondary | `#9da7b8` | `#9da7b8` | `--panel-foreground-soft` |
 | Panel hairline | `#2a3a52` | `#33415c` | `--panel-hairline` |
 | Brand orange | `#f07621` | `#f07621` | `--brand` |
-| Text **on** orange | `#142033` | `#142033` | `--on-brand` |
+| Text **on** orange | `#ffffff` | `#ffffff` | `--on-brand` |
 
 ### Semantic state scale
 
@@ -96,10 +96,16 @@ Measured (WCAG 2.x relative luminance):
 | `#1f7a4c` on `#142033` | 3.07 | ✗ unusable on panel |
 | `#e6a23c` on `#ffffff` | 2.19 | ✗ |
 | `#9a6612` on `#ffffff` | 4.90 | ✓ AA |
-| **white on `#f07621`** | **2.71** | **✗ — never do this** |
-| **`#142033` on `#f07621`** | **6.04** | **✓ — this is why `--on-brand` is navy** |
+| `#142033` on `#f07621` | 6.04 | ✓ AA — the passing option |
+| **white on `#f07621`** | **2.87** | **⚠ chosen anyway — see below** |
 | `#142033` on `#f4f5f6` | 14.99 | ✓ AAA |
 | `#9da7b8` on `#142033` | 6.74 | ✓ AA |
+
+`--on-brand` is white by product decision. It is the one pair in this system
+that does not clear AA: 2.87:1 against the brand orange, where navy would give
+5.7:1. Accepted because the primary button is large, isolated, and never the
+only signal for its action — but it is an exception with a number attached, not
+a pass. It is a single token, so reverting it flips every orange fill at once.
 
 Rule: **never hand-pick a state colour at the call site.** Import `stateTone()`
 from `components/prototype/ui.tsx` and pass `onPanel` when the ground is navy.
@@ -126,7 +132,7 @@ hierarchy, not web-page hierarchy.
 | Body | 17 / 1.6 | 400 | iOS HIG body. Never smaller for content. |
 | Secondary body | 15 / 1.6 | 400 | `--foreground-soft` |
 | Metadata | 13 | 400–500 | `--foreground-faint`. Never for content that changes a decision. |
-| Section label | 13, `+0.08em`, uppercase | 600 | `--foreground-faint`. **Max two per screen.** |
+| Section label | 13, `+0.1em`, uppercase | 700 | `--foreground` at full strength. **Max two per screen** — that cap is what lets them be this loud. |
 | Eyebrow on panel | 13, `+0.1em`, uppercase | 600 | Orange or state colour. One per panel. |
 | Numerals in a column | any | any | `tabular-nums`, always. |
 
@@ -410,7 +416,6 @@ Product-specific, and these are the ones this codebase has actually drifted into
      looking secondary. Panel + orange edge instead.
 - ❌ **Orange doing six jobs** (action, tab, Vector, focus, recurrence, needs-work).
      A colour that means six things means nothing.
-- ❌ **White text on orange.** 2.71:1. Measured, failing, non-negotiable.
 - ❌ **Card inside card inside card.**
 - ❌ **Six uppercase tracked labels per screen** — then none of them read as headings.
 - ❌ **Raw LLM paragraphs** rendered as the answer.

@@ -4,7 +4,7 @@ import { CheckCircle2 } from "lucide-react";
 import { CtaLink } from "@/components/marketing/cta-link";
 import { DebriefSummaryMockupCard } from "@/components/marketing/product-mockups";
 
-const BENEFITS = ["Capture every lesson", "Track real progress", "Improve faster"];
+const BENEFITS = ["Understand what mattered", "Train the weak spots", "Show up ready for what's next"];
 
 export function Hero() {
   return (
@@ -12,18 +12,18 @@ export function Hero() {
       <div className="relative mx-auto max-w-[1320px] px-6">
         <div className="relative z-10 max-w-xl lg:py-16">
           <p className="text-balance text-base font-bold uppercase tracking-[0.16em] text-brand sm:text-lg">
-            Two views of the same flight.
+            Your flight doesn&rsquo;t stop teaching at shutdown.
           </p>
           <h1
-            className="font-display mt-4 max-w-xl text-balance text-[clamp(2.75rem,6vw,4.25rem)] font-extrabold leading-[0.98] text-[#101727]"
+            className="font-display mt-4 max-w-xl text-balance text-[clamp(2.5rem,5.4vw,3.9rem)] font-extrabold leading-[0.98] text-[#101727]"
             style={{ textTransform: "none" }}
           >
-            Get better <br />
-            every <span className="text-brand">flight.</span>
+            Get more out of <br />
+            every flight <span className="text-brand">lesson.</span>
           </h1>
           <p className="mt-6 max-w-md text-pretty text-lg leading-relaxed text-[#68717D]">
-            AfterFlight turns every debrief into clear takeaways, next steps, and real
-            progress&mdash;so you fly better and finish your license with confidence.
+            AfterFlight turns your instructor debrief into personalized training, quick practice,
+            and a clear plan for what to work on before your next flight.
           </p>
 
           <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2">

@@ -67,10 +67,16 @@
   --panel-hairline: #2a3a52;
 
   /*
-   * Text and icons sitting ON a brand-orange fill. Navy, not white: white on
-   * #f07621 is 2.9:1 and fails AA, navy is 6.0:1. Measured, not assumed.
+   * Text and icons sitting ON a brand-orange fill.
+   *
+   * White by request. Worth knowing what it costs: white on the brand orange
+   * #f07621 measures 2.87:1, under the 4.5:1 AA floor for text this size,
+   * where navy measures 5.7:1. The button is large, high-contrast against the
+   * page and never the only signal, so it is legible in practice -- but it is
+   * a deliberate exception, not a passing pair. Swapping this one token back
+   * to #142033 reverts every orange fill in the prototype at once.
    */
-  --on-brand: #142033;
+  --on-brand: #ffffff;
 
   /*
    * Skill state. A separate scale from --brand on purpose: orange means "tap
@@ -178,7 +184,7 @@
     --panel-foreground-soft: #9da7b8;
     --panel-hairline: #33415c;
 
-    --on-brand: #142033;
+    --on-brand: #ffffff;
 
     /* The paper-ground variants are unusable here; the state scale collapses onto
        the bright pair for both grounds. */
@@ -225,7 +231,7 @@
   --panel-foreground-soft: #9da7b8;
   --panel-hairline: #33415c;
 
-  --on-brand: #142033;
+  --on-brand: #ffffff;
 
   /* The paper-ground variants are unusable here; the state scale collapses onto
      the bright pair for both grounds. */

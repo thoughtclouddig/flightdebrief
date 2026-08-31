@@ -44,13 +44,18 @@ export function PageTitle({ children, kicker }: { children: ReactNode; kicker?: 
 }
 
 /**
- * Section label. Capped at two per screen by the design system: six uppercase
- * tracked labels made every one of them read as metadata and none as a heading.
+ * Section label.
+ *
+ * Full-strength ink at bold, not faint at semibold. The faint version sat at
+ * the same visual weight as the metadata line directly beneath it, so a label
+ * and the thing it was labelling blended into one grey block -- the label has
+ * to win that comparison or it is not doing a heading's job. Capped at two
+ * per screen by the design system; that cap is what lets them be this loud.
  */
 export function SectionLabel({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">{children}</h2>
+      <h2 className="text-[13px] font-bold uppercase tracking-[0.1em] text-foreground">{children}</h2>
       {action}
     </div>
   );
@@ -154,9 +159,9 @@ const PRIMARY =
 /**
  * Primary action. Exactly one per screen.
  *
- * Navy on orange, not white on orange: white is 2.71:1 against #f07621 and
- * fails AA outright, navy is 6.04:1. The token exists so the call site can't
- * get it wrong.
+ * The label colour comes from --on-brand rather than being written here, so
+ * the whole product's orange fills change together -- see that token for the
+ * measured contrast and why white is a deliberate exception.
  */
 export function PrimaryButton({ children, onClick, href }: { children: ReactNode; onClick?: () => void; href?: string }) {
   const cls = cn(PRIMARY, "bg-brand text-on-brand");
@@ -204,7 +209,12 @@ export function SecondaryButton({
   const cls = cn(
     "flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-3 text-[15px] font-medium transition-colors duration-200",
     onPanel
-      ? "border-panel-hairline text-panel-foreground hover:border-panel-foreground-soft"
+      // Filled, not outlined. A hairline border against navy is barely a
+      // shade off the panel itself, so the buttons dissolved into the
+      // background -- on a dark ground a control has to be a surface, not an
+      // edge. --panel-elevated lifts them off the panel; the brighter border
+      // then reads as a rim rather than as the whole button.
+      ? "border-panel-hairline bg-panel-elevated text-panel-foreground hover:border-panel-foreground-soft hover:bg-panel-elevated/70"
       : "border-hairline text-foreground hover:border-foreground-faint/40",
   );
   return href ? (
