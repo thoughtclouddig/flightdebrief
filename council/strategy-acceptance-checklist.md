@@ -68,9 +68,19 @@ instructor are standing next to each other, and the "wait" is the CFI saying
 debrief, not the CFI's screen count.
 
 ### D1a — freeform and solo orgs
-- [ ] **Stopwatch, tap-record to walking away: under 2 minutes, one screen,
-      zero typing.** This is the claim the marketing pages make for solo
-      pilots and freeform schools. If it fails, the pitch is wrong.
+
+**Measure the app, not the talking.** There is no cap on recording length and
+there should not be one -- a five-minute debrief is the product working. What
+is being tested is how much app surrounds the conversation.
+
+- [ ] **Count the taps.** From opening the flight to walking away, excluding
+      the talking itself: **3 taps or fewer** (start debrief, agree to the
+      consent step, stop), **one screen**, **zero typing**.
+- [ ] **Time only the non-talking part** -- everything you do that is not
+      speaking the debrief. **Under 30 seconds.** If the app takes longer to
+      operate than a pilot takes to think, the pitch is wrong.
+- [ ] Nothing blocks you after you stop. The analysis happens without you
+      waiting on it or approving it.
 
 ### D1b — guided orgs (schools; the demo org)
 The path is: pick tasks → CFI rates → hand over → student rates → record →
