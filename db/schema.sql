@@ -987,3 +987,38 @@ CREATE TABLE IF NOT EXISTS airport_insights (
   sources text[] NOT NULL DEFAULT '{}',
   computed_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- ---------------------------------------------------------------------------
+-- Recording consent + data retention.
+--
+-- A debrief captures two people talking, and one of them is an employee. The
+-- product must be able to prove, later and without argument, that the
+-- required consent existed AT THE TIME a recording happened -- not that a
+-- policy page existed somewhere.
+--
+-- Worth stating plainly because it shapes this whole section: AfterFlight
+-- NEVER STORES THE RECORDING. lib/transcription/use-deepgram-transcription.ts
+-- streams microphone chunks from the browser straight to Deepgram over a live
+-- socket and discards them; no audio blob is ever POSTed to this app and no
+-- audio column exists on `debriefs`. The retained artifact is the TRANSCRIPT
+-- and the structured result derived from it. So retention here governs text,
+-- and the honest answer to "where does the audio live" is "nowhere."
+--
+-- Consent capture itself already exists above (V1 change 12): one row per
+-- participant, keyed to the flight, written before recording starts. What was
+-- missing is the POLICY VERSION -- proving consent existed is only half the
+-- artifact if you cannot show WHICH text the person agreed to. Added by ALTER
+-- so existing rows keep their timestamps; they backfill to the version that
+-- was live when they were written.
+ALTER TABLE consent_records ADD COLUMN IF NOT EXISTS policy_version text NOT NULL DEFAULT '2026-08-30-initial';
+
+-- Per-org retention policy. Configurable rather than hard-coded so a school
+-- with its own counsel can set its own number; the default is deliberately
+-- conservative and is documented in the UI, not baked into copy.
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS transcript_retention_days integer;
+
+-- Set when a debrief's raw transcript has been cleared by retention. The
+-- structured result survives -- that is the training record, and deleting it
+-- would silently destroy the student's history. Nulling the transcript
+-- removes the verbatim conversation while keeping what was learned from it.
+ALTER TABLE debriefs ADD COLUMN IF NOT EXISTS transcript_purged_at timestamptz;

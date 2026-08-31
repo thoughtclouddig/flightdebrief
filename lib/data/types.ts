@@ -298,6 +298,14 @@ export interface Repository {
   getReferralSummary(filter: { days: number }): Promise<ReferralSummary>;
 
   // --- Study-resource "opened" tracking (first-click only, no duration) ---
+  /**
+   * Clears verbatim transcripts past the org's retention window, keeping the
+   * structured result. Returns how many were purged.
+   */
+  purgeExpiredTranscripts(organizationId: string, retentionDays: number): Promise<number>;
+  /** Immediate, admin-initiated transcript deletion for one debrief. */
+  purgeDebriefTranscript(debriefId: string): Promise<void>;
+
   markStudyResourceViewed(input: { studentId: string; url: string }): Promise<void>;
   listViewedStudyResourceUrls(studentId: string): Promise<string[]>;
 
@@ -435,6 +443,8 @@ export interface Repository {
     flightId: string;
     participantUserId: string;
     participantRole: ConsentRole;
+    /** Which version of the consent copy was on screen. See lib/consent.ts. */
+    policyVersion?: string;
     status: ConsentStatus;
   }): Promise<ConsentRecord>;
   listConsentRecords(flightId: string): Promise<ConsentRecord[]>;

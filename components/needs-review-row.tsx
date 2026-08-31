@@ -6,7 +6,6 @@ import type { NeedsReviewReason } from "@/lib/training-insights";
 export const REASON_VARIANT: Record<NeedsReviewReason, "warning" | "neutral"> = {
   "Repeated Deficiency": "warning",
   "Repeated Carry-Forward": "warning",
-  "Limited Feedback": "neutral",
 };
 
 /** One "Needs Review" queue row -- shared by the real admin insights page and marketing demos. */

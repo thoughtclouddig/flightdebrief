@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AfterFlight — Competitive Reality Check</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --ground:#F7F6F3; --panel:#FFFFFF; --ink:#161B22; --ink-2:#4A545F; --ink-3:#78838F;
+  --rule:#E2E0DA; --amber:#B4661E; --amber-soft:#F2E3D2; --cyan:#1E6E7E; --danger:#B0402A;
+  --good:#3E7A4E; --shadow:0 1px 2px rgba(20,26,33,.06),0 8px 24px rgba(20,26,33,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root{--ground:#0F1620;--panel:#161E29;--ink:#E8E9EA;--ink-2:#A3ADB8;--ink-3:#78848F;
+  --rule:#252F3C;--amber:#E8944A;--amber-soft:#2A2015;--cyan:#4EA8B8;--danger:#D96A50;
+  --good:#6FB283;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.3)}
+}
+:root[data-theme="dark"]{--ground:#0F1620;--panel:#161E29;--ink:#E8E9EA;--ink-2:#A3ADB8;--ink-3:#78848F;
+  --rule:#252F3C;--amber:#E8944A;--amber-soft:#2A2015;--cyan:#4EA8B8;--danger:#D96A50;
+  --good:#6FB283;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.3)}
+:root[data-theme="light"]{--ground:#F7F6F3;--panel:#FFFFFF;--ink:#161B22;--ink-2:#4A545F;--ink-3:#78838F;
+  --rule:#E2E0DA;--amber:#B4661E;--amber-soft:#F2E3D2;--cyan:#1E6E7E;--danger:#B0402A;
+  --good:#3E7A4E;--shadow:0 1px 2px rgba(20,26,33,.06),0 8px 24px rgba(20,26,33,.05)}
+
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:16px/1.65 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:0 20px 96px}
+.wrap{max-width:880px;margin:0 auto}
+.label{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+h1{font-family:ui-serif,Georgia,"Times New Roman",serif;font-weight:600;
+  font-size:clamp(30px,6vw,50px);line-height:1.06;letter-spacing:-.02em;margin:.35em 0 .2em;text-wrap:balance}
+h2{font-family:ui-serif,Georgia,serif;font-size:clamp(21px,3.4vw,28px);line-height:1.18;
+  letter-spacing:-.01em;margin:0 0 .5em;text-wrap:balance}
+h3{font-size:15px;letter-spacing:.02em;margin:1.8em 0 .5em;color:var(--ink)}
+p{margin:0 0 1em;color:var(--ink-2)}
+p strong,li strong{color:var(--ink);font-weight:640}
+a{color:var(--cyan)}
+header{padding:64px 0 40px;border-bottom:1px solid var(--rule)}
+.sub{font-size:clamp(16px,2.2vw,19px);color:var(--ink-2);max-width:60ch;margin:0}
+.meta{margin-top:26px;display:flex;flex-wrap:wrap;gap:8px 26px;font-size:12.5px;color:var(--ink-3)}
+section{padding:44px 0;border-bottom:1px solid var(--rule)}
+.verdict{display:flex;flex-wrap:wrap;align-items:baseline;gap:14px;margin:0 0 22px}
+.stamp{font-family:ui-serif,Georgia,serif;font-size:clamp(28px,5vw,42px);font-weight:600;
+  color:var(--amber);letter-spacing:-.01em;line-height:1}
+.stamp-note{font-size:13px;color:var(--ink-3)}
+.pull{border-left:3px solid var(--amber);padding:2px 0 2px 20px;margin:26px 0;
+  font-family:ui-serif,Georgia,serif;font-size:clamp(17px,2.6vw,21px);line-height:1.45;color:var(--ink)}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:22px 24px;
+  box-shadow:var(--shadow);margin:18px 0}
+.grid2{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(268px,1fr))}
+ul,ol{margin:0 0 1em;padding-left:1.25em;color:var(--ink-2)}
+li{margin:.42em 0}
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--panel);margin:20px 0}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:760px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}
+thead th{position:sticky;top:0;background:var(--panel);font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:600;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+td:first-child,th:first-child{font-weight:560;color:var(--ink)}
+.af{background:var(--amber-soft)}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.tag{display:inline-block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+  padding:3px 9px;border-radius:99px;border:1px solid var(--rule);color:var(--ink-2);font-weight:600}
+.tag.win{border-color:var(--good);color:var(--good)}
+.tag.bad{border-color:var(--danger);color:var(--danger)}
+.tag.hot{border-color:var(--amber);color:var(--amber)}
+.bar{height:5px;border-radius:99px;background:var(--rule);overflow:hidden;min-width:66px}
+.bar>i{display:block;height:100%;background:var(--amber)}
+details{border:1px solid var(--rule);border-radius:10px;background:var(--panel);margin:10px 0;overflow:hidden}
+summary{cursor:pointer;padding:14px 20px;font-weight:600;font-size:14.5px;list-style:none;
+  display:flex;justify-content:space-between;gap:16px;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--ink-3);font-weight:400;font-size:19px}
+details[open] summary::after{content:"−"}
+details[open] summary{border-bottom:1px solid var(--rule)}
+.body{padding:6px 20px 18px;font-size:14.5px}
+.body p{margin:.85em 0}
+.split{display:grid;gap:0;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--panel)}
+.split>div{padding:20px 22px}
+.split>div+div{border-top:1px solid var(--rule)}
+@media(min-width:640px){.split>div+div{border-top:0;border-left:1px solid var(--rule)}}
+.split h3{margin-top:0}
+.split ul{margin:0;padding-left:1.1em;font-size:14px}
+footer{padding:40px 0 0;font-size:12.5px;color:var(--ink-3)}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="label">Claude Council · 30 August 2026</div>
+  <h1>AfterFlight —<br>Competitive Reality Check</h1>
+  <p class="sub">Does AfterFlight still have a defensible wedge, or have competitors already occupied the core opportunity? Is “continuity” genuinely unoccupied — or a nicer word for what competitors already ship?</p>
+  <div class="meta">
+    <span>4 live research agents</span><span>5 advisors</span><span>5 anonymized peer reviews</span><span>1 chairman</span>
+  </div>
+</header>
+
+<section>
+  <div class="label">Council verdict</div>
+  <div class="verdict">
+    <span class="stamp">YES, BUT PIVOT</span>
+    <span class="stamp-note">Unanimous on the mechanism. Split on who pays.</span>
+  </div>
+  <p><strong>Continuity is occupied as a word and unoccupied as a mechanism.</strong> FlightSense’s launch blog claims “enhanced continuity when transitioning between instructors.” Wingman claims “instructor handoff continuity briefs” verbatim. Aviatize ships “instructor continuity” at $29/aircraft/month. A word three vendors use is a commodity adjective, not a position.</p>
+  <p>But none of them can compute what AfterFlight can. Aviatize counts instructor <em>switches</em>, not skill <em>recurrence across</em> instructors. FlightSense’s multi-lesson analysis runs a 15-log window with no instructor dimension — and it captures student self-debriefs and instructor debriefs and never diffs them, because self-debrief is a voice-only mode with <strong>no instructor association</strong>. There is no join key. Atlas holds both data sides and cannot connect them without contradicting its own “your roster stays yours, not the school’s” pitch. Navi debriefs the airplane, not the conversation. All five treat audio as input only; none produces audio out.</p>
+  <div class="pull">You are not late to the mechanism. You are late to the vocabulary — and you were twelve months stale on two features you should now abandon permanently.</div>
+</section>
+
+<section>
+  <div class="label">What the research changed</div>
+  <h2>Three named competitors were wrong</h2>
+  <div class="grid2">
+    <div class="card"><span class="tag bad">Does not exist</span><h3>Aviatron / TopGun Training</h3><p>The only Aviatron is a Vermont MRO shop acquired by Wencor in 2022. “Top Gun debrief” is a methodology, not a product. Your Target 2 was a garbled reference to <strong>Navi AI</strong>.</p></div>
+    <div class="card"><span class="tag bad">Counted twice</span><h3>Atlas = DebriefCFI</h3><p>debriefcfi.com 307-redirects to atlascfi.com. One company (Aetherion Arc LLC), counted as two competitors.</p></div>
+    <div class="card"><span class="tag">Not a company</span><h3>Wingman</h3><p>Solo indie, personal Apple developer account, free, no revenue model, “not enough ratings” to display a score. The only product that <em>names</em> the handoff — and it has no CFI account surface, so its brief can only use student-side data. It names the problem it structurally cannot solve.</p></div>
+    <div class="card"><span class="tag hot">The asteroid</span><h3>ForeFlight owns CloudAhoy</h3><p>Debrief shipped Summer 2025. Scheduler <em>with training records</em>, July 2026. An agentic AI engine with an MCP server, Claude support planned. The EFB, the tracklog, the logbook, the billing relationship.</p></div>
+  </div>
+  <h3>Two premises in the brief are factually wrong</h3>
+  <ul>
+    <li>Flight-school insurance is <strong>softening</strong>, not spiking. The hard market was 2019–2022.</li>
+    <li>The FAA SMS rule (14 CFR Part 5) <strong>does not cover</strong> Part 141 or Part 91 flight schools.</li>
+    <li>Bonus: the postflight-critique mandate is in Part 141 Appendix A (Recreational), <strong>not</strong> Appendix B (Private).</li>
+  </ul>
+  <div class="pull">And the biggest change of all — to your own product. You asked whether to build the Continuity Graph, the perception gap, and the Next-CFI Brief. Verified against source: you already built them.</div>
+</section>
+
+<section>
+  <div class="label">Where the council agreed</div>
+  <h2>Six findings, arrived at independently</h2>
+  <div class="split">
+    <div>
+      <h3 style="color:var(--good)">High-confidence signals</h3>
+      <ul>
+        <li><strong>AI debrief is commoditized.</strong> Record, transcribe, summarize, ACS-map, action items — all table stakes. The primitive is a published 2024 paper.</li>
+        <li><strong>Kill debrief-quality scoring and CFI analytics.</strong> FlightSense ships both, doc-verified.</li>
+        <li><strong>The school cannot pay; the student already does.</strong> ~$400/mo total software budget vs 75k–145k students spending $600–1,100/yr out of pocket.</li>
+        <li><strong>Build no ops surface.</strong> Scheduling, dispatch, billing, maintenance, 141 records, LMS, telemetry — all seven, categorically.</li>
+        <li><strong>The debrief gap is a pay-structure problem.</strong> CFIs bill flight, get squeezed on ground. Any product that adds minutes loses.</li>
+        <li><strong>No moat from data or habit.</strong> CFIs churn in 12–24 months, students in 12–18. Both faster than switching cost can compound.</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="color:var(--danger)">Where they clashed</h3>
+      <ul>
+        <li><strong>Who pays.</strong> The operator says student, priced $15–20/mo, free for CFIs. The investor says school signs <em>because it is the consent architecture</em>, student funds. Resolved: both — school signs, student pays.</li>
+        <li><strong>The ForeFlight window.</strong> The red team says 12 months. Two reviewers say the confirmed evidence contradicts it — CloudAhoy’s blog silent three years, Debrief explicitly does <em>not</em> claim AI, instructor page still has no syllabus or grading. Chairman: treat as 18.</li>
+        <li><strong>Is FlightSense a threat or self-neutralizing?</strong> Its Aug 2026 sprint into full ops is a commitment. It may be abandoning the narrative slot, not closing it.</li>
+        <li><strong>Scale.</strong> The investor calls $2–5M ARR a failure. Two reviewers call it a good outcome for a solo founder with a built product — and note nobody asked about runway.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="label">Peer review</div>
+  <h2>Blind spots the council caught itself</h2>
+  <div class="card">
+    <h3 style="margin-top:0">The advisors audited the market but not the evidence</h3>
+    <p><strong>“Zero organic demand” rests on one forum.</strong> Reddit was entirely unreachable to the research toolchain, so every demand finding comes from Pilots of America — which skews old, experienced and aircraft-owning. Structurally the wrong population to sample for student-pilot demand. Three advisors stated it as settled fact.</p>
+    <p><strong>The competitors have no traction either.</strong> FlightSense: 8 App Store ratings. Navi: 16. Atlas: no listing at all. The red team declared the founder “twelve months behind” companies with no demonstrated users.</p>
+    <p><strong>The Continuity Graph is empty on arrival.</strong> “The same mistake, three instructors” emits nothing until a student has flown several lessons with ≥2 CFIs. It says nothing on day one and nothing in a cold demo — and the Category Strategist made it the entire category claim.</p>
+    <p><strong>The solo mode dissolves the consent problem.</strong> A pilot recording himself has no second party — no all-party-consent exposure across twelve states, no CFI veto, no school contract. It is the only configuration that ships free today, escapes the cold start, and arrives at a school already loaded.</p>
+    <p><strong>Nobody proposed the cheapest test.</strong> Five advisors debated whether demand exists. The product is built. Twenty CFI calls and a paywall would settle it for roughly nothing.</p>
+  </div>
+</section>
+
+<section>
+  <div class="label">The white space, ranked</div>
+  <h2>Five opportunities, scored</h2>
+  <p>Market importance · Differentiation · Buildability · Defensibility · Willingness to pay. Each 1–10.</p>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Opportunity</th><th class="num">Mkt</th><th class="num">Diff</th><th class="num">Build</th><th class="num">Def</th><th class="num">WTP</th><th>Composite</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr class="af"><td>Cross-instructor recurrence</td><td class="num">8</td><td class="num">9</td><td class="num">10</td><td class="num">6</td><td class="num">7</td><td><div class="bar"><i style="width:80%"></i></div></td><td><span class="tag win">The wedge</span></td></tr>
+      <tr class="af"><td>Synthesized Next-CFI Brief</td><td class="num">9</td><td class="num">9</td><td class="num">10</td><td class="num">7</td><td class="num">8</td><td><div class="bar"><i style="width:86%"></i></div></td><td><span class="tag win">Already live</span></td></tr>
+      <tr><td>Student-vs-CFI perception gap</td><td class="num">7</td><td class="num">10</td><td class="num">10</td><td class="num">5</td><td class="num">6</td><td><div class="bar"><i style="width:76%"></i></div></td><td><span class="tag">Demo moment</span></td></tr>
+      <tr><td>Audio Debrief Replay</td><td class="num">6</td><td class="num">10</td><td class="num">10</td><td class="num">4</td><td class="num">5</td><td><div class="bar"><i style="width:70%"></i></div></td><td><span class="tag">Not the headline</span></td></tr>
+      <tr><td>Portable student-owned record</td><td class="num">4</td><td class="num">7</td><td class="num">5</td><td class="num">3</td><td class="num">2</td><td><div class="bar"><i style="width:42%"></i></div></td><td><span class="tag bad">Free feature only</span></td></tr>
+      <tr><td>Debrief quality scoring</td><td class="num">3</td><td class="num">1</td><td class="num">6</td><td class="num">2</td><td class="num">3</td><td><div class="bar"><i style="width:30%"></i></div></td><td><span class="tag bad">Dead — shipped</span></td></tr>
+      <tr><td>CFI development analytics</td><td class="num">3</td><td class="num">1</td><td class="num">5</td><td class="num">2</td><td class="num">4</td><td><div class="bar"><i style="width:30%"></i></div></td><td><span class="tag bad">Recruits the veto</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><strong>On the student-owned record:</strong> thirteen documented cases — MyFlightbook, HealthVault, Google Health, Ciitizen, Blockcerts, Credly at $0.28 per badge-holder — and no individual has ever paid meaningfully for custody of their own record. Parchment’s $835M came from 15,000 <em>institutions</em>. Ship export free, as trust. Never as a revenue line.</p>
+</section>
+
+<section>
+  <div class="label">The wedge</div>
+  <h2>AfterFlight should own the conversation half of the training record</h2>
+  <div class="pull">Specifically: being the only system that can tell a school when the same weakness has survived two different instructors.</div>
+  <p>Everyone else is digitizing the <em>flight</em> — telemetry, maneuver deviation, ACS tolerances, tracklogs. That substrate is contested by ForeFlight, CloudAhoy, Navi, MasterPilot and FlytWERX, three of whom will out-spend you and one of whom sets a $19.99/year floor.</p>
+  <p>Nobody is digitizing the <em>conversation</em>: what the instructor said, what the student heard, and the distance between them. The legally mandated record is a time-and-signature ledger, not a competency record. Maneuver grades, debrief notes and next-lesson plans are <strong>required by nobody and stored by nobody.</strong> That slot is unowned because nobody has paid for it — not because nobody noticed.</p>
+  <p>And the delivery mechanism is the part competitors structurally reject. FlightSense makes the CFI review AI-predicted ACS grades. Atlas makes them sign. Every ops platform makes them type. AfterFlight is the only product positioned to answer the single unsolicited pain quote in the entire research corpus — a CFI, unprompted, inside a review of a <em>scheduling</em> product:</p>
+  <div class="pull">“It takes me a long time to do the documentation of a flight.”</div>
+</section>
+
+<section>
+  <div class="label">Positioning</div>
+  <h2>Stop saying / start saying</h2>
+  <div class="split">
+    <div>
+      <h3 style="color:var(--danger)">Retire immediately</h3>
+      <ul>
+        <li>“AI flight debrief” — commodity</li>
+        <li>“Too much of the debrief gets lost” — no pilot has ever described it as record-loss</li>
+        <li>“The continuity layer for flight training” — you’d be the fourth vendor using the word</li>
+        <li>“One debrief. Everything you need for the next flight.”</li>
+        <li>“We score debrief quality” / “instructor development analytics”</li>
+        <li>“Training memory” / “training intelligence layer” — category costumes</li>
+        <li>Any Part 141 mandate, SMS, or hardening-insurance claim</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="color:var(--good)">The new line</h3>
+      <p style="font-family:ui-serif,Georgia,serif;font-size:20px;line-height:1.35;color:var(--ink)">“The same mistake, three instructors, nobody noticed.”</p>
+      <p style="font-size:14px">AfterFlight listens to the debrief you already give, and tells you when a weakness has outlived the instructor who found it.</p>
+      <p style="font-size:14px"><strong>To the school:</strong> your instructors turn over every 14 months. Your students don’t.</p>
+      <p style="font-size:14px"><strong>To the CFI:</strong> stop writing lesson notes. Talk ninety seconds; the record writes itself.</p>
+      <p style="font-size:14px"><strong>To the student:</strong> you’ll forget most of this debrief by tomorrow. Here it is on the drive home.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="label">Kill criteria · 60–90 days</div>
+  <h2>Pre-register these before you run anything</h2>
+  <div class="card">
+    <ol>
+      <li>Fewer than <strong>8 of 20</strong> CFIs say the cross-instructor finding would change what they do tomorrow.</li>
+      <li>Fewer than <strong>6 of 20</strong> CFIs, given it free, record a debrief on &gt;60% of flights in <strong>week 4</strong>. Habit at week 4 is the whole business.</li>
+      <li>Median CFI capture time exceeds <strong>3 minutes</strong> or needs a second screen, and can’t be engineered under 2.</li>
+      <li>Fewer than <strong>25 of 200</strong> students hitting a $15–20/mo paywall complete a card authorization.</li>
+      <li><strong>Zero of the first 10</strong> schools will sign a consent architecture, or &gt;30% of CFIs opt out.</li>
+      <li>You cannot produce <strong>one owner</strong> who says the finding is worth a fee after seeing it on their own data.</li>
+      <li>ForeFlight ships generative debrief with continuity — converts the plan from “build” to “sell the asset,” immediately.</li>
+    </ol>
+    <p style="margin-bottom:0"><strong>Do not kill on</strong> absence of forum demand. That evidence rests on one forum with the wrong demographic.</p>
+  </div>
+</section>
+
+<section>
+  <div class="label">Full advisor responses</div>
+  <h2>The record</h2>
+  <details><summary>The Category Strategist — “Continuity is a feature. The Continuity Graph is a category.”<span class="tag">C</span></summary><div class="body">
+  <p>Rejects “training continuity” outright: FlightSense, Wingman and Aviatize all already use the word. Proposes instead <em>the system of record for what keeps going wrong across different instructors</em> — a quality finding, not a handoff finding. A skill that survives two teachers is not an instructor problem; it is a curriculum or student problem.</p>
+  <p>Its honest against-case: “I named a problem nobody has said out loud. That is either the definition of naming an unnamed problem or the definition of a product nobody wants, and the dossier cannot tell you which.”</p></div></details>
+
+  <details><summary>The Flight School Operator — “A well-built vitamin.”<span class="tag bad">A</span></summary><div class="body">
+  <p>Would not buy. FlightSense’s $15/seat at 8 CFIs + 70 students is $1,170/month against a $400 total software budget. Won’t wire cables into eight aircraft. Expects ~1 in 5 CFIs to refuse recording.</p>
+  <p>Its one condition to sign this quarter: if the debrief <em>closes out the lesson</em> — completes the syllabus item, populates the record the POI wants, ends the Friday chase for lesson notes. That’s admin hours it actually pays for.</p>
+  <p>“The pain it treats is real but it’s borne by the student, and the student isn’t the one signing. Sell it to them at $15–20/month, free for my CFIs. That I’d endorse tomorrow.”</p></div></details>
+
+  <details><summary>The Product Strategist — “The wedge is not to be built. It is to be named.”<span class="tag win">D · strongest, 5/5 reviewers</span></summary><div class="body">
+  <p>The only advisor to reason from competitors’ architecture rather than their feature lists — which is why its defensibility claims are falsifiable. FlightSense’s self-debrief has no instructor association, so adding the diff means re-modeling capture, not adding a screen.</p>
+  <p>Identifies AfterFlight’s least-told story: the workflow <em>compresses</em> CFI minutes. The CFI speaks a debrief they were going to speak anyway; zero keystrokes downstream. Market minutes saved, not insight generated — a wage line at $45–55/hr, defensible with a stopwatch.</p>
+  <p>Names the two things that would kill it: CFI-first sequencing as a hard gate, and any review-and-approve gate on AI output.</p></div></details>
+
+  <details><summary>The SaaS / GTM Investor — “$2–5M ARR, not a venture outcome.”<span class="tag">E</span></summary><div class="body">
+  <p>School-budget ACV of $1,200–2,400/yr × 3,500 schools = $6.3M at an impossible 100% penetration; ~$950K ARR at a strong 15%, signed 525 accounts at a time — “exactly the OpenAirplane grave.” Student side is roughly 3× and needs no field sales.</p>
+  <p>Resolves the payer question: school signs because B2B2C <em>is</em> the consent architecture; student funds. Says standalone SaaS is not viable and the realistic outcome is acquisition.</p>
+  <p><strong>Reviewers’ critique:</strong> built on the dossier’s self-declared weakest number (~3,500 schools) without flagging it, and never asked what AfterFlight would be <em>bought for</em>. Answers “is this fundable” when the founder asked “should I stop.”</p></div></details>
+
+  <details><summary>The Red Team — “Debriefing is a feature. The primitive is a published paper.”<span class="tag bad">B · best written, least sound</span></summary><div class="body">
+  <p><strong>Sound:</strong> FlightSense ships debrief-quality scoring and CFI analytics — kill both. Zero organic demand is real. Recording is a genuine liability surface with no case law on point.</p>
+  <p><strong>False:</strong> “Aviatize already ships your continuity thesis.” Aviatize counts instructor switches, not skill recurrence across instructors.</p>
+  <p><strong>Over-claimed:</strong> the 12-month ForeFlight window is an inference, and the confirmed evidence cuts the other way.</p>
+  <p><strong>Refuted:</strong> “the buyer cannot pay” is true of schools, false of the market.</p>
+  <p><strong>Fallacious:</strong> its closing line — that the working code is the only argument left — is a genetic fallacy. How the software came to exist has no bearing on whether the wedge is real.</p></div></details>
+</section>
+
+<section>
+  <div class="label">Final recommendation</div>
+  <h2>Spend two weeks buying information, not writing features</h2>
+  <div class="card">
+    <h3 style="margin-top:0">Week 1</h3>
+    <p>Ship the <code>COUNT(DISTINCT instructor_id)</code> change and the sentence it produces — one day. Seed a demo account with loaded multi-instructor history so the finding is never empty. Then open a browser and read the two JS-rendered FlightSense FAQ answers: <em>“What happens when an instructor leaves?”</em> and <em>“Who owns our data?”</em> The research flagged these as the highest-value unknowns in the landscape. They are one page load away, and no advisor thought to just go look.</p>
+    <h3>Week 2</h3>
+    <p>Twenty CFI conversations from the NAFI/SAFE and AOPA-award lists, asking the five falsifying questions. Put a $15–20/month student paywall on a landing page, drive 200 students, and count card authorizations — not signups. Build nothing else.</p>
+    <h3>In parallel — ship the solo tier free</h3>
+    <p>A solo pilot recording himself has no second party: no all-party-consent exposure, no CFI veto, no school contract, no legal opinion needed to start. It is the only configuration that ships free today, escapes the Continuity Graph’s cold start, and arrives at a school already loaded with history. <strong>“Self-serve solo student signup” is already sitting in_progress on your task list.</strong> The council identified it independently as the entry move. Finish it first.</p>
+    <p style="margin-bottom:0">The consent problem and the willingness-to-pay problem are separable <strong>in time, not in one design</strong>: free solo wedge → paid when a CFI attaches.</p>
+  </div>
+  <div class="pull">The binary of build-vs-stop was the right frame twenty thousand lines ago. It is spent. If the two-week sprint hits the kill criteria, you’ll have spent two weeks to learn it instead of six months.</div>
+</section>
+
+<footer>
+  <p>Council convened 30 August 2026 · 4 research agents, 5 advisors, 5 anonymized peer reviewers, 1 chairman. Evidence base: live web research plus AfterFlight’s own source. Full verdict: <code>council/council-verdict-2026-08-30.md</code> · Dossier: <code>council/research-dossier.md</code></p>
+  <p>Methodology adapted from Andrej Karpathy’s LLM Council.</p>
+</footer>
+
+</div>
+</body>
+</html>

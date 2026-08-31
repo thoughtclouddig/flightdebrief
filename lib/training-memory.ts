@@ -20,6 +20,32 @@ export interface RecurringTheme {
   skill: TrainingSkill;
   count: number;
   consideredFlights: number;
+  /**
+   * How many DISTINCT instructors were on the flights where this came up.
+   *
+   * This is the whole point of the field: a weakness that survives two
+   * different instructors is evidence about the SKILL, not about either
+   * instructor. One CFI seeing it three times could be a teaching style; two
+   * CFIs seeing it three times is the thing itself persisting.
+   *
+   * Deliberately a count and never a per-instructor breakdown. A rollup keyed
+   * by instructor is a CFI scorecard, and a CFI who believes the tool grades
+   * them stops talking into it -- which ends the capture the entire product
+   * depends on. Instructor names appear in `lessons` below as neutral
+   * timeline context only.
+   */
+  instructorCount: number;
+  /** Flights where this surfaced, oldest first -- the timeline, not a ranking. */
+  lessons: RecurringThemeLesson[];
+}
+
+export interface RecurringThemeLesson {
+  flightId: string;
+  flightDate: string;
+  /** Context marker, never a subject of evaluation. Null when no CFI was recorded (solo). */
+  instructorName: string | null;
+  /** The debrief sentence that produced the signal -- grounds the claim instead of asserting it. */
+  statement: string;
 }
 
 /**
@@ -51,6 +77,13 @@ export interface NextLessonBrief {
   suggestedQuestion: string | null;
 }
 
+/**
+ * How many completed flights the recurrence analysis looks back over.
+ * Wider than the brief's "last few lessons" framing because cross-instructor
+ * persistence is only visible across an instructor change.
+ */
+const RECURRENCE_LOOKBACK_FLIGHTS = 8;
+
 export async function computeNextLessonBrief(repo: Repository, studentId: string): Promise<NextLessonBrief> {
   const [flights, trainingItems, reservations] = await Promise.all([
     repo.listFlights({ studentId }),
@@ -78,11 +111,22 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
   const lastWentWell = lastDebrief?.structuredResult.wentWell.slice(0, 3) ?? [];
   const suggestedQuestion = buildSuggestedQuestion(focusAreas, keepWorkingOn);
 
-  const recentCompleted = completed.slice(0, 4);
+  // Recurrence looks back further than the rest of this brief on purpose.
+  // A weakness only proves it crossed instructors if the window is wide
+  // enough to CONTAIN two instructors, and a student who changed CFIs three
+  // lessons ago would show a single-instructor pattern under a 4-flight
+  // window -- hiding the exact thing this analysis exists to find.
+  const recentCompleted = completed.slice(0, RECURRENCE_LOOKBACK_FLIGHTS);
   const recentFlightIds = new Set(recentCompleted.map((f) => f.id));
   const signals = await repo.listTrainingSignals({ studentId });
   const recentSignals = signals.filter((s) => recentFlightIds.has(s.flightId) && !s.dismissed);
-  const recurringThemes = computeRecurringThemes(recentSignals, recentCompleted.length);
+  // Names come from the flights themselves rather than a second round of user
+  // lookups; every signal in the window belongs to one of these flights.
+  const instructorNamesById = new Map<string, string>();
+  for (const f of recentCompleted) {
+    if (f.instructor) instructorNamesById.set(f.instructor.id, f.instructor.name);
+  }
+  const recurringThemes = computeRecurringThemes(recentSignals, recentCompleted.length, instructorNamesById);
 
   const now = Date.now();
   const upcomingReservation =
@@ -133,23 +177,93 @@ export function buildSuggestedQuestion(focusAreas: string[], keepWorkingOn: stri
  * TrainingSignal rows (classified once at debrief time, see lib/taxonomy.ts)
  * instead of re-parsing free text on every render.
  */
-function computeRecurringThemes(signals: TrainingSignal[], consideredFlights: number): RecurringTheme[] {
+/** Exported for tests -- the cross-instructor count is the load-bearing claim in the product. */
+export function computeRecurringThemes(
+  signals: TrainingSignal[],
+  consideredFlights: number,
+  instructorNamesById: Map<string, string> = new Map(),
+): RecurringTheme[] {
   if (consideredFlights < 2) return [];
-  const flightsBySkill = new Map<string, Set<string>>();
+
+  // Keyed by flight, not by signal: one debrief can emit several signals for
+  // the same skill, and counting those as separate occurrences would report
+  // "came up in 4 lessons" from a single talkative debrief.
+  const bySkill = new Map<string, Map<string, TrainingSignal>>();
   for (const signal of signals) {
     if (signal.status !== "NEEDS_COACHING") continue;
-    if (!flightsBySkill.has(signal.skill)) flightsBySkill.set(signal.skill, new Set());
-    flightsBySkill.get(signal.skill)!.add(signal.flightId);
+    if (!bySkill.has(signal.skill)) bySkill.set(signal.skill, new Map());
+    const flights = bySkill.get(signal.skill)!;
+    if (!flights.has(signal.flightId)) flights.set(signal.flightId, signal);
   }
-  return Array.from(flightsBySkill.entries())
-    .map(([skill, flightIds]) => ({
-      theme: skillLabel(skill as TrainingSignal["skill"]),
-      skill: skill as TrainingSkill,
-      count: flightIds.size,
-      consideredFlights,
-    }))
+
+  return Array.from(bySkill.entries())
+    .map(([skill, flights]) => {
+      const lessons = Array.from(flights.values())
+        .sort((a, b) => a.flightDate.localeCompare(b.flightDate))
+        .map((s) => ({
+          flightId: s.flightId,
+          flightDate: s.flightDate,
+          instructorName: s.instructorId ? (instructorNamesById.get(s.instructorId) ?? null) : null,
+          statement: s.statement,
+        }));
+      // Distinct NAMED instructors. A solo flight contributes no instructor
+      // rather than counting as an anonymous extra one, which would inflate
+      // the number that carries the entire claim.
+      const instructorCount = new Set(
+        Array.from(flights.values())
+          .map((s) => s.instructorId)
+          .filter((id): id is string => Boolean(id)),
+      ).size;
+      return {
+        theme: skillLabel(skill as TrainingSignal["skill"]),
+        skill: skill as TrainingSkill,
+        count: flights.size,
+        consideredFlights,
+        instructorCount,
+        lessons,
+      };
+    })
     .filter((t) => t.count >= 2)
-    .sort((a, b) => b.count - a.count);
+    // Themes that crossed instructors first: those are the ones a brief
+    // exists to surface, because nobody in the chain could have seen them.
+    .sort((a, b) => b.instructorCount - a.instructorCount || b.count - a.count);
+}
+
+/**
+ * The one sentence this analysis exists to produce.
+ *
+ * Phrased so the subject is always the skill. "has come up in 3 lessons with
+ * 2 instructors" states persistence; it does not say anyone failed to fix it,
+ * and the copy must never drift in that direction -- see RecurringTheme.
+ */
+export function recurringThemeSummary(theme: RecurringTheme): string {
+  const lessons = `${theme.count} lesson${theme.count === 1 ? "" : "s"}`;
+  if (theme.instructorCount >= 2) {
+    return `${theme.theme} has come up in ${lessons} with ${theme.instructorCount} instructors.`;
+  }
+  return `${theme.theme} has come up in ${lessons}.`;
+}
+
+/**
+ * A concrete first move for the next lesson, so the brief ends with an action
+ * rather than a reading list.
+ *
+ * Deterministic and templated on purpose -- this is the one line most likely
+ * to be read aloud or acted on directly, and a model-generated suggestion
+ * could invent a maneuver the student has never flown. It only ever
+ * recombines what the last debrief and the recurrence analysis already said.
+ */
+export function recommendedStartingPoint(brief: NextLessonBrief): string | null {
+  const recurring = brief.recurringThemes[0];
+  const focus = brief.focusAreas[0];
+  if (recurring) {
+    const theme = recurring.theme.toLowerCase();
+    return focus
+      ? `Start with one normal pattern to warm up, then go straight at ${theme} -- it's the thing that keeps coming back. Work ${focus.toLowerCase()} into the same session.`
+      : `Start with one normal pattern to warm up, then go straight at ${theme} -- it's the thing that keeps coming back.`;
+  }
+  if (focus) return `Pick up where the last lesson left off: ${focus.toLowerCase()}.`;
+  return null;
 }
 
 // --- CFI roster ------------------------------------------------------------

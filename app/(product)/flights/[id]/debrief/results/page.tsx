@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { DebriefResultSections } from "@/components/debrief/debrief-result-sections";
 import { DebriefReplay } from "@/components/debrief/debrief-replay";
-import { type ComparisonRow } from "@/components/debrief/comparison-table";
 import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
+import { buildPerceptionGapRow, type PerceptionGapRow } from "@/lib/perception-gap";
 import { getRepository } from "@/lib/data";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
@@ -51,12 +51,17 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
   // Demo orgs carry an expiry; see lib/billing-gate.ts.
   const canDismiss = isInstructorViewer;
 
-  const differenceRows: ComparisonRow[] = result.assessmentDifferences.map((d) => ({
-    taskLabel: d.taskLabel,
-    studentLevel: d.studentLevel,
-    instructorLevel: d.instructorLevel,
-    status: discrepancyStatusFor(discrepancyDistance(d.studentLevel, d.instructorLevel)),
-  }));
+  // The note is the instructor's own words about this task -- always better
+  // than a sentence generated from a rating, so it wins when present.
+  const differenceRows: PerceptionGapRow[] = result.assessmentDifferences.map((d) =>
+    buildPerceptionGapRow({
+      taskLabel: d.taskLabel,
+      studentLevel: d.studentLevel,
+      instructorLevel: d.instructorLevel,
+      status: discrepancyStatusFor(discrepancyDistance(d.studentLevel, d.instructorLevel)),
+      note: d.note,
+    }),
+  );
   const displayTrack = simplifyTrackForDisplay(flight.track);
   const instructorFirstName = resolveCfiFirstName(flight.instructor);
 

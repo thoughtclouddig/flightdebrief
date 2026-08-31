@@ -7,18 +7,24 @@ import {
   CalendarClock,
   CheckCircle2,
   ClipboardList,
+  Compass,
   Eye,
   MessageSquareQuote,
   Target,
   User,
+  Users,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AcsBadge } from "@/components/acs-badge";
+import { RecurrenceTimeline } from "@/components/debrief/recurrence-timeline";
+import { PerceptionGapList } from "@/components/debrief/perception-gap-list";
+import { buildPerceptionGapRow, type PerceptionGapRow } from "@/lib/perception-gap";
+import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { EditableTrainingItemList } from "@/components/debrief/editable-training-item-list";
 import { getRepository } from "@/lib/data";
 import { getAuthorizedStudent } from "@/lib/auth/access";
-import { computeNextLessonBrief } from "@/lib/training-memory";
+import { computeNextLessonBrief, recommendedStartingPoint } from "@/lib/training-memory";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { LocalDateTime } from "@/components/local-date-time";
 
@@ -51,8 +57,22 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
   const watchFor = brief.recurringThemes[0] ?? null;
   const topNeedsWork = brief.lastDebrief?.structuredResult.needsWork[0] ?? null;
   const studyReferences = brief.lastDebrief?.structuredResult.studyReferences ?? [];
+  // Only the tasks they actually saw differently -- an agreed task tells the
+  // next instructor nothing they need before the flight.
+  const perceptionGaps: PerceptionGapRow[] = (brief.lastDebrief?.structuredResult.assessmentDifferences ?? [])
+    .map((d) =>
+      buildPerceptionGapRow({
+        taskLabel: d.taskLabel,
+        studentLevel: d.studentLevel,
+        instructorLevel: d.instructorLevel,
+        status: discrepancyStatusFor(discrepancyDistance(d.studentLevel, d.instructorLevel)),
+        note: d.note,
+      }),
+    )
+    .filter((r) => r.status !== "none");
   const viewedUrls =
     studyReferences.length > 0 ? new Set(await repo.listViewedStudyResourceUrls(id)) : new Set<string>();
+  const startingPoint = recommendedStartingPoint(brief);
   const dateLabel = brief.lastFlight
     ? new Date(brief.lastFlight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
     : null;
@@ -195,7 +215,32 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
         </Card>
       ) : null}
 
-      {watchFor || topNeedsWork ? (
+      {perceptionGaps.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="size-4 text-brand" />
+              Where They Saw It Differently
+            </CardTitle>
+            <CardDescription>
+              How {student.name.split(" ")[0]} rated themselves last lesson, next to how it was assessed. Useful to know
+              before you fly -- it&rsquo;s usually where the surprise is.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PerceptionGapList rows={perceptionGaps} />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {watchFor ? (
+        <div className="flex flex-col gap-2">
+          <RecurrenceTimeline theme={watchFor} />
+          <div className="flex justify-end">
+            <AcsBadge skill={watchFor.skill} certificateType={certificateType} />
+          </div>
+        </div>
+      ) : topNeedsWork ? (
         <Card className="border-amber/40">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -203,18 +248,8 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
               Watch For
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-            {watchFor ? (
-              <>
-                <p className="text-sm text-foreground-soft">
-                  <span className="font-semibold text-foreground">{watchFor.theme}</span> has come up in{" "}
-                  {watchFor.count} of the last {watchFor.consideredFlights} debriefs.
-                </p>
-                <AcsBadge skill={watchFor.skill} certificateType={certificateType} />
-              </>
-            ) : (
-              <p className="text-sm text-foreground-soft">{topNeedsWork}</p>
-            )}
+          <CardContent>
+            <p className="text-sm text-foreground-soft">{topNeedsWork}</p>
           </CardContent>
         </Card>
       ) : null}
@@ -262,6 +297,21 @@ export default async function CfiHandoffBriefPage(props: PageProps<"/cfi/student
                 </blockquote>
               </div>
             ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {startingPoint ? (
+        <Card className="border-brand/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Compass className="size-4 text-brand" />
+              Recommended Starting Point
+            </CardTitle>
+            <CardDescription>A suggestion, not a syllabus -- you know the student.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-foreground">{startingPoint}</p>
           </CardContent>
         </Card>
       ) : null}

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { DebriefResultSections } from "@/components/debrief/debrief-result-sections";
 import { DebriefWrapUp } from "@/components/debrief/debrief-wrap-up";
-import { type ComparisonRow } from "@/components/debrief/comparison-table";
+import { buildPerceptionGapRow, type PerceptionGapRow } from "@/lib/perception-gap";
 import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { getRepository } from "@/lib/data";
 import { getAuthorizedFlight } from "@/lib/auth/access";
@@ -44,12 +44,15 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
     flightSkills.has(p.skill),
   );
 
-  const differenceRows: ComparisonRow[] = result.assessmentDifferences.map((d) => ({
-    taskLabel: d.taskLabel,
-    studentLevel: d.studentLevel,
-    instructorLevel: d.instructorLevel,
-    status: discrepancyStatusFor(discrepancyDistance(d.studentLevel, d.instructorLevel)),
-  }));
+  const differenceRows: PerceptionGapRow[] = result.assessmentDifferences.map((d) =>
+    buildPerceptionGapRow({
+      taskLabel: d.taskLabel,
+      studentLevel: d.studentLevel,
+      instructorLevel: d.instructorLevel,
+      status: discrepancyStatusFor(discrepancyDistance(d.studentLevel, d.instructorLevel)),
+      note: d.note,
+    }),
+  );
   const displayTrack = simplifyTrackForDisplay(flight.track);
 
   return (
