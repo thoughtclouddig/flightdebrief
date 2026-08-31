@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Evidence, PageTitle, Score, Screen, Section, SectionLabel, StateLabel, stateTone } from "@/components/prototype/ui";
+import { Evidence, PageTitle, Screen, Section, SectionLabel, SkillMeter, StateLabel } from "@/components/prototype/ui";
 import { INSTRUCTOR, RECURRING, SKILL_SCORES, type SkillScore } from "@/lib/prototype/vector-data";
 
 /**
@@ -56,16 +56,15 @@ export default function ProgressPage() {
 }
 
 function SkillRow({ skill, open, onToggle }: { skill: SkillScore; open: boolean; onToggle: () => void }) {
-  const tone = stateTone(skill.state);
   return (
     <div className="border-b border-hairline last:border-b-0">
       <button onClick={onToggle} className="flex min-h-[64px] w-full items-center gap-4 py-4 text-left" aria-expanded={open}>
-        <span className={cn("size-2 shrink-0 rounded-full", tone.dot)} aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="text-[17px] font-medium leading-tight text-foreground">{skill.skill}</p>
           <StateLabel state={skill.state} />
         </div>
-        <Score score={skill.score} max={skill.max} />
+        {/* The meter carries the level; a separate dot would say it twice. */}
+        <SkillMeter score={skill.score} max={skill.max} state={skill.state} />
         <ChevronDown className={cn("size-4 shrink-0 text-foreground-faint transition-transform", open && "rotate-180")} />
       </button>
 

@@ -11,7 +11,7 @@ import {
   PageTitle,
   PrimaryButton,
   PrimaryCard,
-  Score,
+  SkillMeter,
   Screen,
   Section,
   SectionLabel,
@@ -127,7 +127,7 @@ export default function TrainPage() {
                 <p className="text-[17px] font-medium text-foreground">{s.skill}</p>
                 <StateLabel state={s.state} />
               </div>
-              <Score score={s.score} max={s.max} />
+              <SkillMeter score={s.score} max={s.max} state={s.state} />
             </div>
           ))}
         </div>

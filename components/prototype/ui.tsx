@@ -145,21 +145,42 @@ export function Evidence({ label, text, quoted = true, tone = "neutral" }: { lab
   );
 }
 
-/** State colour lives here and nowhere else. */
+/**
+ * State colour lives here and nowhere else.
+ *
+ * Deliberately avoids orange: orange is reserved for action and identity, so
+ * a skill sitting at "needs work" must not look like a button. Amber carries
+ * attention, sky carries in-progress, green carries done -- three hues read
+ * correctly at a glance and none competes with the primary CTA.
+ */
 export function stateTone(state: SkillState) {
   return state === "Meets Standard"
-    ? { text: "text-good", dot: "bg-good" }
+    ? { text: "text-good", dot: "bg-good", fill: "bg-good" }
     : state === "Improving"
-      ? { text: "text-foreground-soft", dot: "bg-foreground-faint" }
-      : { text: "text-amber", dot: "bg-amber" };
+      ? { text: "text-sky-500", dot: "bg-sky-500", fill: "bg-sky-500" }
+      : { text: "text-amber", dot: "bg-amber", fill: "bg-amber" };
 }
 
-/** Big number, small denominator. Readable at arm's length. */
-export function Score({ score, max }: { score: number; max: number }) {
+/**
+ * Where a skill stands, as a filled meter rather than a fraction.
+ *
+ * A number makes a student do arithmetic before they know anything. Four
+ * segments in a state colour is read in one glance from arm's length, which
+ * is the actual use -- checking a phone between other things. The value
+ * survives as the accessible name, so a screen reader still gets what the
+ * sighted reader gets from the fill.
+ *
+ * Segments rather than a continuous bar: the underlying assessment is a
+ * discrete four-level scale, and a smooth bar would imply a precision the
+ * instructor never expressed.
+ */
+export function SkillMeter({ score, max, state }: { score: number; max: number; state: SkillState }) {
+  const tone = stateTone(state);
   return (
-    <span className="text-[22px] font-semibold leading-none tabular-nums text-foreground">
-      {score}
-      <span className="text-[15px] font-medium text-foreground-faint">/{max}</span>
+    <span className="flex items-center gap-1" role="img" aria-label={`${state}, ${score} of ${max}`}>
+      {Array.from({ length: max }, (_, i) => (
+        <span key={i} className={cn("h-2 w-5 rounded-full transition-colors", i < score ? tone.fill : "bg-hairline")} />
+      ))}
     </span>
   );
 }
