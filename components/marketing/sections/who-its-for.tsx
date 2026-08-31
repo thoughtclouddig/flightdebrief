@@ -6,7 +6,10 @@ const AUDIENCES = [
   {
     icon: GraduationCap,
     title: "Students",
-    copy: "Turn every debrief into a clearer plan for your next flight.",
+    // Names flying without an instructor explicitly. Self-serve solo signup
+    // has existed for a while, but every audience card here assumed a CFI, so
+    // a pilot flying on their own had no reason to think this was for them.
+    copy: "Turn every debrief into a clearer plan for your next flight -- with a CFI, or flying on your own.",
     cta: "For Students",
     href: "/signup/student",
     id: undefined,

@@ -80,6 +80,15 @@ export default function InstructorsPage() {
                 </CtaLink>
               </div>
               <p className="mt-4 text-sm font-semibold text-brand">Free for CFIs.</p>
+              {/* One page, and its whole argument is how short it is. The
+                  objection here is never "what does it do" -- it is "how much
+                  of my time does this cost me after a lesson." */}
+              <p className="mt-2 text-sm text-[#68717D]">
+                <Link href="/for-instructors-quickstart" className="underline underline-offset-2 hover:text-[#101727]">
+                  See the whole workflow
+                </Link>{" "}
+                &mdash; it fits on one page.
+              </p>
             </Reveal>
 
             <Reveal delay={100} className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl">
