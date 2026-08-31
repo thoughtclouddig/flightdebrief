@@ -90,6 +90,19 @@
   --state-good: #1f7a4c;
   --state-improving: #2c6c93;
   --state-attention: #9a6612;
+  /*
+   * A separate, golder value for the meter fill.
+   *
+   * The text and the fill have different contrast obligations: a label must
+   * clear 4.5:1 (WCAG 1.4.3) and a graphical object only 3:1 (1.4.11). The
+   * label value read as brown because it was carrying the stricter of the two
+   * requirements for both jobs. #a87b0e is 3.82 on white and 3.50 on the
+   * sunken canvas -- clear on both grounds a meter actually sits on, and
+   * visibly gold rather than mud. Truer goldenrod (#b8860b) drops to 2.98 on
+   * the sunken canvas, which is where the skill-detail meter lives, so this is
+   * as gold as the pair will carry.
+   */
+  --state-attention-fill: #a87b0e;
   --state-good-on-panel: #48be83;
   --state-improving-on-panel: #6f9fbd;
   --state-attention-on-panel: #e6a23c;
@@ -125,6 +138,7 @@
   --color-state-good: var(--state-good);
   --color-state-improving: var(--state-improving);
   --color-state-attention: var(--state-attention);
+  --color-state-attention-fill: var(--state-attention-fill);
   --color-state-good-on-panel: var(--state-good-on-panel);
   --color-state-improving-on-panel: var(--state-improving-on-panel);
   --color-state-attention-on-panel: var(--state-attention-on-panel);
@@ -191,6 +205,7 @@
     --state-good: #48be83;
     --state-improving: #6f9fbd;
     --state-attention: #e6a23c;
+    --state-attention-fill: #e6a23c;
     --state-good-on-panel: #48be83;
     --state-improving-on-panel: #6f9fbd;
     --state-attention-on-panel: #e6a23c;

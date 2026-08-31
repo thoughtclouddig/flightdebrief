@@ -333,7 +333,7 @@ function Review() {
       </Section>
 
       <Section title={<>{INSTRUCTOR.firstName} wants next</>}>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-5">
           {STRUCTURED.instructorEmphasis.map((e) => (
             <Evidence key={e.quote} label={INSTRUCTOR.firstName} tone="instructor" text={e.quote} />
           ))}

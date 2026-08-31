@@ -345,11 +345,11 @@ export function Evidence({
           ? "border-l-state-improving/50"
           : "border-l-hairline";
   return (
-    <div className={cn("border-l-2 pl-3.5", rule)}>
-      <p className={cn("text-[13px] font-medium", onPanel ? "text-panel-foreground-soft" : "text-foreground-faint")}>{label}</p>
+    <div className={cn("border-l-2 py-1 pl-4", rule)}>
+      <p className={cn("text-[14px] font-bold", onPanel ? "text-panel-foreground" : "text-foreground")}>{label}</p>
       <p
         className={cn(
-          "mt-0.5 text-[16px] leading-relaxed",
+          "mt-1.5 text-[16px] leading-relaxed",
           onPanel ? "text-panel-foreground" : "text-foreground-soft",
           quoted && "italic",
         )}
@@ -382,7 +382,7 @@ export function stateTone(state: SkillState, onPanel = false) {
     ? { text: "text-state-good", fill: "bg-state-good", track: "bg-hairline" }
     : state === "Improving"
       ? { text: "text-state-improving", fill: "bg-state-improving", track: "bg-hairline" }
-      : { text: "text-state-attention", fill: "bg-state-attention", track: "bg-hairline" };
+      : { text: "text-state-attention", fill: "bg-state-attention-fill", track: "bg-hairline" };
 }
 
 /**

@@ -60,8 +60,10 @@ export default async function SkillDetail({ params }: { params: Promise<{ skill:
       </div>
 
       <Section title={<>Latest evidence</>}>
-        <Evidence label={INSTRUCTOR.firstName} tone="instructor" text={skill.instructorEvidence} />
-        {skill.studentTake ? <Evidence label="You" tone="student" quoted={false} text={skill.studentTake} /> : null}
+        <div className="flex flex-col gap-6">
+          <Evidence label={INSTRUCTOR.firstName} tone="instructor" text={skill.instructorEvidence} />
+          {skill.studentTake ? <Evidence label="You" tone="student" quoted={false} text={skill.studentTake} /> : null}
+        </div>
       </Section>
 
       {skill.recurring ? (

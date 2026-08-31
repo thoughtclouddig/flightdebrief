@@ -61,14 +61,21 @@ export function VectorPanel({
           </button>
         </>
       ) : (
-        <div className="rounded-2xl border border-hairline p-5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="size-3.5 text-brand" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand">Vector</span>
+        <div className="rounded-2xl border border-hairline bg-surface p-5">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="size-4 text-brand" aria-hidden />
+            <span className="text-[17px] font-semibold tracking-tight text-foreground">Vector</span>
           </div>
-          <p className="mt-1.5 text-sm text-foreground-faint">{context}</p>
+          {/*
+           * The flight is a heading here, not a caption. At 14px faint it was
+           * quieter than the suggestion buttons beneath it, so the one line
+           * that says WHICH FLIGHT Vector is answering about was the least
+           * visible thing in the card.
+           */}
+          <p className="mt-2 text-[17px] font-medium leading-snug text-foreground">{context}</p>
+          <p className="mt-1 text-[15px] text-foreground-soft">Ask about this flight</p>
 
-          <div className="mt-4 flex flex-col gap-2">
+          <div className="mt-5 flex flex-col gap-2">
             {suggestions.map((s) => (
               <button
                 key={s}

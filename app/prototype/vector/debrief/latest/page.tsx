@@ -79,7 +79,7 @@ export default function DebriefDetail() {
       </Section>
 
       <Section title={<>{INSTRUCTOR.firstName} wants next</>}>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-5">
           {STRUCTURED.instructorEmphasis.map((e) => (
             <Evidence key={e.quote} label={INSTRUCTOR.firstName} tone="instructor" text={e.quote} />
           ))}
@@ -87,7 +87,7 @@ export default function DebriefDetail() {
       </Section>
 
       <Section title={<>Where you and {INSTRUCTOR.firstName} landed</>} flush>
-        <Card className="flex flex-col gap-4">
+        <Card className="flex flex-col gap-6">
           <Evidence label="You" tone="student" text="Crosswinds felt pretty good." />
           <Evidence
             label={INSTRUCTOR.firstName}
@@ -119,7 +119,7 @@ export default function DebriefDetail() {
           <ChevronDown className={cn("size-4 transition-transform duration-200", showTranscript && "rotate-180")} aria-hidden />
         </button>
         {showTranscript ? (
-          <div className="flex flex-col gap-4 pb-2">
+          <div className="flex flex-col gap-6 pb-2">
             <Evidence label={INSTRUCTOR.firstName} tone="instructor" quoted={false} text={INSTRUCTOR_DEBRIEF} />
             <Evidence label="You" tone="student" quoted={false} text={STUDENT_REFLECTION} />
           </div>
