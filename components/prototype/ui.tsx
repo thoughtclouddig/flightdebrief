@@ -1,78 +1,144 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Sparkles } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SkillState } from "@/lib/prototype/vector-data";
 
 /**
- * The prototype's shared design language.
+ * The prototype's shared design language. Implements
+ * design-system/afterflight/MASTER.md; read that before changing anything here.
  *
- * Exists because the four screens were drifting into four designs -- each one
- * inventing its own section header, its own quote treatment, its own idea of
- * how much padding a card gets. Everything visual now comes from here, so a
- * change to the language is one edit rather than four.
+ * Two rules do most of the work.
  *
- * The colour discipline is the important part. Orange had been doing six
- * jobs: primary action, active tab, Vector, current focus, recurrence, and
- * "needs work". A colour meaning six things means nothing. It is now
- * reserved for ACTION AND IDENTITY -- the thing you tap, the tab you're on,
- * and Vector. State lives in a separate scale: green at standard, amber
- * needs work, muted for neutral.
+ * COLOUR BUDGET. Orange is reserved for action and identity -- the thing you
+ * tap, the tab you're on, and Vector. It had been doing six jobs at once, and a
+ * colour that means six things means nothing. Skill state lives in its own
+ * scale (--state-*), so a skill that needs work never looks like a button.
+ *
+ * ONE PANEL. The signature is a dark navy panel on a light canvas, not a dark
+ * app. The panel is where the product makes its claim for the screen, it is the
+ * only thing carrying a shadow, and there is normally one of it.
  */
 
-/** Page title. One per screen, and nothing else at this size. */
-export function PageTitle({ children, kicker }: { children: ReactNode; kicker?: string }) {
-  return (
-    <div>
-      {kicker ? <p className="text-[15px] text-foreground-faint">{kicker}</p> : null}
-      <h1 className="text-[34px] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">{children}</h1>
-    </div>
-  );
-}
-
-/**
- * Section label. Sentence case, not all-caps -- the previous version had six
- * uppercase tracked labels per screen, which made every one of them read as
- * metadata and none of them as a heading.
- */
-export function SectionLabel({ children, action }: { children: ReactNode; action?: ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between">
-      <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">{children}</h2>
-      {action}
-    </div>
-  );
-}
+/* ------------------------------------------------------------------ layout */
 
 /** Vertical rhythm between major sections, applied once at the page level. */
 export function Screen({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-8 px-6 pb-8 pt-6">{children}</div>;
+  return <div className="flex flex-col gap-8 px-6 pb-10 pt-5">{children}</div>;
 }
 
 export function Section({ children }: { children: ReactNode }) {
   return <section className="flex flex-col gap-3">{children}</section>;
 }
 
-/**
- * The one dominant card on a screen. Dark and elevated with an orange edge,
- * rather than a full orange slab -- the slab read as a banner ad and left
- * nothing for the primary button to do.
- */
-export function PrimaryCard({ children }: { children: ReactNode }) {
+/** Page title. One per screen, and nothing else at this size. */
+export function PageTitle({ children, kicker }: { children: ReactNode; kicker?: string }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-foreground p-6 text-surface shadow-lg shadow-black/10">
+    <div>
+      {kicker ? <p className="text-[15px] text-foreground-faint">{kicker}</p> : null}
+      <h1 className="text-[34px] font-semibold leading-[1.08] tracking-[-0.02em] text-foreground">{children}</h1>
+    </div>
+  );
+}
+
+/**
+ * Section label. Capped at two per screen by the design system: six uppercase
+ * tracked labels made every one of them read as metadata and none as a heading.
+ */
+export function SectionLabel({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">{children}</h2>
+      {action}
+    </div>
+  );
+}
+
+/** Back affordance for a pushed sub-screen. Top-left, 44px, never a tab. */
+export function BackLink({ href, children, onClick }: { href?: string; children: ReactNode; onClick?: () => void }) {
+  const inner = (
+    <>
+      <ChevronLeft className="size-[18px]" aria-hidden />
+      {children}
+    </>
+  );
+  const cls = "-ml-1 -mb-3 flex min-h-[44px] items-center gap-0.5 self-start pr-3 text-[15px] font-medium text-brand";
+  return href ? (
+    <Link href={href} className={cls}>
+      {inner}
+    </Link>
+  ) : (
+    <button onClick={onClick} className={cls}>
+      {inner}
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ panels */
+
+/**
+ * The one dominant element on a screen.
+ *
+ * Dark navy with an orange edge rather than a full orange slab: the slab was
+ * the loudest thing on screen and it was not the thing to tap, which left the
+ * actual primary action looking secondary. The shadow is the only one in the
+ * light theme, which is how the panel earns its dominance -- if everything has
+ * one, nothing does.
+ */
+export function Panel({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-3xl bg-panel p-6 text-panel-foreground shadow-lg shadow-black/10",
+        className,
+      )}
+    >
       <span className="absolute inset-y-0 left-0 w-1 bg-brand" aria-hidden />
       {children}
     </div>
   );
 }
 
-/** Everything that is not the dominant element. */
+/**
+ * The one uppercase line a panel is allowed. Says what kind of claim follows.
+ *
+ * `className` exists so a state-carrying eyebrow ("Needs Work") can wear the
+ * state colour rather than brand orange -- orange means "tap this", and an
+ * eyebrow is never tappable.
+ */
+export function PanelEyebrow({
+  children,
+  icon,
+  className,
+}: {
+  children: ReactNode;
+  icon?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex items-center gap-1.5", className ?? "text-brand")}>
+      {icon}
+      <span className="text-[13px] font-semibold uppercase tracking-[0.1em]">{children}</span>
+    </div>
+  );
+}
+
+/** The claim itself. One per panel. */
+export function PanelHeadline({ children }: { children: ReactNode }) {
+  return <p className="mt-2 text-[27px] font-semibold leading-[1.15] tracking-[-0.01em]">{children}</p>;
+}
+
+export function PanelMeta({ children }: { children: ReactNode }) {
+  return <p className="mt-1 text-[15px] text-panel-foreground-soft">{children}</p>;
+}
+
+/** Everything that is not the dominant element. Flat, hairline, no shadow. */
 export function Card({ children, className, onClick }: { children: ReactNode; className?: string; onClick?: () => void }) {
   const cls = cn("rounded-2xl border border-hairline bg-surface p-5", className);
   return onClick ? (
-    <button onClick={onClick} className={cn(cls, "w-full text-left transition-colors hover:border-foreground-faint/40")}>
+    <button onClick={onClick} className={cn(cls, "w-full cursor-pointer text-left transition-colors hover:border-foreground-faint/40")}>
       {children}
     </button>
   ) : (
@@ -80,50 +146,124 @@ export function Card({ children, className, onClick }: { children: ReactNode; cl
   );
 }
 
-/** Primary action. Orange, full width, 52px -- one per screen. */
+/* ----------------------------------------------------------------- actions */
+
+const PRIMARY =
+  "flex min-h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-2xl px-5 text-[17px] font-semibold transition-[opacity,transform] duration-200 active:scale-[0.99] active:opacity-90";
+
+/**
+ * Primary action. Exactly one per screen.
+ *
+ * Navy on orange, not white on orange: white is 2.71:1 against #f07621 and
+ * fails AA outright, navy is 6.04:1. The token exists so the call site can't
+ * get it wrong.
+ */
 export function PrimaryButton({ children, onClick, href }: { children: ReactNode; onClick?: () => void; href?: string }) {
-  const cls =
-    "flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-brand px-5 text-[17px] font-semibold text-brand-foreground transition-opacity active:opacity-90";
-  if (href) {
-    return (
-      <a href={href} className={cls}>
-        {children}
-      </a>
-    );
-  }
-  return (
+  const cls = cn(PRIMARY, "bg-brand text-on-brand");
+  return href ? (
+    <Link href={href} className={cls}>
+      {children}
+    </Link>
+  ) : (
     <button onClick={onClick} className={cls}>
       {children}
     </button>
   );
 }
 
-/** Secondary action. Never competes with the primary. */
-export function SecondaryButton({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-hairline px-4 text-[15px] font-medium text-foreground transition-colors hover:border-foreground-faint/40"
-    >
+/**
+ * The primary when it lives inside a panel. Orange on navy is legible but puts
+ * two saturated blocks in the same 200px; the light fill reads as the obvious
+ * target without adding a second accent.
+ */
+export function PanelButton({ children, onClick, href }: { children: ReactNode; onClick?: () => void; href?: string }) {
+  const cls = cn(PRIMARY, "bg-panel-foreground text-panel");
+  return href ? (
+    <Link href={href} className={cls}>
+      {children}
+    </Link>
+  ) : (
+    <button onClick={onClick} className={cls}>
       {children}
     </button>
   );
 }
 
+/** Secondary action. Never orange, never competes with the primary. */
+export function SecondaryButton({
+  children,
+  onClick,
+  href,
+  onPanel = false,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  href?: string;
+  onPanel?: boolean;
+}) {
+  const cls = cn(
+    "flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-3 text-[15px] font-medium transition-colors duration-200",
+    onPanel
+      ? "border-panel-hairline text-panel-foreground hover:border-panel-foreground-soft"
+      : "border-hairline text-foreground hover:border-foreground-faint/40",
+  );
+  return href ? (
+    <Link href={href} className={cls}>
+      {children}
+    </Link>
+  ) : (
+    <button onClick={onClick} className={cls}>
+      {children}
+    </button>
+  );
+}
+
+/** Navigation, not action. A hairline-separated row with a chevron. */
+export function QuietRow({ href, label, meta, onClick }: { href?: string; label: ReactNode; meta?: ReactNode; onClick?: () => void }) {
+  const inner = (
+    <>
+      <span className="min-w-0 flex-1 text-[17px] text-foreground">{label}</span>
+      {meta ? <span className="shrink-0 text-[15px] text-foreground-faint">{meta}</span> : null}
+      <ChevronRight className="size-4 shrink-0 text-foreground-faint" aria-hidden />
+    </>
+  );
+  const cls =
+    "flex min-h-[56px] w-full cursor-pointer items-center gap-3 border-b border-hairline text-left last:border-b-0";
+  return href ? (
+    <Link href={href} className={cls}>
+      {inner}
+    </Link>
+  ) : (
+    <button onClick={onClick} className={cls}>
+      {inner}
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ vector */
+
 /**
- * Vector's identity block. Shown wherever a student might meet Vector for
- * the first time, with the descriptor -- a brand name nobody can define is
- * just a word, and "Train with Vector" meant nothing on first run.
+ * Vector's identity block. Shown wherever a student might meet Vector for the
+ * first time, with the descriptor -- a brand name nobody can define is just a
+ * word, and "Train with Vector" meant nothing on first run.
  */
-export function VectorMark({ subtitle, context }: { subtitle?: string; context?: string }) {
+export function VectorMark({ subtitle, context, onPanel = false }: { subtitle?: string; context?: string; onPanel?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5">
-        <Sparkles className="size-4 text-brand" />
-        <span className="text-[17px] font-semibold tracking-tight text-foreground">Vector</span>
+        <Sparkles className="size-4 text-brand" aria-hidden />
+        <span className={cn("text-[17px] font-semibold tracking-tight", onPanel ? "text-panel-foreground" : "text-foreground")}>
+          Vector
+        </span>
       </div>
-      {subtitle ? <p className="text-[15px] text-foreground-soft">{subtitle}</p> : null}
-      {context ? <p className="text-[13px] text-foreground-faint">{context}</p> : null}
+      {subtitle ? (
+        <p className={cn("text-[15px]", onPanel ? "text-panel-foreground-soft" : "text-foreground-soft")}>{subtitle}</p>
+      ) : null}
+      {context ? (
+        <p className={cn("text-[13px] leading-relaxed", onPanel ? "text-panel-foreground-soft" : "text-foreground-faint")}>
+          {context}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -131,75 +271,191 @@ export function VectorMark({ subtitle, context }: { subtitle?: string; context?:
 /**
  * An attributed quote. One treatment for every voice in the product, varied
  * only by a hairline rule and a small label -- loud per-source colour coding
- * would put four accents on one screen and undo the discipline above.
+ * would put four accents on one screen and undo the colour budget.
  */
-export function Evidence({ label, text, quoted = true, tone = "neutral" }: { label: string; text: string; quoted?: boolean; tone?: "instructor" | "student" | "neutral" }) {
-  const rule = tone === "instructor" ? "border-l-brand/60" : tone === "student" ? "border-l-good/60" : "border-l-hairline";
+export function Evidence({
+  label,
+  text,
+  quoted = true,
+  tone = "neutral",
+  onPanel = false,
+}: {
+  label: string;
+  text: string;
+  quoted?: boolean;
+  tone?: "instructor" | "student" | "vector" | "neutral";
+  onPanel?: boolean;
+}) {
+  const rule = onPanel
+    ? "border-l-panel-hairline"
+    : tone === "instructor"
+      ? "border-l-brand/60"
+      : tone === "student"
+        ? "border-l-state-good/50"
+        : tone === "vector"
+          ? "border-l-state-improving/50"
+          : "border-l-hairline";
   return (
     <div className={cn("border-l-2 pl-3.5", rule)}>
-      <p className="text-[13px] font-medium text-foreground-faint">{label}</p>
-      <p className={cn("mt-0.5 text-[15px] leading-relaxed text-foreground-soft", quoted && "italic")}>
+      <p className={cn("text-[13px] font-medium", onPanel ? "text-panel-foreground-soft" : "text-foreground-faint")}>{label}</p>
+      <p
+        className={cn(
+          "mt-0.5 text-[15px] leading-relaxed",
+          onPanel ? "text-panel-foreground" : "text-foreground-soft",
+          quoted && "italic",
+        )}
+      >
         {quoted ? `“${text}”` : text}
       </p>
     </div>
   );
 }
 
+/* ------------------------------------------------------------------- state */
+
 /**
  * State colour lives here and nowhere else.
  *
- * Deliberately avoids orange: orange is reserved for action and identity, so
- * a skill sitting at "needs work" must not look like a button.
- *
- * Held one step deeper than the obvious pick. The 400/500 versions were
- * correct in hue and too loud in practice: four saturated meters stacked in a
- * list pulled attention away from the primary action and made a calm screen
- * feel like a status board. At 600 the states stay legible at a glance and
- * recede when you are not looking for them, which is what a colour used four
- * times per screen has to do.
- *
- * Amber-gold rather than the --amber token for "needs work": that token read
- * as muddy brown beside the brand orange, close enough in hue to look like a
- * dimmed CTA rather than its own state. Gold is warm rather than alarming,
- * which suits "work on this next" rather than "you failed".
+ * Two variants per state, because contrast is a property of the pair and not
+ * of the colour: the bright greens/golds clear 4.5:1 on the navy panel and sit
+ * around 2.2:1 on paper, and the deep versions do the exact reverse. Passing
+ * `onPanel` is not a stylistic choice -- getting it wrong is an AA failure.
  */
-export function stateTone(state: SkillState) {
+export function stateTone(state: SkillState, onPanel = false) {
+  if (onPanel) {
+    return state === "Meets Standard"
+      ? { text: "text-state-good-on-panel", fill: "bg-state-good-on-panel", track: "bg-panel-hairline" }
+      : state === "Improving"
+        ? { text: "text-state-improving-on-panel", fill: "bg-state-improving-on-panel", track: "bg-panel-hairline" }
+        : { text: "text-state-attention-on-panel", fill: "bg-state-attention-on-panel", track: "bg-panel-hairline" };
+  }
   return state === "Meets Standard"
-    // emerald-500 rather than the --good token: that token is tuned for small
-    // text on both themes and goes muted and dark as a fill, which made a
-    // finished skill read as the least confident row on the screen. The one
-    // state worth celebrating should be the brightest thing in the list.
-    ? { text: "text-emerald-600", dot: "bg-emerald-600", fill: "bg-emerald-600" }
+    ? { text: "text-state-good", fill: "bg-state-good", track: "bg-hairline" }
     : state === "Improving"
-      ? { text: "text-sky-600", dot: "bg-sky-600", fill: "bg-sky-600" }
-      : { text: "text-amber-500", dot: "bg-amber-500", fill: "bg-amber-500" };
+      ? { text: "text-state-improving", fill: "bg-state-improving", track: "bg-hairline" }
+      : { text: "text-state-attention", fill: "bg-state-attention", track: "bg-hairline" };
 }
 
 /**
  * Where a skill stands, as a filled meter rather than a fraction.
  *
  * A number makes a student do arithmetic before they know anything. Four
- * segments in a state colour is read in one glance from arm's length, which
+ * segments in a state colour are read in one glance from arm's length, which
  * is the actual use -- checking a phone between other things. The value
- * survives as the accessible name, so a screen reader still gets what the
- * sighted reader gets from the fill.
+ * survives as the accessible name, so a screen reader gets what the sighted
+ * reader gets from the fill.
  *
  * Segments rather than a continuous bar: the underlying assessment is a
  * discrete four-level scale, and a smooth bar would imply a precision the
  * instructor never expressed.
  */
-export function SkillMeter({ score, max, state }: { score: number; max: number; state: SkillState }) {
-  const tone = stateTone(state);
+export function SkillMeter({
+  score,
+  max,
+  state,
+  onPanel = false,
+  size = "md",
+}: {
+  score: number;
+  max: number;
+  state: SkillState;
+  onPanel?: boolean;
+  size?: "md" | "lg";
+}) {
+  const tone = stateTone(state, onPanel);
   return (
     <span className="flex items-center gap-1" role="img" aria-label={`${state}, ${score} of ${max}`}>
       {Array.from({ length: max }, (_, i) => (
-        <span key={i} className={cn("h-2 w-5 rounded-full transition-colors", i < score ? tone.fill : "bg-hairline")} />
+        <span
+          key={i}
+          className={cn(
+            "rounded-full transition-colors duration-200",
+            size === "lg" ? "h-2.5 w-9" : "h-2 w-5",
+            i < score ? tone.fill : tone.track,
+          )}
+        />
       ))}
     </span>
   );
 }
 
-export function StateLabel({ state }: { state: SkillState }) {
-  const tone = stateTone(state);
-  return <span className={cn("text-[13px] font-medium", tone.text)}>{state}</span>;
+export function StateLabel({ state, onPanel = false }: { state: SkillState; onPanel?: boolean }) {
+  return <span className={cn("text-[13px] font-medium", stateTone(state, onPanel).text)}>{state}</span>;
+}
+
+/**
+ * The ACS metadata row.
+ *
+ * Deliberately quiet. ACS is here so the product reads as real flight training
+ * rather than generic AI coaching -- one line that says the skill belongs to a
+ * recognised Area of Operation, then it gets out of the way. Codes live on the
+ * skill-detail screen only, where a student who wants them will look.
+ */
+export function AcsBadge({ area, code, onPanel = false }: { area: string; code?: string; onPanel?: boolean }) {
+  return (
+    <p className={cn("text-[13px] leading-snug", onPanel ? "text-panel-foreground-soft" : "text-foreground-faint")}>
+      <span className="font-semibold uppercase tracking-[0.06em]">FAA ACS</span>
+      <span className="px-1.5 opacity-40">·</span>
+      {area}
+      {code ? <span className="opacity-70"> · {code}</span> : null}
+    </p>
+  );
+}
+
+/**
+ * One skill's last few assessments. Not a chart -- axes and gridlines on three
+ * data points is decoration. Dated columns, state-coloured, directly labelled.
+ */
+export function TrendStrip({ points }: { points: { label: string; score: number; max: number; state: SkillState }[] }) {
+  return (
+    <div className="flex items-end gap-2.5">
+      {points.map((p) => {
+        const tone = stateTone(p.state);
+        return (
+          <div key={p.label} className="flex flex-1 flex-col items-center gap-2">
+            <div className="flex h-16 w-full flex-col justify-end gap-1" role="img" aria-label={`${p.label}: ${p.state}, ${p.score} of ${p.max}`}>
+              {Array.from({ length: p.max }, (_, i) => {
+                const filled = p.max - i <= p.score;
+                return <span key={i} className={cn("h-3 flex-1 rounded-[3px]", filled ? tone.fill : "bg-hairline/60")} />;
+              })}
+            </div>
+            <span className="text-[13px] tabular-nums text-foreground-faint">{p.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Two-way view switch. Used once, for Skills | ACS on Progress. */
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div role="tablist" className="flex gap-1 rounded-xl bg-surface-sunken p-1">
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <button
+            key={o.value}
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(o.value)}
+            className={cn(
+              "min-h-[40px] flex-1 cursor-pointer rounded-lg text-[15px] font-medium transition-colors duration-200",
+              active ? "bg-surface text-foreground shadow-sm shadow-black/5" : "text-foreground-faint",
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 }

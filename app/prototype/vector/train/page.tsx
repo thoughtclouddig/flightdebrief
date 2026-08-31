@@ -6,19 +6,26 @@ import { VectorPanel } from "@/components/prototype/vector-panel";
 import { KnowledgeCheck } from "@/components/prototype/knowledge-check";
 import { ChairFly } from "@/components/prototype/chair-fly";
 import {
+  AcsBadge,
+  BackLink,
   Card,
   Evidence,
   PageTitle,
-  PrimaryButton,
-  PrimaryCard,
+  Panel,
+  PanelButton,
+  PanelEyebrow,
+  PanelHeadline,
   SkillMeter,
   Screen,
   Section,
   SectionLabel,
   SecondaryButton,
   StateLabel,
+  stateTone,
   VectorMark,
 } from "@/components/prototype/ui";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { CONCEPTS, INSTRUCTOR, LAST_FLIGHT, SKILL_SCORES, SUGGESTED } from "@/lib/prototype/vector-data";
 
 type Mode = "menu" | "review" | "quiz" | "chair" | "ask";
@@ -42,9 +49,7 @@ export default function TrainPage() {
   if (mode !== "menu") {
     return (
       <Screen>
-        <button onClick={() => setMode("menu")} className="-mb-4 self-start py-2 text-[15px] font-medium text-brand">
-          ← Training
-        </button>
+        <BackLink onClick={() => setMode("menu")}>Training</BackLink>
         {mode === "quiz" ? <KnowledgeCheck /> : null}
         {mode === "chair" ? <ChairFly /> : null}
         {mode === "ask" ? (
@@ -74,7 +79,7 @@ export default function TrainPage() {
             </ul>
             <p className="mt-4 text-[13px] text-foreground-faint">{crosswind.sources[0]}</p>
             <div className="mt-5">
-              <PrimaryButton onClick={() => setMode("quiz")}>Check my understanding</PrimaryButton>
+              <SecondaryButton onClick={() => setMode("quiz")}>Check my understanding</SecondaryButton>
             </div>
           </Card>
         ) : null}
@@ -94,41 +99,60 @@ export default function TrainPage() {
 
       <Section>
         <SectionLabel>Today Vector recommends</SectionLabel>
-        <PrimaryCard>
-          <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-brand">
-            {recommended.state}
-          </p>
-          <p className="mt-2 text-[26px] font-semibold leading-tight tracking-tight">{recommended.skill}</p>
-          <p className="mt-3 text-[15px] leading-relaxed opacity-75">
-            &ldquo;{recommended.instructorEvidence}&rdquo;
-          </p>
-          <p className="mt-1.5 text-[13px] opacity-50">{INSTRUCTOR.firstName} · {LAST_FLIGHT.date}</p>
-        </PrimaryCard>
-
-        <div className="mt-1 flex flex-col gap-2.5">
-          <PrimaryButton onClick={() => setMode("review")}>
-            Start 5-minute review
-            <ArrowRight className="size-[18px]" />
-          </PrimaryButton>
-          <div className="flex gap-2.5">
-            <SecondaryButton onClick={() => setMode("quiz")}>Quiz me</SecondaryButton>
-            <SecondaryButton onClick={() => setMode("chair")}>Chair-fly</SecondaryButton>
-            <SecondaryButton onClick={() => setMode("ask")}>Ask</SecondaryButton>
+        <Panel>
+          <PanelEyebrow className={stateTone(recommended.state, true).text}>{recommended.state}</PanelEyebrow>
+          <PanelHeadline>{recommended.skill}</PanelHeadline>
+          <div className="mt-2">
+            <AcsBadge area={recommended.acsArea} onPanel />
           </div>
-        </div>
+
+          {/* The reason, in the instructor's own words. A recommendation
+              without its evidence is just a suggestion. */}
+          <div className="mt-5">
+            <Evidence
+              label={`${INSTRUCTOR.firstName} · ${LAST_FLIGHT.date}`}
+              tone="instructor"
+              text={recommended.instructorEvidence}
+              onPanel
+            />
+          </div>
+
+          <div className="mt-6 flex flex-col gap-2.5">
+            <PanelButton onClick={() => setMode("review")}>
+              Start 5-minute review
+              <ArrowRight className="size-[18px]" aria-hidden />
+            </PanelButton>
+            <div className="flex gap-2.5">
+              <SecondaryButton onClick={() => setMode("quiz")} onPanel>
+                Quiz
+              </SecondaryButton>
+              <SecondaryButton onClick={() => setMode("chair")} onPanel>
+                Chair-fly
+              </SecondaryButton>
+              <SecondaryButton onClick={() => setMode("ask")} onPanel>
+                Ask
+              </SecondaryButton>
+            </div>
+          </div>
+        </Panel>
       </Section>
 
       <Section>
         <SectionLabel>Still working on</SectionLabel>
         <div className="flex flex-col">
           {open.map((s) => (
-            <div key={s.skill} className="flex items-center gap-4 border-b border-hairline py-4 last:border-b-0">
+            <Link
+              key={s.slug}
+              href={`/prototype/vector/progress/${s.slug}`}
+              className="flex min-h-[68px] items-center gap-4 border-b border-hairline py-4 last:border-b-0"
+            >
               <div className="min-w-0 flex-1">
                 <p className="text-[17px] font-medium text-foreground">{s.skill}</p>
                 <StateLabel state={s.state} />
               </div>
               <SkillMeter score={s.score} max={s.max} state={s.state} />
-            </div>
+              <ChevronRight className="size-4 shrink-0 text-foreground-faint" aria-hidden />
+            </Link>
           ))}
         </div>
       </Section>

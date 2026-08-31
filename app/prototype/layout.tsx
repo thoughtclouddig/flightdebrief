@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { BottomNav } from "@/components/prototype/bottom-nav";
+import { DemoStateSwitch } from "@/components/prototype/demo-state-switch";
 
 /**
  * Standalone shell for the prototype.
@@ -21,6 +22,10 @@ export default function PrototypeLayout({ children }: { children: ReactNode }) {
             Prototype
           </span>
           <p className="text-[11px] text-foreground-faint">Seeded data</p>
+          <span className="flex-1" />
+          <Suspense fallback={null}>
+            <DemoStateSwitch />
+          </Suspense>
         </div>
         {children}
       </div>

@@ -82,7 +82,7 @@ export function VectorCardView({ card, onAction }: { card: VectorCard; onAction?
       {card.nextAction ? (
         <button
           onClick={() => onAction?.(card.nextAction!.target)}
-          className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-brand px-5 text-[17px] font-semibold text-brand-foreground"
+          className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-brand px-5 text-[17px] font-semibold text-on-brand"
         >
           {card.nextAction.label}
           <ArrowRight className="size-[18px]" />
