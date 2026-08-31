@@ -149,16 +149,30 @@ export function Evidence({ label, text, quoted = true, tone = "neutral" }: { lab
  * State colour lives here and nowhere else.
  *
  * Deliberately avoids orange: orange is reserved for action and identity, so
- * a skill sitting at "needs work" must not look like a button. Amber carries
- * attention, sky carries in-progress, green carries done -- three hues read
- * correctly at a glance and none competes with the primary CTA.
+ * a skill sitting at "needs work" must not look like a button.
+ *
+ * Held one step deeper than the obvious pick. The 400/500 versions were
+ * correct in hue and too loud in practice: four saturated meters stacked in a
+ * list pulled attention away from the primary action and made a calm screen
+ * feel like a status board. At 600 the states stay legible at a glance and
+ * recede when you are not looking for them, which is what a colour used four
+ * times per screen has to do.
+ *
+ * Amber-gold rather than the --amber token for "needs work": that token read
+ * as muddy brown beside the brand orange, close enough in hue to look like a
+ * dimmed CTA rather than its own state. Gold is warm rather than alarming,
+ * which suits "work on this next" rather than "you failed".
  */
 export function stateTone(state: SkillState) {
   return state === "Meets Standard"
-    ? { text: "text-good", dot: "bg-good", fill: "bg-good" }
+    // emerald-500 rather than the --good token: that token is tuned for small
+    // text on both themes and goes muted and dark as a fill, which made a
+    // finished skill read as the least confident row on the screen. The one
+    // state worth celebrating should be the brightest thing in the list.
+    ? { text: "text-emerald-600", dot: "bg-emerald-600", fill: "bg-emerald-600" }
     : state === "Improving"
-      ? { text: "text-sky-500", dot: "bg-sky-500", fill: "bg-sky-500" }
-      : { text: "text-amber", dot: "bg-amber", fill: "bg-amber" };
+      ? { text: "text-sky-600", dot: "bg-sky-600", fill: "bg-sky-600" }
+      : { text: "text-amber-500", dot: "bg-amber-500", fill: "bg-amber-500" };
 }
 
 /**
