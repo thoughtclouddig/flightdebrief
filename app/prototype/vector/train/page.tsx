@@ -90,15 +90,23 @@ export default function TrainPage() {
     <Screen>
       <PageTitle>Train</PageTitle>
 
-      {/* Vector introduced with its descriptor, not just its name. */}
-      <VectorMark
-        subtitle="Your AI flight trainer"
-        context={`Vector starts where your last flight ended · ${LAST_FLIGHT.lesson} · ${INSTRUCTOR.firstName}`}
-      />
-
       <Section title={<>Today Vector recommends</>} flush>
         <Panel>
-          <PanelEyebrow className={stateTone(recommended.state, true).text}>{recommended.state}</PanelEyebrow>
+          {/* Vector is introduced INSIDE the recommendation it is making.
+              Standing alone above the card it had nothing to align to and
+              read as a page header; here it reads as the byline on a specific
+              piece of advice, which is what it actually is. */}
+          <div className="border-b border-panel-hairline pb-5">
+            <VectorMark subtitle="Your AI flight trainer" onPanel />
+          </div>
+
+          <p className="mt-5 text-[15px] leading-relaxed text-panel-foreground-soft">
+            Starting where your last flight ended &mdash; {LAST_FLIGHT.lesson} with {INSTRUCTOR.firstName}.
+          </p>
+
+          <div className="mt-6">
+            <PanelEyebrow className={stateTone(recommended.state, true).text}>{recommended.state}</PanelEyebrow>
+          </div>
           <PanelHeadline>{recommended.skill}</PanelHeadline>
           <div className="mt-2">
             <AcsBadge area={recommended.acsArea} onPanel />
