@@ -1,0 +1,58 @@
+import { NextResponse } from "next/server";
+import { askVector, evaluateChairFly } from "@/lib/ai/vector";
+import { CHAIR_FLY, KNOWLEDGE_CHECK } from "@/lib/prototype/vector-data";
+
+/**
+ * The prototype's single endpoint. Three intents rather than three routes,
+ * because the whole surface is one conversation with different entry points
+ * and splitting it would imply an architecture the prototype hasn't earned.
+ *
+ * Deliberately unauthenticated and read-only: it touches no database, reads
+ * only the seeded module, and writes nothing. That is what makes it safe to
+ * ship alongside production.
+ */
+export async function POST(request: Request) {
+  let body: {
+    intent?: "ask" | "grade" | "chair_fly";
+    question?: string;
+    history?: { role: "user" | "assistant"; content: string }[];
+    questionId?: string;
+    optionId?: string;
+    stepId?: string;
+    answer?: string;
+  };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Bad request." }, { status: 400 });
+  }
+
+  if (body.intent === "grade") {
+    const q = KNOWLEDGE_CHECK.find((k) => k.id === body.questionId);
+    if (!q) return NextResponse.json({ error: "Unknown question." }, { status: 400 });
+    // Reflection questions have no right answer on purpose -- the point is
+    // leaving with a cue you'll actually recall, not being marked.
+    const isReflection = q.kind === "reflection";
+    const correct = isReflection ? true : body.optionId === q.correctOptionId;
+    return NextResponse.json({
+      correct,
+      isReflection,
+      explanation: q.explanation,
+      concept: correct && !isReflection ? null : q.concept,
+    });
+  }
+
+  if (body.intent === "chair_fly") {
+    const step = CHAIR_FLY.steps.find((s) => s.id === body.stepId);
+    if (!step) return NextResponse.json({ error: "Unknown step." }, { status: 400 });
+    const result = evaluateChairFly(step, body.answer ?? "");
+    const idx = CHAIR_FLY.steps.findIndex((s) => s.id === step.id);
+    const next = CHAIR_FLY.steps[idx + 1] ?? null;
+    return NextResponse.json({ response: result.response, missed: result.missed, next });
+  }
+
+  const question = (body.question ?? "").trim();
+  if (!question) return NextResponse.json({ error: "Ask something." }, { status: 400 });
+  const reply = await askVector(question, body.history?.slice(-6) ?? []);
+  return NextResponse.json(reply);
+}
