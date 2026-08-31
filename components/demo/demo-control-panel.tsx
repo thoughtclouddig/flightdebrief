@@ -13,34 +13,97 @@ interface Scene {
   note?: string;
 }
 
+/**
+ * The capture running order, rewritten after the Aug 2026 competitive
+ * teardown (council/demo-story.md).
+ *
+ * The previous list was a feature tour -- flight, debrief, summary, next
+ * lesson, history, CFI view -- and it did not include either of the two
+ * things the product is now positioned on: the student/instructor
+ * perception gap (/compare) and the same weakness recurring across a change
+ * of instructor (the handoff brief). Those are the only screens no
+ * competitor can render, so they are now the middle of the story rather
+ * than absent from it.
+ *
+ * Order follows the 3-minute script: cost of the lost debrief, capture that
+ * costs the CFI nothing, the recap in the student's ear, THE REVEAL, the
+ * pattern across instructors, then the handoff. Scenes 8-10 are the
+ * supporting material to cut to, not part of the main take.
+ */
 const SCENES: Scene[] = [
-  { n: 1, label: "The Flight (dashboard)", persona: "student", href: "/home" },
-  { n: 2, label: "Start Debrief", persona: "instructor", href: `/flights/${DEMO_FLIGHT_ID}` },
+  {
+    n: 1,
+    label: "The flight (student home)",
+    persona: "student",
+    href: "/home",
+    note: "Opening beat: a flight happened, the debrief is the part that gets lost.",
+  },
+  {
+    n: 2,
+    label: "Start debrief",
+    persona: "instructor",
+    href: `/flights/${DEMO_FLIGHT_ID}`,
+  },
   {
     n: 3,
-    label: "Guided Debrief (cards ready)",
+    label: "Capture -- record, talk, stop",
     persona: "instructor",
     href: `/flights/${DEMO_FLIGHT_ID}/debrief?started=1`,
-    note: "Click the mic to enter Recording (Scene 4), then End Debrief for Processing (Scene 5) -- one continuous take.",
+    note: "The adoption argument. Click the mic, talk, End Debrief -- one continuous take, no typing. Time it.",
   },
   {
     n: 4,
-    label: "Recording",
+    label: "Structured result",
     persona: "instructor",
-    href: `/flights/${DEMO_FLIGHT_ID}/debrief?started=1`,
-    note: "Same page as Scene 3 -- click the mic button to start.",
+    href: `/flights/${DEMO_FLIGHT_ID}/debrief/results`,
+    note: "Everything below came from that one conversation. Scroll to the audio recap and play five seconds of it.",
   },
   {
     n: 5,
-    label: "AI Processing",
-    persona: "instructor",
-    href: `/flights/${DEMO_FLIGHT_ID}/debrief?started=1`,
-    note: "Same page as Scene 3/4 -- click End Debrief to trigger this.",
+    label: "THE REVEAL -- two views of the same flight",
+    persona: "student",
+    href: `/flights/${DEMO_FLIGHT_ID}/debrief/compare`,
+    note: "\"She thinks she's got crosswinds. He thinks she doesn't. Neither knows the other said it.\" Needs both assessments submitted.",
   },
-  { n: 6, label: "AfterFlight Summary (results)", persona: "instructor", href: `/flights/${DEMO_FLIGHT_ID}/debrief/results` },
-  { n: 7, label: "Next Flight brief", persona: "student", href: "/next-lesson" },
-  { n: 8, label: "Training Over Time (history)", persona: "student", href: "/history" },
-  { n: 9, label: "CFI / School view", persona: "instructor", href: `/cfi/students/${DEMO_STUDENT_ID}` },
+  {
+    n: 6,
+    label: "The pattern across instructors",
+    persona: "instructor",
+    href: `/cfi/students/${DEMO_STUDENT_ID}/handoff`,
+    note: "\"4 lessons, 2 instructors -- Marcus taught the first half, Sarah the second. Neither could see the other's lessons.\"",
+  },
+  {
+    n: 7,
+    label: "The handoff brief",
+    persona: "instructor",
+    href: `/cfi/students/${DEMO_STUDENT_ID}/handoff#objectives`,
+    note: "Same page, scrolled to what carries forward + the recommended starting point. Today this is a hallway conversation.",
+  },
+  {
+    n: 8,
+    label: "Student's next flight",
+    persona: "student",
+    href: "/next-lesson",
+    note: "Supporting: the student's own side of the same brief.",
+  },
+  {
+    n: 9,
+    label: "Training over time",
+    persona: "student",
+    href: "/progress",
+    note: "Supporting: recurrence from the student's view.",
+  },
+  {
+    n: 10,
+    label: "Recording, retention & deletion",
+    persona: "instructor",
+    // The PUBLIC page, not /admin/data-handling: the demo instructor is a
+    // plain 'instructor' member, and the admin version notFound()s for
+    // anyone who isn't an org admin. The public one is also the version you
+    // would actually send a prospect before they have an account.
+    href: "/data-handling",
+    note: "The trust answer. Cut here when the objection is \"where does the audio live\".",
+  },
 ];
 
 export function DemoControlPanel() {
