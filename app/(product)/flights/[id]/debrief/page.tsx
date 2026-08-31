@@ -71,12 +71,18 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
     redirect(`/flights/${id}/debrief/self-assessment`);
   }
   if (studentAssessment?.status !== "submitted" || instructorAssessment?.status !== "submitted") {
+    // FlightWithRelations carries aircraft and instructor but not the student,
+    // so the name is looked up here rather than widening that type for one
+    // sentence on one screen.
+    const student = isInstructorViewer ? await repo.getUser(flight.userId) : null;
+    const studentFirstName = student?.name?.split(" ")[0] ?? "your student";
     return (
       <WaitingMessage
         flight={flight}
+        heading={isInstructorViewer ? "Hand it over" : "Not quite yet"}
         text={
           isInstructorViewer
-            ? "Waiting on the student's self-assessment."
+            ? `Ask ${studentFirstName} to open AfterFlight and rate the flight. This page moves on by itself once they do.`
             : "Waiting on your instructor's assessment."
         }
       />
@@ -123,12 +129,30 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
   );
 }
 
-function WaitingMessage({ flight, text }: { flight: FlightWithRelations; text: string }) {
+/**
+ * The heading defaults to "Not quite yet" -- correct for someone who is
+ * genuinely blocked and can only wait.
+ *
+ * It is overridden for the CFI mid-debrief, because that person is not
+ * blocked: the student is standing next to them. A passive status ("waiting
+ * on the student") describes something happening elsewhere, when what is
+ * actually needed is one sentence telling them what to do in the next five
+ * seconds. AutoRefresh then moves them on the moment the student submits.
+ */
+function WaitingMessage({
+  flight,
+  text,
+  heading = "Not quite yet",
+}: {
+  flight: FlightWithRelations;
+  text: string;
+  heading?: string;
+}) {
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
       <AutoRefresh />
       <p className="text-sm font-medium uppercase tracking-wide text-brand">{formatFlightContext(flight)}</p>
-      <h1 className="mt-1 text-2xl font-semibold text-foreground">Not quite yet</h1>
+      <h1 className="mt-1 text-2xl font-semibold text-foreground">{heading}</h1>
       <p className="text-sm text-foreground-soft">{text}</p>
     </div>
   );
