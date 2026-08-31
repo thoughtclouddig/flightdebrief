@@ -24,6 +24,7 @@ const FOOTER_COLUMNS = [
       { href: "/#how-it-works", label: "Features" },
       { href: "/#pricing", label: "Pricing" },
       { href: "/what-is-afterflight", label: "What Is AfterFlight?" },
+      { href: "/how-it-works", label: "How It Works" },
     ],
   },
 
@@ -31,6 +32,7 @@ const FOOTER_COLUMNS = [
     title: "Who It's For",
     links: [
       { href: "/instructors", label: "For CFIs" },
+      { href: "/for-instructors-quickstart", label: "CFI Quickstart" },
       { href: "/schools", label: "For Schools" },
       { href: "/enterprise", label: "Enterprise" },
     ],
@@ -51,6 +53,9 @@ const FOOTER_COLUMNS = [
     links: [
       { href: "/privacy", label: "Privacy Policy" },
       { href: "/terms", label: "Terms of Service" },
+      // Sits in Legal because that is where a chief instructor looks for it,
+      // even though it is a product page rather than a legal one.
+      { href: "/data-handling", label: "Recording & Retention" },
     ],
   },
 ];

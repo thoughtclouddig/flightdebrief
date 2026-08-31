@@ -105,6 +105,27 @@ export async function ensureVideoDemoSeeded(): Promise<void> {
   // Historical flights + debriefs (Scene 8 /history, and the recurring-theme
   // logic Scene 7/9 read from). Run through the same mock analyzer the real
   // freeform flow uses -- realistic derived wentWell/needsWork per flight,
+  // Every insert below is ON CONFLICT DO NOTHING, which makes re-running
+  // this safe but also makes it INERT against a database seeded by an older
+  // build. Two changes -- splitting the history across a departed CFI, and
+  // writing training_signals at all -- are invisible to a DB that already
+  // has the history rows, so the recurrence view would stay empty forever on
+  // any environment the demo had ever been entered on.
+  //
+  // So: detect a stale seed and rebuild the history. Deleting the flights is
+  // enough, since debriefs and training_signals both reference flights ON
+  // DELETE CASCADE. Scoped to the demo's own row ids and nothing else.
+  const { rows: staleRows } = await db.query(
+    `SELECT
+       (SELECT count(*) FROM training_signals WHERE flight_id LIKE 'flight-video-demo-history-%') AS signal_count,
+       (SELECT count(*) FROM flights WHERE id LIKE 'flight-video-demo-history-%' AND instructor_id = $1) AS prior_cfi_flights`,
+    [DEMO_PRIOR_INSTRUCTOR_ID],
+  );
+  const stale = Number(staleRows[0]?.signal_count ?? 0) === 0 || Number(staleRows[0]?.prior_cfi_flights ?? 0) === 0;
+  if (stale) {
+    await db.query("DELETE FROM flights WHERE id LIKE 'flight-video-demo-history-%'");
+  }
+
   // not hand-authored, so the arc feels organic rather than scripted.
   let previousActionItems: string[] = [];
   for (let i = 0; i < DEMO_HISTORY.length; i++) {
