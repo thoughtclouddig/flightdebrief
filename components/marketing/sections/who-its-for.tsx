@@ -14,7 +14,7 @@ import { Reveal } from "@/components/marketing/reveal";
 const PRIMARY = {
   icon: GraduationCap,
   title: "Student Pilots",
-  copy: "Turn every debrief into exactly what to learn and practise next -- with a CFI, or flying on your own.",
+  copy: "Turn every debrief into exactly what to learn and practice next -- with a CFI, or flying on your own.",
   cta: "Start free",
   href: "/signup/student",
 } as const;

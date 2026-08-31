@@ -30,7 +30,7 @@ export function generateStaticParams() {
  * The order is deliberate. The score is stated, then immediately sourced --
  * the instructor's own sentence sits directly under the number, because a
  * score without its evidence is exactly the thing this product refuses to
- * ship. Vector's read comes last and is labelled as Vector's, never as the
+ * ship. Vector's read comes last and is labeled as Vector's, never as the
  * instructor's.
  */
 export default async function SkillDetail({ params }: { params: Promise<{ skill: string }> }) {

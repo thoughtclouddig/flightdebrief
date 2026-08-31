@@ -11,7 +11,7 @@ import { INSTRUCTOR, SKILL_SCORES, skillsByAcsArea, type SkillScore } from "@/li
  *
  * Two views of the same four skills. SKILLS is the default because that is how
  * a student thinks about their own flying; ACS is the second view, for when
- * they want to see the same thing the way the checkride is organised. Neither
+ * they want to see the same thing the way the checkride is organized. Neither
  * is a matrix, and neither expands everything at once -- the evidence, the
  * trend, Vector's read and the next action all live on the skill's own screen,
  * because a list where every row is already open is a report rather than an app.

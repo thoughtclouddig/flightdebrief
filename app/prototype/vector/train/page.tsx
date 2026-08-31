@@ -31,7 +31,7 @@ import { CONCEPTS, INSTRUCTOR, LAST_FLIGHT, SKILL_SCORES, SUGGESTED } from "@/li
 type Mode = "menu" | "review" | "quiz" | "chair" | "ask";
 
 /**
- * Train answers: what should I practise right now?
+ * Train answers: what should I practice right now?
  *
  * Vector RECOMMENDS one thing rather than presenting a menu. Four equal
  * buttons is a tool tray, and a tool tray puts the decision back on a

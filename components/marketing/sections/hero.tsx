@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
 import { CtaLink } from "@/components/marketing/cta-link";
@@ -12,14 +11,20 @@ export function Hero() {
       <div className="relative mx-auto max-w-[1320px] px-6">
         <div className="relative z-10 max-w-xl lg:py-16">
           <p className="text-balance text-base font-bold uppercase tracking-[0.16em] text-brand sm:text-lg">
-            Your flight doesn&rsquo;t stop teaching at shutdown.
+            Your flight keeps teaching.
           </p>
+          {/* Three lines, fixed. The breaks are explicit rather than left to
+              text-balance because the display face is wide enough that "Get
+              more out of" wraps on its own at the old size, turning a
+              three-line headline into four and pushing the CTA below the
+              fold. Negative tracking buys the width that costs. */}
           <h1
-            className="font-display mt-4 max-w-xl text-balance text-[clamp(2.5rem,5.4vw,3.9rem)] font-extrabold leading-[0.98] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(2.75rem,5.6vw,4.25rem)] font-extrabold leading-[1.0] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
-            Get more out of <br />
-            every flight <span className="text-brand">lesson.</span>
+            Get more <br />
+            out of every <br />
+            <span className="text-brand">lesson.</span>
           </h1>
           <p className="mt-6 max-w-md text-pretty text-lg leading-relaxed text-[#68717D]">
             AfterFlight turns your instructor debrief into personalized training, quick practice,
@@ -43,14 +48,12 @@ export function Hero() {
               </CtaLink>
             </div>
 
-            {/* The recording claim links to the page that backs it. Its value
-                is that it survives being checked, so it should be one click
-                from the assertion rather than buried in the footer. */}
+            {/* The recording claim used to sit here, wrapped under the CTA
+                where it read as fine print on the price. It now lives beside
+                the recorder itself, in the Debrief Replay section, which is
+                where someone is actually wondering about it. */}
             <p className="text-balance text-center text-sm font-medium text-[#68717D] sm:text-left">
-              No credit card &middot; Free to start &middot;{" "}
-              <Link href="/data-handling" className="underline underline-offset-2 hover:text-[#101727]">
-                Nothing you say is stored as a recording
-              </Link>
+              No credit card &middot; Free to start
             </p>
           </div>
         </div>

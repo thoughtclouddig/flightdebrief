@@ -14,7 +14,7 @@ import type { SkillState } from "@/lib/prototype/vector-data";
  *
  * COLOUR BUDGET. Orange is reserved for action and identity -- the thing you
  * tap, the tab you're on, and Vector. It had been doing six jobs at once, and a
- * colour that means six things means nothing. Skill state lives in its own
+ * color that means six things means nothing. Skill state lives in its own
  * scale (--state-*), so a skill that needs work never looks like a button.
  *
  * ONE PANEL. The signature is a dark navy panel on a light canvas, not a dark
@@ -48,7 +48,7 @@ export function PageTitle({ children, kicker }: { children: ReactNode; kicker?: 
  *
  * Full-strength ink at bold, not faint at semibold. The faint version sat at
  * the same visual weight as the metadata line directly beneath it, so a label
- * and the thing it was labelling blended into one grey block -- the label has
+ * and the thing it was labeling blended into one gray block -- the label has
  * to win that comparison or it is not doing a heading's job. Capped at two
  * per screen by the design system; that cap is what lets them be this loud.
  */
@@ -110,7 +110,7 @@ export function Panel({ children, className }: { children: ReactNode; className?
  * The one uppercase line a panel is allowed. Says what kind of claim follows.
  *
  * `className` exists so a state-carrying eyebrow ("Needs Work") can wear the
- * state colour rather than brand orange -- orange means "tap this", and an
+ * state color rather than brand orange -- orange means "tap this", and an
  * eyebrow is never tappable.
  */
 export function PanelEyebrow({
@@ -159,7 +159,7 @@ const PRIMARY =
 /**
  * Primary action. Exactly one per screen.
  *
- * The label colour comes from --on-brand rather than being written here, so
+ * The label color comes from --on-brand rather than being written here, so
  * the whole product's orange fills change together -- see that token for the
  * measured contrast and why white is a deliberate exception.
  */
@@ -280,8 +280,8 @@ export function VectorMark({ subtitle, context, onPanel = false }: { subtitle?: 
 
 /**
  * An attributed quote. One treatment for every voice in the product, varied
- * only by a hairline rule and a small label -- loud per-source colour coding
- * would put four accents on one screen and undo the colour budget.
+ * only by a hairline rule and a small label -- loud per-source color coding
+ * would put four accents on one screen and undo the color budget.
  */
 export function Evidence({
   label,
@@ -324,10 +324,10 @@ export function Evidence({
 /* ------------------------------------------------------------------- state */
 
 /**
- * State colour lives here and nowhere else.
+ * State color lives here and nowhere else.
  *
  * Two variants per state, because contrast is a property of the pair and not
- * of the colour: the bright greens/golds clear 4.5:1 on the navy panel and sit
+ * of the color: the bright greens/golds clear 4.5:1 on the navy panel and sit
  * around 2.2:1 on paper, and the deep versions do the exact reverse. Passing
  * `onPanel` is not a stylistic choice -- getting it wrong is an AA failure.
  */
@@ -350,7 +350,7 @@ export function stateTone(state: SkillState, onPanel = false) {
  * Where a skill stands, as a filled meter rather than a fraction.
  *
  * A number makes a student do arithmetic before they know anything. Four
- * segments in a state colour are read in one glance from arm's length, which
+ * segments in a state color are read in one glance from arm's length, which
  * is the actual use -- checking a phone between other things. The value
  * survives as the accessible name, so a screen reader gets what the sighted
  * reader gets from the fill.
@@ -398,7 +398,7 @@ export function StateLabel({ state, onPanel = false }: { state: SkillState; onPa
  *
  * Deliberately quiet. ACS is here so the product reads as real flight training
  * rather than generic AI coaching -- one line that says the skill belongs to a
- * recognised Area of Operation, then it gets out of the way. Codes live on the
+ * recognized Area of Operation, then it gets out of the way. Codes live on the
  * skill-detail screen only, where a student who wants them will look.
  */
 export function AcsBadge({ area, code, onPanel = false }: { area: string; code?: string; onPanel?: boolean }) {
@@ -414,7 +414,7 @@ export function AcsBadge({ area, code, onPanel = false }: { area: string; code?:
 
 /**
  * One skill's last few assessments. Not a chart -- axes and gridlines on three
- * data points is decoration. Dated columns, state-coloured, directly labelled.
+ * data points is decoration. Dated columns, state-colored, directly labeled.
  */
 export function TrendStrip({ points }: { points: { label: string; score: number; max: number; state: SkillState }[] }) {
   return (

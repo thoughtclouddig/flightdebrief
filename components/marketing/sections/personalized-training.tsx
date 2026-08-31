@@ -29,7 +29,7 @@ export function PersonalizedTraining() {
             <div className="border-b border-black/[0.06] bg-white px-7 py-6 sm:px-9">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Crosswind landings</p>
               <p className="font-display mt-1 text-2xl font-bold text-[#101727] sm:text-3xl">
-                From one line in your debrief to something you can practise.
+                From one line in your debrief to something you can practice.
               </p>
             </div>
 

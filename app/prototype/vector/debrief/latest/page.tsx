@@ -76,7 +76,7 @@ export default function DebriefDetail() {
             </li>
           ))}
         </ul>
-        {/* ACS as a structural footnote: one line saying this is a recognised
+        {/* ACS as a structural footnote: one line saying this is a recognized
             Area of Operation, then out of the way. */}
         <AcsBadge area={ACS_AREAS.landings} />
       </Section>

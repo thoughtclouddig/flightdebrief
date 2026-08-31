@@ -85,7 +85,7 @@ a skill that needs work must never look like a button.
 | Improving | `#2c6c93` | `#6f9fbd` | `--state-improving` / `--state-improving-on-panel` |
 | Needs Work | `#9a6612` | `#e6a23c` | `--state-attention` / `--state-attention-on-panel` |
 
-**Two variants per state, because contrast is a property of the pair, not the colour.**
+**Two variants per state, because contrast is a property of the pair, not the color.**
 Measured (WCAG 2.x relative luminance):
 
 | Pair | Ratio | Verdict |
@@ -107,14 +107,14 @@ that does not clear AA: 2.87:1 against the brand orange, where navy would give
 only signal for its action — but it is an exception with a number attached, not
 a pass. It is a single token, so reverting it flips every orange fill at once.
 
-Rule: **never hand-pick a state colour at the call site.** Import `stateTone()`
+Rule: **never hand-pick a state color at the call site.** Import `stateTone()`
 from `components/prototype/ui.tsx` and pass `onPanel` when the ground is navy.
 
-### Colour budget per screen
+### Color budget per screen
 
 - **Orange** — one primary action, the active tab, and the Vector mark. Nothing else.
 - **One panel.** Two only when the second is a genuinely different claim.
-- **State colours** appear only on skill meters, state labels and ACS rollups.
+- **State colors** appear only on skill meters, state labels and ACS rollups.
 - Everything else is ink, paper and hairline.
 
 ---
@@ -133,7 +133,7 @@ hierarchy, not web-page hierarchy.
 | Secondary body | 15 / 1.6 | 400 | `--foreground-soft` |
 | Metadata | 13 | 400–500 | `--foreground-faint`. Never for content that changes a decision. |
 | Section label | 13, `+0.1em`, uppercase | 700 | `--foreground` at full strength. **Max two per screen** — that cap is what lets them be this loud. |
-| Eyebrow on panel | 13, `+0.1em`, uppercase | 600 | Orange or state colour. One per panel. |
+| Eyebrow on panel | 13, `+0.1em`, uppercase | 600 | Orange or state color. One per panel. |
 | Numerals in a column | any | any | `tabular-nums`, always. |
 
 The app's base scale is already nudged up (15/17/19 rather than 12/14/16) because
@@ -246,7 +246,7 @@ or any number that aggregates across skills.
 
 **Presentation.** The score renders as a four-segment **meter**, not a fraction.
 A number makes a student do arithmetic before they know anything; four segments in
-a state colour read in one glance. Segments rather than a continuous bar, because
+a state color read in one glance. Segments rather than a continuous bar, because
 the underlying assessment is a discrete four-level scale and a smooth bar would
 imply precision the instructor never expressed. The value survives verbatim as the
 accessible name (`"Improving, 3 of 4"`), so a screen reader gets exactly what the
@@ -291,7 +291,7 @@ decision back on a student who opened the app precisely because they did not kno
 what to work on. Lead with one recommendation and its reason in the instructor's
 words; demote quiz / chair-fly / ask to secondaries.
 
-**Vector's voice is always labelled as Vector's.** It never speaks in the
+**Vector's voice is always labeled as Vector's.** It never speaks in the
 instructor's voice, and it never issues a readiness verdict.
 
 ---
@@ -363,7 +363,7 @@ dismissing an in-progress recording.
 
 - **44×44 minimum** on every target; 8px between adjacent ones. List rows are 52–64px.
 - Body text ≥ 4.5:1, large text ≥ 3:1 — verified per pair (§2), not assumed.
-- Never colour alone: state carries a **label** and a **meter**, not just a hue.
+- Never color alone: state carries a **label** and a **meter**, not just a hue.
 - Visible focus ring (the app sets `:focus-visible` to a 2px brand outline).
 - `prefers-reduced-motion` disables entrance motion and renders the final state.
 - Keyboard order matches visual order; every disclosure carries `aria-expanded`.
@@ -375,9 +375,9 @@ dismissing an in-progress recording.
 
 This app has almost no charts, and that is deliberate.
 
-- **Skill meter** — four segments, state-coloured. The main "chart" in the product.
+- **Skill meter** — four segments, state-colored. The main "chart" in the product.
 - **Trend** — a small sequence of lesson-level dots or bars showing the last few
-  assessments of one skill. Direct-labelled with dates; no axes, no gridlines.
+  assessments of one skill. Direct-labeled with dates; no axes, no gridlines.
 - No pies. No dashboards of tiles. No gauge that implies an aggregate — see §9.
 - Every visual carries a text equivalent in its accessible name.
 
@@ -415,7 +415,7 @@ Product-specific, and these are the ones this codebase has actually drifted into
 - ❌ **A giant orange slab.** It reads as a banner ad and leaves the real button
      looking secondary. Panel + orange edge instead.
 - ❌ **Orange doing six jobs** (action, tab, Vector, focus, recurrence, needs-work).
-     A colour that means six things means nothing.
+     A color that means six things means nothing.
 - ❌ **Card inside card inside card.**
 - ❌ **Six uppercase tracked labels per screen** — then none of them read as headings.
 - ❌ **Raw LLM paragraphs** rendered as the answer.
@@ -455,7 +455,7 @@ Run before declaring any screen done:
 - [ ] Is there exactly one dominant action?
 - [ ] Readable in 3 seconds?
 - [ ] Does it feel native to mobile, not like a web page?
-- [ ] Is hierarchy carried by size/weight/space, not just colour?
+- [ ] Is hierarchy carried by size/weight/space, not just color?
 - [ ] Fewer than four cards?
 - [ ] Is any LLM content longer than two lines before a tap?
 - [ ] Is ACS present where useful and absent where not?

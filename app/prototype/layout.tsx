@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 import { BottomNav } from "@/components/prototype/bottom-nav";
 import { DemoStateSwitch } from "@/components/prototype/demo-state-switch";
+import { AppHeader } from "@/components/prototype/app-header";
 
 /**
  * Standalone shell for the prototype.
@@ -27,6 +28,9 @@ export default function PrototypeLayout({ children }: { children: ReactNode }) {
             <DemoStateSwitch />
           </Suspense>
         </div>
+        <Suspense fallback={null}>
+          <AppHeader />
+        </Suspense>
         {children}
       </div>
       <BottomNav />
