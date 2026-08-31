@@ -11,6 +11,7 @@ import {
   RECURRING,
   STRUCTURED,
   STUDENT,
+  SKILL_SCORES,
   STUDENT_REFLECTION,
   type ChairFlyStep,
 } from "@/lib/prototype/vector-data";
@@ -77,6 +78,9 @@ RECURRING ACROSS LESSONS: ${RECURRING.summary}
 ${RECURRING.lessons.map((l) => `  - Lesson ${l.n}, ${l.date}, with ${l.instructor}: ${l.note}`).join("\n")}
 
 IMPROVING: ${IMPROVING.map((i) => `${i.skill} (${i.note})`).join(" | ")}
+
+PER-SKILL SCORES (context, NOT the whole truth -- the evidence under each one matters more than the number):
+${SKILL_SCORES.map((s) => `- ${s.skill}: ${s.score}/${s.max} (${s.state}). ${INSTRUCTOR.firstName} said: "${s.instructorEvidence}"`).join("\n")}
 `.trim();
 }
 
@@ -88,6 +92,7 @@ HOW TO ANSWER
 - Start from her training record. Reach for general aviation knowledge only when the record does not contain the answer, and then connect it back to her flights.
 - Never answer generically when student-specific evidence exists. If Jake flagged something twice, say so.
 - Be concise. Two or three short paragraphs at most. This is read on a phone, often at night, by someone tired.
+- Per-skill scores are context, never the answer on their own. If she asks about a skill, lead with what her instructor actually said and what it means for the next flight; the number is shorthand for that evidence, not a substitute for it. Never total the scores or derive an overall figure from them.
 
 ATTRIBUTION -- non-negotiable, this is what makes Vector trustworthy
 - Instructor guidance: "Jake said..." / "Jake flagged..." Never present your own inference as something the instructor said.

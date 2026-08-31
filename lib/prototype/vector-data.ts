@@ -136,6 +136,94 @@ export const IMPROVING = [
 
 export const NEXT_LESSON = { date: "Thursday", time: "9:00 AM", instructor: INSTRUCTOR.fullName, focus: "Crosswind landings" };
 
+/**
+ * Per-skill scores.
+ *
+ * Allowed, and deliberately so: a score attached to ONE skill, with the
+ * evidence that produced it visible next to it, is the clearest thing a
+ * student can be shown. "Crosswind Landing 3/4, and here is the sentence
+ * your instructor said" is immediately actionable.
+ *
+ * What is NOT allowed anywhere in this product is an aggregate --  no
+ * overall FlightScore, no "72% solo ready", no "83% checkride ready". Those
+ * imply AfterFlight can certify readiness, which it cannot: the signoff is
+ * the instructor's and a forward verdict would put the product against the
+ * person whose judgment actually governs. The rule is that a number must be
+ * sourced, explainable and tied to a specific skill -- or it does not exist.
+ *
+ * Every field below the score exists to enforce that. `instructorEvidence`
+ * is why the number is what it is, in the instructor's own words;
+ * `studentTake` is her side where she said something about it;
+ * `vectorRead` is clearly labelled as inference; `next` is what moves it.
+ */
+export type SkillState = "Needs Work" | "Improving" | "Meets Standard";
+
+export interface SkillScore {
+  skill: string;
+  /** Out of `max`. Never summed across skills -- see the note above. */
+  score: number;
+  max: number;
+  state: SkillState;
+  /** The instructor's own words. Attribution stays structural. */
+  instructorEvidence: string;
+  /** Her reflection, where she said something about this skill. Null when she didn't. */
+  studentTake: string | null;
+  /** Vector's reading, always labelled as Vector's rather than the instructor's. */
+  vectorRead: string;
+  /** What moves this skill forward before the next lesson. */
+  next: string;
+  /** Set when this skill is also in the recurrence set, so the two surfaces agree. */
+  recurring?: { lessons: number; instructors: number };
+}
+
+export const SKILL_SCORES: SkillScore[] = [
+  {
+    skill: "Crosswind Landing",
+    score: 3,
+    max: 4,
+    state: "Improving",
+    instructorEvidence:
+      "Centerline control was much better today, but you're still relaxing the correction once you get into the flare.",
+    studentTake: "You felt crosswind landings were going pretty well.",
+    vectorRead:
+      "You're close here. The centerline work is done -- the remaining issue is holding the correction through touchdown, which is the part that's still costing you consistency.",
+    next: "A short review, then the crosswind chair-fly scenario before Thursday.",
+  },
+  {
+    skill: "Stabilized Approach",
+    score: 2,
+    max: 4,
+    state: "Needs Work",
+    instructorEvidence:
+      "You were a little fast on two of the approaches. I want you stabilized earlier so you're not trying to fix the speed at the threshold.",
+    studentTake: "You knew you were fast on one approach.",
+    vectorRead:
+      "This is the older of your two open items and the one that has survived a change of instructor. The pattern is that speed control slips when the pattern gets busy, so the fix is earlier configuration rather than more attention on short final.",
+    next: "Configuration complete before the turn to final. 65 KIAS by short final or go around.",
+    recurring: { lessons: 3, instructors: 2 },
+  },
+  {
+    skill: "Short-Field Landing",
+    score: 4,
+    max: 4,
+    state: "Meets Standard",
+    instructorEvidence: "Short-field was pretty solid -- you hit your aiming point on three of four.",
+    studentTake: "You felt short-field went well.",
+    vectorRead: "You and Jake agree here, and this is the one skill from Thursday he didn't leave open.",
+    next: "Nothing before Thursday. Keep it warm.",
+  },
+  {
+    skill: "Radio Work",
+    score: 4,
+    max: 4,
+    state: "Meets Standard",
+    instructorEvidence: "No repeats needed all flight.",
+    studentTake: null,
+    vectorRead: "Confident and clear for three lessons running -- this stopped being a problem a while ago.",
+    next: "Nothing.",
+  },
+];
+
 export interface QuizQuestion {
   id: string;
   kind: "recall" | "application" | "scenario" | "reflection";

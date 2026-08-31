@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AskVector } from "@/components/prototype/ask-vector";
 import { KnowledgeCheck } from "@/components/prototype/knowledge-check";
 import { ChairFly } from "@/components/prototype/chair-fly";
+import { SkillScores } from "@/components/prototype/skill-scores";
 import {
   CONCEPTS,
   IMPROVING,
@@ -247,7 +248,9 @@ export default function VectorPrototypePage() {
         </CardContent>
       </Card>
 
-      {/* 5 — PROGRESS. Explainable, not a percentage. */}
+      <SkillScores />
+
+      {/* 5 — PROGRESS. Per-skill, explainable, never an aggregate. */}
       <Card>
         <CardHeader>
           <CardTitle>Your progress</CardTitle>
