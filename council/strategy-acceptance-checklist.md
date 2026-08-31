@@ -60,11 +60,38 @@ spanning them. The video-demo student is seeded for exactly this.
 
 ## D. Adoption — the CFI must feel helped, not measured
 
-- [ ] **D1.** **Time it with a stopwatch.** From tapping record to walking
-      away: under 2 minutes, one screen, zero typing.
-      **This is the whole adoption argument. If it fails, nothing else matters.**
+**Two different bars, because the two modes are different products.** An
+earlier version of this checklist applied the solo bar to guided mode and
+concluded guided mode was broken. It isn't — in guided mode the student and
+instructor are standing next to each other, and the "wait" is the CFI saying
+"your turn" while the student rates on their phone. Time the whole co-present
+debrief, not the CFI's screen count.
+
+### D1a — freeform and solo orgs
+- [ ] **Stopwatch, tap-record to walking away: under 2 minutes, one screen,
+      zero typing.** This is the claim the marketing pages make for solo
+      pilots and freeform schools. If it fails, the pitch is wrong.
+
+### D1b — guided orgs (schools; the demo org)
+The path is: pick tasks → CFI rates → hand over → student rates → record →
+Finish on /review.
+- [ ] **Time the whole thing, both people, as one continuous session.**
+      Compare it against the 10–15 minutes the debrief already took without
+      the app. **Pass: AfterFlight adds only a couple of minutes to something
+      that was happening anyway.** Fail: it roughly doubles the debrief.
+- [ ] After the CFI submits, their screen reads **"Hand it over"** and names
+      the student. **Fail:** "Waiting on the student's self-assessment" —
+      old build.
+- [ ] The CFI's page advances **on its own** once the student submits; nobody
+      has to refresh or hunt for a button.
+- [ ] A student sitting elsewhere sees "your turn" on `/home`.
+- [ ] Neither person can see the other's ratings before both submit. **This is
+      the property that makes /compare mean anything — check it directly.**
+
+### D2–D6 — applies to both modes
 - [ ] **D2.** No mandatory AI-review or approve step after recording.
-- [ ] **D3.** No required ACS confirmation grid before the record is usable.
+- [ ] **D3.** In freeform, no ACS grid at all. In guided, the ratings step is
+      the CFI's own assessment — not a review of something the AI proposed.
 - [ ] **D4. NEGATIVE TEST.** Search the whole app as an admin for anything
       resembling instructor scoring: debrief-quality score, CFI ranking,
       instructor effectiveness, a per-instructor column, an instructor
