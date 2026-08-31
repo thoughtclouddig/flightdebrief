@@ -31,7 +31,7 @@ function formatTime(seconds: number) {
  * replay of the original CFI/student conversation. Sits below the
  * six-card "how it works" grid as a distinct, full-width proof moment.
  */
-export function DebriefRecapDemo() {
+export function DebriefRecapDemo({ showHeading = true, className }: { showHeading?: boolean; className?: string } = {}) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -72,17 +72,28 @@ export function DebriefRecapDemo() {
   const progress = duration > 0 ? currentTime / duration : 0;
 
   return (
-    <Reveal className="mt-20">
+    <Reveal className={cn("mt-20", className)}>
       <div className="mx-auto max-w-4xl rounded-3xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm sm:px-16 sm:py-16">
-        <h3 className="font-display text-balance text-2xl font-bold text-[#101727] sm:text-3xl">
-          Hear what the student takes with them.
-        </h3>
-        <p className="text-pretty mx-auto mt-3 max-w-xl text-base leading-relaxed text-[#68717D]">
-          After the CFI and student finish their debrief, AfterFlight turns the conversation into a personalized
-          audio recap they can replay anytime.
-        </p>
+        {/* The homepage's Debrief Replay section supplies its own heading, so
+            this one is suppressed there rather than repeated. */}
+        {showHeading ? (
+          <>
+            <h3 className="font-display text-balance text-2xl font-bold text-[#101727] sm:text-3xl">
+              Hear what the student takes with them.
+            </h3>
+            <p className="text-pretty mx-auto mt-3 max-w-xl text-base leading-relaxed text-[#68717D]">
+              After the CFI and student finish their debrief, AfterFlight turns the conversation into a personalized
+              audio recap they can replay anytime.
+            </p>
+          </>
+        ) : null}
 
-        <div className="mx-auto mt-10 max-w-2xl rounded-2xl border border-slate-200 bg-[#f4f5f6] p-8 text-left sm:p-10">
+        <div
+          className={cn(
+            "mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-[#f4f5f6] p-8 text-left sm:p-10",
+            showHeading && "mt-10",
+          )}
+        >
           <div className="flex items-center gap-4">
             {/* A real photo (not a flat brand-orange initial) so this identity
                 chip doesn't visually compete with the orange play button below it. */}

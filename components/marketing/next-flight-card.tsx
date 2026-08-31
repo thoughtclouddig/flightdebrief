@@ -1,0 +1,157 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { Check } from "lucide-react";
+import { useInView } from "@/lib/marketing/use-in-view";
+import { cn } from "@/lib/utils";
+
+/**
+ * The next-flight card, assembling itself when it scrolls into view.
+ *
+ * The claim the section makes is that this is BUILT from the flight you just
+ * flew, rather than pulled off a syllabus. A card that is simply present when
+ * you arrive at it looks pre-written; one that composes -- source line first,
+ * then each block landing in order -- shows the derivation the copy is
+ * asserting.
+ *
+ * The stagger is 260ms a block, which is slow enough to read as sequence and
+ * fast enough that the whole card is settled before a normal scroll would
+ * carry it off screen. Reduced motion renders the finished state immediately.
+ */
+const FOCUS = ["Stabilized approach speed", "Crosswind correction through touchdown"] as const;
+const TRAIN = ["3-minute review", "Quick knowledge check", "Chair-flying prompt"] as const;
+const REMEMBER = ["Get configured earlier", "Hold correction through touchdown", "Don't chase the flare"] as const;
+
+const BLOCK_COUNT = 4;
+
+export function NextFlightCard() {
+  const { ref, inView } = useInView<HTMLDivElement>();
+  const [step, setStep] = useState(-1);
+
+  // Reduced motion is handled in CSS (motion-reduce: on each block) rather
+  // than by branching here: reading matchMedia during the effect would mean
+  // setting state synchronously on mount, and the class-based version also
+  // survives someone flipping the OS setting mid-visit.
+  useEffect(() => {
+    if (!inView) return;
+    const timers = Array.from({ length: BLOCK_COUNT + 1 }, (_, i) =>
+      setTimeout(() => setStep(i), 420 + i * 260),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [inView]);
+
+  const built = step >= BLOCK_COUNT;
+
+  return (
+    <div ref={ref} className="mx-auto mt-14 max-w-[720px]">
+      <div className="overflow-hidden rounded-[28px] border border-black/[0.06] bg-white shadow-[0_24px_50px_-24px_rgba(16,23,39,0.28)]">
+        <div className="bg-[#142033] px-7 py-6 sm:px-9">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Your next flight</p>
+          <p className="font-display mt-1.5 text-2xl font-bold text-white sm:text-3xl">
+            Thursday · Crosswind + Short Field
+          </p>
+
+          {/* The source line resolves from "building" to "built", which is the
+              one moment that says where the contents came from. */}
+          <p className="mt-1 flex items-center gap-2 text-base text-[#9da7b8]">
+            <span
+              className={cn(
+                "transition-opacity duration-500",
+                built ? "text-[#48be83] opacity-100" : "opacity-0",
+              )}
+              aria-hidden
+            >
+              <Check className="size-4" strokeWidth={3} />
+            </span>
+            <span>
+              With Jake ·{" "}
+              <span className="transition-opacity duration-500">
+                {built ? "built from Tuesday's debrief" : "building from Tuesday's debrief"}
+              </span>
+            </span>
+          </p>
+        </div>
+
+        <div className="flex flex-col">
+          <Block title="What matters most" show={step >= 0}>
+            <ol className="flex flex-col gap-3">
+              {FOCUS.map((f, i) => (
+                <li key={f} className="flex items-start gap-3.5">
+                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-[#f4f5f6] text-sm font-bold tabular-nums text-[#68717D]">
+                    {i + 1}
+                  </span>
+                  <span className="text-lg leading-snug text-[#101727]">{f}</span>
+                </li>
+              ))}
+            </ol>
+          </Block>
+
+          <Block title="What your instructor wants continued" show={step >= 1}>
+            <blockquote className="border-l-2 border-brand/60 pl-4">
+              <p className="text-pretty text-lg italic leading-relaxed text-[#4b545d]">
+                &ldquo;Maintain 65 KIAS through short final.&rdquo;
+              </p>
+              <footer className="mt-1 text-sm font-medium text-[#68717D]">Jake, after Tuesday&rsquo;s flight</footer>
+            </blockquote>
+          </Block>
+
+          <Block title="Train with Vector" show={step >= 2}>
+            <ul className="flex flex-wrap gap-2.5">
+              {TRAIN.map((t) => (
+                <li
+                  key={t}
+                  className="rounded-full border border-[#e3e5e8] bg-white px-4 py-2 text-base font-medium text-[#101727]"
+                >
+                  {t}
+                </li>
+              ))}
+            </ul>
+          </Block>
+
+          <Block title="Remember in the cockpit" show={step >= 3}>
+            <ul className="flex flex-col gap-2.5">
+              {REMEMBER.map((r) => (
+                <li key={r} className="flex items-start gap-3 text-lg leading-snug text-[#101727]">
+                  <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-brand" aria-hidden />
+                  {r}
+                </li>
+              ))}
+            </ul>
+          </Block>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Opacity and transform only -- animating height would reflow the page under
+ * a reader's cursor four times in a row. The blocks hold their space from the
+ * start and fade into it.
+ *
+ * Headings carry full ink at display weight and the blocks are ruled apart.
+ * The first version used small grey uppercase labels separated by whitespace,
+ * which made the whole card read as one column and left every heading quieter
+ * than the body text underneath it.
+ */
+function Block({ title, show, children }: { title: string; show: boolean; children: ReactNode }) {
+  return (
+    <div
+      className={cn(
+        "border-b border-black/[0.07] px-7 py-7 transition-[opacity,transform] duration-500 ease-out last:border-b-0 sm:px-9 sm:py-8",
+        show ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
+        "motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none",
+      )}
+    >
+      {/* A short brand rule rather than colored text: an orange heading would
+          read as a link, and orange is the CTA colour on this page. The marker
+          gives the heading a colour cue without spending the accent on it. */}
+      <h3 className="font-display flex items-center gap-3 text-lg font-bold leading-snug text-[#101727]">
+        <span className="h-4 w-[3px] shrink-0 rounded-full bg-brand" aria-hidden />
+        {title}
+      </h3>
+      <div className="mt-3.5">{children}</div>
+    </div>
+  );
+}
