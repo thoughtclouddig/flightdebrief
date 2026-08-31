@@ -1,0 +1,116 @@
+"use client";
+
+import { useState } from "react";
+import { CornerDownLeft, Loader2, Sparkles } from "lucide-react";
+import { VectorCardView } from "@/components/prototype/vector-card";
+import type { VectorCard } from "@/lib/ai/vector-schema";
+
+/**
+ * Vector, as a trainer rather than a chat transcript.
+ *
+ * Default state is context plus suggested actions -- never an empty box, and
+ * never a scrollback. One answer is on screen at a time, because the previous
+ * version's growing transcript was the single biggest reason the prototype
+ * read as a chatbot with cards around it.
+ *
+ * The answer is a VectorCard rendered as UI, so length is bounded by the
+ * schema rather than by asking the model to be brief.
+ */
+export function VectorPanel({
+  context,
+  suggestions,
+  onAction,
+}: {
+  context: string;
+  suggestions: string[];
+  onAction?: (target: string | null) => void;
+}) {
+  const [card, setCard] = useState<VectorCard | null>(null);
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [live, setLive] = useState<boolean | null>(null);
+
+  async function ask(question: string) {
+    if (!question.trim() || busy) return;
+    setBusy(true);
+    setValue("");
+    try {
+      const res = await fetch("/api/prototype/vector", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ intent: "ask", question }),
+      });
+      const data = (await res.json()) as { card?: VectorCard; live?: boolean };
+      if (data.card) setCard(data.card);
+      setLive(data.live ?? null);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {card ? (
+        <>
+          <VectorCardView card={card} onAction={onAction} />
+          <button
+            onClick={() => setCard(null)}
+            className="self-start text-sm font-medium text-foreground-faint transition-colors hover:text-brand"
+          >
+            Ask something else
+          </button>
+        </>
+      ) : (
+        <div className="rounded-2xl border border-hairline p-5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-3.5 text-brand" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand">Vector</span>
+          </div>
+          <p className="mt-1.5 text-sm text-foreground-faint">{context}</p>
+
+          <div className="mt-4 flex flex-col gap-2">
+            {suggestions.map((s) => (
+              <button
+                key={s}
+                onClick={() => void ask(s)}
+                disabled={busy}
+                className="rounded-xl border border-hairline px-4 py-3 text-left text-[15px] text-foreground transition-colors hover:border-brand disabled:opacity-50"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+
+          {busy ? (
+            <div className="mt-4 flex items-center gap-2 text-sm text-foreground-faint">
+              <Loader2 className="size-4 animate-spin" />
+              Thinking
+            </div>
+          ) : null}
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void ask(value);
+            }}
+            className="mt-4 flex items-center gap-2 rounded-xl bg-surface-sunken px-4 py-3"
+          >
+            <input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="Ask Vector…"
+              className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-foreground-faint"
+            />
+            <button type="submit" disabled={busy || !value.trim()} aria-label="Ask" className="text-foreground-faint disabled:opacity-40">
+              <CornerDownLeft className="size-4" />
+            </button>
+          </form>
+
+          {live === false ? (
+            <p className="mt-2 text-[11px] text-foreground-faint">Local responder &mdash; no API key set</p>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}

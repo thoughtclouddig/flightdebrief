@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { extractJson } from "./extract-json";
+import { RESPONSE_SHAPE_INSTRUCTION, vectorCardSchema, type VectorCard } from "./vector-schema";
 import {
   CHAIR_FLY,
   CONCEPTS,
@@ -34,10 +36,8 @@ import {
 const MODEL = "claude-sonnet-5";
 const REQUEST_TIMEOUT_MS = 30_000;
 
-export type VectorIntent = "ask" | "chair_fly";
-
 export interface VectorReply {
-  text: string;
+  card: VectorCard;
   /** True when this came from Claude; false when the local responder answered. */
   live: boolean;
 }
@@ -91,7 +91,7 @@ You are NOT a general chatbot. You are the conversational interface to ONE stude
 HOW TO ANSWER
 - Start from her training record. Reach for general aviation knowledge only when the record does not contain the answer, and then connect it back to her flights.
 - Never answer generically when student-specific evidence exists. If Jake flagged something twice, say so.
-- Be concise. Two or three short paragraphs at most. This is read on a phone, often at night, by someone tired.
+- You are not writing prose. You are returning structured data that the app renders as native UI. Be ruthlessly short: a summary she can read in one glance, and a handful of one-line points.
 - Per-skill scores are context, never the answer on their own. If she asks about a skill, lead with what her instructor actually said and what it means for the next flight; the number is shorthand for that evidence, not a substitute for it. Never total the scores or derive an overall figure from them.
 
 ATTRIBUTION -- non-negotiable, this is what makes Vector trustworthy
@@ -112,68 +112,189 @@ Calm, concise, practical, aviation-competent. No fake enthusiasm, no generic enc
 
 export async function askVector(question: string, history: { role: "user" | "assistant"; content: string }[] = []): Promise<VectorReply> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { text: mockAnswer(question), live: false };
+  if (!apiKey) return { card: mockCard(question), live: false };
 
   try {
     const client = new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS });
     const res = await client.messages.create({
       model: MODEL,
-      max_tokens: 700,
-      system: `${SYSTEM}\n\n--- THIS STUDENT'S TRAINING RECORD ---\n${buildTrainingContext()}`,
+      max_tokens: 900,
+      system: `${SYSTEM}\n\n--- THIS STUDENT'S TRAINING RECORD ---\n${buildTrainingContext()}\n\n--- RESPONSE FORMAT ---\n${RESPONSE_SHAPE_INSTRUCTION}`,
       messages: [...history, { role: "user" as const, content: question }],
     });
-    const text = res.content
+    const raw = res.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")
       .map((b) => b.text)
-      .join("\n")
-      .trim();
-    return { text: text || mockAnswer(question), live: true };
+      .join("\n");
+    // Schema has .default() on every field, so a partial object still renders
+    // rather than throwing -- same hardening as lib/ai/schema.ts.
+    const parsed = vectorCardSchema.safeParse(JSON.parse(extractJson(raw)));
+    if (!parsed.success) {
+      console.error("[vector] response did not match the card schema; using local responder");
+      return { card: mockCard(question), live: false };
+    }
+    return { card: parsed.data, live: true };
   } catch (err) {
     console.error("[vector] Claude call failed, using local responder:", err);
-    return { text: mockAnswer(question), live: false };
+    return { card: mockCard(question), live: false };
   }
 }
 
 /**
- * Local responder, used when there's no API key.
+ * Local responder, used when there is no API key.
  *
- * Not a toy: the whole point of the prototype is judging whether grounded
- * answers feel different from generic ones, so these are written from the
- * same record the live model gets, with the same attribution discipline.
- * Keyword-routed on purpose -- deterministic beats clever for a demo.
+ * Returns the same VectorCard shape as the live path, so the UI is exercised
+ * identically either way -- the prototype must never be a spinner, and a mock
+ * that returns a different shape would hide rendering bugs until the key is
+ * set. Keyword-routed on purpose: deterministic beats clever for a demo.
  */
-function mockAnswer(question: string): string {
+function mockCard(question: string): VectorCard {
   const q = question.toLowerCase();
 
   if (q.includes("mean") || q.includes("flare") || q.includes("relax")) {
-    return `Jake said your centerline control was "much better today" -- that part he's happy with. What he flagged was what happens after: you're relaxing the aileron correction once you get into the flare.\n\nThe reason that matters is that control effectiveness drops as you slow down. In the flare you're slower than at any other point in the approach, so holding the same aileron does less work than it did a few seconds earlier. Feeling like you're holding the correction and actually holding it are two different things there.\n\nHis words for the fix were "keep the correction in all the way through touchdown." Practically: expect to keep feeding aileron in, close to full deflection by rollout.`;
+    return {
+      kind: "explanation",
+      title: "Correction through touchdown",
+      summary:
+        "Jake is happy with your centerline control. What he flagged is what happens after: the aileron correction relaxes once you get into the flare.",
+      evidence: [
+        { source: "instructor", label: "Jake", text: "Centerline control was much better today, but you're still relaxing the correction once you get into the flare." },
+        { source: "vector", label: "Vector", text: "Feeling like you're holding the correction and actually holding it are different things as you slow down." },
+      ],
+      keyPoints: [
+        "Control effectiveness drops as airspeed decays",
+        "Same deflection does less work in the flare",
+        "Expect near-full aileron by rollout",
+        "Don't relax anything until taxi speed",
+      ],
+      stats: [],
+      nextAction: { label: "Chair-fly this", target: "chair-fly" },
+      detail:
+        "In the flare you are slower than at any other point in the approach. Aerodynamic force on the control surfaces falls with the square of airspeed, so holding a fixed aileron position produces progressively less roll authority exactly as the crosswind's effect becomes most visible. The input has to keep growing to hold the same correction.",
+    };
   }
 
-  if (q.includes("keep happening") || q.includes("keeps coming back") || q.includes("why does") || q.includes("speed")) {
-    return `Approach speed has come up in three of your recent lessons, and across two instructors -- Dana flagged it on Jul 18, Jake on Aug 12 and again on Aug 29. That's worth knowing, because it means it isn't about one instructor's preference.\n\nThe pattern across those three is the same: your speed control slips when the pattern gets busy. Jake put it as fixing the speed at the threshold rather than being stable before it.\n\nSo the fix probably isn't more attention on short final -- it's getting configured earlier, so by the time you're on final there's nothing left to correct.`;
+  if (q.includes("keep") || q.includes("why does") || q.includes("speed") || q.includes("again")) {
+    return {
+      kind: "recurrence",
+      title: "Stabilized approach speed",
+      summary:
+        "This has come up in three recent lessons and across two instructors, so it isn't one instructor's preference. The pattern is that speed control slips as the pattern gets busy.",
+      evidence: [
+        { source: "instructor", label: "Jake, Aug 29", text: "You were a little fast on two of the approaches." },
+        { source: "instructor", label: "Dana, Jul 18", text: "Carrying five to ten extra knots on final." },
+        { source: "vector", label: "Vector", text: "The fix is earlier configuration, not more attention on short final." },
+      ],
+      keyPoints: [
+        "Configuration complete before the turn to final",
+        "65 KIAS by short final",
+        "If you're fixing speed at the threshold, go around",
+      ],
+      stats: [
+        { value: "3", label: "lessons" },
+        { value: "2", label: "instructors" },
+      ],
+      nextAction: { label: "Train this", target: "train" },
+      detail: null,
+    };
   }
 
   if (q.includes("quiz") || q.includes("test me") || q.includes("questions")) {
-    return `Happy to. Three questions from Thursday's flight -- crosswind correction and approach speed, since those are the two Jake left open.\n\nOpen the Check Yourself card and I'll walk through them with you. If you miss one, I'll explain that specific concept rather than handing you a chapter.`;
+    return {
+      kind: "recommendation",
+      title: "Three from Thursday",
+      summary: "Questions from your own flight — crosswind correction and approach speed, the two Jake left open.",
+      evidence: [],
+      keyPoints: ["Grounded in Thursday's debrief", "No score shown", "Miss one and I'll teach that concept"],
+      stats: [],
+      nextAction: { label: "Start the check", target: "quiz" },
+      detail: null,
+    };
   }
 
-  if (q.includes("thursday") || q.includes("next flight") || q.includes("prepare") || q.includes("review") || q.includes("study")) {
-    return `Thursday is crosswinds again with Jake. Two things carry over.\n\nFirst, the correction through touchdown -- that's the one Jake explicitly asked to continue. Second, being stabilized earlier, which is the older of the two problems and the one that has survived a change of instructor.\n\nIf you only have five minutes: read the crosswind concept card, then chair-fly the approach once. The cue to bring into the cockpit is "65 by short final, and the aileron keeps going in."`;
+  if (q.includes("thursday") || q.includes("next flight") || q.includes("prepare") || q.includes("review") || q.includes("study") || q.includes("remember")) {
+    return {
+      kind: "next_flight",
+      title: "Thursday with Jake",
+      summary: "Crosswinds again. Two things carry over from Aug 29 — one Jake raised this lesson, one that predates him.",
+      evidence: [
+        { source: "instructor", label: "Jake", text: "Get stabilized earlier so you're not trying to fix the speed at the threshold." },
+      ],
+      keyPoints: [
+        "65 KIAS by short final — no faster",
+        "Configured and stable before the threshold",
+        "Aileron keeps going in as you slow",
+        "Correction stays in until you're rolling straight",
+      ],
+      stats: [],
+      nextAction: { label: "Chair-fly this lesson", target: "chair-fly" },
+      detail: null,
+    };
   }
 
   if (q.includes("ready") || q.includes("solo") || q.includes("checkride")) {
-    return `That call is Jake's, not mine -- I don't have signoff authority and I'm not going to guess at it.\n\nWhat I can tell you is what's still open. Jake has two unresolved items on your record right now: crosswind correction held through touchdown, and being stabilized before short final rather than at it. The second has appeared in three lessons across two instructors.\n\nThose are the things worth asking him about directly.`;
+    return {
+      kind: "progress",
+      title: "That's Jake's call",
+      summary:
+        "I don't have signoff authority and I'm not going to guess at it. What I can tell you is what's still open on your record.",
+      evidence: [
+        { source: "vector", label: "Vector", text: "Two items are unresolved: crosswind correction through touchdown, and being stabilized before short final." },
+      ],
+      keyPoints: ["Crosswind correction — raised Aug 29", "Stabilized approach — 3 lessons, 2 instructors", "Worth asking Jake directly on Thursday"],
+      stats: [],
+      nextAction: null,
+      detail: null,
+    };
   }
 
-  if (q.includes("improv") || q.includes("better") || q.includes("progress") || q.includes("good")) {
-    return `Three things are clearly moving. Radio work has been confident for three lessons running. Short-field technique is solid -- Jake had you hitting the aiming point on three of four. And centerline control is the one he called out by name this time as "much better."\n\nThe two still open are crosswind correction through touchdown, and approach speed. Both are on Thursday's plan.`;
+  if (q.includes("improv") || q.includes("better") || q.includes("progress")) {
+    return {
+      kind: "progress",
+      title: "What's moving",
+      summary: "Three skills are clearly improving. Two are still open, and both are on Thursday's plan.",
+      evidence: [{ source: "instructor", label: "Jake", text: "Centerline control was much better today." }],
+      keyPoints: [
+        "Radio work — confident three lessons running",
+        "Short-field — aiming point on three of four",
+        "Centerline control — called out by name",
+      ],
+      stats: [
+        { value: "3", label: "improving" },
+        { value: "2", label: "still open" },
+      ],
+      nextAction: { label: "See progress", target: "progress" },
+      detail: null,
+    };
   }
 
-  if (q.includes("chair") || q.includes("walk me") || q.includes("rehears")) {
-    return `Let's do the crosswind approach at KSQL -- left crosswind, about 12 knots, Runway 30. Open the Chair Fly card and I'll set the scene, stop at each decision point, and ask what you'd do.\n\nI won't explain first. Answer, and I'll tell you where you are.`;
+  if (q.includes("chair") || q.includes("walk me") || q.includes("rehears") || q.includes("scenario")) {
+    return {
+      kind: "recommendation",
+      title: "Crosswind at KSQL",
+      summary: "Left crosswind, about 12 knots, Runway 30. I'll set the scene and stop at each decision point.",
+      evidence: [],
+      keyPoints: ["Three decision points", "I won't explain first — you answer", "Bound to Thursday's focus"],
+      stats: [],
+      nextAction: { label: "Start the scenario", target: "chair-fly" },
+      detail: null,
+    };
   }
 
-  return `I've got Thursday's flight with Jake, your reflection from it, and the six lessons before it.\n\nThe two things still open are crosswind correction held through touchdown, and being stabilized before short final. The second is the older one -- it's shown up in three lessons across two instructors.\n\nAsk me about either, or say "quiz me" and I'll pull questions from your own flight.`;
+  return {
+    kind: "explanation",
+    title: "What I've got",
+    summary: "Thursday's flight with Jake, your own reflection from it, and the six lessons before it.",
+    evidence: [],
+    keyPoints: [
+      "Crosswind correction through touchdown — open",
+      "Stabilized approach speed — open, and older",
+      "Ask about either, or say \"quiz me\"",
+    ],
+    stats: [],
+    nextAction: null,
+    detail: null,
+  };
 }
 
 /**
