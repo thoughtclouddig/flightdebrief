@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Dumbbell, ClipboardList, TrendingUp } from "lucide-react";
+import { Home, PlaneTakeoff, ClipboardList, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  */
 const TABS = [
   { href: "/prototype/vector", label: "Home", icon: Home },
-  { href: "/prototype/vector/train", label: "Train", icon: Dumbbell },
+  { href: "/prototype/vector/train", label: "Train", icon: PlaneTakeoff },
   { href: "/prototype/vector/debrief", label: "Debrief", icon: ClipboardList },
   { href: "/prototype/vector/progress", label: "Progress", icon: TrendingUp },
 ];
