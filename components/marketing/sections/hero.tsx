@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
 import { CtaLink } from "@/components/marketing/cta-link";
@@ -11,7 +12,7 @@ export function Hero() {
       <div className="relative mx-auto max-w-[1320px] px-6">
         <div className="relative z-10 max-w-xl lg:py-16">
           <p className="text-balance text-base font-bold uppercase tracking-[0.16em] text-brand sm:text-lg">
-            Make every debrief count.
+            Two views of the same flight.
           </p>
           <h1
             className="font-display mt-4 max-w-xl text-balance text-[clamp(2.75rem,6vw,4.25rem)] font-extrabold leading-[0.98] text-[#101727]"
@@ -42,8 +43,14 @@ export function Hero() {
               </CtaLink>
             </div>
 
+            {/* The recording claim links to the page that backs it. Its value
+                is that it survives being checked, so it should be one click
+                from the assertion rather than buried in the footer. */}
             <p className="text-balance text-center text-sm font-medium text-[#68717D] sm:text-left">
-              No credit card &middot; Free to start &middot; Cancel anytime
+              No credit card &middot; Free to start &middot;{" "}
+              <Link href="/data-handling" className="underline underline-offset-2 hover:text-[#101727]">
+                Nothing you say is stored as a recording
+              </Link>
             </p>
           </div>
         </div>

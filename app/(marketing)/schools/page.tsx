@@ -68,6 +68,15 @@ export default function SchoolsPage() {
                 </CtaLink>
               </div>
               <p className="mt-4 text-sm font-semibold text-brand">Your first 25 debriefs are free.</p>
+              <p className="mt-2 text-sm text-[#68717D]">
+                <Link href="/how-it-works" className="underline underline-offset-2 hover:text-[#101727]">
+                  How it works
+                </Link>{" "}
+                &middot;{" "}
+                <Link href="/data-handling" className="underline underline-offset-2 hover:text-[#101727]">
+                  What we record and keep
+                </Link>
+              </p>
             </Reveal>
 
             <Reveal delay={100} className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl">
