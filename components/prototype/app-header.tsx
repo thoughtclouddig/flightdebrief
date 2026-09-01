@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LifeBuoy, Plus } from "lucide-react";
+import { LifeBuoy, Plane } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/prototype/theme-toggle";
 import { Avatar } from "@/components/prototype/avatar";
@@ -16,10 +16,12 @@ import { Avatar } from "@/components/prototype/avatar";
  * them to make room for the one nobody opens twice, and the top-right corner
  * is where every native app already puts the account.
  *
- * Add Flight is the exception that earns a permanent icon. It is the entry
+ * Start Flight is the exception that earns a permanent icon. It is the entry
  * point to the whole lifecycle -- nothing downstream exists without a flight
- * -- and the alternative is a student who just landed hunting for it. It sits
- * first in the row because it is the only one of these that is an action.
+ * -- and it is time-critical in a way nothing else here is: a student sitting
+ * on the ramp before engine start has seconds of attention, and hunting for
+ * it costs the whole track. It sits first because it is the only one of these
+ * that is an action rather than a destination.
  *
  * Hidden inside the debrief capture flow, which is deliberately chrome-free.
  */
@@ -40,11 +42,11 @@ export function AppHeader() {
       </Link>
 
       <Link
-        href="/prototype/vector/flights/new"
-        aria-label="Add flight"
+        href="/prototype/vector/fly"
+        aria-label="Start flight"
         className="flex size-11 items-center justify-center rounded-full text-foreground-faint transition-colors hover:text-foreground"
       >
-        <Plus className="size-[23px]" strokeWidth={2.2} aria-hidden />
+        <Plane className="size-[23px]" strokeWidth={2.2} aria-hidden />
       </Link>
       <ThemeToggle />
       <Link

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowRight, Mic, Plus, Radar, PlaneLanding, PlaneTakeoff } from "lucide-react";
+import { ArrowRight, Mic, Plane, Plus, Radar, PlaneLanding, PlaneTakeoff } from "lucide-react";
 import {
   Evidence,
   PageTitle,
@@ -175,13 +175,22 @@ function BetweenFlights() {
         </p>
       </div>
 
-      {/* "I just flew" has to be reachable from Home at all times -- the
-          detection path only fires when ADS-B saw the aircraft, and a student
-          who flew a non-equipped airplane still needs a way in. */}
-      <SecondaryButton href="/prototype/vector/flights/new">
-        <Plus className="size-[18px]" aria-hidden />
-        I just flew — add a flight
-      </SecondaryButton>
+      {/*
+       * Three ways in, in the order they are worth offering. Start Flight
+       * records directly and owns the session clock; adding afterwards is the
+       * fallback when the phone was not running. The detection path lives
+       * inside Add Flight, since it needs a tail number first.
+       */}
+      <div className="flex gap-2.5">
+        <SecondaryButton href="/prototype/vector/fly">
+          <Plane className="size-[18px]" aria-hidden />
+          Start flight
+        </SecondaryButton>
+        <SecondaryButton href="/prototype/vector/flights/new">
+          <Plus className="size-[18px]" aria-hidden />
+          Add a flight
+        </SecondaryButton>
+      </div>
 
       <div className="flex flex-col">
         <QuietRow href="/prototype/vector/flights" label="My flights" meta="5" />
