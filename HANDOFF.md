@@ -209,6 +209,28 @@ Standard" against a standard nobody has shown them.
 like an inconsistency and are not. The mapping lives in
 `lib/prototype/assessment.ts`.
 
+**The student must never appear to self-certify against the ACS.** `Felt Solid`
+is a student's report about their own experience; `Meets Standard` is a
+judgement against the published standard, and only the instructor makes it.
+That boundary is currently structural rather than conventional, and it is worth
+keeping that way:
+
+- `lib/prototype/acs.ts` imports `SKILL_SCORES` only. It never touches
+  `PERCEPTION_GAPS`, which is where `studentLevel` lives — so no student rating
+  can reach the ACS view at all.
+- The ACS view renders `StateLabel`, which takes a `SkillState` and has **no
+  `rater` parameter**. It cannot emit "Felt Solid" even by mistake.
+- `levelLabel(code, "student")` exists in exactly three places, every one of
+  them explicitly dual-attributed: the debrief assessment step,
+  `ObjectiveComparison` ("You" vs the instructor's name), and the chair-fly
+  reason line.
+
+One internal wrinkle that is fine and looks wrong: `levelState()` maps
+`INDEPENDENT` to the string `"Meets Standard"` for both raters, because that
+string is the key into the shared colour scale. It is never rendered for a
+student — `ObjectiveComparison` takes the *colour* from it and the *label* from
+`levelLabel(code, "student")`. Do not "fix" that by rendering the state name.
+
 ### Evidence treatment
 
 - **No quotation marks around summaries or AI paraphrase.** Quotation marks
@@ -456,6 +478,12 @@ Operations"**. It looks odd above a land trainer's radio work and it is correct;
 
 `skillsByAcsArea()` is gone — the ACS view is built from the task structure now
 and nothing else called it.
+
+Keep the published Area names and task codes here. They are not to be
+simplified back into the friendlier Skills taxonomy — the formality is what
+makes this view read as checkride preparation rather than as the Skills list
+with a different tab selected. And see the vocabulary boundary in the debrief
+section: nothing student-rated belongs on this screen.
 
 ---
 
