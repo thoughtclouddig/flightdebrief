@@ -9,18 +9,20 @@ import { PersonalizedTraining } from "@/components/marketing/sections/personaliz
 import { PerceptionGap } from "@/components/marketing/sections/perception-gap";
 import { SkillProgress } from "@/components/marketing/sections/skill-progress";
 import { DebriefReplay } from "@/components/marketing/sections/debrief-replay";
+import { FlightRecordingPreview } from "@/components/marketing/sections/flight-recording-preview";
 import { ForCfis } from "@/components/marketing/sections/for-cfis";
 import { DebriefDoctrine } from "@/components/marketing/sections/debrief-doctrine";
 import { Proof } from "@/components/marketing/sections/proof";
 import { TrainingEconomics } from "@/components/marketing/sections/training-economics";
 import { WhoItsFor } from "@/components/marketing/sections/who-its-for";
 import { Pricing } from "@/components/marketing/sections/pricing";
+import { FounderStory } from "@/components/marketing/sections/founder-story";
 import { FinalCta } from "@/components/marketing/sections/final-cta";
 
 export const metadata: Metadata = {
-  title: "AfterFlight — Get more out of every flight lesson.",
+  title: "AfterFlight — Show up ready for your next lesson.",
   description:
-    "AfterFlight turns your instructor debrief into personalized training, quick practice, and a clear plan for what to work on before your next flight. Vector, your AI flight trainer, already knows your training history.",
+    "AfterFlight is the between-flight training system for student pilots. It connects every flight with your instructor's feedback and personalized training, so you show up better prepared, build proficiency faster, and waste fewer expensive flight hours.",
   alternates: appOrigin() ? { canonical: appOrigin()! } : undefined,
 };
 
@@ -33,6 +35,19 @@ export const metadata: Metadata = {
  * produces (next flight, training, the perception gap, progress). The
  * instructor beat comes after all of that, because a CFI reading this page is
  * deciding whether it costs them anything, not whether it works.
+ *
+ * The messaging pass moved one thing and added two. ForCfis dropped below
+ * TrainingEconomics so the entire student story, economics included, resolves
+ * before the page addresses a second audience; the section itself is
+ * unchanged. FounderStory is new and sits last before the close, where it
+ * reads as provenance rather than as a pitch.
+ *
+ * FlightRecordingPreview is the native recorder, and it sits AFTER every
+ * shipped section on purpose. It began as a product-proof walkthrough in
+ * position three; apps/mobile has never run on a device, so a present-tense
+ * section that high made the page's most prominent product claim its least
+ * verified one. Ordering is the honest lever here -- what ships outranks what
+ * is coming -- and it stays in future tense until a device test passes.
  *
  * Three sections were removed rather than rewritten:
  *
@@ -64,12 +79,14 @@ export default function MarketingHomePage() {
       <PerceptionGap />
       <SkillProgress />
       <DebriefReplay />
-      <ForCfis />
+      <FlightRecordingPreview />
       <DebriefDoctrine />
       <Proof />
       <TrainingEconomics />
+      <ForCfis />
       <WhoItsFor />
       <Pricing />
+      <FounderStory />
       <FinalCta />
     </>
   );

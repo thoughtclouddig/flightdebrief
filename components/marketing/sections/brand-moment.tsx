@@ -34,16 +34,27 @@ export function BrandMoment() {
           style={{ objectPosition: "center 55%", filter: "saturate(0.65) brightness(1.12)" }}
           sizes="100vw"
         />
+        {/*
+         * Bright at both ends, thin in the middle.
+         *
+         * The original ramp went white-to-clear top-to-bottom, which was right
+         * when the section ended at the video. The three problem lines now sit
+         * below it, in what used to be the clear end of the ramp -- dark ramp
+         * asphalt behind #4b545d body text, which is unreadable rather than
+         * merely low-contrast. The scrim now thins to its minimum around the
+         * video, where the photograph should be doing the work, and recovers
+         * to near-opaque under the copy beneath it.
+         */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.85) 22%, rgba(255,255,255,0.72) 48%, rgba(255,255,255,0.55) 68%, rgba(255,255,255,0.3) 85%, rgba(255,255,255,0.05) 100%)",
+              "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.85) 18%, rgba(255,255,255,0.66) 34%, rgba(255,255,255,0.48) 50%, rgba(255,255,255,0.6) 62%, rgba(255,255,255,0.82) 74%, rgba(255,255,255,0.93) 84%, rgba(255,255,255,0.97) 100%)",
           }}
         />
       </div>
 
-      <Reveal className="relative mx-auto max-w-3xl text-center">
+      <Reveal className="relative mx-auto max-w-3xl text-center lg:max-w-[1040px]">
         <p
           className="text-balance text-lg font-bold uppercase tracking-[0.2em] text-brand sm:text-xl"
           style={{ textShadow: "0 1px 8px rgba(255,255,255,0.9)" }}
@@ -61,10 +72,10 @@ export function BrandMoment() {
          * solutions with a very short second line. The ch cap gives balance a
          * target narrow enough that both lines have to be full.
          */}
-        <p className="font-display mx-auto mt-6 max-w-[20ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-[#101727] sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0]">
+        <p className="font-display mx-auto mt-6 max-w-[20ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-[#101727] sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0] lg:max-w-none lg:text-[clamp(2.5rem,4.5vw,3rem)] lg:whitespace-nowrap">
           The expensive part is the flight.
         </p>
-        <p className="font-display mx-auto mt-3 max-w-[20ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-brand sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0]">
+        <p className="font-display mx-auto mt-3 max-w-[20ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-brand sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0] lg:max-w-none lg:text-[clamp(2.5rem,4.5vw,3rem)] lg:whitespace-nowrap">
           The learning has to continue after it.
         </p>
         <p
@@ -77,13 +88,30 @@ export function BrandMoment() {
         </p>
       </Reveal>
 
+      <Reveal delay={300} className="relative mt-12 w-full max-w-2xl sm:mt-14">
+        <div
+          className="overflow-hidden rounded-xl border border-black/[0.06] bg-black/5 shadow-[0_16px_40px_-12px_rgba(16,23,39,0.25)]"
+          style={{ position: "relative", height: 0, paddingBottom: "56.25%" }}
+        >
+          <iframe
+            className="sproutvideo-player"
+            src="https://videos.sproutvideo.com/embed/ee9adcbb161ee1c664/9f8eb983a05fd24e?playerColor=ff6f08&playerTheme=light&showControls=false&endFrame=posterFrame"
+            style={{ position: "absolute", width: "100%", height: "100%", left: 0, top: 0 }}
+            frameBorder={0}
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Video Player"
+          />
+        </div>
+      </Reveal>
+
       {/*
        * Deliberately small and chrome-free. These three lines exist to name
        * the problem the video is about, not to compete with it -- as cards
        * they were three more objects fighting the one thing this section is
        * built around. A rule and a numeral is enough structure.
        */}
-      <Reveal delay={450} className="relative mt-10 w-full max-w-3xl sm:mt-12">
+      <Reveal delay={450} className="relative mt-12 w-full max-w-3xl sm:mt-14">
         <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-3">
           {PROBLEMS.map((p, i) => (
             <div key={p.title} className="border-t border-[#101727]/12 pt-4">
@@ -99,23 +127,6 @@ export function BrandMoment() {
             </div>
           ))}
         </dl>
-      </Reveal>
-
-      <Reveal delay={300} className="relative mt-12 w-full max-w-2xl sm:mt-16">
-        <div
-          className="overflow-hidden rounded-xl border border-black/[0.06] bg-black/5 shadow-[0_16px_40px_-12px_rgba(16,23,39,0.25)]"
-          style={{ position: "relative", height: 0, paddingBottom: "56.25%" }}
-        >
-          <iframe
-            className="sproutvideo-player"
-            src="https://videos.sproutvideo.com/embed/ee9adcbb161ee1c664/9f8eb983a05fd24e?playerColor=ff6f08&playerTheme=light&showControls=false&endFrame=posterFrame"
-            style={{ position: "absolute", width: "100%", height: "100%", left: 0, top: 0 }}
-            frameBorder={0}
-            allowFullScreen
-            referrerPolicy="no-referrer-when-downgrade"
-            title="Video Player"
-          />
-        </div>
       </Reveal>
 
     </section>
