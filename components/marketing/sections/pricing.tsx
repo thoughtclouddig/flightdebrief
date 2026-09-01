@@ -1,8 +1,24 @@
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 import { SectionViewEvent } from "@/components/marketing/section-view-event";
 import { TrackedLink } from "@/components/marketing/tracked-link";
-import { PRICING_TIERS, ENTERPRISE_PRICING } from "@/lib/marketing/pricing";
+import { PRICING_TIERS } from "@/lib/marketing/pricing";
+
+/**
+ * The homepage shows the Pilot tier ONLY.
+ *
+ * It used to render all three side by side with an Enterprise panel beneath,
+ * which asked a student to compare their own plan against a CFI plan and a
+ * flight-school plan before deciding. The homepage is a student journey now,
+ * so the decision here is start-or-not rather than which-of-four.
+ *
+ * PRICING_TIERS itself is untouched and still holds all three: /enterprise
+ * and /what-is-afterflight read the same data, and the CFI and school plans
+ * are sold on their own pages. Filtering by id rather than slicing so a
+ * reordering of the source array cannot silently change which plan a student
+ * is shown.
+ */
+const STUDENT_TIER = PRICING_TIERS.filter((t) => t.id === "pilot");
 import { cn } from "@/lib/utils";
 
 export function Pricing() {
@@ -12,18 +28,18 @@ export function Pricing() {
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="text-center">
           <p className="text-balance text-sm font-bold uppercase tracking-[0.16em] text-brand">
-            Built for Every Part of Flight Training.
+            Simple pricing
           </p>
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             Get better every flight.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-pretty text-[#68717D]">
-            Start as a pilot or CFI. Bring AfterFlight to your entire school when you&rsquo;re ready.
+            Start free for your first 3 flights. Your instructor&rsquo;s access is always free.
           </p>
         </Reveal>
 
-        <div className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {PRICING_TIERS.map((tier, i) => (
+        <div className="mx-auto mt-14 max-w-md">
+          {STUDENT_TIER.map((tier, i) => (
             <Reveal key={tier.id} delay={i * 100}>
               <div
                 className={cn(
@@ -95,49 +111,6 @@ export function Pricing() {
         </div>
 
 
-        <Reveal delay={300}>
-          <div
-            id="enterprise"
-            className="relative mt-10 overflow-hidden rounded-2xl bg-[#101727] px-8 py-10 sm:px-12 sm:py-12"
-          >
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#171f33_0%,_#0c1220_75%)]" />
-
-            <div className="relative grid gap-10 lg:grid-cols-[1fr_1.15fr] lg:items-center lg:gap-16">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{ENTERPRISE_PRICING.eyebrow}</p>
-                <h3 className="font-display mt-3 text-balance text-3xl font-bold text-white sm:text-4xl">
-                  {ENTERPRISE_PRICING.sectionHeadlineLine1}
-                  <br />
-                  {ENTERPRISE_PRICING.sectionHeadlineLine2}
-                </h3>
-                <p className="mt-4 max-w-md text-pretty text-white/70">{ENTERPRISE_PRICING.sectionCopy}</p>
-                <p className="text-balance mt-6 font-display text-xl font-bold text-white">{ENTERPRISE_PRICING.sectionPriceLabel}</p>
-
-                <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-                  <TrackedLink
-                    href={ENTERPRISE_PRICING.ctaHref}
-                    event="select_enterprise"
-                    className="group inline-flex items-center gap-2.5 rounded-lg bg-brand px-8 py-4 text-base font-bold text-white transition-[transform,box-shadow,background-color] duration-150 ease-out hover:-translate-y-0.5 hover:bg-brand-bright hover:shadow-lg hover:shadow-brand/25 active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-                  >
-                    {ENTERPRISE_PRICING.cta}
-                    <ArrowRight className="size-5 transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
-                  </TrackedLink>
-                </div>
-                <p className="mt-5 max-w-md text-pretty text-sm text-white/60">{ENTERPRISE_PRICING.sectionSupportingLine}</p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {ENTERPRISE_PRICING.capabilityTiles.map((tile) => (
-                  <div key={tile.title} className="rounded-xl border border-white/10 bg-white/[0.04] p-5">
-                    <span className="block h-0.5 w-6 bg-brand" aria-hidden="true" />
-                    <p className="text-balance mt-3 text-sm font-bold uppercase tracking-wide text-white">{tile.title}</p>
-                    <p className="mt-1.5 text-pretty text-[13px] leading-relaxed text-white/55">{tile.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </Reveal>
       </div>
     </section>
   );

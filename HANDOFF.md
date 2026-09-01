@@ -263,6 +263,53 @@ together" — which is the product's positioning made visible.
 
 ---
 
+## Pricing — display strings and the amount actually charged are separate
+
+**Pilot moved `$9.99/$99` -> `$19.99/$169 (~30%)` on 2026-09-01, in the copy
+only.** The site now advertises a price that Stripe may not yet charge.
+
+`lib/stripe.ts` bills whatever `STRIPE_PRICE_PILOT_MONTHLY` and
+`STRIPE_PRICE_PILOT_ANNUAL` point at. **Nothing in this repository sets an
+amount.** New Stripe Price objects have to exist and those two secrets have to
+be repointed **in the Deployment scope as well as the workspace** -- the
+database episode above is the proof that the two scopes differ. Until that is
+done the site quotes one number and bills another.
+
+Three display surfaces carry the price, and only two share a source:
+
+| Where | Reads |
+|---|---|
+| Homepage `Pricing` | `lib/marketing/pricing.ts` |
+| `/what-is-afterflight` | same file — the pricing FAQ **and** its product structured data |
+| `app/(product)/billing/page.tsx` | **hardcoded**, updated by hand |
+
+A price edit in `lib/marketing/pricing.ts` is a site-wide edit. The billing page
+is not wired to it and will silently drift.
+
+Watch out for `$99`: it is Pilot's old annual price *and* Flight School Pro's
+current monthly price. Grep by context, not by number. School pricing was not
+touched.
+
+### The homepage shows one tier now
+
+`Pricing` renders the Pilot tier only, via
+`PRICING_TIERS.filter((t) => t.id === "pilot")` -- filtered by id rather than
+sliced, so reordering the source array cannot silently change which plan a
+student sees. `PRICING_TIERS` still holds all three and `ENTERPRISE_PRICING` is
+untouched; `/enterprise` and `/what-is-afterflight` are unaffected structurally.
+
+The Enterprise panel was removed from the homepage render only. CFI-free
+survives as one reassurance line under the headline rather than as a card,
+because asking a student to compare their plan against a CFI plan and a
+school plan is a four-way decision on a page whose only question is
+start-or-not.
+
+**This also fixed the 320px horizontal scroll** recorded in the section below
+as pre-existing and unfixed. It came from the three-across card grid. The
+homepage now has zero horizontal overflow at 320.
+
+---
+
 ## Homepage reduction pass — 18 sections to 15
 
 Shipped 2026-09-01. The page had accumulated individually strong sections that
@@ -333,10 +380,9 @@ unbounded. Fine while labels were short, broken the moment one grew --
 pushed the whole page into horizontal scroll. Now `max-w-full` and allowed to
 wrap.
 
-**Not fixed, pre-existing:** the `Pricing` cards overflow at 320px — six
-elements reaching 339px in a 320px viewport, causing horizontal scroll.
-`pricing.tsx` was untouched by this pass. Worth a look; it is the only
-remaining horizontal-scroll source on the homepage.
+**Fixed in the pass after this one**, as a side effect of showing a single
+pricing tier: the `Pricing` cards used to overflow at 320px, six elements
+reaching 339px in a 320px viewport. The three-across grid was the cause.
 
 ---
 

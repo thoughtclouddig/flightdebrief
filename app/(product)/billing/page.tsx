@@ -112,10 +112,10 @@ export default async function BillingPage({
                  usually doesn't have to. */
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <SubscribeButton billingPeriod="monthly" size="lg">
-                  Monthly -- $9.99/mo
+                  Monthly -- $19.99/mo
                 </SubscribeButton>
                 <SubscribeButton billingPeriod="annual" size="lg" variant="outline">
-                  Annual -- $99/yr
+                  Annual -- $169/yr
                 </SubscribeButton>
               </div>
             )}

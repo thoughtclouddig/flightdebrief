@@ -18,14 +18,29 @@ export interface PricingTier {
   upsell?: { text: string; linkLabel: string; href: string };
 }
 
+/**
+ * THESE STRINGS ARE DISPLAY ONLY. The amount a customer is actually charged
+ * lives in Stripe, behind STRIPE_PRICE_PILOT_MONTHLY / _ANNUAL (see
+ * lib/stripe.ts) -- nothing here sets it. Changing a price below without
+ * repointing those secrets at new Stripe Price objects makes the site
+ * advertise one number and bill another, in both the workspace and the
+ * Deployment scope.
+ *
+ * Pilot moved $9.99/$99 -> $19.99/$169 on 2026-09-01.
+ *
+ * Read by the homepage, /what-is-afterflight (pricing FAQ *and* its
+ * product structured data) and /enterprise. A price edit here is a
+ * site-wide edit. app/(product)/billing/page.tsx hardcodes its own copy and
+ * does NOT read this -- it has to be changed by hand.
+ */
 export const PRICING_TIERS: PricingTier[] = [
   {
     id: "pilot",
     name: "Pilot",
     audience: "For student pilots and individual pilots.",
-    price: "$9.99",
+    price: "$19.99",
     priceSuffix: "/mo",
-    priceNote: "or $99/year — save 17%",
+    priceNote: "or $169/year — save ~30%",
     features: [
       "Unlimited debriefs",
       "See your progress over time",
