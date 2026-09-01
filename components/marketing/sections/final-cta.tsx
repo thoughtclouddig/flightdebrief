@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Reveal } from "@/components/marketing/reveal";
 import { TrackedLink } from "@/components/marketing/tracked-link";
 
@@ -18,10 +19,14 @@ export function FinalCta() {
 
         <Reveal delay={80}>
           <h2 className="font-display mt-12 text-balance text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">
-            Ready to get more out of
+            Every flight should
             <br />
-            <span className="text-brand">every flight lesson?</span>
+            <span className="text-brand">build on the last.</span>
           </h2>
+          <p className="mx-auto mt-5 max-w-lg text-balance text-lg leading-relaxed text-white/75">
+            Turn your flight, your instructor&rsquo;s feedback, and your between-flight training into a clear path
+            forward.
+          </p>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-white/75">
             <li className="text-balance">No credit card required</li>
             <li className="text-balance">Free to start</li>
@@ -35,8 +40,14 @@ export function FinalCta() {
             event="start_free"
             className="rounded-lg bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-bright"
           >
-            Start Free
+            Start Your First Flight
           </TrackedLink>
+          <Link
+            href="/#how-it-works"
+            className="rounded-lg border border-white/20 px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+          >
+            See How It Works
+          </Link>
         </Reveal>
 
         <Reveal delay={250}>

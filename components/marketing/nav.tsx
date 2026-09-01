@@ -1,25 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 
+// Student-first, and the split is the point rather than a tidy-up. A flat bar
+// listing "For Instructors" and "For Schools" beside the product links tells a
+// student pilot that this site is addressed to three audiences and leaves them
+// to work out which one they are. The primary row is now the product they
+// would actually be buying; the audience pages move one interaction away,
+// which is demotion, not removal -- both remain one click from every page,
+// and both keep their footer links.
 const NAV_LINKS = [
   { href: "/demo", label: "Live Demo" },
   { href: "/#how-it-works", label: "How It Works" },
-  { href: "/instructors", label: "For Instructors" },
-  { href: "/schools", label: "For Schools" },
-  // Sits with the audience pages rather than after Pricing: Pricing stays
-  // last because it is adjacent to the signup CTA, and content belongs before
-  // the ask rather than after it.
-  { href: "/field-notes", label: "Field Notes" },
+  { href: "/#vector", label: "Vector" },
+  { href: "/#progress", label: "Progress" },
+  // Pricing stays last because it is adjacent to the signup CTA, and content
+  // belongs before the ask rather than after it.
   { href: "/#pricing", label: "Pricing" },
+];
+
+const MORE_LINKS = [
+  { href: "/instructors", label: "For Instructors" },
+  { href: "/schools", label: "For Flight Schools" },
+  { href: "/field-notes", label: "Field Notes" },
 ];
 
 export function MarketingNav() {
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   // Close on any navigation. Adjusting state during render (React's own
@@ -30,6 +43,7 @@ export function MarketingNav() {
   if (pathname !== lastPathname) {
     setLastPathname(pathname);
     setOpen(false);
+    setMoreOpen(false);
   }
 
   // A hash-only link ("/#pricing") changes neither pathname nor the mounted
@@ -38,10 +52,33 @@ export function MarketingNav() {
   // swallowing the next tap on the hamburger -- which is what read as "the
   // menu won't open again after going to How It Works".
   useEffect(() => {
-    const close = () => setOpen(false);
+    const close = () => {
+      setOpen(false);
+      setMoreOpen(false);
+    };
     window.addEventListener("hashchange", close);
     return () => window.removeEventListener("hashchange", close);
   }, []);
+
+  // Dismissal for the desktop "More" menu. Pointerdown rather than click so a
+  // press that starts outside the menu closes it before the target underneath
+  // receives the event, and Escape because a disclosure that can only be
+  // dismissed with a mouse is not keyboard-operable.
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!moreRef.current?.contains(e.target as Node)) setMoreOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMoreOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [moreOpen]);
 
   // Don't leave the page scrollable behind an open full-screen menu.
   useEffect(() => {
@@ -109,6 +146,41 @@ export function MarketingNav() {
               </Link>
             );
           })}
+
+          <div ref={moreRef} className="relative">
+            <button
+              type="button"
+              aria-expanded={moreOpen}
+              aria-haspopup="true"
+              onClick={() => setMoreOpen((v) => !v)}
+              className={
+                "flex cursor-pointer items-center gap-1 border-b-2 pb-0.5 transition-colors hover:border-brand hover:text-[#101727] " +
+                (moreOpen ? "border-brand text-[#101727]" : "border-transparent")
+              }
+            >
+              More
+              <ChevronDown
+                className={"size-4 transition-transform " + (moreOpen ? "rotate-180" : "")}
+                aria-hidden
+              />
+            </button>
+
+            {moreOpen ? (
+              <div className="absolute right-0 top-full z-50 mt-3 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg">
+                {MORE_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMoreOpen(false)}
+                    aria-current={pathname === link.href ? "page" : undefined}
+                    className="flex min-h-[44px] items-center px-4 text-[15px] font-medium text-[#101727] hover:bg-[#f4f5f6]"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-4 lg:gap-5">
@@ -162,10 +234,25 @@ export function MarketingNav() {
                   </Link>
                 );
               })}
+              {/* Same demotion as the desktop "More" menu, expressed the way a
+                  narrow viewport can carry it: still present, still one tap,
+                  visibly a second tier rather than a peer of the product links. */}
+              <p className="px-3 pb-2 pt-5 text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">More</p>
+              {MORE_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={pathname === link.href ? "page" : undefined}
+                  className="flex min-h-[52px] items-center border-b border-slate-100 pl-3 text-base font-medium text-[#68717D] last:border-b-0"
+                >
+                  {link.label}
+                </Link>
+              ))}
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className="flex min-h-[52px] items-center text-base font-semibold text-[#101727] sm:hidden"
+                className="flex min-h-[52px] items-center pt-2 text-base font-semibold text-[#101727] sm:hidden"
               >
                 Log in
               </Link>

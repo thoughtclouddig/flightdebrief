@@ -3,32 +3,57 @@ import { CheckCircle2 } from "lucide-react";
 import { CtaLink } from "@/components/marketing/cta-link";
 import { DebriefSummaryMockupCard } from "@/components/marketing/product-mockups";
 
-const BENEFITS = ["Understand what mattered", "Train the weak spots", "Show up ready for what's next"];
+const BENEFITS = ["Carry feedback forward", "Build proficiency faster", "Waste fewer flight hours"];
 
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-white pt-24 sm:pt-28 lg:min-h-[680px] lg:pb-0">
       <div className="relative mx-auto max-w-[1320px] px-6">
         <div className="relative z-10 max-w-xl lg:py-16">
-          <p className="text-balance text-base font-bold uppercase tracking-[0.16em] text-brand sm:text-lg">
-            Your flight keeps teaching.
+          {/* One line, and sized by measurement rather than by eye. Uppercase
+              at 0.16em tracking, this string renders 630px wide at 18px
+              against a 576px column, so it wrapped. 15px puts it at ~525px --
+              about 50px of slack, which is enough to survive the fallback face
+              before Archivo loads. It still wraps below sm, where no readable
+              size fits 45 characters on a phone. */}
+          <p className="text-balance text-[15px] font-bold uppercase tracking-[0.16em] text-brand">
+            Better flight training starts between flights
           </p>
           {/* Three lines, fixed. The breaks are explicit rather than left to
-              text-balance because the display face is wide enough that "Get
-              more out of" wraps on its own at the old size, turning a
-              three-line headline into four and pushing the CTA below the
-              fold. Negative tracking buys the width that costs. */}
+              text-balance because the display face is wide enough that a line
+              wraps on its own at this size, turning a three-line headline into
+              four and pushing the CTA below the fold. Negative tracking buys
+              the width that costs.
+
+              Both clamp ends are set by the longest line rather than by eye.
+              Measured in the real Archivo face, "Show up ready" renders 600px
+              wide at 68px -- so it needs roughly 8.8px of column per px of
+              type. Against the 576px desktop column that caps the headline at
+              ~65px (3.75rem, 60px, leaves ~50px of slack); against the 327px
+              column on a 375px phone it caps at ~37px (2.125rem, 34px, ~27px
+              of slack). At the previous 4.25rem/2.75rem the line overflowed at
+              both ends and the headline broke to four lines on desktop and
+              five on mobile, which is what pushed the CTA under the fold.
+
+              Measure with font-stretch copied onto the probe span. Omitting it
+              renders the probe in a narrower synthetic instance and
+              understates Archivo's real width by about a fifth.
+
+              The promise is continuity, not capture: what the student buys is
+              arriving at the next lesson already prepared. "Lesson" carries the
+              brand color because the next lesson is the thing this product is
+              about -- not the flight that just ended. */}
           <h1
-            className="font-display mt-4 max-w-2xl text-[clamp(2.75rem,5.6vw,4.25rem)] font-extrabold leading-[1.0] tracking-[-0.025em] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(2.125rem,5.6vw,3.75rem)] font-extrabold leading-[1.0] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
-            Get more <br />
-            out of every <br />
+            Show up ready <br />
+            for your next <br />
             <span className="text-brand">lesson.</span>
           </h1>
-          <p className="mt-6 max-w-md text-pretty text-lg leading-relaxed text-[#68717D]">
-            AfterFlight turns your instructor debrief into personalized training, quick practice,
-            and a clear plan for what to work on before your next flight.
+          <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#68717D]">
+            AfterFlight connects every flight with your instructor&rsquo;s feedback and personalized training, so
+            you show up better prepared, build proficiency faster, and waste fewer expensive flight hours.
           </p>
 
           <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
@@ -42,7 +67,7 @@ export function Hero() {
 
           <div className="mt-8 flex flex-col items-stretch gap-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <CtaLink href="/signup">Start Free</CtaLink>
+              <CtaLink href="/signup">Start Your First Flight</CtaLink>
               <CtaLink href="#how-it-works" variant="secondary" className="whitespace-nowrap">
                 See How It Works
               </CtaLink>
