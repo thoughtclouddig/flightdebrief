@@ -199,7 +199,7 @@ export function HowItWorks() {
                   />
                 </div>
 
-                <div className="absolute bottom-7 left-7 z-[1] flex w-[min(380px,44%)] flex-col overflow-hidden rounded-[20px] border border-white/70 bg-white/[0.78] p-[20px_22px] shadow-[0_20px_40px_-20px_rgba(16,23,39,0.45)] backdrop-blur-[18px]">
+                <div className="absolute bottom-7 left-7 z-[1] flex w-[min(480px,56%)] flex-col overflow-hidden rounded-[20px] border border-white/70 bg-white/[0.78] p-[20px_22px] shadow-[0_20px_40px_-20px_rgba(16,23,39,0.45)] backdrop-blur-[18px]">
                   <div
                     aria-hidden="true"
                     className="pointer-events-none absolute -right-2 -bottom-5 text-[90px] leading-none font-extrabold tracking-[-0.04em] text-[#101727] opacity-[0.05] select-none"
@@ -209,7 +209,19 @@ export function HowItWorks() {
                   <span className="relative z-[1] inline-flex w-fit items-center gap-2 self-start rounded-full bg-brand px-3 py-[7px] text-xs font-extrabold tracking-[0.12em] text-white uppercase">
                     Step {i + 1}: {card.label}
                   </span>
-                  <p className="relative z-[1] mt-3 text-balance text-[22px] leading-[1.25] font-extrabold tracking-[-0.01em] text-[#101727]">
+                  {/*
+                   * Sized so every headline sits on ONE line at every width
+                   * this carousel is shown at -- it is hidden below md.
+                   *
+                   * The longest is "Start where the last flight ended.", which
+                   * wants 415px at the old 22px and had 336px of content width
+                   * to do it in, so it broke. The card is wider now and the
+                   * type scales with the viewport rather than being fixed, so
+                   * the constraint holds at 768 as well as at 1400 instead of
+                   * only at the width someone happened to look at. Measure
+                   * before adding a longer headline.
+                   */}
+                  <p className="relative z-[1] mt-3 text-balance text-[clamp(17px,1.4vw,22px)] leading-[1.25] font-extrabold tracking-[-0.01em] text-[#101727]">
                     {card.headline}
                   </p>
                   <p className="relative z-[1] mt-2 text-pretty text-base leading-[1.4] text-[#101727]">{card.copy}</p>
