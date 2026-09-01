@@ -20,8 +20,15 @@ export function generateStaticParams() {
  * them -- one is audio you listen to on the drive home, this one is a thing
  * you interrogate.
  */
-export default async function ReplayPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ReplayPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ t?: string }>;
+}) {
   const { id } = await params;
+  const { t } = await searchParams;
   const flight = flightById(id);
   const analysis = analysisFor(id);
   if (!flight || !analysis) notFound();
@@ -32,7 +39,12 @@ export default async function ReplayPage({ params }: { params: Promise<{ id: str
       <PageTitle kicker={`${flight.dateLabel} · ${flight.departureAirport} · ${formatHours(flight.durationMinutes)} hr`}>
         Flight replay
       </PageTitle>
-      <FlightReplay telemetry={analysis.telemetry} segments={analysis.segments} moments={analysis.moments} />
+      <FlightReplay
+        telemetry={analysis.telemetry}
+        segments={analysis.segments}
+        moments={analysis.moments}
+        startT={Number(t) || 0}
+      />
     </Screen>
   );
 }

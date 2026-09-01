@@ -104,7 +104,7 @@ export default function DebriefDetail() {
             {MOMENTS.map((m) => (
               <Link
                 key={m.id}
-                href="/prototype/vector/flights/aug-29/replay"
+                href={`/prototype/vector/flights/aug-29/moments/${m.id}`}
                 className="flex items-start gap-3 rounded-2xl border border-hairline bg-surface p-5"
               >
                 <span className="min-w-0 flex-1">

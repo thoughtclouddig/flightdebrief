@@ -11,6 +11,7 @@ import {
   PrimaryButton,
   Screen,
   Section,
+  SecondaryButton,
 } from "@/components/prototype/ui";
 import { cn } from "@/lib/utils";
 import { FLIGHTS, flightById, formatHours } from "@/lib/prototype/flights";
@@ -56,10 +57,15 @@ export default async function AnalysisPage({ params }: { params: Promise<{ id: s
         </div>
       </Section>
 
-      <PrimaryButton href={`/prototype/vector/flights/${id}/replay`}>
-        <Play className="size-[18px] fill-current" aria-hidden />
-        Replay this flight
-      </PrimaryButton>
+      <div className="flex flex-col gap-2.5">
+        <PrimaryButton href={`/prototype/vector/flights/${id}/replay`}>
+          <Play className="size-[18px] fill-current" aria-hidden />
+          Replay this flight
+        </PrimaryButton>
+        {approaches.length > 1 ? (
+          <SecondaryButton href={`/prototype/vector/flights/${id}/compare`}>Compare attempts</SecondaryButton>
+        ) : null}
+      </div>
 
       <Section title={<>{approaches.length} approaches detected</>}>
         <div className="flex flex-col">
@@ -90,7 +96,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ id: s
               return (
                 <Link
                   key={m.id}
-                  href={`/prototype/vector/flights/${id}/replay`}
+                  href={`/prototype/vector/flights/${id}/moments/${m.id}`}
                   className="flex items-start gap-3 rounded-2xl border border-hairline bg-surface p-5"
                 >
                   <span className="min-w-0 flex-1">

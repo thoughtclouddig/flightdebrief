@@ -34,12 +34,19 @@ export function FlightReplay({
   telemetry,
   segments,
   moments,
+  /**
+   * Where to open. "Replay this moment" is a promise that the scrubber will
+   * already be at the moment -- landing at zero and asking the student to find
+   * it again is the same as not having the button.
+   */
+  startT = 0,
 }: {
   telemetry: FlightTelemetry;
   segments: FlightSegment[];
   moments: FlightMoment[];
+  startT?: number;
 }) {
-  const [t, setT] = useState(0);
+  const [t, setT] = useState(Math.min(startT, telemetry.durationMs));
   const [playing, setPlaying] = useState(false);
   const raf = useRef<number | null>(null);
   const last = useRef<number>(0);
@@ -330,7 +337,7 @@ function ContextCard({
 
           <div className="flex flex-col gap-2.5">
             <PrimaryButton href="/prototype/vector/train">Train this with Vector</PrimaryButton>
-            <SecondaryButton href="/prototype/vector/flights/aug-29/analysis">Compare attempts</SecondaryButton>
+            <SecondaryButton href="/prototype/vector/flights/aug-29/compare">Compare attempts</SecondaryButton>
           </div>
         </>
       ) : (
