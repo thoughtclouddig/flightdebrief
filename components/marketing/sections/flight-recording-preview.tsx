@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Reveal } from "@/components/marketing/reveal";
 
 /**
@@ -24,7 +25,8 @@ import { Reveal } from "@/components/marketing/reveal";
 export function FlightRecordingPreview() {
   return (
     <section id="flight-recording" className="bg-white px-6 py-20 sm:py-24">
-      <Reveal className="mx-auto max-w-[720px]">
+      <div className="mx-auto grid max-w-[1100px] grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
+      <Reveal>
         <p className="inline-flex items-center rounded-full border border-brand/30 bg-brand/[0.07] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-brand">
           In development
         </p>
@@ -48,6 +50,26 @@ export function FlightRecordingPreview() {
           Not available yet, and not required to use AfterFlight.
         </p>
       </Reveal>
+
+      {/*
+        * The section's own sentence, as a picture: this is the view once the
+        * phone is away. Deliberately the flight rather than the product --
+        * a photograph of a phone running a recorder would show a thing that
+        * does not exist yet, which is the one claim this section is built to
+        * avoid making.
+        */}
+      <Reveal delay={120}>
+        <div className="relative aspect-[4/3] overflow-hidden rounded-[28px] lg:aspect-[5/4]">
+          <Image
+            src="/images/marketing/wing-view-sunset.webp"
+            alt="The view over the wing of a light aircraft in cruise at sunset"
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 520px, 100vw"
+          />
+        </div>
+      </Reveal>
+      </div>
     </section>
   );
 }

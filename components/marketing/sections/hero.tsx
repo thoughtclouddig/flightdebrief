@@ -17,44 +17,34 @@ export function Hero() {
               before Archivo loads. It still wraps below sm, where no readable
               size fits 45 characters on a phone. */}
           <p className="text-balance text-[15px] font-bold uppercase tracking-[0.16em] text-brand">
-            Better flight training starts between flights
+            Better training between flights
           </p>
-          {/* Three lines, fixed. The breaks are explicit rather than left to
-              text-balance because the display face is wide enough that a line
-              wraps on its own at this size, turning a three-line headline into
-              four and pushing the CTA below the fold. Negative tracking buys
-              the width that costs.
+          {/* Two lines, and no line may ever hold a single word.
+              That rule is what sets the type size, not taste. Measured in the
+              real Archivo face, the longest line -- "Make every flight" --
+              needs about 10.15px of column per px of type (609px at 60px), so
+              any size above column/10.15 wraps it and strands "flight" alone.
+              At 3.75rem in a 576px column that is exactly what happened.
 
-              Re-checked when the headline changed: "Make every flight" is
-              wider than "build on" or "the last.", and narrower than the
-              "Show up ready" these numbers were originally cut for, so the
-              existing ends hold with more slack than before rather than less.
+              The ends are cut so the longest line fits at every width the
+              checklist covers: 3.375rem needs 548px against the 576px desktop
+              column, and 1.625rem needs 264px against the 272px column of a
+              320px phone. 8vw rather than 5.6vw so the middle range reaches
+              full size quickly instead of sitting at the floor on a 375px
+              screen.
 
-              Both clamp ends are set by the longest line rather than by eye.
-              Measured in the real Archivo face, "Show up ready" renders 600px
-              wide at 68px -- so it needs roughly 8.8px of column per px of
-              type. Against the 576px desktop column that caps the headline at
-              ~65px (3.75rem, 60px, leaves ~50px of slack); against the 327px
-              column on a 375px phone it caps at ~37px (2.125rem, 34px, ~27px
-              of slack). At the previous 4.25rem/2.75rem the line overflowed at
-              both ends and the headline broke to four lines on desktop and
-              five on mobile, which is what pushed the CTA under the fold.
+              Any copy edit here needs re-measuring. A longer first line does
+              not merely look tighter -- it silently reintroduces the orphan.
 
               Measure with font-stretch copied onto the probe span. Omitting it
-              renders the probe in a narrower synthetic instance and
-              understates Archivo's real width by about a fifth.
-
-              The promise is continuity, not capture: what the student buys is
-              arriving at the next lesson already prepared. "Lesson" carries the
-              brand color because the next lesson is the thing this product is
-              about -- not the flight that just ended. */}
+              renders a narrower synthetic instance and understates Archivo's
+              real width by about a fifth. */}
           <h1
-            className="font-display mt-4 max-w-2xl text-[clamp(2.125rem,5.6vw,3.75rem)] font-extrabold leading-[1.0] tracking-[-0.025em] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(1.625rem,8vw,3.375rem)] font-extrabold leading-[1.0] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
             Make every flight <br />
-            build on <br />
-            <span className="text-brand">the last.</span>
+            build on <span className="text-brand">the last.</span>
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#68717D]">
             AfterFlight turns each lesson into a personalized plan for what to review, practice, and focus on

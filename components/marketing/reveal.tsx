@@ -32,6 +32,11 @@ export function Reveal({
       className={cn(
         "reveal transition-[opacity,transform] duration-700 ease-out",
         inView ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
+        // Render the final state outright when the visitor has asked for
+        // reduced motion. This was missing, so every Reveal on the site still
+        // slid and faded regardless of the setting -- the one thing the
+        // preference exists to prevent.
+        "motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none",
         className,
       )}
       style={delay ? { transitionDelay: `${delay}ms` } : undefined}

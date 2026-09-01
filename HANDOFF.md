@@ -1,4 +1,4 @@
-# Handoff — AfterFlight, as of `8aceee7`
+# Handoff — AfterFlight, as of `a4b1238`
 
 Written to survive a session boundary. Read this and `design-system/afterflight/MASTER.md`
 before touching the prototype, the flight-analysis stack, or the mobile app.
@@ -14,9 +14,15 @@ sense:
 
 | Area | State |
 |---|---|
-| Prototype (`/prototype/vector/**`) | Working, 18 routes, the main review surface |
+| Prototype (`/prototype/vector/**`) | Working, 18 routes, the main review surface. Debrief rebuilt in `68a4b39` — see below |
 | Flight analysis + replay | Working on seeded data |
 | Native recorder (`apps/mobile`) | Code complete, **never run** |
+| Marketing site | Repositioned on continuity (`3bea1b0`); behind the shared-password gate |
+
+Remote is clean at **`a4b1238`**, sandbox and Replit in sync, `pull.ff only`
+set on Replit so the merge-commit pile-up documented below cannot recur. The
+gate is live, the prototype sits behind it, and the rebuilt debrief flow is
+deployed to Replit.
 
 `npm run build` fails locally with `DATABASE_URL is not set` — expected without
 the Replit DB, and unrelated to any of this. `tsc`, `eslint` and 351 tests pass.
@@ -135,6 +141,98 @@ Background recording is **configured, not verified**. It requires a real
 iPhone, a real hour, a locked screen and ForeFlight in the foreground. Battery
 and thermal are unmeasured for the same reason. Do not let anyone record this
 as done.
+
+---
+
+## The debrief — current architecture, shipped `68a4b39`
+
+**Read this before touching anything under `app/prototype/vector/debrief/`.**
+It replaced an earlier design, and several of the decisions below look like
+things worth "tidying up" until you know why they are that way.
+
+### The flow, and it does not branch
+
+```
+Lesson objectives → Student assessment → Device handoff →
+Instructor assessment → Reveal comparison → Record conversation →
+Debrief summary → Carry forward
+```
+
+There is **no longer a fork** between "Jake's debrief" and "My reflection."
+That fork was the root cause of what V2 lost: it framed the two views as
+alternative content, so the comparison between them was optional and therefore
+skipped. One guided flow, no branch. The home screen's separate "My reflection"
+entry point was removed for the same reason — a second door re-creates the
+fork.
+
+### The rules inside it
+
+- **The lesson objective is the unit of assessment.** Both people rate the same
+  list.
+- **Both assess independently, before the recording starts.**
+- **The student rates first and their answers stay hidden through the
+  handoff.** An instructor who can see "Felt Solid" before rating produces an
+  echo rather than a judgement, and comparing a judgement to its own echo is
+  worthless. This is why the handoff screen exists.
+- **The reveal shows agreements and gaps, at equal weight.** Agreement is
+  meaningful data and must not be filtered out — "you both think this is solid"
+  is what eventually lets a student trust their own read of a flight. A view
+  that surfaces only gaps reads as a list of faults.
+- **Recording comes last**, after the comparison, so the conversation has
+  something specific to be about.
+
+### Performance model — one scale, two vocabularies
+
+The persisted model is unchanged and shared with the real product:
+`LEARNING` · `NEEDS_COACHING` · `INDEPENDENT` (`lib/performance-levels.ts`,
+FITS-derived). **Do not create a second scoring model.** Codes, order and
+`performanceLevelRank` are the single source of truth; only the code is ever
+persisted, which is what makes the wording below safe.
+
+| Underlying code | Student sees | Instructor sees |
+|---|---|---|
+| `LEARNING` | Needs Work | Needs Work |
+| `NEEDS_COACHING` | Improving | Improving |
+| `INDEPENDENT` | **Felt Solid** | **Meets Standard** |
+
+`Felt Solid` and `Meets Standard` are the **same underlying code**, deliberately.
+The student is reporting *perceived* performance; the instructor is evaluating
+against the *training standard*. A student cannot honestly report "Meets
+Standard" against a standard nobody has shown them.
+
+**Do not unify these labels without an explicit product decision.** They look
+like an inconsistency and are not. The mapping lives in
+`lib/prototype/assessment.ts`.
+
+### Evidence treatment
+
+- **No quotation marks around summaries or AI paraphrase.** Quotation marks
+  require actual transcript.
+- Both `studentView` and `instructorView` in the seed are summaries, so
+  **neither is quoted.** Quoting the instructor while paraphrasing the student
+  made one voice testimony and the other narration.
+- Student and instructor evidence get **equal visual and epistemic treatment.**
+- Verbatim material (`INSTRUCTOR_DEBRIEF`, `STUDENT_REFLECTION`) lives behind
+  View transcript.
+
+### Debrief Latest
+
+Must render **both levels for every objective**, agreements included, iterating
+`PERCEPTION_GAPS`. It previously carried three hardcoded strings describing one
+objective — an assessment reduced to an anecdote, with the two agreeing
+objectives silently dropped. **Do not revert to that.**
+
+### Progress / Skill Detail
+
+Shows the **latest** dual assessment (`objectiveForSkill` matches skill names to
+objective names loosely, since the seed vocabularies drifted).
+
+**Still open, and the next significant product task:** per-lesson student +
+instructor assessment *history* over time. `SkillScore.trend` currently carries
+instructor-side values only, so this needs a seed expansion and a `TrendStrip`
+signature change. It is the natural progression from "here is how you both saw
+this flight" to "here is how your judgement and your performance are developing
+together" — which is the product's positioning made visible.
 
 ---
 
@@ -272,23 +370,102 @@ no error. Verify against the public URL after publishing, not just locally.
 
 ---
 
+## Brand imagery — read the casting bible BEFORE generating anything
+
+`ad-studio/afterflight/casting/consistency-tokens.md` is the source of truth for
+people, aircraft and wardrobe, and it contains paste-verbatim prompt tokens.
+`ad-studio/afterflight/storyboard/` holds ~39 already-approved frames (A/B/C/D
+series). **Look there first — the shot you need probably exists.**
+
+The cast, in short: **Mia**, student, mid-20s, navy quarter-zip. **Dave**, CFI,
+mid-50s, salt-and-pepper, navy polo (plain in cockpit/exterior shots, AfterFlight
+lockup only in the B3 lounge scene). Aircraft is the **Cirrus TRAC, NAV8RX**,
+orange-and-black livery, all-black cabin, **side-sticks not a yoke**, red CAPS
+handle. Seat convention is absolute and must be stated in every cockpit prompt:
+**Mia LEFT and flying, Dave RIGHT.**
+
+**Naming:** the CFI is **Dave** in casting/storyboard only. Everything
+user-facing — app seed data, marketing copy — says **Jake**, and that is
+correct. Do not "fix" one to match the other.
+
+Three things that cost real time in the session that produced this section:
+
+- Generating before reading the casting file produced a child at the controls of
+  a Cessna. Nothing about it was reusable.
+- **Next's image optimizer caches by URL.** Replacing a file at the same path in
+  `public/` keeps serving the old image through hard reloads. Change the
+  filename.
+- `ffmpeg` here has **no AVIF muxer** and `avifenc` is not installed.
+  `sips -s format avif -s formatOptions 65 -Z 2000 in.png --out out.avif` works.
+
+---
+
+## Next feature: guided Chair Flying (briefed, not started)
+
+Full brief is in the session transcript; **ask for it to be re-pasted** rather
+than working from this summary.
+
+The defining rule: **Chair Flying is generated from what actually happened on
+the student's last flight** — never a generic study library. The loop is
+Flight → Debrief → specific training need → Chair Flying → Next Flight.
+
+It lives inside **Train**, as one of Vector's recommended actions, with Vector
+giving the reason from real debrief evidence. Not a new nav item, not a chatbot.
+
+V1 is **one** guided rehearsal mode, 3–7 minutes, one objective. Scenario →
+student thinks → brief coaching → continue, one prompt at a time. Lightweight
+tap/reveal only — **do not make the student type answers**. Must include at
+least one ADM/judgment moment (go-around as a legitimate option), and must end
+by carrying 2–3 items into the Next Flight plan.
+
+Seed it from the existing crosswind row, which is already the right shape:
+student `INDEPENDENT` vs instructor `NEEDS_COACHING`, with Jake's rollout
+evidence. That makes the reason for the drill self-evident.
+
+Architect for later modes — Guided / Recall / Challenge, and a future spoken
+mode — but **build none of them yet**. No speech analysis in this pass.
+
+Guardrail: Chair Flying reinforces the CFI, POH/AFM and published procedures. It
+never replaces them, and where detail is aircraft-specific it points back to the
+student's own checklist and instructor rather than inventing numbers.
+
+---
+
 ## Known-open, roughly in priority order
 
-1. `apps/mobile` install → prebuild → dev build → device test
-2. 3D flight path, subscribing to the same `t`
-3. Telemetry-aware Vector answers; render the Picture This block
-4. Onboarding/support as a swipeable sequence (asked for, never built)
-5. Knowledge-check and chair-fly screens never got the premium pass — visible
-   seam entering from Train
-6. Deepgram "50% discount" claim in `lib/transcription/use-deepgram-transcription.ts`
-   comments and `.env.example` is **unverified** and traces only to a
-   competitor's blog. It should be corrected or removed.
-7. `council/demo-story.md` still carries the Atlas framing and three claims
-   that were later corrected
-8. Tasks #156 (home progress rail), #157 (solo signup smoke test), #158
-   (homepage stage-two positioning, held pending 20 CFI discovery calls)
-9. Founder story has no photograph; the signature is set, the image is not
-10. `npm run build` has never been run successfully outside Replit
+From the V2 prototype walk:
+
+1. **Per-lesson dual-assessment history** in Progress / Skill Detail — the next
+   significant product task, see the debrief section above
+2. **Fold or remove Flight Analysis**, but only after verifying every inbound
+   route and data dependency — it has links from Flight Detail, Compare's back
+   link and Replay's back link
+3. **Progress movement cues** — the list shows current state with no sense of
+   travel
+4. Literal `--` in the seed takeaway strings renders as two hyphens on
+   `/debrief/latest`
+5. Founder story has no photograph; the signature is set, the image is not
+6. **Confirm the deployed environment carries `SITE_ACCESS_CODE` when
+   publishing.** The workspace environment alone is not sufficient — a
+   Deployment can hold its own secrets scope, and if it is missing there the
+   site publishes fully public with no error
+
+Longer-standing:
+
+7. `apps/mobile` install → prebuild → dev build → device test
+8. 3D flight path, subscribing to the same `t`
+9. Telemetry-aware Vector answers; render the Picture This block
+10. Onboarding/support as a swipeable sequence (asked for, never built)
+11. Knowledge-check and chair-fly screens never got the premium pass — visible
+    seam entering from Train
+12. Deepgram "50% discount" claim in `lib/transcription/use-deepgram-transcription.ts`
+    comments and `.env.example` is **unverified** and traces only to a
+    competitor's blog. It should be corrected or removed.
+13. `council/demo-story.md` still carries the Atlas framing and three claims
+    that were later corrected
+14. Tasks #156 (home progress rail), #157 (solo signup smoke test), #158
+    (homepage stage-two positioning, held pending 20 CFI discovery calls)
+15. `npm run build` has never been run successfully outside Replit
     (`DATABASE_URL`), so a publish is still its first real test
 
 ---

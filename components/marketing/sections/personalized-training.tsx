@@ -80,7 +80,7 @@ export function PersonalizedTraining() {
 
             <ol>
               {STAGES.map((stage, i) => (
-                <Stage key={stage.label} n={i + 1} label={stage.label}>
+                <Stage key={stage.label} n={i + 1} delay={i * 110} label={stage.label}>
                   {stage.body}
                 </Stage>
               ))}
@@ -97,16 +97,31 @@ export function PersonalizedTraining() {
   );
 }
 
-function Stage({ n, label, children }: { n: number; label: string; children: ReactNode }) {
+/**
+ * The stages arrive in sequence rather than together.
+ *
+ * The claim this card makes is that each stage is DERIVED from the one above
+ * it -- the instructor's sentence becomes an explanation, the explanation
+ * becomes a check, the check becomes a cue you take to the airplane. Revealed
+ * as one block, that is something the reader is told. Revealed in order, at
+ * roughly reading pace, it is something they watch happen.
+ *
+ * The Reveal sits inside the <li> rather than wrapping it, so the list stays a
+ * list: an <ol> whose children are divs is no longer an ordered list to a
+ * screen reader, and the numbering here is the meaning.
+ */
+function Stage({ n, label, delay, children }: { n: number; label: string; delay: number; children: ReactNode }) {
   return (
-    <li className="flex gap-5 border-b border-black/[0.07] px-7 py-8 last:border-b-0 sm:gap-6 sm:px-10 sm:py-9">
-      <span className="font-display mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-[#142033] text-base font-extrabold tabular-nums text-white">
-        {n}
-      </span>
-      <div className="min-w-0 flex-1">
-        <h3 className="font-display text-xl font-bold leading-snug text-[#101727]">{label}</h3>
-        <div className="mt-3.5">{children}</div>
-      </div>
+    <li className="border-b border-black/[0.07] last:border-b-0">
+      <Reveal delay={delay} className="flex gap-5 px-7 py-8 sm:gap-6 sm:px-10 sm:py-9">
+        <span className="font-display mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-[#142033] text-base font-extrabold tabular-nums text-white">
+          {n}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-display text-xl font-bold leading-snug text-[#101727]">{label}</h3>
+          <div className="mt-3.5">{children}</div>
+        </div>
+      </Reveal>
     </li>
   );
 }

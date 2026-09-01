@@ -92,10 +92,24 @@ export function TrainingEconomics() {
 
     <section className="relative overflow-hidden bg-[#101727] px-6 py-20 text-center sm:py-28">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#171f33_0%,_#0c1220_75%)]" />
-      <Reveal className="relative mx-auto max-w-4xl">
-        <p className="font-display text-3xl font-bold leading-snug text-white sm:whitespace-nowrap sm:text-4xl lg:text-5xl">
+      <Reveal className="relative mx-auto max-w-5xl">
+        {/*
+          * The forced break only applies where both halves actually fit.
+          *
+          * "One less repeat lesson can pay for" measures 961px at 48px against
+          * what was an 896px container, so it wrapped and left "for" alone on
+          * a line. `whitespace-nowrap` could not save it -- nowrap does not
+          * shrink text, it just overflows or, once the browser breaks anyway,
+          * strands the tail.
+          *
+          * From lg the container is 1024px and the size is capped so the long
+          * line stays inside it. Below lg the break is dropped entirely and
+          * text-balance is left to split the sentence, which it does evenly --
+          * a balanced wrap cannot produce the orphan a hand-placed break did.
+          */}
+        <p className="font-display text-balance text-3xl font-bold leading-snug text-white sm:text-4xl lg:text-[clamp(2.5rem,4.2vw,3rem)]">
           One less repeat lesson can pay for
-          <br />
+          <br className="hidden lg:block" />{" "}
           <span className="text-brand">an entire year of AfterFlight.</span>
         </p>
       </Reveal>

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, MousePointer2, Sparkles } from "lucide-react";
 import { useInView } from "@/lib/marketing/use-in-view";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,19 @@ const REMEMBER = ["Get configured earlier", "Hold correction through touchdown",
 
 const BLOCK_COUNT = 4;
 
+/**
+ * When each step fires, in ms from the card entering view.
+ *
+ * Explicit rather than arithmetic because the tail is not evenly paced: the
+ * four blocks assemble briskly, then there is a beat before the pointer moves
+ * so the finished card can be read as a finished card first. A tap that lands
+ * while things are still arriving looks like a glitch rather than a choice.
+ */
+const SCHEDULE = [420, 680, 940, 1200, 1460, 2000, 2380, 2620];
+const STEP_POINTER = 5;
+const STEP_PRESSED = 6;
+const STEP_OPENED = 7;
+
 export function NextFlightCard() {
   const { ref, inView } = useInView<HTMLDivElement>();
   const [step, setStep] = useState(-1);
@@ -35,9 +48,7 @@ export function NextFlightCard() {
   // survives someone flipping the OS setting mid-visit.
   useEffect(() => {
     if (!inView) return;
-    const timers = Array.from({ length: BLOCK_COUNT + 1 }, (_, i) =>
-      setTimeout(() => setStep(i), 420 + i * 260),
-    );
+    const timers = SCHEDULE.map((at, i) => setTimeout(() => setStep(i), at));
     return () => timers.forEach(clearTimeout);
   }, [inView]);
 
@@ -97,16 +108,76 @@ export function NextFlightCard() {
           </Block>
 
           <Block title="Train with Vector" show={step >= 2}>
-            <ul className="flex flex-wrap gap-2.5">
-              {TRAIN.map((t) => (
-                <li
-                  key={t}
-                  className="rounded-full border border-[#e3e5e8] bg-white px-4 py-2 text-base font-medium text-[#101727]"
-                >
-                  {t}
-                </li>
-              ))}
-            </ul>
+            {/*
+              * The card finishes by being used, not just by being built.
+              *
+              * Everything above this point is AfterFlight showing the student
+              * what it worked out. The section's claim is that the next flight
+              * starts where the last one left off, and the moment that becomes
+              * true is the moment they act on it -- so the sequence ends with
+              * a lesson actually being opened rather than with a row of
+              * buttons nobody touches.
+              *
+              * The pointer is decorative and hidden from assistive tech; the
+              * pill it "presses" is not a real control, so it carries no
+              * button semantics either. Under reduced motion the pointer never
+              * renders and the opened panel is simply present -- the end state
+              * without the performance.
+              */}
+            <div className="relative">
+              <ul className="flex flex-wrap gap-2.5">
+                {TRAIN.map((t, i) => {
+                  const chosen = i === 0 && step >= STEP_PRESSED;
+                  return (
+                    <li
+                      key={t}
+                      className={cn(
+                        "rounded-full border px-4 py-2 text-base font-medium transition-[background-color,border-color,color,transform] duration-300 ease-out",
+                        chosen
+                          ? "border-brand bg-brand text-white"
+                          : "border-[#e3e5e8] bg-white text-[#101727]",
+                        i === 0 && step === STEP_PRESSED && "scale-[0.97]",
+                        "motion-reduce:transition-none motion-reduce:scale-100",
+                      )}
+                    >
+                      {t}
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <span
+                aria-hidden
+                className={cn(
+                  "pointer-events-none absolute left-[86px] top-[26px] transition-[opacity,transform] duration-500 ease-out motion-reduce:hidden",
+                  step >= STEP_POINTER ? "translate-x-0 translate-y-0 opacity-100" : "translate-x-6 translate-y-6 opacity-0",
+                  step >= STEP_PRESSED && "translate-y-[2px]",
+                )}
+              >
+                <MousePointer2 className="size-6 fill-[#101727] text-white drop-shadow-[0_2px_6px_rgba(16,23,39,0.35)]" />
+              </span>
+            </div>
+
+            <div
+              className={cn(
+                "grid transition-[grid-template-rows,opacity] duration-500 ease-out",
+                step >= STEP_OPENED ? "mt-4 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+                "motion-reduce:mt-4 motion-reduce:grid-rows-[1fr] motion-reduce:opacity-100 motion-reduce:transition-none",
+              )}
+            >
+              <div className="overflow-hidden">
+                <div className="rounded-2xl bg-[#142033] px-5 py-4">
+                  <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-brand">
+                    <Sparkles className="size-3.5" aria-hidden />
+                    Vector · 3-minute review
+                  </p>
+                  <p className="mt-2 text-pretty text-base leading-relaxed text-[#dfe4ec]">
+                    Why the correction has to keep increasing as you slow &mdash; then two questions from
+                    Thursday&rsquo;s flight.
+                  </p>
+                </div>
+              </div>
+            </div>
           </Block>
 
           <Block title="Remember in the cockpit" show={step >= 3}>

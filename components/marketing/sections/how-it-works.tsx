@@ -22,32 +22,45 @@ import { cn } from "@/lib/utils";
  * plus its controls break out to full viewport width, since the active slide
  * (min(90vw,1400px)) is wider than the section's own container.
  */
+/**
+ * The four steps, named exactly as the headline names them.
+ *
+ * The previous set -- Debrief, Understand, Train with Vector, Fly prepared --
+ * described an older flow in which the debrief opened with free-form voice
+ * recording, and it also gave the reader a second set of step names competing
+ * with "Fly. Debrief. Train. Fly again." two lines above it. The labels are the
+ * headline's words now, so the section makes one claim rather than two.
+ *
+ * Card two carries the change that actually matters in V2: the debrief is two
+ * independent assessments of the same objectives, compared. It is no longer a
+ * microphone.
+ */
 const CARDS = [
   {
+    label: "Fly",
+    headline: "Fly the lesson.",
+    copy: "AfterFlight starts with what actually happened in the airplane — the lesson, the objectives, and what you worked on.",
+    src: "/images/marketing/how-it-works-fly-a4.avif",
+    alt: "A student pilot flying the Cirrus from the left seat, hand on the side-stick, with her instructor beside her in the right seat",
+  },
+  {
     label: "Debrief",
-    headline: "Your instructor talks through the flight.",
-    copy: "The way they normally do. No forms, no grading grid, no extra work for either of you.",
-    src: "/images/marketing/how-it-works-3.avif",
-    alt: "A CFI and student pilot recording a debrief together in AfterFlight after a training flight",
+    headline: "Compare how you both saw it.",
+    copy: "You and your instructor assess the same lesson objectives, then talk through what went well, what needs work, and what should carry forward.",
+    src: "/images/marketing/how-it-works-debrief.avif",
+    alt: "A student and her instructor going through the flight together on a tablet after landing",
   },
   {
-    label: "Understand",
-    headline: "AfterFlight sorts out what mattered.",
-    copy: "What went well, what still needs work, and where your read of the flight differs from your instructor's.",
-    src: "/images/marketing/how-it-works-4.avif",
-    alt: "AfterFlight showing a flight summary organized into what went well and what needs work",
-  },
-  {
-    label: "Train with Vector",
-    headline: "Work the weak spots before you fly again.",
-    copy: "Vector explains what your instructor meant, checks your understanding, and rehearses the parts you're still getting wrong.",
+    label: "Train",
+    headline: "Start where the last flight ended.",
+    copy: "Vector turns the debrief into focused practice and preparation before the next lesson.",
     src: "/images/marketing/how-it-works-5.avif",
     alt: "AfterFlight showing an area to improve connected to the FAA Airman Certification Standards",
   },
   {
-    label: "Fly prepared",
-    headline: "Show up knowing what you're there to fix.",
-    copy: "A short list of things to study, remember and practice — before you spend money on the next hour.",
+    label: "Fly again",
+    headline: "Show up with a plan.",
+    copy: "Your next flight starts with the priorities, skills, and context from the one before it.",
     src: "/images/marketing/how-it-works-6.avif",
     alt: "AfterFlight showing the three focus areas for a student's next flight",
   },
@@ -58,23 +71,61 @@ export function HowItWorks() {
   const trackRef = useRef<HTMLDivElement>(null);
   const slideRefs = useRef<Array<HTMLDivElement | null>>([]);
 
+  /*
+   * Which slide is active is decided by comparing the track's scroll position
+   * against the slide centres.
+   *
+   * Two earlier versions of this got it wrong, both by depending on something
+   * that could silently stop delivering:
+   *
+   *  - An IntersectionObserver rooted on the track, built once in an effect
+   *    with an empty dependency list. The track lives inside `hidden md:block`,
+   *    so a first mount at a narrow width gave the root no box, no intersection
+   *    ever fired, and `active` stayed pinned at 0 for the life of the page --
+   *    the rail never advanced and every inactive card stayed dimmed.
+   *  - A rAF-throttled scroll handler guarded by a `frame` flag. If a frame
+   *    callback is ever dropped or throttled, the flag stays set and every
+   *    subsequent scroll is discarded. It fails in exactly the same way as the
+   *    observer: stuck on whatever index it happened to reach.
+   *
+   * So this version subscribes to nothing that can go stale and holds no state
+   * that can latch. Slide centres are measured once per layout and cached, and
+   * the scroll handler only reads `scrollLeft` -- no layout reads per event, so
+   * there is nothing to throttle in the first place.
+   */
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
-            const index = slideRefs.current.indexOf(entry.target as HTMLDivElement);
-            if (index !== -1) setActive(index);
-          }
-        });
-      },
-      { root: track, threshold: [0.6] },
-    );
-    slideRefs.current.forEach((slide) => slide && observer.observe(slide));
-    return () => observer.disconnect();
+    let centres: number[] = [];
+
+    const remeasure = () => {
+      centres = slideRefs.current.map((slide) => (slide ? slide.offsetLeft + slide.offsetWidth / 2 : NaN));
+      pick();
+    };
+
+    const pick = () => {
+      if (!centres.length) return;
+      const centre = track.scrollLeft + track.clientWidth / 2;
+      let best = 0;
+      let bestDistance = Infinity;
+      centres.forEach((slideCentre, i) => {
+        const distance = Math.abs(slideCentre - centre);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = i;
+        }
+      });
+      setActive(best);
+    };
+
+    remeasure();
+    track.addEventListener("scroll", pick, { passive: true });
+    window.addEventListener("resize", remeasure);
+    return () => {
+      track.removeEventListener("scroll", pick);
+      window.removeEventListener("resize", remeasure);
+    };
   }, []);
 
   function scrollToSlide(index: number) {
@@ -89,6 +140,7 @@ export function HowItWorks() {
       <div className="mx-auto max-w-[1320px]">
         <SectionHead
           eyebrow="How it works"
+          size="large"
           headline="Fly. Debrief. Train. Fly again."
           body="The loop that makes a lesson carry forward. The debrief already happens — AfterFlight is what turns it into training you can actually do before the next one."
         />
@@ -127,8 +179,8 @@ export function HowItWorks() {
                 }}
                 className={cn(
                   "relative block aspect-[16/8.4] w-[min(90vw,1400px)] shrink-0 snap-center overflow-hidden rounded-[28px] bg-[#0d1420]",
-                  "shadow-[0_30px_60px_-30px_rgba(16,23,39,0.35)] transition-[filter] duration-300 ease-out",
-                  i === active ? "filter-none" : "brightness-[0.6] saturate-[0.7]",
+                  "shadow-[0_30px_60px_-30px_rgba(16,23,39,0.35)] transition-opacity duration-300 ease-out",
+                  i === active ? "opacity-100" : "opacity-[0.88]",
                 )}
               >
                 <div className="absolute inset-0 h-full w-full">
