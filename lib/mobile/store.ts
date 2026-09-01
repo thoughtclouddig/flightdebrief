@@ -4,7 +4,7 @@ import type { MobileSession } from "@/lib/mobile/ingest";
 /**
  * Persistence for in-progress mobile recordings.
  *
- * Thin on purpose -- all the interesting behaviour (idempotency, dedupe,
+ * Thin on purpose -- all the interesting behavior (idempotency, dedupe,
  * ordering, normalization) lives in lib/mobile/ingest.ts as pure functions,
  * and this module only moves the document in and out. Keeping them separate is
  * what let the ingestion rules be tested without a database.

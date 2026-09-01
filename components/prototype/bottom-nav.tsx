@@ -38,7 +38,7 @@ export function BottomNav() {
                 active ? "text-brand" : "text-foreground-soft",
               )}
             >
-              {/* Weight carries the active state alongside colour, so the tab
+              {/* Weight carries the active state alongside color, so the tab
                   bar still reads for anyone who can't separate the two hues.
                   1.7 was hairline-thin at this size and made every icon look
                   provisional. */}

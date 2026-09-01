@@ -69,7 +69,7 @@ export async function startRemoteSession(s: LocalSession, device: { platform: "i
  *
  * The idempotency key is derived from the session and the batch's first and
  * last `t` -- deterministic, so a retry after a crash regenerates the SAME key
- * for the same fixes and the server recognises it. A random key would make
+ * for the same fixes and the server recognizes it. A random key would make
  * every retry a new batch and defeat the whole mechanism.
  */
 export async function syncPending(sessionId: string): Promise<{ sent: number; done: boolean }> {

@@ -107,7 +107,7 @@ async function insertDemoAircraft(
  * Wraps around if more flights are needed than were fetched.
  */
 // Only tracks that begin and end on the ground. Three fixtures stop on final
-// where ADS-B coverage ends, and drawn on a map they read as an aeroplane
+// where ADS-B coverage ends, and drawn on a map they read as an airplane
 // ending in a neighbourhood. See isCompleteTrack().
 const DEMO_FLIGHTS = completeDemoFlights();
 let realFlightCursor = Math.floor(Math.random() * DEMO_FLIGHTS.length);
@@ -294,7 +294,7 @@ async function seedHistoricalFlights(
  * warming every historical flight would spend forty Deepgram calls per demo
  * start to cover pages nobody opens.
  *
- * Never throws. A failed warm just restores the old behaviour for that one
+ * Never throws. A failed warm just restores the old behavior for that one
  * recap -- slow, not broken -- and must not take the demo down with it.
  */
 async function warmDemoRecapAudio(records: HistoricalFlightRecord[]): Promise<void> {

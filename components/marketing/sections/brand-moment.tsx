@@ -63,29 +63,26 @@ export function BrandMoment() {
         </p>
 
         {/*
-         * Two sentences, two blocks, each capped at ~20 characters wide.
+         * One question, allowed to break into two balanced lines.
          *
-         * As one run of text the display size broke mid-sentence ("The
-         * expensive / part is the flight. The") and orphaned a word at almost
-         * every width. Splitting it helped but text-balance alone still had a
-         * whole 3xl container to play with, so it kept finding two-line
-         * solutions with a very short second line. The ch cap gives balance a
-         * target narrow enough that both lines have to be full.
+         * The previous copy was two sentences and was set as two blocks, each
+         * capped at ~20ch, because as one run the display size broke
+         * mid-sentence and orphaned a word at almost every width. A single
+         * question does not have that problem -- but it is 40 characters,
+         * two wider than the longest line this block used to hold, so the
+         * lg:whitespace-nowrap that used to sit here is gone. Balance splits
+         * it instead, which cannot overflow at any width.
          */}
-        <p className="font-display mx-auto mt-6 max-w-[20ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-[#101727] sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0] lg:max-w-none lg:text-[clamp(2.5rem,4.5vw,3rem)] lg:whitespace-nowrap">
-          The expensive part is the flight.
-        </p>
-        <p className="font-display mx-auto mt-3 max-w-[20ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-brand sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0] lg:max-w-none lg:text-[clamp(2.5rem,4.5vw,3rem)] lg:whitespace-nowrap">
-          The learning has to continue after it.
+        <p className="font-display mx-auto mt-6 max-w-[22ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-[#101727] sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0] lg:max-w-[26ch] lg:text-[clamp(2.5rem,4.5vw,3rem)]">
+          Why does every flight feel like a <span className="text-brand">reset?</span>
         </p>
         <p
           className="mx-auto mt-8 max-w-md text-balance text-lg text-[#4b545d] sm:max-w-2xl"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
-          Your instructor gives you feedback after every lesson. But if it isn&rsquo;t understood, practiced and
-          carried into the next flight &mdash; which is sometimes flown with a different instructor &mdash; you
-          can spend expensive airplane time{" "}
-          <span className="text-brand">relearning the same things.</span>
+          What you learned, what needs work, and what to focus on next gets lost between lessons. So instead of
+          building on the last flight, too much of the next one is{" "}
+          <span className="text-brand">spent catching up.</span>
         </p>
       </Reveal>
 

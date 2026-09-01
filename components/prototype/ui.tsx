@@ -13,7 +13,7 @@ import type { SkillState } from "@/lib/prototype/vector-data";
  *
  * Two rules do most of the work.
  *
- * COLOUR BUDGET. Orange is reserved for action and identity -- the thing you
+ * COLOR BUDGET. Orange is reserved for action and identity -- the thing you
  * tap, the tab you're on, and Vector. It had been doing six jobs at once, and a
  * color that means six things means nothing. Skill state lives in its own
  * scale (--state-*), so a skill that needs work never looks like a button.

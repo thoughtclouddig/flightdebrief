@@ -8,7 +8,7 @@ import { extractJson } from "./extract-json";
  * Structured rather than one paragraph so a person can change one element
  * without rewriting the whole thing -- swap the aircraft, move it to dusk,
  * pull the camera back -- and so the edit form has something to put in
- * labelled fields. The parts are composed into the final prompt at generation
+ * labeled fields. The parts are composed into the final prompt at generation
  * time by composeImagePrompt().
  *
  * NO FALLBACK. This used to substitute a hardcoded scene when the model call
@@ -27,7 +27,7 @@ export interface ImagePromptParts {
   scene: string;
   /** Who is in frame and what they are doing. Empty when the shot has nobody in it. */
   subjects: string;
-  /** The aircraft and its correct configuration. Empty when no aeroplane belongs. */
+  /** The aircraft and its correct configuration. Empty when no airplane belongs. */
   aircraft: string;
   /** Time of day, direction, quality. */
   light: string;
@@ -54,7 +54,7 @@ SCENE -- where it happens and what is in it. A flight school briefing room with 
 
 SUBJECTS -- who is in frame and what they are doing. A student and instructor leaning over the same page. A pilot alone walking the wing. Give posture and where they are looking; "two people talking" is not a photograph. Leave this EMPTY if the picture is better with nobody in it -- an empty room can be the point.
 
-AIRCRAFT -- the type and its correct configuration, when one is in frame. A Cessna 172 is a high-wing single with wing struts, fixed nosewheel, one propeller on the nose. A Cherokee is a low-wing single. A Seminole is a twin with one engine on each wing. Vary the type across articles -- not everything is a 172. Leave EMPTY if no aeroplane belongs in the picture.
+AIRCRAFT -- the type and its correct configuration, when one is in frame. A Cessna 172 is a high-wing single with wing struts, fixed nosewheel, one propeller on the nose. A Cherokee is a low-wing single. A Seminole is a twin with one engine on each wing. Vary the type across articles -- not everything is a 172. Leave EMPTY if no airplane belongs in the picture.
 
 LIGHT -- time of day, direction, quality. Low sun through a west-facing window. Overcast noon. Warm lamplight after dark.
 
@@ -64,7 +64,7 @@ RATIONALE -- one line on why this scene belongs to THIS article specifically. Th
 
 MAKE IT BELONG TO THIS ARTICLE
 
-An article about a student switching instructors is a scene about two people, or a room where a conversation is or is not happening. An article about crosswind technique is a scene about wind and an aeroplane. If the scene would sit equally well on any other article on the site, write a different one.
+An article about a student switching instructors is a scene about two people, or a room where a conversation is or is not happening. An article about crosswind technique is a scene about wind and an airplane. If the scene would sit equally well on any other article on the site, write a different one.
 
 TWO HARD LIMITS -- what image models actually get wrong
 
@@ -98,7 +98,7 @@ export async function writeImagePrompt(input: {
         content: `Article title: "${input.title}"
 Topic: ${input.topicName}
 ${input.answer ? `What the article says: ${input.answer}` : ""}
-${input.direction ? `\nThe editor asked for this specifically, and it overrides your own judgement: ${input.direction}` : ""}
+${input.direction ? `\nThe editor asked for this specifically, and it overrides your own judgment: ${input.direction}` : ""}
 
 Brief the photograph.`,
       },

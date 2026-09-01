@@ -222,19 +222,19 @@ function americanized(body: ArticleBody): ArticleBody {
 
 /**
  * Returns the quote only if it actually appears in the body it claims to come
- * from. Normalised for punctuation and whitespace, because a model will
+ * from. Normalized for punctuation and whitespace, because a model will
  * happily return the same sentence with different quote marks or a dash
  * swapped for a comma, and that is still the writer's line.
  */
 function verbatimQuote(quote: string | null | undefined, body: string): string | null {
   const trimmed = quote?.trim();
   if (!trimmed) return null;
-  const normalise = (text: string) =>
+  const normalize = (text: string) =>
     text
       .toLowerCase()
       .replace(/[\u2018\u2019\u201c\u201d"']/g, "")
       .replace(/[\u2014\u2013,;:.!?]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
-  return normalise(body).includes(normalise(trimmed)) ? trimmed : null;
+  return normalize(body).includes(normalize(trimmed)) ? trimmed : null;
 }

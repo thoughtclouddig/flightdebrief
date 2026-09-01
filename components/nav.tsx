@@ -40,7 +40,7 @@ const STUDENT_ITEMS = [
 ];
 
 /**
- * Same destinations as STUDENT_ITEMS, relabelled for someone who already
+ * Same destinations as STUDENT_ITEMS, relabeled for someone who already
  * holds a certificate: they aren't "in training" and aren't progressing
  * toward a checkride, they're maintaining proficiency. Deliberately not
  * "Logbook" -- that promises hours and endorsements this app doesn't keep.

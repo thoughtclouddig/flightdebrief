@@ -42,7 +42,7 @@ export function generateStaticParams() {
  *
  * The map is the shipped `components/flight-map.tsx` -- MapLibre over a
  * keyless CARTO basemap, with track simplification and its own fullscreen
- * control. Reusing it rather than drawing a second map keeps one behaviour for
+ * control. Reusing it rather than drawing a second map keeps one behavior for
  * sparse-ADS-B and hand-entered flights, which are different empty states and
  * were already distinguished correctly there.
  */
@@ -54,7 +54,7 @@ export default async function FlightDetail({ params }: { params: Promise<{ id: s
   const needsDebrief = flight.status === "NEEDS_DEBRIEF" || flight.status === "DEBRIEF_STARTED";
   // Only the flight this prototype's debrief actually belongs to shows skills.
   const skills = flight.id === "aug-29" ? SKILL_SCORES.filter((s) => s.state !== "Meets Standard") : [];
-  // Only offered when there is genuinely something to analyse. A screen that
+  // Only offered when there is genuinely something to analyze. A screen that
   // advertises Flight Analysis and then explains it has no data is worse than
   // one that never mentioned it.
   const analysis = analysisFor(flight.id);

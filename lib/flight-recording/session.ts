@@ -59,9 +59,9 @@ export interface RecordedFix {
   t: number;
   lat: number;
   lon: number;
-  /** Metres. GPS altitude, not pressure altitude and not AGL. */
+  /** Meters. GPS altitude, not pressure altitude and not AGL. */
   altitudeM: number | null;
-  /** Metres per second over the ground. Not indicated airspeed. Ever. */
+  /** Meters per second over the ground. Not indicated airspeed. Ever. */
   speedMps: number | null;
   /** Degrees, course over ground. Not heading -- they differ in any wind. */
   courseDeg: number | null;
@@ -172,7 +172,7 @@ function nmBetween(a: { lat: number; lon: number }, b: { lat: number; lon: numbe
  * written and tested, and its logic -- slow, then slow for a sustained period,
  * with a speed increase meaning touch-and-go rather than landing -- is about
  * motion, not about where the position came from. Writing a second one for
- * phone GPS would be two behaviours to keep in agreement.
+ * phone GPS would be two behaviors to keep in agreement.
  *
  * A POOR fix is skipped rather than fed in. A bad GPS sample reads as near-zero
  * groundspeed, which is indistinguishable from having landed.
@@ -263,7 +263,7 @@ export function durations(session: FlightRecordingSession, now = Date.now()): Du
  * The whole point: Flight Replay, segmentation, moments and Compare Attempts
  * work on phone-recorded flights without a second architecture, because the
  * output is the same `TrackPosition[]` an FR24 track produces. Units convert
- * here and nowhere else -- metres and m/s are the device's vocabulary, feet
+ * here and nowhere else -- meters and m/s are the device's vocabulary, feet
  * and knots are aviation's.
  */
 export function toTrackPositions(session: FlightRecordingSession) {

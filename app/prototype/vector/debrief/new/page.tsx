@@ -61,8 +61,8 @@ type Ratings = Partial<Record<string, PerformanceLevelCode>>;
  *
  * Order is load-bearing. The student rates first and their answers stay hidden
  * through the handoff, because an instructor who can see "Felt Solid" before
- * rating is no longer producing an independent judgement, and a comparison
- * between a judgement and an echo of it is worthless. Recording comes last,
+ * rating is no longer producing an independent judgment, and a comparison
+ * between a judgment and an echo of it is worthless. Recording comes last,
  * once both sides can see where they differed, so the conversation has
  * something specific to be about.
  */

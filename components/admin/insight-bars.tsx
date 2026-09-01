@@ -12,10 +12,10 @@ import { cn } from "@/lib/utils";
  * It stays --brand in both themes rather than darkening for light mode. The
  * 3:1 non-text contrast rule covers graphics *required* to understand the
  * content, and the count is printed in text beside every bar, so the mark is
- * supplementary: the whole list reads correctly with no colour at all. Paying
+ * supplementary: the whole list reads correctly with no color at all. Paying
  * for contrast the bar doesn't need cost the brand orange and looked muddy.
  *
- * Values wear text tokens rather than the bar colour -- the mark carries
+ * Values wear text tokens rather than the bar color -- the mark carries
  * magnitude, the text carries the number, neither depends on the other.
  */
 export interface InsightBarDatum {

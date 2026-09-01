@@ -29,7 +29,7 @@ export interface RealDemoFlight {
  * fixtures looked like a crash on the demo, which is not a thing to show a
  * prospect.
  *
- * Detected from the data rather than from airport coordinates: an aeroplane
+ * Detected from the data rather than from airport coordinates: an airplane
  * that has landed is doing taxi speed. One that vanished on final is doing
  * seventy knots. Three of the ten fixtures fail this, ending at 69-105 kt
  * and 475-2425 ft.

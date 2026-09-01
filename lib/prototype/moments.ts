@@ -35,7 +35,7 @@ export interface FlightAnalysis {
  *
  * The flight-data rows are phrased in the vocabulary ADS-B supports.
  * "Groundspeed", never "airspeed". Variation and consistency, never "stable"
- * or "met criteria" -- that is a judgement, and it belongs to Jake.
+ * or "met criteria" -- that is a judgment, and it belongs to Jake.
  */
 function momentsFor(segments: FlightSegment[]): FlightMoment[] {
   const approach = (n: number) => segments.find((s) => s.id === `approach-${n}`);
@@ -110,7 +110,7 @@ function momentsFor(segments: FlightSegment[]): FlightMoment[] {
 }
 
 /**
- * Analysis for a flight, or null when there is nothing to analyse.
+ * Analysis for a flight, or null when there is nothing to analyze.
  *
  * Returns null rather than an empty shell for a hand-entered flight: a screen
  * that offers Flight Analysis and then explains it has no data is worse than

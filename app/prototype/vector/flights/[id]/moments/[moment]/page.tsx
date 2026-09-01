@@ -27,7 +27,7 @@ export function generateStaticParams() {
  * Order is the argument: what happened, what Jake said, what the data shows,
  * what Vector makes of it, which standard it belongs to, what to do. Reversing
  * any two of those changes what the screen is claiming -- putting Vector above
- * Jake would make the inference look like the judgement.
+ * Jake would make the inference look like the judgment.
  */
 export default async function MomentDetail({ params }: { params: Promise<{ id: string; moment: string }> }) {
   const { id, moment: momentId } = await params;

@@ -10,7 +10,7 @@ import { appOrigin } from "@/lib/email";
  * fetches links will trip: next/link prefetches an href as soon as it scrolls
  * into view, and a Link pointing here signed the user out just by rendering
  * the header that contained it. The staff nav did exactly that, and the
- * symptom was unrecognisable -- every /super-admin sub-page redirected to
+ * symptom was unrecognizable -- every /super-admin sub-page redirected to
  * /login while /super-admin itself, already rendered, looked fine.
  *
  * So: refuse to act on a prefetch. Next sets Next-Router-Prefetch; browsers

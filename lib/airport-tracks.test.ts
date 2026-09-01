@@ -32,7 +32,7 @@ describe("geometry", () => {
 });
 
 describe("sectorOf", () => {
-  it("centres sectors on the compass point rather than starting at it", () => {
+  it("centers sectors on the compass point rather than starting at it", () => {
     // 10 degrees is north by any ordinary reading. A sector starting at 0
     // would call it northeast, which is half a sector wrong everywhere.
     expect(sectorOf(10)).toBe("north");

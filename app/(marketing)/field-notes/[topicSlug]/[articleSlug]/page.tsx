@@ -137,7 +137,7 @@ export default async function ArticlePage(props: PageProps<"/field-notes/[topicS
       ) : null}
 
       {/* One column for everything. Two centred containers of different widths
-          share a centre line but not a left edge, which is why the headline
+          share a center line but not a left edge, which is why the headline
           used to start outside the text it belonged to. Anything that should
           be wider than the measure breaks out of this column symmetrically
           (see the hero below) rather than living in a second container. */}
@@ -186,7 +186,7 @@ export default async function ArticlePage(props: PageProps<"/field-notes/[topicS
             plainText={article.body}
             hero={
               article.imageUrl ? (
-                /* Wider than the text, on the same centre line. A hero
+                /* Wider than the text, on the same center line. A hero
                    constrained to the measure reads as an illustration inside
                    the article; at full bleed past it, it reads as the
                    article's opening image, which is what it is. */

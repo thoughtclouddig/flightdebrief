@@ -9,7 +9,7 @@
  *
  * The banned-construction list is the load-bearing part. Left to itself a
  * model writes competent, weightless prose full of the same handful of tics,
- * and readers now recognise those tics instantly -- the cost isn't clumsiness,
+ * and readers now recognize those tics instantly -- the cost isn't clumsiness,
  * it's that the writing announces itself as machine-made and everything
  * around it gets discounted.
  */
@@ -35,7 +35,7 @@ These are the constructions that make writing read as machine-made. Avoid them c
 - Vague attribution: "experts agree", "studies show", "many instructors believe", "it is widely known". Either name a real source or make the claim in your own voice.
 - Hollow openers: "In the world of aviation", "When it comes to landings", "Let's dive in", "It's important to note that".
 - Motivational filler and sign-offs: "the sky's the limit", "happy flying", "you've got this", "master the skies".
-- British spellings. This is written for US pilots and cites FAA documents that use American spelling: maneuver not manoeuvre, practice not practise, center not centre, analyze not analyse, color not colour, airplane not aeroplane, program not programme, toward not towards, while not whilst.
+- British spellings. This is written for US pilots and cites FAA documents that use American spelling: maneuver not maneuver, practice not practice, center not center, analyze not analyze, color not color, airplane not airplane, program not program, toward not toward, while not while.
 - Em dashes and en dashes. The characters are "—" and "–". Do not emit either one, in any position, including inside a word pair. Use a comma, a colon, a full stop, or rewrite the sentence.
 - Rhetorical questions used as transitions. "So what does this mean for you?"
 - Adjective stacking: "comprehensive, detailed, in-depth guide".
@@ -51,4 +51,4 @@ This is the section that matters most. A single invented number destroys the cre
 - If a sentence would be stronger with a number you cannot verify, write it without the number.
 - No regulation citations, ACS tolerance values, currency requirements, or checkride minimums unless they are so standard and stable that being wrong is not plausible. When in doubt, describe the requirement in general terms and let a human add the citation.
 - Never invent a source, publication, author, or URL.
-- AfterFlight organises and carries forward what a CFI teaches. It does not instruct, evaluate, or replace an instructor -- never write it as though it does.`;
+- AfterFlight organizes and carries forward what a CFI teaches. It does not instruct, evaluate, or replace an instructor -- never write it as though it does.`;

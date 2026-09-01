@@ -4,7 +4,7 @@ import { REAL_DEMO_FLIGHTS, completeDemoFlights, isCompleteTrack } from "./real-
 describe("isCompleteTrack", () => {
   it("rejects a track that stops on final", () => {
     // ADS-B coverage ends a mile out, so the track stops at approach speed
-    // several hundred feet up. Drawn on a map, that is an aeroplane ending in
+    // several hundred feet up. Drawn on a map, that is an airplane ending in
     // a neighbourhood -- which is exactly how it looked on the demo.
     expect(
       isCompleteTrack({

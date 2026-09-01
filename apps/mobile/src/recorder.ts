@@ -48,7 +48,7 @@ TaskManager.defineTask(LOCATION_TASK, async ({ data, error }) => {
       // over ground, and the rename happens here so the misnomer travels no
       // further -- in a crosswind the difference is the entire lesson.
       courseDeg: loc.coords.heading ?? null,
-      // Metres per second over the ground. Never indicated airspeed.
+      // Meters per second over the ground. Never indicated airspeed.
       speedMps: loc.coords.speed ?? null,
     });
   }

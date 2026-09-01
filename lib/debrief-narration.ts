@@ -116,7 +116,7 @@ export function buildDebriefNarration(input: DebriefNarrationInput): string {
   if (input.actionItems.length > 0) {
     sections.push(
       solo
-        // stripSpokenActionLabel: the item arrives labelled for the results
+        // stripSpokenActionLabel: the item arrives labeled for the results
         // card ("Work on: ..."), and both frames here already say it.
         ? `For your next flight, you're focusing on ${stripSpokenActionLabel(toSecondPerson(input.actionItems[0]!))}.`
         : `For your next flight, ${cfiOrFallback} wants you to focus on ${stripSpokenActionLabel(toSecondPerson(input.actionItems[0]!))}.`,

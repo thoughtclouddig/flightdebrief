@@ -98,7 +98,7 @@ const researchSchema = z.object({
         claim: z.string().default("").catch(""),
         label: z.string().default("").catch(""),
         url: z.string().default("").catch(""),
-        // A plain string, mapped afterwards. As a z.enum, one unrecognised
+        // A plain string, mapped afterwards. As a z.enum, one unrecognized
         // value ("faa_handbook", "research") threw the whole parse and
         // discarded every finding alongside it -- eight verified sources lost
         // to one label. The label is the least important field here; the URL
@@ -119,7 +119,7 @@ GO TO THE PRIMARY DOCUMENT
 14 CFR for requirements (Part 61 certification and currency, Part 91 operating rules). The ACS for what a checkride tests. FAA handbooks for technique and theory -- the Aviation Instructor's Handbook (FAA-H-8083-9) is the right source for claims about how students learn. Advisory Circulars and the AIM for guidance and procedures, neither of which is regulatory. NTSB and NASA ASRS for accidents and incidents. Peer-reviewed journals for skill acquisition and retention.
 
 NOT SOURCES
-Flight-school blogs, gear retailers, and content farms rewriting each other. Forums. Any statistic whose original study you cannot reach -- a number repeated across twenty sites is still a rumour. "The FAA requires..." with no citation, which is usually a superseded revision.
+Flight-school blogs, gear retailers, and content farms rewriting each other. Forums. Any statistic whose original study you cannot reach -- a number repeated across twenty sites is still a rumor. "The FAA requires..." with no citation, which is usually a superseded revision.
 
 EVERY FINDING NEEDS
 A URL you actually retrieved in this session, and the supporting passage quoted verbatim. If you cannot quote it, you have not verified it.
@@ -251,12 +251,12 @@ Find what can be substantiated about it, and say plainly what cannot.`,
  * journal", "14 CFR / FAA regulatory standard (ACS)", and "other (journalism
  * reporting on in-progress academic research)". Those are good descriptions;
  * they just aren't the enum. Matching on the words rather than demanding the
- * exact token keeps a Journal of Applied Psychology meta-analysis labelled as
+ * exact token keeps a Journal of Applied Psychology meta-analysis labeled as
  * research instead of demoting it to one person's opinion.
  *
  * Order matters: the first match wins, so the more specific patterns come
- * first. Anything unrecognised falls to expert_opinion, the weakest
- * classification -- a mislabelled source is under-claimed, never over-claimed.
+ * first. Anything unrecognized falls to expert_opinion, the weakest
+ * classification -- a mislabeled source is under-claimed, never over-claimed.
  */
 function toSourceType(value: string): SourceType {
   // "non-regulatory" contains "regulat", which matched the requirement rule

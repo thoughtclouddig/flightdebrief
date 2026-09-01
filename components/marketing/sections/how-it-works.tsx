@@ -73,7 +73,7 @@ export function HowItWorks() {
 
   /*
    * Which slide is active is decided by comparing the track's scroll position
-   * against the slide centres.
+   * against the slide centers.
    *
    * Two earlier versions of this got it wrong, both by depending on something
    * that could silently stop delivering:
@@ -89,7 +89,7 @@ export function HowItWorks() {
    *    observer: stuck on whatever index it happened to reach.
    *
    * So this version subscribes to nothing that can go stale and holds no state
-   * that can latch. Slide centres are measured once per layout and cached, and
+   * that can latch. Slide centers are measured once per layout and cached, and
    * the scroll handler only reads `scrollLeft` -- no layout reads per event, so
    * there is nothing to throttle in the first place.
    */
@@ -97,20 +97,20 @@ export function HowItWorks() {
     const track = trackRef.current;
     if (!track) return;
 
-    let centres: number[] = [];
+    let centers: number[] = [];
 
     const remeasure = () => {
-      centres = slideRefs.current.map((slide) => (slide ? slide.offsetLeft + slide.offsetWidth / 2 : NaN));
+      centers = slideRefs.current.map((slide) => (slide ? slide.offsetLeft + slide.offsetWidth / 2 : NaN));
       pick();
     };
 
     const pick = () => {
-      if (!centres.length) return;
-      const centre = track.scrollLeft + track.clientWidth / 2;
+      if (!centers.length) return;
+      const center = track.scrollLeft + track.clientWidth / 2;
       let best = 0;
       let bestDistance = Infinity;
-      centres.forEach((slideCentre, i) => {
-        const distance = Math.abs(slideCentre - centre);
+      centers.forEach((slideCentre, i) => {
+        const distance = Math.abs(slideCentre - center);
         if (distance < bestDistance) {
           bestDistance = distance;
           best = i;

@@ -6,7 +6,7 @@
  * track costs 40 credits -- about a cent -- so the runway was always sitting
  * in data we could afford. It just had to be read out of the geometry.
  *
- * The method: an aeroplane on final is tracking the runway centreline, so the
+ * The method: an airplane on final is tracking the runway centerline, so the
  * direction it is moving in the last stretch before it reaches the field IS
  * the runway heading. Same in reverse for a departure.
  *
@@ -22,8 +22,8 @@ import { bearingDeg, distanceNm, type LatLon, type TrackPoints } from "./airport
  * How close a point must be to count as part of the arrival or departure leg.
  *
  * Two miles: far enough out that the aircraft is established and tracking the
- * centreline, close enough that it is committed to this runway rather than
- * still manoeuvring.
+ * centerline, close enough that it is committed to this runway rather than
+ * still maneuvering.
  */
 const APPROACH_RADIUS_NM = 2;
 
@@ -67,7 +67,7 @@ function meanBearing(bearings: number[]): number {
  *
  * Runway numbers are MAGNETIC, and a track gives true bearings. At Falcon
  * Field the difference is about 10 degrees east, which is a whole runway
- * number -- skip this and every figure is confidently labelled with the wrong
+ * number -- skip this and every figure is confidently labeled with the wrong
  * runway.
  */
 export function runwayNumber(trueHeading: number, magneticVariationDeg: number): string {
@@ -108,7 +108,7 @@ export function runwayFromTrack(
   for (let i = 1; i < leg.length; i++) {
     const [lon1, lat1] = leg[i - 1];
     const [lon2, lat2] = leg[i];
-    // Consecutive points a few metres apart give a bearing that is mostly
+    // Consecutive points a few meters apart give a bearing that is mostly
     // GPS noise, so skip them rather than let them vote.
     if (distanceNm({ lat: lat1, lon: lon1 }, { lat: lat2, lon: lon2 }) < 0.05) continue;
     bearings.push(bearingDeg({ lat: lat1, lon: lon1 }, { lat: lat2, lon: lon2 }));

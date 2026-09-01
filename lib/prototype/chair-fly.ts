@@ -120,7 +120,7 @@ function dashes(s: string): string {
  *
  * The student rating themselves ABOVE the instructor is the highest-value
  * case in the product, and it is the one a student will not self-select: they
- * think the thing went fine, so they would never choose to practise it. It is
+ * think the thing went fine, so they would never choose to practice it. It is
  * also the drill whose reason explains itself -- "you called it Felt Solid,
  * Jake called it Improving, here is what he saw" needs no further argument.
  *
@@ -329,7 +329,7 @@ const SCENARIOS: Record<string, { scenario: string; steps: ChairFlyStep[] }> = {
             id: "a",
             text: "Go around",
             response:
-              "A completely legitimate answer, and often the best one. A go-around is a normal manoeuvre, not an admission of anything — and it is always available while you still have the runway to do it.",
+              "A completely legitimate answer, and often the best one. A go-around is a normal maneuver, not an admission of anything — and it is always available while you still have the runway to do it.",
           },
           {
             id: "b",

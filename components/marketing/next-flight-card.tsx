@@ -202,7 +202,7 @@ export function NextFlightCard() {
  * start and fade into it.
  *
  * Headings carry full ink at display weight and the blocks are ruled apart.
- * The first version used small grey uppercase labels separated by whitespace,
+ * The first version used small gray uppercase labels separated by whitespace,
  * which made the whole card read as one column and left every heading quieter
  * than the body text underneath it.
  */
@@ -216,8 +216,8 @@ function Block({ title, show, children }: { title: string; show: boolean; childr
       )}
     >
       {/* A short brand rule rather than colored text: an orange heading would
-          read as a link, and orange is the CTA colour on this page. The marker
-          gives the heading a colour cue without spending the accent on it. */}
+          read as a link, and orange is the CTA color on this page. The marker
+          gives the heading a color cue without spending the accent on it. */}
       <h3 className="font-display flex items-center gap-3 text-lg font-bold leading-snug text-[#101727]">
         <span className="h-4 w-[3px] shrink-0 rounded-full bg-brand" aria-hidden />
         {title}

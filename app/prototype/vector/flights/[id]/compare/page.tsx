@@ -33,7 +33,7 @@ export function generateStaticParams() {
  *
  * Every row is a relative difference computed from the two segments. Nothing
  * here says "stabilized" or "met criteria": ADS-B cannot support that, and it
- * is a judgement in any case.
+ * is a judgment in any case.
  */
 export default async function ComparePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -86,7 +86,7 @@ export default async function ComparePage({ params }: { params: Promise<{ id: st
   const spanY = Math.max(maxLat - minLat, 1e-9);
   const scale = Math.min(innerW / spanX, innerH / spanY);
 
-  // Centre the fitted track in whichever axis has slack left over.
+  // Center the fitted track in whichever axis has slack left over.
   const offsetX = PAD + (innerW - spanX * scale) / 2;
   const offsetY = PAD + (innerH - spanY * scale) / 2;
 

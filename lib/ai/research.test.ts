@@ -9,7 +9,7 @@ describe("toSourceType", () => {
     expect(toSourceType("peer_reviewed_research")).toBe("peer_reviewed_research");
   });
 
-  it("recognises how the researcher actually describes sources", () => {
+  it("recognizes how the researcher actually describes sources", () => {
     // All three are real labels returned by the research pass.
     expect(toSourceType("peer-reviewed journal")).toBe("peer_reviewed_research");
     expect(toSourceType("14 CFR / FAA regulatory standard (ACS)")).toBe("faa_requirement");
@@ -22,7 +22,7 @@ describe("toSourceType", () => {
     expect(toSourceType("14 CFR Part 61 requirement")).toBe("faa_requirement");
   });
 
-  it("under-claims anything it doesn't recognise", () => {
+  it("under-claims anything it doesn't recognize", () => {
     expect(toSourceType("other (journalism reporting on in-progress research)")).toBe("expert_opinion");
     expect(toSourceType("")).toBe("expert_opinion");
   });

@@ -12,7 +12,7 @@ import { SectionHead } from "@/components/marketing/section-head";
  * the bottom, not the experience.
  *
  * The four stages are numbered and ruled apart because the first version set
- * them as small grey uppercase labels with only whitespace between: at a
+ * them as small gray uppercase labels with only whitespace between: at a
  * glance the whole card read as one undifferentiated column, and the labels
  * were quieter than the body text they were introducing. A stage heading has
  * to outweigh its own content or it isn't a heading. The numbering is not

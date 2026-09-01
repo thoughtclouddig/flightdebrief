@@ -3,7 +3,7 @@ import { ACS_STRUCTURE, acsReadiness, taskForSkill, taskProgress } from "@/lib/p
 import { SKILL_SCORES } from "@/lib/prototype/vector-data";
 
 /**
- * The ACS view is a second ORGANISATION of the same evidence, never a second
+ * The ACS view is a second ORGANIZATION of the same evidence, never a second
  * scoring model. These tests hold that line and keep the two views from
  * quietly disagreeing about which task a skill belongs to.
  */

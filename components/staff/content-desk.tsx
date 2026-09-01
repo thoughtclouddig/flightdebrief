@@ -14,7 +14,7 @@ import { RedraftArticleButton } from "./redraft-article-button";
  * "what exists" and nothing else -- you could not see what was queued, what
  * was waiting on you, or what a draft looked like before it went live.
  *
- * So the organising idea here is the pipeline, not the table. A piece moves
+ * So the organizing idea here is the pipeline, not the table. A piece moves
  * Idea -> Queued -> Draft -> Published, each stage is a filter with a count,
  * and the count is the useful part: "3 drafts" is a to-do list. Ideas and
  * articles are different rows in the database but the same thing to a person
@@ -49,7 +49,7 @@ const ARTICLE_STAGES: { key: Stage | "all"; label: string }[] = [
 ];
 
 const STAGE_STYLE: Record<Stage, { label: string; className: string }> = {
-  // Ideas and queued items are the same colour deliberately: neither is
+  // Ideas and queued items are the same color deliberately: neither is
   // written yet, and the difference between them is whose turn it is.
   idea: { label: "Idea", className: "bg-white/10 text-white/70" },
   queued: { label: "Queued", className: "bg-white/10 text-white/70" },

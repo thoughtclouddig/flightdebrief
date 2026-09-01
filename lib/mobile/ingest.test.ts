@@ -96,7 +96,7 @@ describe("no fabricated values", () => {
 describe("poor fixes", () => {
   it("drops them from the track rather than smoothing them", () => {
     // A 400m fix puts a corner in the track that segmentation would read as
-    // a manoeuvre. Fewer points beats an invented one.
+    // a maneuver. Fewer points beats an invented one.
     const s = ingestBatch(session(), {
       idempotencyKey: "b1",
       sessionId: "sess-1",

@@ -19,7 +19,7 @@ They are listed here so the substitution is auditable rather than silent.
 
 | Generator said | We use | Why |
 |---|---|---|
-| Category *Mental Health App*; lavender `#8B5CF6` / `#FAF5FF` palette | The palette in §2 | The nearest catalogue rows were "Fitness/Gym App" (energetic orange on OLED black) and "Mental Health App" (calming lavender). Neither is an aviation training tool. The palette below is the one specified by the product owner, checked for contrast rather than adopted on look. |
+| Category *Mental Health App*; lavender `#8B5CF6` / `#FAF5FF` palette | The palette in §2 | The nearest catalog rows were "Fitness/Gym App" (energetic orange on OLED black) and "Mental Health App" (calming lavender). Neither is an aviation training tool. The palette below is the one specified by the product owner, checked for contrast rather than adopted on look. |
 | Inter + Playfair Display | Archivo (already shipped) | The repo already ships one variable family across marketing and product. A display serif would fork the brand for four prototype screens. |
 | Page pattern *Hero → Testimonials → CTA* | The IA in §12 | That is a landing-page conversion pattern. This is a signed-in app; there is no funnel to run. |
 
@@ -371,7 +371,7 @@ dismissing an in-progress recording.
 
 ---
 
-## 16. Data visualisation
+## 16. Data visualization
 
 This app has almost no charts, and that is deliberate.
 
@@ -398,6 +398,11 @@ translate offsets 8–16px. Transform and opacity only.
 ---
 
 ## 18. Copy
+
+**American spelling, always** — center, color, maneuver, practice, judgment,
+organize. This is a US aviation product and the FAA material it cites is
+American throughout. Enforced by `lib/content/us-spelling.source.test.ts`; see
+CLAUDE.md.
 
 Write from the student's side of the screen. "Capture what mattered while it's
 fresh", not "Initiate debrief session". A control says exactly what happens, and

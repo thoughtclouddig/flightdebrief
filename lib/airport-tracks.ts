@@ -83,8 +83,8 @@ export function sectorOf(bearing: number): Sector {
   // Sectors are centred on the compass point rather than starting at it, so
   // "north" means 337.5-22.5 rather than 0-45. Otherwise every reading is
   // rotated half a sector from what the word means.
-  const normalised = ((bearing % 360) + 360) % 360;
-  return COMPASS[Math.round(normalised / 45) % 8];
+  const normalized = ((bearing % 360) + 360) % 360;
+  return COMPASS[Math.round(normalized / 45) % 8];
 }
 
 function percentile(sorted: number[], p: number): number {

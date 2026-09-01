@@ -90,7 +90,7 @@ function View({
         <Image src={src} alt={alt} fill className="object-cover" sizes="(min-width: 640px) 430px, 100vw" />
       </div>
       {/* The accent moves below the image so it still separates the two voices
-          without a coloured hairline floating above a photograph. */}
+          without a colored hairline floating above a photograph. */}
       <div className={`flex flex-1 flex-col border-t-[3px] px-7 py-7 ${accent}`}>
         <figcaption className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">{label}</figcaption>
         <blockquote className="mt-3 text-pretty text-lg italic leading-relaxed text-[#101727]">

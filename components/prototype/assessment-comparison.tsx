@@ -15,10 +15,10 @@ import { ASSESSMENT_LEVELS, agreement, levelLabel, levelScore, levelState, type 
  * Agreement carries the same visual weight as disagreement. A view that
  * highlights only gaps reads as a list of faults, and "you and your instructor
  * both think this is solid" is information a student needs in order to trust
- * their own judgement at all -- which is the thing that eventually lets them
+ * their own judgment at all -- which is the thing that eventually lets them
  * fly without one.
  *
- * Both ratings render on the same meter and the same colour scale, so the
+ * Both ratings render on the same meter and the same color scale, so the
  * distance between them is legible without reading the labels. The labels
  * differ by rater on purpose (see lib/prototype/assessment.ts): the student is
  * reporting an experience, the instructor is judging against a standard.

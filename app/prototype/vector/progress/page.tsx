@@ -24,7 +24,7 @@ import { acsReadiness, type TaskProgress } from "@/lib/prototype/acs";
  * list twice.
  *
  *   SKILLS  "What am I getting better at?"  -- everyday training progress, in
- *           the student's own vocabulary, organised the way she thinks about
+ *           the student's own vocabulary, organized the way she thinks about
  *           her flying. A flat, tappable list of the things she is working on.
  *
  *   ACS     "How am I tracking against what I have to demonstrate on the
@@ -61,7 +61,7 @@ export default function ProgressPage() {
         <p className="px-1.5 text-[14px] leading-relaxed text-foreground-faint">
           {view === "skills"
             ? "Everyday training progress — what you're getting better at, flight to flight."
-            : "The same evidence, organised the way the checkride is."}
+            : "The same evidence, organized the way the checkride is."}
         </p>
       </div>
 
@@ -210,7 +210,7 @@ function TaskRow({ progress }: { progress: TaskProgress }) {
             <span key={s.slug}>
               {i > 0 ? <span className="px-1 text-foreground-faint">·</span> : null}
               {/* Ink, not orange. These are the third and fourth tappable
-                  things on the screen and the colour budget gives orange to
+                  things on the screen and the color budget gives orange to
                   one action; an underline says "tappable" without spending it. */}
               <Link
                 href={`/prototype/vector/progress/${s.slug}`}

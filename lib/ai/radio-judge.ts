@@ -118,7 +118,7 @@ What the student said:
 
   const parsed = judgementSchema.parse(JSON.parse(extractJson(textBlock.text)));
 
-  // A judgement that doesn't cover every element isn't a judgement. Falling
+  // A judgment that doesn't cover every element isn't a judgment. Falling
   // back to keyword scoring beats reporting a partial one as complete.
   if (parsed.elements.length !== scenario.requiredElements.length) return null;
 

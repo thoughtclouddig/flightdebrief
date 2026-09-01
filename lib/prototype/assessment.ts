@@ -37,7 +37,7 @@ export function levelLabel(code: PerformanceLevelCode, rater: Rater): string {
 }
 
 /**
- * Maps an assessment level onto the app's existing three-state colour scale so
+ * Maps an assessment level onto the app's existing three-state color scale so
  * objective ratings and skill meters read as one system rather than two.
  */
 export function levelState(code: PerformanceLevelCode): SkillState {
@@ -83,12 +83,12 @@ export function agreementSummary(rows: { student: PerformanceLevelCode; instruct
  * undefined for skills the last flight did not cover, which is the common
  * case and not an error.
  */
-function normalise(name: string): string {
+function normalize(name: string): string {
   return name.toLowerCase().replace(/[^a-z]/g, "").replace(/s$/, "");
 }
 
 export function objectiveForSkill(skillName: string) {
-  return PERCEPTION_GAPS.find((g) => normalise(g.task) === normalise(skillName));
+  return PERCEPTION_GAPS.find((g) => normalize(g.task) === normalize(skillName));
 }
 
 /**
@@ -102,5 +102,5 @@ export function objectiveForSkill(skillName: string) {
  * error.
  */
 export function skillForObjective(task: string) {
-  return SKILL_SCORES.find((s) => normalise(s.skill) === normalise(task));
+  return SKILL_SCORES.find((s) => normalize(s.skill) === normalize(task));
 }

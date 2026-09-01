@@ -53,7 +53,7 @@ describe("partitionTasks", () => {
 });
 
 describe("isUniversalTask", () => {
-  it("recognises only the fixed three", () => {
+  it("recognizes only the fixed three", () => {
     expect(isUniversalTask("PREFLIGHT_INSPECTION")).toBe(true);
     expect(isUniversalTask("SHORT_FIELD_LANDING")).toBe(false);
   });

@@ -14,7 +14,7 @@
  * the REGISTRANT'S MAILING ADDRESS, which for a flight school is its office
  * and for a management company is a lawyer's suite downtown. Within ten miles
  * of a field that is a good proxy and it is not a fact, so every figure this
- * writes is labelled registered-near and the page says so. Calling it "based
+ * writes is labeled registered-near and the page says so. Calling it "based
  * at" would be the same class of error as calling flights "operations".
  *
  * The interesting field is flight_hours_last_year. A 172 flying 1,100 hours
@@ -43,7 +43,7 @@ const PROBE = argv.includes("--probe");
 const BASE = "https://windsock.ai";
 const SOURCE = "windsock";
 
-/** Types a training field actually operates, for the utilisation figure. */
+/** Types a training field actually operates, for the utilization figure. */
 const TRAINER_PATTERN = /^(172|152|PA-?28|PA28|DA40|DA20|SR20|SR22|177|182|AA-?5|C1[578]2)/i;
 
 /** The airport's own coordinates, needed for the registry radius search. */
@@ -171,7 +171,7 @@ if (PROBE) {
  * The census.
  *
  * NOT /nearby-aircraft, which returns what is airborne near the field right
- * now -- a live snapshot with altitudes and distances, and no utilisation
+ * now -- a live snapshot with altitudes and distances, and no utilization
  * history. The registry search with a radius filter is what answers "what is
  * based around here", and it is the one that carries flight_hours_last_year.
  */
@@ -271,7 +271,7 @@ const topTypes = [...byType.entries()]
 const years = aircraft.map(year).filter(Boolean);
 const trainers = aircraft.filter((a) => TRAINER_PATTERN.test(model(a)));
 const trainerHours = trainers.map(hours).filter(Boolean);
-// The split worth publishing: a school aeroplane and a privately owned one of
+// The split worth publishing: a school airplane and a privately owned one of
 // the same type live completely different lives -- roughly 1,000 hours a year
 // against 50. A fleet count alone says nothing; this says which fields have
 // aircraft actually working.
@@ -290,7 +290,7 @@ console.log(`  top types: ${topTypes.slice(0, 4).map((t) => t.type).join(", ")}`
 // trainer types does not support a claim about how hard the fleet works: the
 // school aircraft are registered to corporate addresses outside the radius,
 // so a registry search finds local OWNERS rather than based aircraft.
-console.log(`  (utilisation, not published: median ${median(trainerHours) ?? "?"} hrs, ${hardWorked} over 500)`);
+console.log(`  (utilization, not published: median ${median(trainerHours) ?? "?"} hrs, ${hardWorked} over 500)`);
 if (runways.length) console.log(`  runways: ${runways.join(", ")}`);
 
 const client = new pg.Client({ connectionString });

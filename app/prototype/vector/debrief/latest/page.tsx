@@ -147,7 +147,7 @@ export default function DebriefDetail() {
         * objectives where Mia and Jake agreed. Agreement is the information a
         * student needs in order to trust their own read of a flight, so a view
         * that only ever surfaces gaps teaches the wrong lesson about their own
-        * judgement.
+        * judgment.
         *
         * The per-objective views below are summaries, not transcript, so
         * neither voice is quoted -- see the note in vector-data.ts. The

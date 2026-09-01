@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 const PART_FIELDS: { key: keyof ArticleImagePrompt; label: string; hint: string }[] = [
   { key: "scene", label: "Scene", hint: "Where it happens and what is in it" },
   { key: "subjects", label: "Subjects", hint: "Who is in frame and what they are doing — blank for an empty scene" },
-  { key: "aircraft", label: "Aircraft", hint: "Type and configuration — blank if no aeroplane belongs" },
+  { key: "aircraft", label: "Aircraft", hint: "Type and configuration — blank if no airplane belongs" },
   { key: "light", label: "Light", hint: "Time of day, direction, quality" },
   { key: "camera", label: "Camera", hint: "Focal length, distance, angle, depth of field" },
 ];

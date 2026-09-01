@@ -13,7 +13,7 @@ import { appOrigin } from "@/lib/email-origin";
  *   can never be the only thing identifying us. The alt text is styled to
  *   read as the wordmark when the image doesn't load, and the heading below
  *   carries the message on its own.
- * - A preheader is the grey snippet beside the subject in the inbox list.
+ * - A preheader is the gray snippet beside the subject in the inbox list.
  *   Left unset, clients scrape the first text they find (previously the
  *   heading, repeated). It's the second thing a recipient reads and it was
  *   being wasted.
@@ -90,7 +90,7 @@ export function renderEmail(content: EmailContent): string {
     <td align="center" style="padding:32px 16px">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;background:#ffffff;border-radius:12px;border:1px solid ${HAIRLINE}">
         <!-- Thin brand rule rather than an orange banner: this is a utility
-             message, and a full colour block reads as marketing. -->
+             message, and a full color block reads as marketing. -->
         <tr><td style="height:4px;background:${BRAND};border-radius:12px 12px 0 0;font-size:0;line-height:0">&nbsp;</td></tr>
         <tr>
           <td style="padding:28px 32px 0">${logoCell}</td>

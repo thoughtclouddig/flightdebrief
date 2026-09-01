@@ -83,7 +83,7 @@
    * this", so a skill that needs work must never look like a button.
    *
    * Two variants per state because contrast is a property of the pair, not the
-   * colour. The bright versions clear 4.5:1 on --panel and fail badly on paper
+   * color. The bright versions clear 4.5:1 on --panel and fail badly on paper
    * (#48be83 on white is 2.3:1); the deep versions do the reverse. Use the
    * -on-panel pair anywhere the ground is --panel or the app is in dark mode.
    */
@@ -266,7 +266,7 @@
  * border color was previously unlayered, which meant a bare `*` selector was
  * silently overriding every border-<color> utility in the app -- border-brand,
  * border-transparent, hover:border-brand and friends all rendered as hairline
- * grey, so nothing could ever show a colored border. Layering it fixes that:
+ * gray, so nothing could ever show a colored border. Layering it fixes that:
  * utilities come after base, so a class wins again.
  *
  * The focus ring has the same hazard in reverse. Unlayered, it would beat the

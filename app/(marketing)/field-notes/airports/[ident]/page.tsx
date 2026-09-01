@@ -268,7 +268,7 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
       {/* --- Season -------------------------------------------------------
           The section that makes the hour chart above honest. Where the peak
           hour moves between seasons, an annual figure is an average of two
-          different behaviours and describes neither. */}
+          different behaviors and describes neither. */}
       {seasons.length ? (
         <Section
           title="How the year changes it"
@@ -606,7 +606,7 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
           </p>
           <p>
             Runway use is read from the tracks rather than reported by the data source, which carries no
-            runway at all: an aeroplane on final is tracking the centreline, so its direction of travel over
+            runway at all: an airplane on final is tracking the centerline, so its direction of travel over
             the last two miles is the runway heading. Headings snap to the runways this field actually has.
             Anything that passed nearby without settling on a heading is counted as unclassified rather than
             assigned to the closest runway.
@@ -614,7 +614,7 @@ export default async function AirportReportPage(props: PageProps<"/field-notes/a
           <p>
             The registry figures describe aircraft whose REGISTERED ADDRESS is near the field. That is a
             reasonable proxy for a local fleet and it is not a list of based aircraft — a flight school&rsquo;s
-            aeroplanes are often registered to a corporate address somewhere else entirely.
+            airplanes are often registered to a corporate address somewhere else entirely.
           </p>
           <p>
             The track figure is a sample of local flights spread across hours and months, not every flight and

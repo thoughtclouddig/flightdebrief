@@ -7,7 +7,7 @@ import type { TrackPosition } from "@/lib/types";
  * already has. Deliberately a versioned boundary rather than the native client
  * calling internal Next.js functions: a phone in a flight bag runs whatever
  * build the student last installed, and an app in the App Store cannot be
- * redeployed in step with the server. The server has to keep honouring
+ * redeployed in step with the server. The server has to keep honoring
  * whatever the phone was built against.
  *
  * The design constraint that shapes everything here: the phone is offline for
@@ -29,7 +29,7 @@ export type BatchState = "PENDING" | "SYNCING" | "ACKNOWLEDGED";
  * server can never reinterpret old data when the rules improve, and it would
  * throw away the accuracy figures that decide whether a fix may support an
  * instructional claim. `course` is course over ground, never heading; `speed`
- * is metres per second over the ground, never indicated airspeed.
+ * is meters per second over the ground, never indicated airspeed.
  */
 export interface MobileFix {
   /** Milliseconds since the session's t0. */
@@ -138,8 +138,8 @@ export const POOR_ACCURACY_M = 50;
  * `TrackPosition[]`, so Flight Replay, segmentation, Moments and Compare work
  * on it without a second architecture and without knowing where it came from.
  *
- * Poor fixes are dropped rather than smoothed. A 400-metre fix puts a spurious
- * corner in the track that segmentation would happily read as a manoeuvre, and
+ * Poor fixes are dropped rather than smoothed. A 400-meter fix puts a spurious
+ * corner in the track that segmentation would happily read as a maneuver, and
  * inventing a plausible position is worse than having fewer of them.
  */
 export function toTrackPositions(session: MobileSession): TrackPosition[] {

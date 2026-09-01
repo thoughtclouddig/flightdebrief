@@ -154,7 +154,7 @@ export const NEXT_LESSON = { date: "Thursday", time: "9:00 AM", instructor: INST
  * Every field below the score exists to enforce that. `instructorEvidence`
  * is why the number is what it is, in the instructor's own words;
  * `studentTake` is her side where she said something about it;
- * `vectorRead` is clearly labelled as inference; `next` is what moves it.
+ * `vectorRead` is clearly labeled as inference; `next` is what moves it.
  */
 export type SkillState = "Needs Work" | "Improving" | "Meets Standard";
 
@@ -185,7 +185,7 @@ export interface SkillScore {
   instructorEvidence: string;
   /** Her reflection, where she said something about this skill. Null when she didn't. */
   studentTake: string | null;
-  /** Vector's reading, always labelled as Vector's rather than the instructor's. */
+  /** Vector's reading, always labeled as Vector's rather than the instructor's. */
   vectorRead: string;
   /** What moves this skill forward before the next lesson. */
   next: string;

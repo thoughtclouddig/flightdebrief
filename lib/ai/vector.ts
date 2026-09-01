@@ -44,7 +44,7 @@ export interface VectorReply {
 /**
  * The student's record, rendered for the model.
  *
- * Written as labelled evidence rather than prose so the attribution rules
+ * Written as labeled evidence rather than prose so the attribution rules
  * below have something to point at -- the model can say "Jake said" only
  * because the instructor's words are marked as the instructor's.
  */

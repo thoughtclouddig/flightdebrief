@@ -46,7 +46,7 @@ the signoff.
 
 **Evidence classes stay distinct** — instructor, student, flight data, Vector,
 FAA ACS. Vector inference must never look measured; telemetry must never look
-like judgement. Enforced in the data model, not just the UI.
+like judgment. Enforced in the data model, not just the UI.
 
 **Vector does not draw.** `lib/ai/media.ts` has five source classes and there is
 deliberately no `GENERATED_DIAGRAM`. `source` is required by the schema, so a
@@ -100,7 +100,7 @@ confidence out rather than thresholding it away), `FlightMoment`,
 `EvidenceAnchor`, `compareSegments`.
 
 `lib/prototype/moments.ts` — analysis for a flight, or `null` when there is
-nothing to analyse. Returns null rather than an empty shell so callers can
+nothing to analyze. Returns null rather than an empty shell so callers can
 decline to offer the entry point.
 
 Replay's whole design is one number: `t`, ms from engine start. Nothing holds
@@ -177,7 +177,7 @@ fork.
 - **Both assess independently, before the recording starts.**
 - **The student rates first and their answers stay hidden through the
   handoff.** An instructor who can see "Felt Solid" before rating produces an
-  echo rather than a judgement, and comparing a judgement to its own echo is
+  echo rather than a judgment, and comparing a judgment to its own echo is
   worthless. This is why the handoff screen exists.
 - **The reveal shows agreements and gaps, at equal weight.** Agreement is
   meaningful data and must not be filtered out — "you both think this is solid"
@@ -211,7 +211,7 @@ like an inconsistency and are not. The mapping lives in
 
 **The student must never appear to self-certify against the ACS.** `Felt Solid`
 is a student's report about their own experience; `Meets Standard` is a
-judgement against the published standard, and only the instructor makes it.
+judgment against the published standard, and only the instructor makes it.
 That boundary is currently structural rather than conventional, and it is worth
 keeping that way:
 
@@ -227,8 +227,8 @@ keeping that way:
 
 One internal wrinkle that is fine and looks wrong: `levelState()` maps
 `INDEPENDENT` to the string `"Meets Standard"` for both raters, because that
-string is the key into the shared colour scale. It is never rendered for a
-student — `ObjectiveComparison` takes the *colour* from it and the *label* from
+string is the key into the shared color scale. It is never rendered for a
+student — `ObjectiveComparison` takes the *color* from it and the *label* from
 `levelLabel(code, "student")`. Do not "fix" that by rendering the state name.
 
 ### Evidence treatment
@@ -258,7 +258,7 @@ objective names loosely, since the seed vocabularies drifted).
 instructor assessment *history* over time. `SkillScore.trend` currently carries
 instructor-side values only, so this needs a seed expansion and a `TrendStrip`
 signature change. It is the natural progression from "here is how you both saw
-this flight" to "here is how your judgement and your performance are developing
+this flight" to "here is how your judgment and your performance are developing
 together" — which is the product's positioning made visible.
 
 ---
@@ -431,7 +431,7 @@ Three things that cost real time in the session that produced this section:
 
 **Read this before editing `lib/prototype/acs.ts` or the Progress tabs.** They
 used to be the same four rows regrouped under an Area heading, which made the
-ACS tab look like a relabelled Skills tab because that is exactly what it was.
+ACS tab look like a relabeled Skills tab because that is exactly what it was.
 
 |  | Answers | Shape |
 |---|---|---|
@@ -448,7 +448,7 @@ rows.
 **No second scoring model.** A task sits at the *lowest* level of the skills
 assessed under it, on the same three-state scale — a task is not at standard
 while a component of it is not. That is an ACS rollup, which MASTER.md §2
-already sanctions as one of the three places a state colour may appear.
+already sanctions as one of the three places a state color may appear.
 
 **The readiness summary is counts, not a verdict.** "2 of 3 assessed tasks
 meeting standard", and the not-assessed count is rendered directly beneath it
@@ -521,7 +521,7 @@ pilot, and it is invisible if you only ever look at `/` and `/prototype`.
 
 **Homepage card two under-sells its own point.** The "Compare how you both saw
 it" card shows two ratings whose meters render at similar lengths, so the
-*difference* between them reads mostly as a colour change -- and showing that
+*difference* between them reads mostly as a color change -- and showing that
 difference is the entire reason the card exists. Worth judging at full size.
 
 ---
@@ -567,9 +567,9 @@ is the thing a future session would count, and a count is a score. If Chair
 Flying activity ever needs tracking, track completion separately and do not let
 it touch the performance model.
 
-The step UI carries no right/wrong colouring for the same reason: the chosen
+The step UI carries no right/wrong coloring for the same reason: the chosen
 option is marked as chosen and Vector's words carry whether the reasoning holds
-up. If that ever reads as too soft, the fix is the wording, not a colour.
+up. If that ever reads as too soft, the fix is the wording, not a color.
 
 ### What is derived vs authored
 

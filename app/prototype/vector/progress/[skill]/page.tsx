@@ -66,8 +66,8 @@ export default async function SkillDetail({ params }: { params: Promise<{ skill:
         * Both assessments of this skill from the most recent flight, when the
         * flight rated it.
         *
-        * Skill detail previously showed the instructor's judgement with the
-        * student's remark underneath as supporting colour, which quietly
+        * Skill detail previously showed the instructor's judgment with the
+        * student's remark underneath as supporting color, which quietly
         * ranked the two. They are two independent assessments of the same
         * objective, and seeing the distance between them is the point -- it is
         * how a student learns to calibrate their own read of a flight against

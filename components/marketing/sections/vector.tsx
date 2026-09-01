@@ -18,12 +18,12 @@ import { VectorDemo } from "@/components/marketing/vector-demo";
  * what separates this from a chat box that has to be told everything first.
  */
 /**
- * Four, not six. Two of the originals restated their neighbours -- the habit
+ * Four, not six. Two of the originals restated their neighbors -- the habit
  * that shows up when the pattern gets busy is the same claim as which
  * corrections you relax and when, and what the instructor wants continued next
  * lesson is the next-flight section's job. A list long enough to skim is a
  * list nobody reads a single line of, and each of these four is a distinct
- * kind of knowledge: a behaviour, a pattern across instructors, a gap in
+ * kind of knowledge: a behavior, a pattern across instructors, a gap in
  * self-perception, and something already proven.
  */
 const KNOWS = [

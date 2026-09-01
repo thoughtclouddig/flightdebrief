@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { readsAsSentence, speakItems } from "./narration";
 
 describe("readsAsSentence", () => {
-  it("recognises a sentence, however short", () => {
+  it("recognizes a sentence, however short", () => {
     expect(readsAsSentence("Nina had you work on configuring earlier")).toBe(true);
     expect(readsAsSentence("Your radio calls were rushed")).toBe(true);
   });
 
-  it("recognises a noun phrase, however long", () => {
+  it("recognizes a noun phrase, however long", () => {
     expect(readsAsSentence("getting configured earlier on downwind")).toBe(false);
     expect(readsAsSentence("airspeed control on final")).toBe(false);
     expect(readsAsSentence("flare timing")).toBe(false);

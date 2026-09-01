@@ -13,7 +13,7 @@ import { Reveal } from "@/components/marketing/reveal";
  * trusted again, and a chief instructor is exactly the reader who will check.
  *
  * Kept as a teaser rather than deleted, because the direction is real and
- * worth signalling while the concept is being tested. Kept deliberately small:
+ * worth signaling while the concept is being tested. Kept deliberately small:
  * no mocked screens and no buttons. A "Start Flight" button rendered in brand
  * orange reads as shippable UI regardless of the label above it, and this
  * section sits below the shipped product for the same reason -- what works

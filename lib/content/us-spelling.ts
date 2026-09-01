@@ -92,6 +92,18 @@ const BASE: Record<string, string> = {
   fulfil: "fulfill",
   instalment: "installment",
 
+  // Prefixed forms. \b means "unrecognised" never matches "recognised", so
+  // each prefix has to be listed rather than derived.
+  unrecognised: "unrecognized",
+  unrecognisable: "unrecognizable",
+  unlabelled: "unlabeled",
+  mislabelled: "mislabeled",
+  relabelled: "relabeled",
+  unorganised: "unorganized",
+  reorganise: "reorganize",
+  centreline: "centerline",
+  centrelines: "centerlines",
+
   // Miscellaneous
   judgement: "judgment",
   ageing: "aging",

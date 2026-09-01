@@ -20,7 +20,7 @@ export default async function PracticeSessionPage(props: PageProps<"/practice/[i
   // The next thing waiting for them. Finishing one assignment used to offer
   // only "Back to Home", so a student with three assigned calls had to
   // navigate back and find the next one each time -- friction on exactly the
-  // behaviour the feature wants (do several in a sitting).
+  // behavior the feature wants (do several in a sitting).
   const assignments = await repo.listRadioPracticeAssignments(viewer.user.id);
   const next =
     assignments.find((a) => a.id !== assignment.id && a.status !== "completed") ?? null;

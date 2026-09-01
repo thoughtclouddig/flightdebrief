@@ -120,7 +120,7 @@ export function FlightReplay({
                 )}
               >
                 {/* A marker, not a label: at this width a word would truncate
-                    on every segment. The colour says whether the moment there
+                    on every segment. The color says whether the moment there
                     needs attention or went well. */}
                 {m ? (
                   <span

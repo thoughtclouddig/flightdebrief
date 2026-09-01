@@ -147,7 +147,7 @@ const WEEKDAYS = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 function localParts(iso) {
   const parts = partsFormatter.formatToParts(new Date(iso));
   const get = (type) => parts.find((p) => p.type === type)?.value;
-  // Intl renders midnight as "24" in some hourCycles; normalise it.
+  // Intl renders midnight as "24" in some hourCycles; normalize it.
   const hour = Number(get("hour")) % 24;
   return {
     hour,
@@ -163,7 +163,7 @@ const fmt = (d) => d.toISOString().replace(/\.\d{3}Z$/, "");
  *
  * A 429 is not a lost day -- it means we asked too fast, and the fix is to
  * wait rather than to drop the data and leave an invisible hole in the
- * window. Honours Retry-After when the server sends one, since that is a real
+ * window. Honors Retry-After when the server sends one, since that is a real
  * number and our doubling is a guess.
  */
 async function fetchDay(from, to) {

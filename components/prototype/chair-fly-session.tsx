@@ -168,7 +168,7 @@ export function ChairFlySession({ drill }: { drill: ChairFlyDrill }) {
                 aria-pressed={picked}
                 className={cn(
                   "min-h-[52px] cursor-pointer rounded-2xl border px-4 py-3 text-left text-[16px] leading-snug transition-colors duration-200",
-                  // No right/wrong colouring. The chosen option is marked as
+                  // No right/wrong coloring. The chosen option is marked as
                   // chosen and nothing else -- Vector's words carry whether
                   // the reasoning holds up.
                   picked

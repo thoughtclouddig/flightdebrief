@@ -14,7 +14,7 @@ import { startDraftJob } from "@/lib/content/draft-jobs";
  * CONTENT_PIPELINE_SECRET.
  *
  * Approved ideas drive this, rather than "whichever topic is thinnest". The
- * old behaviour wrote about whatever was least covered, which is a coverage
+ * old behavior wrote about whatever was least covered, which is a coverage
  * heuristic, not an editorial one -- it had no way to know whether the angle
  * was worth writing. Now the human decision at /admin/ideas is what the
  * pipeline consumes, and the coverage heuristic only survives as the fallback

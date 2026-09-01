@@ -45,7 +45,7 @@ export type TelemetryProvider =
  * MEASURED   the source reported this value
  * DERIVED    computed from measured values by a defensible rule (e.g. vertical
  *            rate from consecutive altitudes)
- * INFERRED   a judgement about what the numbers mean
+ * INFERRED   a judgment about what the numbers mean
  * UNCERTAIN  the data is too sparse or noisy to support a claim
  *
  * Not shown as a number. The product needs to know the difference so that
@@ -302,7 +302,7 @@ export function segmentFlight(telemetry: FlightTelemetry): FlightSegment[] {
   if (segments.length === 0) return [];
 
   // Bookend with departure and landing so the timeline covers the whole flight
-  // rather than leaving unlabelled gaps the student has to interpret.
+  // rather than leaving unlabeled gaps the student has to interpret.
   const first = segments[0]!;
   const last = segments[segments.length - 1]!;
   return [

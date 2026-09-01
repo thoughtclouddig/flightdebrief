@@ -1,10 +1,10 @@
 import { ACS_AREAS, SKILL_SCORES, type AcsArea, type SkillScore, type SkillState } from "@/lib/prototype/vector-data";
 
 /**
- * The FAA ACS, as a structure rather than a relabelled skill list.
+ * The FAA ACS, as a structure rather than a relabeled skill list.
  *
  * Progress has two views of the same evidence and they answer different
- * questions. SKILLS asks "what am I getting better at" and is organised the way
+ * questions. SKILLS asks "what am I getting better at" and is organized the way
  * a student thinks about their own flying. ACS asks "how am I tracking against
  * what I have to demonstrate on the checkride", and that question has a shape
  * the student does not get to choose: Area of Operation -> Task, as published.
@@ -20,7 +20,7 @@ import { ACS_AREAS, SKILL_SCORES, type AcsArea, type SkillScore, type SkillState
  * assessed under it, on the same three-state scale used everywhere else -- a
  * task is not at standard while a component of it is not. That is an ACS
  * rollup, which MASTER.md §2 explicitly sanctions as one of the three places a
- * state colour is allowed to appear. Nothing here introduces a level, a point,
+ * state color is allowed to appear. Nothing here introduces a level, a point,
  * a percentage or a readiness verdict.
  */
 
