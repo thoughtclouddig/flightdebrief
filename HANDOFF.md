@@ -400,6 +400,22 @@ Three things that cost real time in the session that produced this section:
 
 ---
 
+## Two gaps that are easy to miss because the surface looks finished
+
+**The marketing site now describes a debrief flow that only exists in the
+prototype.** `68a4b39` rebuilt the guided dual-assessment debrief under
+`app/prototype/vector/**`, and the homepage was reframed to match. The real
+`(product)` app was **not** touched. A visitor reading the homepage and a user
+signing in are currently promised different things. This matters before any
+pilot, and it is invisible if you only ever look at `/` and `/prototype`.
+
+**Homepage card two under-sells its own point.** The "Compare how you both saw
+it" card shows two ratings whose meters render at similar lengths, so the
+*difference* between them reads mostly as a colour change -- and showing that
+difference is the entire reason the card exists. Worth judging at full size.
+
+---
+
 ## Next feature: guided Chair Flying (briefed, not started)
 
 Full brief is in the session transcript; **ask for it to be re-pasted** rather
