@@ -14,7 +14,7 @@ sense:
 
 | Area | State |
 |---|---|
-| Prototype (`/prototype/vector/**`) | Working, 18 routes, the main review surface. Debrief rebuilt in `68a4b39` — see below |
+| Prototype (`/prototype/vector/**`) | Working, 19 routes, the main review surface. Debrief rebuilt in `68a4b39`; Chair Flying added — see below |
 | Flight analysis + replay | Working on seeded data |
 | Native recorder (`apps/mobile`) | Code complete, **never run** |
 | Marketing site | Repositioned on continuity (`3bea1b0`); behind the shared-password gate |
@@ -25,7 +25,12 @@ gate is live, the prototype sits behind it, and the rebuilt debrief flow is
 deployed to Replit.
 
 `npm run build` fails locally with `DATABASE_URL is not set` — expected without
-the Replit DB, and unrelated to any of this. `tsc`, `eslint` and 351 tests pass.
+the Replit DB, and unrelated to any of this. `tsc`, `eslint` and 365 tests pass.
+
+**`npx eslint .` reports ~577 errors that are not yours.** They are all inside
+`.claude/worktrees/**/node_modules`. The project's own tree has exactly one, a
+pre-existing `react-hooks/purity` error in `apps/mobile/App.tsx`. Filter by path
+before believing the count.
 
 ---
 
@@ -67,7 +72,7 @@ sat on the ground.
 
 ## Prototype
 
-18 routes under `app/prototype/vector/`. Standalone layout — deliberately
+19 routes under `app/prototype/vector/`. Standalone layout — deliberately
 outside `(product)`, which requires a session and a database.
 
 Design language lives in `components/prototype/ui.tsx`; a screen that invents
@@ -400,6 +405,29 @@ Three things that cost real time in the session that produced this section:
 
 ---
 
+## A whole screen was throwing, and nothing caught it
+
+`components/prototype/assessment-comparison.tsx` called `stateTone()` — which
+lives in the client-only `ui.tsx` — without carrying `"use client"` itself. On
+`/debrief/latest` that worked, because a client page pulls the component into
+the client graph. Every **server-rendered** skill-detail route
+(`/progress/crosswind-landing` and its three siblings) threw *"Attempted to call
+stateTone() from the server"* and returned 500.
+
+It shipped in the dual-assessment work and survived because the browser pane has
+been unreliable, so nobody loaded those routes. Fixed by adding the directive.
+
+**The lesson worth keeping:** `tsc`, `eslint` and the whole vitest suite pass on
+this bug. Nothing in the test setup renders a route. A curl sweep over every
+prototype route is currently the only thing that would have caught it — worth
+running before declaring a prototype pass done:
+
+```bash
+for p in $(grep -rho '/prototype/vector[a-z0-9/-]*' app components | sort -u); do printf "%-52s %s\n" "$p" "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000$p)"; done
+```
+
+---
+
 ## Two gaps that are easy to miss because the surface looks finished
 
 **The marketing site now describes a debrief flow that only exists in the
@@ -416,34 +444,102 @@ difference is the entire reason the card exists. Worth judging at full size.
 
 ---
 
-## Next feature: guided Chair Flying (briefed, not started)
+## Chair Flying — shipped
 
-Full brief is in the session transcript; **ask for it to be re-pasted** rather
-than working from this summary.
+**Read this before touching `lib/prototype/chair-fly.ts` or anything under
+`app/prototype/vector/train/`.**
 
-The defining rule: **Chair Flying is generated from what actually happened on
-the student's last flight** — never a generic study library. The loop is
-Flight → Debrief → specific training need → Chair Flying → Next Flight.
+The defining rule, and it is enforced by tests: **a drill is generated from what
+actually happened on the student's last flight.** Not a study library with a
+crosswind chapter. The loop it closes is Flight → Debrief → specific training
+need → Chair Flying → Next Flight.
 
-It lives inside **Train**, as one of Vector's recommended actions, with Vector
-giving the reason from real debrief evidence. Not a new nav item, not a chatbot.
+### The selection rule is the product
 
-V1 is **one** guided rehearsal mode, 3–7 minutes, one objective. Scenario →
-student thinks → brief coaching → continue, one prompt at a time. Lightweight
-tap/reveal only — **do not make the student type answers**. Must include at
-least one ADM/judgment moment (go-around as a legitimate option), and must end
-by carrying 2–3 items into the Next Flight plan.
+`contestedObjective()` picks the objective where **the student rated themselves
+above the instructor** — largest gap first. That is deliberate and it is the
+part no competitor can copy, because it needs both assessments:
 
-Seed it from the existing crosswind row, which is already the right shape:
-student `INDEPENDENT` vs instructor `NEEDS_COACHING`, with Jake's rollout
-evidence. That makes the reason for the drill self-evident.
+- The weakest open skill is the one she already knows about. Jake said it, it is
+  on the debrief, she would pick it herself.
+- The contested one is the one she thinks went **fine**, which is exactly why
+  she would never choose to rehearse it.
 
-Architect for later modes — Guided / Recall / Challenge, and a future spoken
-mode — but **build none of them yet**. No speech analysis in this pass.
+Falls back to whatever the instructor left open, so Train always has something
+to say. Returns null when nothing is contested and nothing is open, and
+`recommendedDrill()` returns null when the chosen objective has no authored
+scenario — `/train/chair-fly` 404s rather than serving generic content. **That
+is the correct failure. Do not add a default drill.**
 
-Guardrail: Chair Flying reinforces the CFI, POH/AFM and published procedures. It
-never replaces them, and where detail is aircraft-specific it points back to the
-student's own checklist and instructor rather than inventing numbers.
+### Chair Flying is NOT an assessment layer
+
+There is exactly one performance model in this product
+(`lib/performance-levels.ts`) and Chair Flying only ever **reads** it. No
+correctness scores, no percentages, no pass/fail, no points, no stars, no
+mastery levels, no separate proficiency scale. Choosing an option produces
+coaching and then the next situation.
+
+`ChairFlyOption` has **no `correct` flag**, and `chair-fly.test.ts` asserts the
+option keys are exactly `id / response / text`. That is not tidiness — a boolean
+is the thing a future session would count, and a count is a score. If Chair
+Flying activity ever needs tracking, track completion separately and do not let
+it touch the performance model.
+
+The step UI carries no right/wrong colouring for the same reason: the chosen
+option is marked as chosen and Vector's words carry whether the reasoning holds
+up. If that ever reads as too soft, the fix is the wording, not a colour.
+
+### What is derived vs authored
+
+Derived from the seed: which objective, both ratings, the instructor's evidence,
+the carry-forward list (`CONCEPTS[...].nextTime`), the next-flight link, and the
+stated duration (from step count, so the claim cannot drift from the content).
+
+Authored: the six scenario beats, keyed by objective in `SCENARIOS`. The
+prototype has no generation pipeline and the brief was explicit about not adding
+one.
+
+### Rules inside the drill
+
+- **Six beats:** scene → control inputs → flare → touchdown → **rollout** →
+  judgment. The rollout beat is the one from Jake's debrief and it is the only
+  step carrying `instructorNote`, so his name appears on his own words and
+  Vector never speaks in the instructor's voice. Asserted in tests.
+- **At least one `kind: "judgment"` beat**, with the go-around offered as
+  legitimate rather than as failure. A rehearsal that is only procedure teaches
+  sequence, not decision.
+- **No typing.** Tap and reveal, one situation on screen, the previous prompt
+  gone. The old `components/prototype/chair-fly.tsx` was a growing chat log with
+  a text input; it was deleted, because composing sentences for a machine is not
+  sitting in the airplane.
+- Conditions come from the flight that produced the note — KSQL, Runway 30, left
+  crosswind ~12 kt, the C172S. **Wind from the left means the upwind wing is the
+  LEFT wing and any drift is to the RIGHT.** The old seed had a beat drifting the
+  wrong way; the new ones are written to this and were reviewed for it.
+- The guardrail line points back to the checklist, the POH and the instructor,
+  and no number is invented — the only figures used are ones Jake already said.
+
+### Later modes are architected, not built
+
+`ChairFlyMode = "guided" | "recall" | "challenge"`, and only `guided` exists.
+`looksFor` / `idealAnswer` survive on every step as the free-text seam for
+`recall` — `evaluateChairFly()` in `lib/ai/vector.ts` and the `chair_fly` intent
+on `/api/prototype/vector` still consume them. A spoken mode is a delivery change
+on top of `recall`, not a fourth mode. **No speech analysis was built.**
+
+`CHAIR_FLY` moved out of `vector-data.ts` into `lib/prototype/chair-fly.ts`;
+there is one dataset, and the old export is a getter over the drill so the API
+route keeps working.
+
+### Where it lives
+
+One route added: `/prototype/vector/train/chair-fly`, server-rendered from the
+seed. Quiz and Ask are still in-page modes on Train; this one is not, because
+the rehearsal needs the whole screen and every screen here is deep-linkable.
+Train's recommendation panel now leads with **Start chair flying** and states
+both ratings above Jake's evidence; Review / Quiz / Ask are demoted to
+secondaries. A Vector card whose `nextAction.target` is `chair-fly` navigates
+there from any surface — that is handled once in `vector-panel.tsx`.
 
 ---
 
@@ -472,8 +568,10 @@ Longer-standing:
 8. 3D flight path, subscribing to the same `t`
 9. Telemetry-aware Vector answers; render the Picture This block
 10. Onboarding/support as a swipeable sequence (asked for, never built)
-11. Knowledge-check and chair-fly screens never got the premium pass — visible
-    seam entering from Train
+11. Knowledge-check never got the premium pass — visible seam entering from
+    Train. (The chair-fly half of this is resolved: it is built on `ui.tsx`
+    now. `knowledge-check.tsx` still uses shadcn `Card` and its own button
+    styles.)
 12. Deepgram "50% discount" claim in `lib/transcription/use-deepgram-transcription.ts`
     comments and `.env.example` is **unverified** and traces only to a
     competitor's blog. It should be corrected or removed.
@@ -488,6 +586,16 @@ Longer-standing:
 
 ## Things a fresh session will get wrong without being told
 
+- **The browser pane's failures in the Chair Flying session were the
+  ENVIRONMENT, not the app.** Clicks via `computer` timed out with "the pane may
+  be stuck", `_next` chunks returned 403 inside the pane while curl got 200 for
+  the same URLs, and the page would not scroll past ~37px. React was hydrated
+  and healthy throughout: dispatching clicks with `javascript_tool` drove every
+  state transition correctly. Chair Flying was verified that way plus
+  server-rendered curl checks — so the *logic and rendering* are confirmed, but
+  the real mouse-input and scroll path was never exercised. **Repeat a normal
+  visual interaction pass on `/train/chair-fly` when the browser environment is
+  healthy**, including the below-the-fold portion of a step screen.
 - **The browser pane drops paths on `navigate`** and has been unreliable for
   several sessions. Recent screens were verified by server-rendered content
   checks plus tsc/eslint/tests. If you need visual proof, say which screens

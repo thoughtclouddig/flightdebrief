@@ -4,7 +4,6 @@ import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { VectorPanel } from "@/components/prototype/vector-panel";
 import { KnowledgeCheck } from "@/components/prototype/knowledge-check";
-import { ChairFly } from "@/components/prototype/chair-fly";
 import {
   AcsBadge,
   BackLink,
@@ -26,9 +25,12 @@ import {
 } from "@/components/prototype/ui";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { CONCEPTS, INSTRUCTOR, LAST_FLIGHT, SKILL_SCORES, SUGGESTED } from "@/lib/prototype/vector-data";
+import { CONCEPTS, INSTRUCTOR, LAST_FLIGHT, NEXT_LESSON, SKILL_SCORES, SUGGESTED } from "@/lib/prototype/vector-data";
+import { recommendedDrill } from "@/lib/prototype/chair-fly";
 
-type Mode = "menu" | "review" | "quiz" | "chair" | "ask";
+const CHAIR_FLY_HREF = "/prototype/vector/train/chair-fly";
+
+type Mode = "menu" | "review" | "quiz" | "ask";
 
 /**
  * Train answers: what should I practice right now?
@@ -36,27 +38,42 @@ type Mode = "menu" | "review" | "quiz" | "chair" | "ask";
  * Vector RECOMMENDS one thing rather than presenting a menu. Four equal
  * buttons is a tool tray, and a tool tray puts the decision back on a
  * student who opened the app precisely because they did not know what to
- * work on. The recommendation is the lowest-scoring open skill, with the
- * instructor's own words as the reason.
+ * work on. The recommendation is the objective the two of them saw
+ * differently when there is one, otherwise the lowest-scoring open skill --
+ * with the instructor's own words as the reason either way.
  */
 export default function TrainPage() {
   const [mode, setMode] = useState<Mode>("menu");
   const crosswind = CONCEPTS["crosswind-correction-through-touchdown"]!;
   const open = SKILL_SCORES.filter((s) => s.state !== "Meets Standard");
-  // Weakest open skill wins. Deterministic, and it matches what Jake left open.
-  const recommended = [...open].sort((a, b) => a.score / a.max - b.score / b.max)[0]!;
+  const weakest = [...open].sort((a, b) => a.score / a.max - b.score / b.max)[0]!;
+
+  /*
+   * What Vector recommends, and the order matters.
+   *
+   * A contested objective outranks the weakest open skill. The weakest skill
+   * is the one the student already knows is a problem -- Jake said so, it is
+   * on the debrief, and she would pick it herself. The contested one is the
+   * one she thinks went fine, which is exactly why nobody would choose to
+   * rehearse it. That is the recommendation only this product can make,
+   * because it is the only one holding both assessments.
+   *
+   * Falls back to the weakest open skill when the last flight produced no
+   * disagreement, so Train always has something to say.
+   */
+  const drill = recommendedDrill();
+  const recommended = (drill ? open.find((s) => s.skill === drill.skill) : undefined) ?? weakest;
 
   if (mode !== "menu") {
     return (
       <Screen>
         <BackLink onClick={() => setMode("menu")}>Training</BackLink>
         {mode === "quiz" ? <KnowledgeCheck /> : null}
-        {mode === "chair" ? <ChairFly /> : null}
         {mode === "ask" ? (
           <VectorPanel
             context={`${LAST_FLIGHT.lesson} · ${INSTRUCTOR.firstName} · ${LAST_FLIGHT.date}`}
             suggestions={SUGGESTED.nextFlight}
-            onAction={(t) => setMode(t === "quiz" ? "quiz" : t === "chair-fly" ? "chair" : "menu")}
+            onAction={(t) => setMode(t === "quiz" ? "quiz" : "menu")}
           />
         ) : null}
         {mode === "review" ? (
@@ -135,6 +152,18 @@ export default function TrainPage() {
             <AcsBadge area={recommended.acsArea} onPanel />
           </div>
 
+          {/* Why THIS one. The two ratings side by side is the whole
+              argument for spending four minutes on a skill she thinks is
+              already fine, so it goes above the evidence rather than being
+              left for her to infer from it. */}
+          {drill ? (
+            <p className="mt-4 text-[15px] leading-relaxed text-panel-foreground-soft">
+              You called this <span className="font-semibold text-panel-foreground">{drill.reason.studentLabel}</span>.{" "}
+              {drill.reason.instructorName} called it{" "}
+              <span className="font-semibold text-panel-foreground">{drill.reason.instructorLabel}</span>.
+            </p>
+          ) : null}
+
           {/* The reason, in the instructor's own words. A recommendation
               without its evidence is just a suggestion. */}
           <div className="mt-5">
@@ -147,16 +176,34 @@ export default function TrainPage() {
           </div>
 
           <div className="mt-6 flex flex-col gap-2.5">
-            <PanelButton onClick={() => setMode("review")}>
-              Start 5-minute review
-              <ArrowRight className="size-[18px]" aria-hidden />
-            </PanelButton>
-            <div className="flex gap-2.5">
+            {/* One recommendation with its reason, and the rest demoted. Four
+                equal buttons is a tool tray, and a tool tray hands the
+                decision back to a student who opened the app because she did
+                not have one. */}
+            {drill ? (
+              <>
+                <PanelButton href={CHAIR_FLY_HREF}>
+                  Start chair flying
+                  <ArrowRight className="size-[18px]" aria-hidden />
+                </PanelButton>
+                <p className="px-1 text-[14px] text-panel-foreground-soft">
+                  About {drill.estimatedMinutes} minutes · rehearse it before {NEXT_LESSON.date}
+                </p>
+              </>
+            ) : (
+              <PanelButton onClick={() => setMode("review")}>
+                Start 5-minute review
+                <ArrowRight className="size-[18px]" aria-hidden />
+              </PanelButton>
+            )}
+            <div className="mt-1.5 flex gap-2.5">
+              {drill ? (
+                <SecondaryButton onClick={() => setMode("review")} onPanel>
+                  Review
+                </SecondaryButton>
+              ) : null}
               <SecondaryButton onClick={() => setMode("quiz")} onPanel>
                 Quiz
-              </SecondaryButton>
-              <SecondaryButton onClick={() => setMode("chair")} onPanel>
-                Chair-fly
               </SecondaryButton>
               <SecondaryButton onClick={() => setMode("ask")} onPanel>
                 Ask

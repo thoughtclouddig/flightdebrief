@@ -7,7 +7,7 @@ import type { PerformanceLevelCode } from "@/lib/performance-levels";
  * evaluable without a migration, a reseed, or any risk to production data --
  * and the question it exists to answer ("does this feel like it helps me
  * learn?") does not depend on where the rows live. Everything downstream
- * (context builder, Vector, knowledge check, chair fly) reads this shape, so
+ * (context builder, Vector, knowledge check) reads this shape, so
  * swapping it for real repository calls later is a single seam.
  *
  * The content is not decorative. The debrief language, the reflection, and
@@ -413,48 +413,6 @@ export const CONCEPTS: Record<
     ],
     sources: ["FAA Airplane Flying Handbook, Ch. 8 — Approaches and Landings", "ACS: PA.IV.A — Normal Approach and Landing"],
   },
-};
-
-export interface ChairFlyStep {
-  id: string;
-  setup: string;
-  prompt: string;
-  /** Keyword clusters the answer should touch. Used by the mock evaluator. */
-  looksFor: string[];
-  idealAnswer: string;
-}
-
-/** One scenario, proving the loop rather than building a library. */
-export const CHAIR_FLY = {
-  title: "Crosswind landing at KSQL",
-  intro:
-    "Left crosswind, about 12 knots, Runway 30. You're midfield downwind. I'll stop at each decision point and ask what you do -- answer out loud or type it, whichever is easier.",
-  steps: [
-    {
-      id: "s1",
-      setup: "You're midfield downwind, abeam the numbers, 1,000 AGL.",
-      prompt: "What are you doing right now?",
-      looksFor: ["power", "carb", "flaps", "speed", "descent", "abeam"],
-      idealAnswer:
-        "Power back, carb heat as required, first notch of flaps, start the descent and let the speed settle. This is where getting configured early starts.",
-    },
-    {
-      id: "s2",
-      setup: "You roll onto final. The airplane is drifting right of centerline and you're about 8 knots fast.",
-      prompt: "What do you fix first, and how?",
-      looksFor: ["aileron", "left", "wind", "rudder", "speed", "power", "go around", "stabiliz"],
-      idealAnswer:
-        "Left aileron into the wind, right rudder to keep the nose straight, and get the speed down now rather than in the flare. If it isn't stable by short final, go around -- that's the exact pattern Jake wants broken.",
-    },
-    {
-      id: "s3",
-      setup: "You're in the flare. The upwind wing starts to rise and you feel yourself drifting left of centerline.",
-      prompt: "What do you do?",
-      looksFor: ["aileron", "more", "into the wind", "increase", "rudder", "hold"],
-      idealAnswer:
-        "More aileron into the wind -- the input needs to keep increasing as you slow. Rudder keeps the nose aligned. Don't relax anything until you're rolling straight at taxi speed.",
-    },
-  ] as ChairFlyStep[],
 };
 
 /** Contextual suggested actions. Vector never opens as an empty box. */

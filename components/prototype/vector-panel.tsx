@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CornerDownLeft, Loader2, Sparkles } from "lucide-react";
 import { VectorCardView } from "@/components/prototype/vector-card";
 import type { VectorCard } from "@/lib/ai/vector-schema";
@@ -25,6 +26,7 @@ export function VectorPanel({
   suggestions: string[];
   onAction?: (target: string | null) => void;
 }) {
+  const router = useRouter();
   const [card, setCard] = useState<VectorCard | null>(null);
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
@@ -52,7 +54,13 @@ export function VectorPanel({
     <div className="flex flex-col gap-4">
       {card ? (
         <>
-          <VectorCardView card={card} onAction={onAction} />
+          {/* Chair-fly is a route now, not a mode, so it resolves here for
+              every surface that renders a Vector card -- Train and Debrief
+              both offer it, and only one of them was passing an onAction. */}
+          <VectorCardView
+            card={card}
+            onAction={(t) => (t === "chair-fly" ? router.push("/prototype/vector/train/chair-fly") : onAction?.(t))}
+          />
           <button
             onClick={() => setCard(null)}
             className="self-start text-sm font-medium text-foreground-faint transition-colors hover:text-brand"

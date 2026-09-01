@@ -1,5 +1,5 @@
 import { performanceLevelRank, type PerformanceLevelCode } from "@/lib/performance-levels";
-import { PERCEPTION_GAPS, type SkillState } from "@/lib/prototype/vector-data";
+import { PERCEPTION_GAPS, SKILL_SCORES, type SkillState } from "@/lib/prototype/vector-data";
 
 /**
  * The objective-level assessment vocabulary for the guided debrief.
@@ -89,4 +89,18 @@ function normalise(name: string): string {
 
 export function objectiveForSkill(skillName: string) {
   return PERCEPTION_GAPS.find((g) => normalise(g.task) === normalise(skillName));
+}
+
+/**
+ * The reverse of objectiveForSkill: the skill row a lesson objective was
+ * scored under.
+ *
+ * Same loose comparison, for the same reason -- the seed says "Crosswind
+ * Landings" as an objective and "Crosswind Landing" as a skill, and keeping
+ * two vocabularies in sync by hand is how they drift. Returns undefined when
+ * an objective has no matching skill row, which is a real case and not an
+ * error.
+ */
+export function skillForObjective(task: string) {
+  return SKILL_SCORES.find((s) => normalise(s.skill) === normalise(task));
 }

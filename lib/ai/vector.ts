@@ -2,7 +2,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import { extractJson } from "./extract-json";
 import { RESPONSE_SHAPE_INSTRUCTION, vectorCardSchema, type VectorCard } from "./vector-schema";
 import {
-  CHAIR_FLY,
   CONCEPTS,
   IMPROVING,
   INSTRUCTOR,
@@ -15,8 +14,8 @@ import {
   STUDENT,
   SKILL_SCORES,
   STUDENT_REFLECTION,
-  type ChairFlyStep,
 } from "@/lib/prototype/vector-data";
+import type { ChairFlyStep } from "@/lib/prototype/chair-fly";
 
 /**
  * Vector -- the conversational surface over one student's own training record.
@@ -332,4 +331,5 @@ export function evaluateChairFly(step: ChairFlyStep, answer: string): { hit: str
   return { hit, missed, response };
 }
 
-export { CHAIR_FLY, CONCEPTS };
+export { CHAIR_FLY } from "@/lib/prototype/chair-fly";
+export { CONCEPTS };

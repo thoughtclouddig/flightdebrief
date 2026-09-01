@@ -1,3 +1,9 @@
+"use client";
+
+// stateTone() below lives in the client-only ui.tsx, so this component has to
+// be in the client graph to call it. Without the directive it worked on
+// /debrief/latest -- a client page pulls it in -- and threw "Attempted to call
+// stateTone() from the server" on every server-rendered skill-detail route.
 import { Card, SkillMeter, stateTone } from "@/components/prototype/ui";
 import { cn } from "@/lib/utils";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
