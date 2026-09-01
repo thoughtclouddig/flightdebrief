@@ -151,7 +151,14 @@ export function HowItWorks() {
         <SectionHead
           eyebrow="How it works"
           size="large"
-          headline="Fly. Learn. Get better. Get checkride ready."
+          headline={
+            <>
+              {/* Stated break from sm up, where the column can hold each half
+                  on one line. Below sm it cannot, so balance handles it. */}
+              <span className="sm:block">Fly. Learn. Get better.</span>{" "}
+              <span className="sm:block">Get checkride ready.</span>
+            </>
+          }
           body="The loop that makes a lesson carry forward. The debrief already happens — AfterFlight is what turns it into training you can actually do before the next one."
         />
 

@@ -44,8 +44,20 @@ export function SectionHead({
           // broke a fourth time and stranded "ready." -- the same failure the
           // note describes, one breakpoint down. A clamp at both ends now.
           size === "large"
-            ? "text-[clamp(1.6rem,7vw,2.25rem)] sm:text-[clamp(3rem,6vw,3.75rem)]"
+            // 3.3rem, not 3.75rem: "Fly. Learn. Get better." needs 739px at
+            // 60px and the column is 672px, so the intended two-line break
+            // could not happen at the old ceiling however it was marked up.
+            ? "text-[clamp(1.6rem,7vw,2.25rem)] sm:text-[clamp(2.75rem,5.2vw,3.3rem)]"
             : "text-4xl sm:text-5xl",
+          // AFTER the size, and that ordering is the whole trick.
+          //
+          // Tailwind's text-* utilities set font-size AND line-height together,
+          // so an arbitrary text-[clamp(...)] sets only the size and the
+          // headline fell back to body leading -- 90px of it on 60px type.
+          // Stating leading fixes that, but tailwind-merge treats a font-size
+          // class as conflicting with leading and drops any leading that comes
+          // BEFORE it. Written above the size line, this silently vanished.
+          size === "large" && "leading-[1.03]",
         )}
       >
         {headline}
