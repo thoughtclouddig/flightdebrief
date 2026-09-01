@@ -53,7 +53,7 @@ describe("idempotent ingestion", () => {
   it("dedupes overlapping batches sent from an older checkpoint", () => {
     // A different key, but the fixes overlap -- what a client does after a
     // crash when it resends from the last checkpoint it managed to persist.
-    let s = ingestBatch(session(), { idempotencyKey: "b1", sessionId: "sess-1", fixes: [fix(1), fix(2)] }).session;
+    const s = ingestBatch(session(), { idempotencyKey: "b1", sessionId: "sess-1", fixes: [fix(1), fix(2)] }).session;
     const r = ingestBatch(s, { idempotencyKey: "b2", sessionId: "sess-1", fixes: [fix(2), fix(3)] });
     expect(r.duplicate).toBe(false);
     expect(r.accepted).toBe(1);
