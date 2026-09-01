@@ -1,8 +1,29 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, SITE_GATE_COOKIE, isSiteGateEnabled, verifySessionJwt, verifySiteGateJwt } from "@/lib/auth/session";
 
-const MARKETING_PATHS = new Set(["/", "/instructors", "/schools", "/enterprise", "/privacy", "/terms", "/what-is-afterflight"]);
-const MARKETING_PREFIXES = ["/field-notes", "/research"];
+// These two lists and the `matcher` at the bottom must be kept in sync, and
+// the failure is silent in a misleading direction: a path added to the matcher
+// but NOT to one of these falls through to the session check below and
+// redirects to /login, so the page appears broken to a logged-out visitor
+// rather than gated. Add to both, always.
+const MARKETING_PATHS = new Set([
+  "/",
+  "/instructors",
+  "/schools",
+  "/enterprise",
+  "/privacy",
+  "/terms",
+  "/what-is-afterflight",
+  "/how-it-works",
+  "/data-handling",
+  "/for-instructors-quickstart",
+]);
+
+// `/demo` covers /demo/overview as well as the bare path. `/prototype` gates
+// the whole prototype surface -- ~19 routes of unreleased product that sat
+// completely open until now, reachable by anyone holding a direct URL even
+// while the marketing site itself was gated.
+const MARKETING_PREFIXES = ["/field-notes", "/research", "/demo", "/prototype"];
 
 /**
  * Route protection, in two unrelated tiers:
@@ -78,6 +99,9 @@ export const config = {
      * (marketing) routes -- optional shared-password gate. /gate and
      * /api/gate are deliberately excluded (would redirect-loop otherwise);
      * (auth) routes are excluded on purpose, see the doc comment above.
+     *
+     * Mirror every addition into MARKETING_PATHS or MARKETING_PREFIXES at the
+     * top of this file -- see the note there for what breaks if you don't.
      */
     "/",
     "/instructors",
@@ -86,9 +110,18 @@ export const config = {
     "/privacy",
     "/terms",
     "/what-is-afterflight",
+    "/how-it-works",
+    "/data-handling",
+    "/for-instructors-quickstart",
     "/field-notes",
     "/field-notes/:path*",
     "/research",
     "/research/:path*",
+    "/demo",
+    "/demo/:path*",
+    // Both the bare path and the children: ":path*" does not match the parent,
+    // the same trap already documented for /super-admin above.
+    "/prototype",
+    "/prototype/:path*",
   ],
 };
