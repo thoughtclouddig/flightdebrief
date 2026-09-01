@@ -1022,3 +1022,40 @@ ALTER TABLE organizations ADD COLUMN IF NOT EXISTS transcript_retention_days int
 -- would silently destroy the student's history. Nulling the transcript
 -- removes the verbatim conversation while keeping what was learned from it.
 ALTER TABLE debriefs ADD COLUMN IF NOT EXISTS transcript_purged_at timestamptz;
+
+-- ---------------------------------------------------------------------------
+-- Mobile recording sessions.
+--
+-- The phone records offline and uploads in batches, so the server needs
+-- somewhere to accumulate a flight that does not exist yet -- a Flight row is
+-- only created when the session finalizes and its duration is known.
+--
+-- The session is stored as a single JSONB document rather than a fixes table
+-- because it is written as a whole on every batch and read as a whole on
+-- finalize; there is no query that wants one fix. `seen_batch_keys` is what
+-- makes retries idempotent, and it is indexed inside the document rather than
+-- as rows for the same reason.
+CREATE TABLE IF NOT EXISTS mobile_recording_sessions (
+  -- Client-generated, so the phone can reference the session before it has
+  -- ever reached the network.
+  id text PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  -- Epoch ms of the START FLIGHT tap. The canonical session origin that GPS,
+  -- replay and later cockpit audio all stamp against.
+  t0 bigint NOT NULL,
+  aircraft_tail text NOT NULL,
+  instructor_id uuid REFERENCES users(id) ON DELETE SET NULL,
+  device jsonb NOT NULL DEFAULT '{}'::jsonb,
+  session jsonb NOT NULL,
+  -- Set when the session finalizes into a real flight.
+  flight_id uuid REFERENCES flights(id) ON DELETE SET NULL,
+  ended_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS mobile_recording_sessions_user_idx
+  ON mobile_recording_sessions (user_id, created_at DESC);
+-- Finds the unfinished session on app relaunch.
+CREATE INDEX IF NOT EXISTS mobile_recording_sessions_active_idx
+  ON mobile_recording_sessions (user_id) WHERE ended_at IS NULL;
