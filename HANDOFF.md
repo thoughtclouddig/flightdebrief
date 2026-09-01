@@ -228,17 +228,47 @@ The secret was added to Replit Secrets on 2026-09-01. **Not published yet** —
 adding a secret to the repl does not apply it to an already-published
 deployment.
 
-**Open, and not yet approved:** `proxy.ts` gates a stale list. Even with the
-gate on, these stay reachable to anyone holding a direct URL — `/demo`,
-`/demo/overview`, `/how-it-works`, `/data-handling`,
-`/for-instructors-quickstart`, and all 19 `/prototype/vector/**` routes. The
-prototype is the unreleased product review surface and is entirely ungated.
+**Coverage was fixed in `11c0bc3`** and verified at runtime on Replit.
+`proxy.ts` had gated a stale list: `/how-it-works`, `/data-handling`,
+`/for-instructors-quickstart`, `/demo`, `/demo/overview` and all ~19
+`/prototype/vector` routes were reachable by direct URL while the marketing
+site in front of them was locked. The prototype — unreleased product — was the
+serious one.
 
-If you fix it: the matcher and the `MARKETING_PATHS` / `MARKETING_PREFIXES`
-sets must be updated **together**. A path in the matcher but not the marketing
-sets falls through to the session check and redirects to `/login` — the page
-breaks rather than being gated. `SITE_ACCESS_CODE` is also still undocumented
-in `.env.example`, which is likely why it was easy to lose.
+Measured with the gate on, `curl` against the running server:
+
+| Route | | |
+|---|---|---|
+| `/`, `/how-it-works`, `/demo`, `/prototype/vector`, `/prototype/vector/progress` | `307` | gated |
+| `/gate`, `/login` | `200` | reachable |
+| `/invite/accept` | `307` → `/login` | its own no-token logic, **not** the gate |
+
+That last row is the one to re-check if you ever touch this. `/invite/accept`
+must never redirect to `/gate`, or an invited user cannot accept while the site
+is hidden.
+
+**The rule that will bite you:** the `matcher` and the
+`MARKETING_PATHS` / `MARKETING_PREFIXES` sets must be edited together. A path
+in the matcher alone falls through to the session check and redirects to
+`/login` — the page looks broken rather than gated, which points debugging at
+auth instead of at this file. Both ends of `proxy.ts` say so now.
+
+`robots.ts` disallows everything and drops the sitemap link while the gate is
+on; the sitemap was a complete public list of every URL, so a private site had
+still been publishing its own map.
+
+Two curl checks worth keeping. Note `localhost` resolves to `::1` on Replit and
+the dev server binds IPv4 only, so `127.0.0.1` is required or everything reads
+`000` and looks like the gate is broken when the server simply was not reached:
+
+```bash
+for p in / /prototype/vector; do curl -s -o /dev/null -w "$p %{http_code}\n" "http://127.0.0.1:3000$p"; done
+```
+
+**Still open:** a published Deployment may carry its own secrets scope. Setting
+`SITE_ACCESS_CODE` on the workspace does not necessarily apply it to the
+published site, and if it is missing there the site publishes fully public with
+no error. Verify against the public URL after publishing, not just locally.
 
 ---
 
@@ -257,8 +287,9 @@ in `.env.example`, which is likely why it was easy to lose.
    that were later corrected
 8. Tasks #156 (home progress rail), #157 (solo signup smoke test), #158
    (homepage stage-two positioning, held pending 20 CFI discovery calls)
-9. `proxy.ts` gate coverage — see the Site gate section above
-10. Founder story has no photograph; the signature is set, the image is not
+9. Founder story has no photograph; the signature is set, the image is not
+10. `npm run build` has never been run successfully outside Replit
+    (`DATABASE_URL`), so a publish is still its first real test
 
 ---
 
