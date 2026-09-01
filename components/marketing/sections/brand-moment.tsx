@@ -63,18 +63,19 @@ export function BrandMoment() {
         </p>
 
         {/*
-         * One question, allowed to break into two balanced lines.
+         * One question. Below lg it wraps wherever balance puts it; at lg the
+         * two spans become blocks, which forces the break after "feel".
          *
-         * The previous copy was two sentences and was set as two blocks, each
-         * capped at ~20ch, because as one run the display size broke
-         * mid-sentence and orphaned a word at almost every width. A single
-         * question does not have that problem -- but it is 40 characters,
-         * two wider than the longest line this block used to hold, so the
-         * lg:whitespace-nowrap that used to sit here is gone. Balance splits
-         * it instead, which cannot overflow at any width.
+         * Explicit spans rather than a hidden <br> or a tuned ch cap: a br
+         * toggled with display utilities relies on browser handling of a
+         * display-switched line break, and a character cap only produces this
+         * break until someone edits a word. Blocks state the intent.
          */}
-        <p className="font-display mx-auto mt-6 max-w-[22ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-[#101727] sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0] lg:max-w-[26ch] lg:text-[clamp(2.5rem,4.5vw,3rem)]">
-          Why does every flight feel like a <span className="text-brand">reset?</span>
+        <p className="font-display mx-auto mt-6 max-w-[22ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-[#101727] sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0] lg:max-w-none lg:text-[clamp(2.5rem,4.5vw,3rem)]">
+          <span className="lg:block">Why does every flight feel</span>{" "}
+          <span className="lg:block">
+            like a <span className="text-brand">reset?</span>
+          </span>
         </p>
         <p
           className="mx-auto mt-8 max-w-md text-balance text-lg text-[#4b545d] sm:max-w-2xl"
