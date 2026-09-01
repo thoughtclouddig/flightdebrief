@@ -1,4 +1,4 @@
-# Handoff — AfterFlight, as of `c04850e`
+# Handoff — AfterFlight, as of `8aceee7`
 
 Written to survive a session boundary. Read this and `design-system/afterflight/MASTER.md`
 before touching the prototype, the flight-analysis stack, or the mobile app.
@@ -138,34 +138,107 @@ as done.
 
 ---
 
-## Next up: homepage messaging reframe (briefed, not started)
+## Homepage messaging reframe — shipped `a3b73c4`
 
-A full brief was given on 2026-08-31 and **no work was done on it** — the
-session ran out of context first. Nothing was changed; the homepage is exactly
-as `aa512b9` left it.
+The brief that the previous handoff recorded as briefed-but-unstarted has now
+been implemented. It was delivered as a **surgical messaging pass, not a
+rebuild** — the user's own scope clarification was "keep 80–90%, change
+10–20%", and that is what happened.
 
-The strategic centre:
+**Changed:** hero copy; `TrainingEconomics` headline plus a working cost
+calculator; `FinalCta` headline and a secondary CTA; `nav.tsx` made
+student-first; `BrandMoment` problem cards moved below the video with the
+scrim rebalanced; page order and metadata.
 
-- **Why:** every flight should build on the last
-- **Category:** the between-flight training system for student pilots
-- **Outcome:** build proficiency faster, waste fewer expensive flight hours
-- **Explicitly NOT** "a flight tracking app" — the recorder is a proof point
-  and an input, not the promise
+**Added:** `training-cost-calculator.tsx`, `founder-story.tsx`,
+`flight-recording-preview.tsx`.
 
-Hero becomes: eyebrow *"Better flight training starts between flights"*,
-headline *"Show up ready for your next lesson."*, primary CTA *"Start Your
-First Flight"*.
+**Preserved unchanged, deliberately:** HowItWorks, Vector, NextFlight,
+PersonalizedTraining, PerceptionGap, SkillProgress, DebriefReplay,
+DebriefDoctrine, Proof, WhoItsFor, Pricing, and the ForCfis copy itself.
+These already said the right thing. Do not "improve" them into drift.
 
-Structural asks: keep every existing section (this is copy and hierarchy, not
-a rebuild); add a Start Flight product-proof section; add an economic-stakes
-section sized to host a training-cost calculator later; demote CFI and Schools
-below the student story in both page and nav.
+### The recorder copy is deliberately in future tense
 
-Guardrails: no guaranteed savings, no "ready to solo/checkride", never lead
-with AI, telemetry, tracking or transcription.
+The brief asked for a Start Flight product-proof section and one was built —
+four states, mocked screens, brand-orange `Start Flight` and `Start Debrief`
+buttons. **It was then replaced** by `flight-recording-preview.tsx`, on the
+user's explicit decision, because `apps/mobile` has still never run on a
+device and the locked-screen / ForeFlight-in-front case that section
+advertised is precisely the one the release gate has not tested.
 
-The full brief is in the session transcript. Ask the user to re-paste it — it
-is long and specific, and working from this summary alone would lose detail.
+Three things carry that constraint, and all three matter:
+
+- **Tense.** Every verb is future. Changing it before a device test passes is
+  wrong, and the file's header comment says so.
+- **Position.** It sits after every shipped section. What ships outranks what
+  is coming.
+- **No buttons.** An orange `Start Flight` fill reads as shippable UI whatever
+  label sits above it.
+
+The file is named `flight-recording-preview.tsx` rather than `start-flight.tsx`
+for exactly this reason — a future session opening a file called "start flight"
+will assume it documents something that ships.
+
+A sweep of `components/marketing` for `records your flight | flight path |
+telemetry | ADS-B` returns nothing. Keep it that way until the gate passes.
+
+### Type sized by measurement, not by eye
+
+Both hero clamp ends and the `BrandMoment` display lines are set from measured
+string widths, and the reasoning is in the code comments. The new copy is
+materially wider than what it replaced; at the old sizes the hero broke to four
+lines on desktop and five on mobile and pushed the CTA toward the fold.
+
+**Measuring gotcha, cost an hour:** a probe span must copy `font-stretch`.
+Without it Archivo measures about a fifth narrower than it renders, which
+produces a confidently wrong number.
+
+---
+
+## Git direction was backwards — fixed `8aceee7`
+
+Worth knowing, because it silently invalidated local verification.
+
+`origin` had been **33 commits behind Replit**, including
+`3007297 Separate live Deepgram TTS checks from the deterministic test suite`.
+The documented loop is push-from-sandbox / pull-on-Replit, but Replit had been
+the source of truth in practice, so every pull produced another merge commit —
+which is why the history has so many.
+
+A sandbox clone was therefore missing real work, including a `vitest.config.mts`
+change, so any local test run was being made against a tree that did not match
+the repo. Resolved by pushing **from Replit** on 2026-09-01; all three now sit
+at `8aceee7` with zero divergence. `git config pull.ff only` on Replit is what
+keeps it from recurring, and it only works now that both sides match.
+
+Default assumption for a fresh session: **verify `git rev-list --left-right
+--count origin/main...HEAD` before trusting a local test run.**
+
+---
+
+## Site gate
+
+Code-complete and untouched. One secret drives it: `SITE_ACCESS_CODE`, unset or
+blank means off (`lib/auth/session.ts`). The value is both the password and the
+JWT signing key, so changing it revokes every existing 30-day `fb_site_gate`
+cookie.
+
+The secret was added to Replit Secrets on 2026-09-01. **Not published yet** —
+adding a secret to the repl does not apply it to an already-published
+deployment.
+
+**Open, and not yet approved:** `proxy.ts` gates a stale list. Even with the
+gate on, these stay reachable to anyone holding a direct URL — `/demo`,
+`/demo/overview`, `/how-it-works`, `/data-handling`,
+`/for-instructors-quickstart`, and all 19 `/prototype/vector/**` routes. The
+prototype is the unreleased product review surface and is entirely ungated.
+
+If you fix it: the matcher and the `MARKETING_PATHS` / `MARKETING_PREFIXES`
+sets must be updated **together**. A path in the matcher but not the marketing
+sets falls through to the session check and redirects to `/login` — the page
+breaks rather than being gated. `SITE_ACCESS_CODE` is also still undocumented
+in `.env.example`, which is likely why it was easy to lose.
 
 ---
 
@@ -184,6 +257,8 @@ is long and specific, and working from this summary alone would lose detail.
    that were later corrected
 8. Tasks #156 (home progress rail), #157 (solo signup smoke test), #158
    (homepage stage-two positioning, held pending 20 CFI discovery calls)
+9. `proxy.ts` gate coverage — see the Site gate section above
+10. Founder story has no photograph; the signature is set, the image is not
 
 ---
 
