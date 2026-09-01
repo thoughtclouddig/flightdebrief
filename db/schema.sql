@@ -1039,16 +1039,18 @@ CREATE TABLE IF NOT EXISTS mobile_recording_sessions (
   -- Client-generated, so the phone can reference the session before it has
   -- ever reached the network.
   id text PRIMARY KEY,
-  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  -- text, not uuid: every id in this schema is text, and users.id in
+  -- particular is a text key rather than a generated uuid.
+  user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   -- Epoch ms of the START FLIGHT tap. The canonical session origin that GPS,
   -- replay and later cockpit audio all stamp against.
   t0 bigint NOT NULL,
   aircraft_tail text NOT NULL,
-  instructor_id uuid REFERENCES users(id) ON DELETE SET NULL,
+  instructor_id text REFERENCES users(id) ON DELETE SET NULL,
   device jsonb NOT NULL DEFAULT '{}'::jsonb,
   session jsonb NOT NULL,
   -- Set when the session finalizes into a real flight.
-  flight_id uuid REFERENCES flights(id) ON DELETE SET NULL,
+  flight_id text REFERENCES flights(id) ON DELETE SET NULL,
   ended_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
