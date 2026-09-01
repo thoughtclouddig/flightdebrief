@@ -25,15 +25,21 @@ import { cn } from "@/lib/utils";
 /**
  * The four steps, named exactly as the headline names them.
  *
- * The previous set -- Debrief, Understand, Train with Vector, Fly prepared --
- * described an older flow in which the debrief opened with free-form voice
- * recording, and it also gave the reader a second set of step names competing
- * with "Fly. Debrief. Train. Fly again." two lines above it. The labels are the
- * headline's words now, so the section makes one claim rather than two.
+ * These are the headline's words, and they have to stay that way -- an
+ * earlier version gave the reader a second set of step names competing with
+ * the headline two lines above it, so the section made two claims instead of
+ * one. Change one and change the other.
  *
- * Card two carries the change that actually matters in V2: the debrief is two
- * independent assessments of the same objectives, compared. It is no longer a
- * microphone.
+ * The set no longer loops. "Fly. Debrief. Train. Fly again." described a
+ * repeating software workflow and literally ended where it started, which is
+ * not what a student is buying: they are buying the certificate. Fly -> Learn
+ * -> Get Better -> Get Checkride Ready is the same four steps pointed at the
+ * outcome, so step four is an arrival rather than a return to step one.
+ *
+ * Step four's label is materially longer than the other three. The progress
+ * rail below gives each step flex-1 of the track, so it fits without a layout
+ * change, but a fifth step or a longer label would not -- check the rail at
+ * 768 before adding either.
  */
 const CARDS = [
   {
@@ -44,23 +50,23 @@ const CARDS = [
     alt: "A student pilot flying the Cirrus from the left seat, hand on the side-stick, with her instructor beside her in the right seat",
   },
   {
-    label: "Debrief",
-    headline: "Compare how you both saw it.",
+    label: "Learn",
+    headline: "Know what to work on next.",
     copy: "You and your instructor assess the same lesson objectives, then talk through what went well, what needs work, and what should carry forward.",
     src: "/images/marketing/how-it-works-debrief.avif",
     alt: "A student and her instructor going through the flight together on a tablet after landing",
   },
   {
-    label: "Train",
+    label: "Get Better",
     headline: "Start where the last flight ended.",
     copy: "Vector turns the debrief into focused practice and preparation before the next lesson.",
     src: "/images/marketing/how-it-works-5.avif",
     alt: "AfterFlight showing an area to improve connected to the FAA Airman Certification Standards",
   },
   {
-    label: "Fly again",
+    label: "Get Checkride Ready",
     headline: "Show up with a plan.",
-    copy: "Your next flight starts with the priorities, skills, and context from the one before it.",
+    copy: "Build proficiency every flight — and get closer to your certificate.",
     src: "/images/marketing/how-it-works-6.avif",
     alt: "AfterFlight showing the three focus areas for a student's next flight",
   },
@@ -141,7 +147,7 @@ export function HowItWorks() {
         <SectionHead
           eyebrow="How it works"
           size="large"
-          headline="Fly. Debrief. Train. Fly again."
+          headline="Fly. Learn. Get better. Get checkride ready."
           body="The loop that makes a lesson carry forward. The debrief already happens — AfterFlight is what turns it into training you can actually do before the next one."
         />
 

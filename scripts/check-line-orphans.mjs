@@ -34,6 +34,7 @@ const WIDTHS = [375, 768, 1024, 1440];
  */
 const RATIO = 0.45;
 
+const JSON_OUT = process.argv.includes("--json");
 const paths = process.argv.slice(2).filter((a) => a.startsWith("/"));
 const PATHS = paths.length ? paths : ["/", "/how-it-works", "/pricing"];
 
@@ -76,6 +77,7 @@ const MEASURE = `(minRatio) => {
     if (last === 1 || ratio < minRatio) {
       found.push({
         text: text.slice(0, 80), lines: ls.length, lastWords: last,
+        tag: el.tagName.toLowerCase(), cls: el.getAttribute("class") ?? "",
         last: ls[ls.length - 1].text, pct: Math.round(ratio * 100),
         fault: last === 1 ? "orphan" : "stub",
       });
@@ -111,6 +113,7 @@ for (const path of PATHS) {
     const found = await page.evaluate(`(${MEASURE})(${RATIO})`);
     for (const f of found) {
       failures++;
+      if (JSON_OUT) { console.log(JSON.stringify({ path, width, ...f })); continue; }
       console.log(`${path} @${width}px  ${f.fault.toUpperCase()}  last line "${f.last}" — ${f.pct}% of the widest, ${f.lines} lines`);
       console.log(`    ${f.text}${f.text.length >= 90 ? "..." : ""}\n`);
     }
