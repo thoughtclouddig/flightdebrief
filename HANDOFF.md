@@ -266,7 +266,7 @@ together" — which is the product's positioning made visible.
 ## Homepage reduction pass — 18 sections to 15
 
 Shipped 2026-09-01. The page had accumulated individually strong sections that
-added up to a catalogue rather than a story. This was a **subtraction pass**,
+added up to a catalog rather than a story. This was a **subtraction pass**,
 deliberately not a rebuild: an earlier proposal merged six sections into two
 new ones and was rejected, on the grounds that the obvious cuts should be made
 first and consolidation judged against the simplified page rather than against
