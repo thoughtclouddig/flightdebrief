@@ -1,0 +1,75 @@
+We are planning to add a core AfterFlight feature called START FLIGHT.
+
+The intended user experience is:
+
+1. Student opens AfterFlight before a flight.
+2. Taps START FLIGHT.
+3. AfterFlight records the flight path from the phone.
+4. The student locks the phone or switches to ForeFlight.
+5. AfterFlight continues recording GPS in the background for the entire flight.
+6. After landing, AfterFlight detects the likely end of the flight and prompts the student to END FLIGHT.
+7. The recorded track feeds Flight Replay, 3D path analysis, and the post-flight debrief.
+
+Before we build this, please confirm exactly how our Replit mobile/App Store deployment works.
+
+Specifically:
+
+1. What mobile architecture are you using for App Store / Google Play deployment?
+   - Expo / React Native?
+   - Capacitor?
+   - native Swift / Kotlin wrapper?
+   - another approach?
+
+2. Does that architecture support true continuous background GPS/location recording when:
+   - the phone screen is locked
+   - AfterFlight is backgrounded
+   - ForeFlight or another app is in the foreground
+   - the flight lasts 1–3+ hours
+
+3. On iOS:
+   - can we enable the required Background Location capability?
+   - can we use Core Location for continuous flight-path recording?
+   - can we request the appropriate “Always” / background location permissions?
+   - can location continue when the device is locked?
+
+4. On Android:
+   - can we run the required foreground/background location service?
+   - can location continue while another app is open?
+   - can we show the required persistent system notification?
+
+5. Can the app record GPS while offline and sync the data to our backend after connectivity returns?
+
+6. Can we persist an active recording session locally so that a temporary app restart or connection loss does not destroy the flight track?
+
+7. Can we access at least:
+   - timestamp
+   - latitude
+   - longitude
+   - altitude
+   - horizontal accuracy
+   - vertical accuracy
+   - course / track
+   - groundspeed
+
+8. Can we choose the GPS sampling frequency / accuracy level during an active flight and turn high-accuracy tracking off immediately after END FLIGHT?
+
+9. Are there any Replit platform limitations that would prevent reliable continuous recording for a 1–3 hour flight?
+
+10. Can we use the same backend/domain model we already have, with the mobile app simply streaming native GPS points into the existing FlightRecordingSession / telemetry layer?
+
+11. Can this be tested on a real iPhone via TestFlight before App Store submission?
+
+12. Are there App Store or Play Store review considerations we need to plan for because we are using continuous background location?
+
+Most important:
+Please do not answer only that “Replit supports App Store apps.”
+
+We need confirmation that the deployed app can support REAL native background location recording for the use case above.
+
+If yes, please tell us:
+- exact architecture
+- exact permissions/capabilities required
+- what needs to be configured in the project
+- any limitations
+- whether any Replit-specific plugin/module is required
+- whether we can test this in TestFlight before release
