@@ -19,7 +19,28 @@ export function Hero() {
           <p className="text-balance text-[15px] font-bold uppercase tracking-[0.16em] text-brand">
             Better training between flights
           </p>
-          {/* Two lines, and no line may ever hold a single word.
+          {/* THREE lines now, and no line may ever hold a single word.
+              The orphan rule is the real constraint; "two lines" was a
+              property of the old, shorter copy rather than a design choice.
+
+              Re-measured 2026-09-01 for "Get to your checkride sooner — with
+              confidence.", which is 46 characters against the old 35. At 60px
+              in the 576px column: "sooner — with confidence." is 956px, so a
+              two-line split caps the type at 36px -- a third smaller than the
+              54px it had. Splitting three ways makes "checkride sooner —" the
+              longest line at 718px. That allows 48px exactly -- 572px of a
+              576px column -- which is four pixels of margin and would wrap on
+              any rendering variance, stranding the dash. Ceiling is 2.875rem
+              (46px) for real headroom.
+
+              7vw, not 4.6vw. The first attempt tuned the vw term to reach the
+              desktop ceiling and starved the phone -- 4.6vw is 17px at 375,
+              so the clamp floor took over and the hero rendered smaller than
+              the body copy beneath it. The small end is the binding case:
+              "checkride sooner --" allows 22.7px in a 320px screen's column
+              and 27.3px at 375, and 7vw lands just under both.
+
+              The old note follows, because the method still applies.
               That rule is what sets the type size, not taste. Measured in the
               real Archivo face, the longest line -- "Make every flight" --
               needs about 10.15px of column per px of type (609px at 60px), so
@@ -40,11 +61,12 @@ export function Hero() {
               renders a narrower synthetic instance and understates Archivo's
               real width by about a fifth. */}
           <h1
-            className="font-display mt-4 max-w-2xl text-[clamp(1.625rem,8vw,3.375rem)] font-extrabold leading-[1.0] tracking-[-0.025em] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(1.375rem,7vw,2.875rem)] font-extrabold leading-[1.0] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
-            Make every flight <br />
-            build on <span className="text-brand">the last.</span>
+            Get to your <br />
+            checkride sooner &mdash; <br />
+            <span className="text-brand">with confidence.</span>
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#68717D]">
             AfterFlight turns each lesson into a personalized plan for what to review, practice, and focus on

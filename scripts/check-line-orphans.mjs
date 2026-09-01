@@ -55,7 +55,7 @@ const LONG_RATIO = 0.2;
 // 0.2 rather than 0.25 after looking at what each bar actually caught. Between
 // them sit last lines of 20-24% -- four or five words on a ragged-right
 // paragraph, which is ordinary body typography and not worth a rewrite. Below
-// 20% is a genuine stub. Setting this is a judgement call, so it is written
+// 20% is a genuine stub. Setting this is a judgment call, so it is written
 // down rather than quietly tuned until the count reached zero.
 
 const JSON_OUT = process.argv.includes("--json");

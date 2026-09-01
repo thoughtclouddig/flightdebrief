@@ -263,6 +263,83 @@ together" — which is the product's positioning made visible.
 
 ---
 
+## Homepage reduction pass — 18 sections to 15
+
+Shipped 2026-09-01. The page had accumulated individually strong sections that
+added up to a catalogue rather than a story. This was a **subtraction pass**,
+deliberately not a rebuild: an earlier proposal merged six sections into two
+new ones and was rejected, on the grounds that the obvious cuts should be made
+first and consolidation judged against the simplified page rather than against
+assumptions. That order still stands for the next pass.
+
+**Narrative spine:** `FLY -> DEBRIEF -> GET BETTER -> GET CHECKRIDE READY`.
+
+**Cut from the homepage, files preserved and NOT deleted:**
+
+| Component | Why | Where it lives now |
+|---|---|---|
+| `FlightRecordingPreview` | future functionality interrupting a story about today | unreferenced |
+| `ForCfis` | speaks to the CFI mid-student-journey | `/instructors` exists, in nav |
+| `WhoItsFor` | three ICPs stop the student story | `/instructors`, `/schools` |
+| `FounderStory` | provenance, not part of the journey | **unreferenced, no About page** |
+| `TrainingCostCalculator` | ROI machinery for a one-sentence argument | unreferenced; `TrainingEconomics` keeps the copy |
+
+`FounderStory` and `TrainingCostCalculator` are intentionally orphaned. Do not
+delete them as dead code -- both are candidates for dedicated pages, and that
+is a product decision rather than a cleanup.
+
+**Kept as-is, explicitly:** `DebriefReplay`, `PerceptionGap`,
+`PersonalizedTraining`, `VectorSection`, `NextFlight`, `SkillProgress`,
+`DebriefDoctrine`, `Proof`, `Pricing`. These had already been refined and were
+not to be reworked while the page was being shortened. No ACS beat was added to
+`SkillProgress` for the same reason.
+
+**Added:** `Capabilities`, and it is deliberately tiny -- 450px against a
+median section height of 1139px. Four items, no cards, no screenshots, the
+hairline-and-label treatment from `BrandMoment` rather than a new one. It lists
+**Recommended Study, Chair Flying, Instructor Continuity, ACS Readiness** and
+deliberately omits Vector and Debrief Replay: both still have full sections
+above it, so listing them again would re-add length to repeat what the page
+already said. Chair Flying and ACS readiness appear nowhere else; Instructor
+Continuity left the page entirely with `ForCfis` and `WhoItsFor`.
+
+### The hero is measured, and the rule is the orphan rule
+
+`Get to your checkride sooner — with confidence.` is 46 characters against the
+old headline's 35, and the old comment's "two lines" was a property of that
+shorter copy rather than a design choice. The stated rule -- **no line may ever
+hold a single word** -- is what sets the size.
+
+Measured in the real face at 60px against the 576px column: a two-line split
+makes `sooner — with confidence.` 956px wide and caps the type at **36px**, a
+third smaller than the 54px it had. Splitting three ways makes
+`checkride sooner —` the longest line at 718px, which allows 48px.
+
+Shipped at `clamp(1.375rem, 7vw, 2.875rem)` — 46px rather than 48 for real
+headroom, since 48px left four pixels in a 576px column and would wrap on any
+rendering variance. Verified 320 / 375 / desktop: 22.4px / 26.3px / 46px, three
+lines, no orphan at any width.
+
+**7vw, and the first attempt got this wrong.** Tuning the vw term to reach the
+desktop ceiling gave 4.6vw, which is 17px at 375 -- the clamp floor took over
+and the hero rendered smaller than the body copy beneath it. The small end is
+the binding case, not the large one.
+
+### Two responsive faults found while measuring
+
+**Fixed:** `PhotoVisual`'s label in `app-screen.tsx` was `whitespace-nowrap` and
+unbounded. Fine while labels were short, broken the moment one grew --
+`Step 4: Get Checkride Ready` rendered 330px wide inside a 320px viewport and
+pushed the whole page into horizontal scroll. Now `max-w-full` and allowed to
+wrap.
+
+**Not fixed, pre-existing:** the `Pricing` cards overflow at 320px — six
+elements reaching 339px in a 320px viewport, causing horizontal scroll.
+`pricing.tsx` was untouched by this pass. Worth a look; it is the only
+remaining horizontal-scroll source on the homepage.
+
+---
+
 ## Homepage messaging reframe — shipped `a3b73c4`
 
 The brief that the previous handoff recorded as briefed-but-unstarted has now

@@ -1,6 +1,5 @@
 import { Clock, PiggyBank, TrendingUp } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
-import { TrainingCostCalculator } from "@/components/marketing/training-cost-calculator";
 
 const BENEFITS = [
   { icon: PiggyBank, title: "Save money", copy: "Avoid repeat lessons and extra flight time." },
@@ -10,6 +9,16 @@ const BENEFITS = [
 
 /**
  * The economic stakes of broken continuity, and the arithmetic behind them.
+ *
+ * The calculator was removed from this section on 2026-09-01 and the
+ * component kept (components/marketing/training-cost-calculator.tsx). The
+ * argument here is one sentence -- flight time is too expensive to spend
+ * catching up -- and an interactive ROI widget is a lot of page length to
+ * make a point that lands without it. Reinstating it is a product decision,
+ * not a cleanup.
+ *
+ * The historical note below is kept because it records why the section reads
+ * the way it does.
  *
  * The calculator is the reason this section exists in its current form. The
  * cost of losing the thread is the most persuasive thing about this product
@@ -75,7 +84,6 @@ export function TrainingEconomics() {
             </div>
 
             <div className="mt-9">
-              <TrainingCostCalculator />
             </div>
 
             {/* Part of the output, not fine print under it. The figure above is

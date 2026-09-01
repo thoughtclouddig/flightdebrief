@@ -9,14 +9,11 @@ import { PersonalizedTraining } from "@/components/marketing/sections/personaliz
 import { PerceptionGap } from "@/components/marketing/sections/perception-gap";
 import { SkillProgress } from "@/components/marketing/sections/skill-progress";
 import { DebriefReplay } from "@/components/marketing/sections/debrief-replay";
-import { FlightRecordingPreview } from "@/components/marketing/sections/flight-recording-preview";
-import { ForCfis } from "@/components/marketing/sections/for-cfis";
 import { DebriefDoctrine } from "@/components/marketing/sections/debrief-doctrine";
 import { Proof } from "@/components/marketing/sections/proof";
 import { TrainingEconomics } from "@/components/marketing/sections/training-economics";
-import { WhoItsFor } from "@/components/marketing/sections/who-its-for";
 import { Pricing } from "@/components/marketing/sections/pricing";
-import { FounderStory } from "@/components/marketing/sections/founder-story";
+import { Capabilities } from "@/components/marketing/sections/capabilities";
 import { FinalCta } from "@/components/marketing/sections/final-cta";
 
 export const metadata: Metadata = {
@@ -87,14 +84,11 @@ export default function MarketingHomePage() {
       <VectorSection />
       <NextFlight />
       <SkillProgress />
-      <FlightRecordingPreview />
+      <Capabilities />
       <DebriefDoctrine />
       <Proof />
       <TrainingEconomics />
-      <ForCfis />
-      <WhoItsFor />
       <Pricing />
-      <FounderStory />
       <FinalCta />
     </>
   );

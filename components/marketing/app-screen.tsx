@@ -6,13 +6,23 @@ export function Visual({ children }: { children: ReactNode }) {
   return <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-[#f4f5f6]">{children}</div>;
 }
 
-/** `label` sits flush in the bottom-left corner of the photo as a brand-orange tag, width hugging the text -- flush against both edges it touches, with only the inner corner rounded. */
+/**
+ * `label` sits flush in the bottom-left corner of the photo as a brand-orange
+ * tag, width hugging the text -- flush against both edges it touches, with only
+ * the inner corner rounded.
+ *
+ * It is capped at the visual's width and allowed to wrap. It used to be
+ * whitespace-nowrap and unbounded, which was fine while labels were short and
+ * broke the moment one got longer: "Step 4: Get Checkride Ready" rendered
+ * 330px wide inside a 320px viewport and pushed the whole page into horizontal
+ * scroll.
+ */
 export function PhotoVisual({ src, alt, label }: { src: string; alt: string; label?: string }) {
   return (
     <Visual>
       <Image src={src} alt={alt} fill className="object-cover" sizes="(min-width: 1024px) 420px, (min-width: 640px) 320px, 100vw" />
       {label ? (
-        <p className="absolute bottom-0 left-0 whitespace-nowrap rounded-tr-lg bg-brand px-4 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-white">
+        <p className="absolute bottom-0 left-0 max-w-full rounded-tr-lg bg-brand px-4 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-white">
           {label}
         </p>
       ) : null}

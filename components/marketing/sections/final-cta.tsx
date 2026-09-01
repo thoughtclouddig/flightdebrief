@@ -17,11 +17,17 @@ export function FinalCta() {
           </p>
         </Reveal>
 
+        {/* Clamped rather than text-4xl/sm:text-5xl. The stated break needs
+            "Make your next flight" to fit on one line, and at 36px that wants
+            451px against a 327px column on a phone -- so both halves wrapped
+            and "last." ended up alone on a fourth line. 3rem keeps the old
+            desktop size; leading is stated because an arbitrary text-[...]
+            carries no line-height of its own. */}
         <Reveal delay={80}>
-          <h2 className="font-display mt-12 text-balance text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">
-            Show up ready for
+          <h2 className="font-display mt-12 text-balance text-[clamp(1.5rem,6.6vw,3rem)] font-extrabold leading-[1.05] text-white">
+            Make your next flight
             <br />
-            <span className="text-brand">your next lesson.</span>
+            <span className="text-brand">build on the last.</span>
           </h2>
           <p className="mx-auto mt-5 max-w-lg text-pretty text-lg leading-relaxed text-white/75">
             Turn your flight, your instructor&rsquo;s feedback, and your between-flight training into a clear path

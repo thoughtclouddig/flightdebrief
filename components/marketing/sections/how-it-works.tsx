@@ -36,6 +36,11 @@ import { cn } from "@/lib/utils";
  * -> Get Better -> Get Checkride Ready is the same four steps pointed at the
  * outcome, so step four is an arrival rather than a return to step one.
  *
+ * Step two is DEBRIEF and stays that way. It was briefly "Learn", which named
+ * the outcome; "Debrief" names the thing the student actually does, and every
+ * student already knows what one is. That anchors the progression in real
+ * flight training rather than in product vocabulary.
+ *
  * Step four's label is materially longer than the other three. The progress
  * rail below gives each step flex-1 of the track, so it fits without a layout
  * change, but a fifth step or a longer label would not -- check the rail at
@@ -50,11 +55,7 @@ const CARDS = [
     alt: "A student pilot flying the Cirrus from the left seat, hand on the side-stick, with her instructor beside her in the right seat",
   },
   {
-    label: "Learn",
-    // The chip names the concrete activity; the rail label names the step in
-    // the progression. They differ only here, because "Learn" is what this
-    // step achieves and "Debrief" is what the student actually does in it.
-    chipLabel: "Debrief",
+    label: "Debrief",
     headline: "Know what to work on next.",
     copy: "You and your instructor assess the same lesson objectives, then talk through what went well, what needs work, and what should carry forward.",
     src: "/images/marketing/how-it-works-debrief.avif",
@@ -155,7 +156,7 @@ export function HowItWorks() {
             <>
               {/* Stated break from sm up, where the column can hold each half
                   on one line. Below sm it cannot, so balance handles it. */}
-              <span className="sm:block">Fly. Learn. Get better.</span>{" "}
+              <span className="sm:block">Fly. Debrief. Get better.</span>{" "}
               <span className="sm:block">Get checkride ready.</span>
             </>
           }
@@ -169,7 +170,7 @@ export function HowItWorks() {
         <div className="mt-16 grid grid-cols-1 gap-x-8 gap-y-14 md:hidden">
           {CARDS.map((card, i) => (
             <Reveal key={card.label} delay={(i % 3) * 100} className="flex flex-col gap-4">
-              <PhotoVisual src={card.src} alt={card.alt} label={`Step ${i + 1}: ${"chipLabel" in card ? card.chipLabel : card.label}`} />
+              <PhotoVisual src={card.src} alt={card.alt} label={`Step ${i + 1}: ${card.label}`} />
               <div>
                 <p className="font-display text-balance text-xl font-bold text-[#101727]">{card.headline}</p>
                 <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
@@ -218,7 +219,7 @@ export function HowItWorks() {
                     {String(i + 1).padStart(2, "0")}
                   </div>
                   <span className="relative z-[1] inline-flex w-fit items-center gap-2 self-start rounded-full bg-brand px-3 py-[7px] text-xs font-extrabold tracking-[0.12em] text-white uppercase">
-                    Step {i + 1}: {"chipLabel" in card ? card.chipLabel : card.label}
+                    Step {i + 1}: {card.label}
                   </span>
                   {/*
                    * Sized so every headline sits on ONE line at every width
