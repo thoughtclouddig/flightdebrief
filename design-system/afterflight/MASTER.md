@@ -399,6 +399,14 @@ translate offsets 8–16px. Transform and opacity only.
 
 ## 18. Copy
 
+**No orphans, no stubs.** A wrapped block never ends with a single word, and
+its last line is never under ~45% of its widest line — "balanced" is a claim
+about line WIDTH, not word count. Body copy relies on `text-balance` /
+`text-pretty`; a display headline that has to break in a particular place uses
+explicit `lg:block` spans rather than a tuned character cap, which only holds
+until someone edits a word. Checked by `npm run check:copy`, which measures
+what actually rendered at 375 / 768 / 1024 / 1440.
+
 **American spelling, always** — center, color, maneuver, practice, judgment,
 organize. This is a US aviation product and the FAA material it cites is
 American throughout. Enforced by `lib/content/us-spelling.source.test.ts`; see

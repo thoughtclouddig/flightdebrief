@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:integration:tts": "LIVE_TTS_INTEGRATION=1 vitest run",
     "test:e2e:auth": "node e2e/auth-journey.mjs",
-    "test:e2e:flight-map": "node e2e/flight-map-defer.mjs"
+    "test:e2e:flight-map": "node e2e/flight-map-defer.mjs",
+    "check:copy": "node scripts/check-line-orphans.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

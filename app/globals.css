@@ -301,26 +301,34 @@
  * whole block -- the right behavior for short, large type.
  *
  * Both degrade silently to normal wrapping on browsers that don't support
- * them, so this is never worse than the previous behavior. Element selectors
- * on purpose: any Tailwind text-balance/text-pretty utility still wins on a
- * specific element, since a class outranks a bare tag.
+ * them, so this is never worse than the previous behavior.
+ *
+ * IN @layer base, AND THAT IS LOAD-BEARING. These were unlayered, and
+ * unlayered CSS beats every layered rule no matter how specific -- Tailwind v4
+ * emits utilities into a layer, so `text-wrap: pretty` on a bare `p` was
+ * silently overriding every text-balance/text-pretty utility on the site. A
+ * marketing headline could carry text-balance and get `pretty`, which balances
+ * nothing and left three-line paragraphs ending in a two-word stub. Inside
+ * base, utilities win again and the class means what it says.
  */
-p,
-li,
-dd,
-figcaption,
-blockquote,
-label {
-  text-wrap: pretty;
-}
+@layer base {
+  p,
+  li,
+  dd,
+  figcaption,
+  blockquote,
+  label {
+    text-wrap: pretty;
+  }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  text-wrap: balance;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-wrap: balance;
+  }
 }
 
 /*

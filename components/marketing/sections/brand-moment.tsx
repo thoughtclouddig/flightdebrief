@@ -63,8 +63,10 @@ export function BrandMoment() {
         </p>
 
         {/*
-         * One question. Below lg it wraps wherever balance puts it; at lg the
-         * two spans become blocks, which forces the break after "feel".
+         * One question, split so the two lines are near equal -- 21 characters
+         * against 18. Balance on its own put the break after "feel", which is
+         * a legal break and a lopsided one: 26 against 13, with the second
+         * line half the width of the first.
          *
          * Explicit spans rather than a hidden <br> or a tuned ch cap: a br
          * toggled with display utilities relies on browser handling of a
@@ -72,9 +74,9 @@ export function BrandMoment() {
          * break until someone edits a word. Blocks state the intent.
          */}
         <p className="font-display mx-auto mt-6 max-w-[22ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-[#101727] sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0] lg:max-w-none lg:text-[clamp(2.5rem,4.5vw,3rem)]">
-          <span className="lg:block">Why does every flight feel</span>{" "}
+          <span className="lg:block">Why does every flight</span>{" "}
           <span className="lg:block">
-            like a <span className="text-brand">reset?</span>
+            feel like a <span className="text-brand">reset?</span>
           </span>
         </p>
         <p
