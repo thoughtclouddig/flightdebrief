@@ -1,9 +1,30 @@
 import Image from "next/image";
 import { Reveal } from "@/components/marketing/reveal";
 
+/**
+ * Three ways training value leaks between lessons.
+ *
+ * Written at the student, never at the instructor: the CFI gave the feedback,
+ * and what happens to it afterwards is the gap this product fills.
+ */
+const PROBLEMS = [
+  {
+    title: "Hard to remember",
+    copy: "The details that mattered right after landing are easy to forget by tomorrow.",
+  },
+  {
+    title: "Hard to practice",
+    copy: "\u201cWork on landings\u201d isn\u2019t a study plan. Students often leave without knowing exactly what to do between flights.",
+  },
+  {
+    title: "Easy to repeat",
+    copy: "The same weak area can show up again and again without ever becoming the focus of between-flight training.",
+  },
+] as const;
+
 export function BrandMoment() {
   return (
-    <section className="relative flex min-h-[560px] flex-col items-center overflow-hidden bg-white px-6 py-20 sm:min-h-[680px] sm:py-24 lg:min-h-[860px]">
+    <section className="relative flex flex-col items-center overflow-hidden bg-white px-6 py-20 sm:py-24">
       <div className="absolute inset-0">
         <Image
           src="/images/marketing/ten-minutes-back.webp"
@@ -30,16 +51,54 @@ export function BrandMoment() {
           The Problem
         </p>
 
-        <p className="font-display mt-6 text-balance text-3xl font-bold leading-[1.05] text-[#101727] sm:text-[clamp(3rem,2.25rem+3vw,4.5rem)] sm:leading-[0.95]">
-          Too much of the debrief <span className="text-brand">gets lost.</span>
+        {/*
+         * Two sentences, two blocks, each capped at ~20 characters wide.
+         *
+         * As one run of text the display size broke mid-sentence ("The
+         * expensive / part is the flight. The") and orphaned a word at almost
+         * every width. Splitting it helped but text-balance alone still had a
+         * whole 3xl container to play with, so it kept finding two-line
+         * solutions with a very short second line. The ch cap gives balance a
+         * target narrow enough that both lines have to be full.
+         */}
+        <p className="font-display mx-auto mt-6 max-w-[20ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-[#101727] sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0]">
+          The expensive part is the flight.
+        </p>
+        <p className="font-display mx-auto mt-3 max-w-[20ch] text-balance text-3xl font-bold leading-[1.05] tracking-[-0.02em] text-brand sm:text-[clamp(2.5rem,1.9rem+2.5vw,3.75rem)] sm:leading-[1.0]">
+          The learning has to continue after it.
         </p>
         <p
           className="mx-auto mt-8 max-w-md text-balance text-lg text-[#4b545d] sm:max-w-2xl"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
-          Every flight ends with a conversation that matters. But there&rsquo;s no guarantee the right things{" "}
-          <span className="text-brand">get discussed, remembered, or carried into the next lesson.</span>
+          Your instructor gives you feedback after every lesson. But if you don&rsquo;t fully understand it,
+          practice it, and carry it into the next flight, you can spend the next lesson{" "}
+          <span className="text-brand">relearning the same things.</span>
         </p>
+      </Reveal>
+
+      {/*
+       * Deliberately small and chrome-free. These three lines exist to name
+       * the problem the video is about, not to compete with it -- as cards
+       * they were three more objects fighting the one thing this section is
+       * built around. A rule and a numeral is enough structure.
+       */}
+      <Reveal delay={450} className="relative mt-10 w-full max-w-3xl sm:mt-12">
+        <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-3">
+          {PROBLEMS.map((p, i) => (
+            <div key={p.title} className="border-t border-[#101727]/12 pt-4">
+              <dt className="flex items-baseline gap-2">
+                <span className="font-display text-xs font-extrabold tabular-nums tracking-[0.1em] text-brand">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="font-display text-[15px] font-bold uppercase tracking-wide text-[#101727]">
+                  {p.title}
+                </span>
+              </dt>
+              <dd className="text-pretty mt-1.5 text-[15px] leading-relaxed text-[#4b545d]">{p.copy}</dd>
+            </div>
+          ))}
+        </dl>
       </Reveal>
 
       <Reveal delay={300} className="relative mt-12 w-full max-w-2xl sm:mt-16">
@@ -58,6 +117,7 @@ export function BrandMoment() {
           />
         </div>
       </Reveal>
+
     </section>
   );
 }

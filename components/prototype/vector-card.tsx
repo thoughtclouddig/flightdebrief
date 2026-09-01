@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, ChevronDown, Quote, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Evidence, VectorMark } from "@/components/prototype/ui";
 import type { EvidenceSource, VectorCard } from "@/lib/ai/vector-schema";
 
 /**
@@ -23,12 +24,9 @@ export function VectorCardView({ card, onAction }: { card: VectorCard; onAction?
 
   return (
     <div className="rounded-2xl border border-hairline bg-surface p-5">
-      <div className="flex items-center gap-2">
-        <Sparkles className="size-3.5 text-brand" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand">Vector</span>
-      </div>
+      <VectorMark />
 
-      <h3 className="mt-2 text-xl font-semibold leading-tight text-foreground">{card.title}</h3>
+      <h3 className="mt-3 text-[22px] font-semibold leading-tight tracking-tight text-foreground">{card.title}</h3>
       {card.summary ? <p className="mt-2 text-[15px] leading-relaxed text-foreground-soft">{card.summary}</p> : null}
 
       {card.stats.length > 0 ? (
@@ -45,7 +43,13 @@ export function VectorCardView({ card, onAction }: { card: VectorCard; onAction?
       {card.evidence.length > 0 ? (
         <div className="mt-4 flex flex-col gap-2.5">
           {card.evidence.map((e, i) => (
-            <EvidenceRow key={i} source={e.source} label={e.label} text={e.text} />
+            <Evidence
+              key={i}
+              label={e.label}
+              text={e.text}
+              tone={toneFor(e.source)}
+              quoted={e.source === "instructor" || e.source === "student"}
+            />
           ))}
         </div>
       ) : null}
@@ -78,35 +82,17 @@ export function VectorCardView({ card, onAction }: { card: VectorCard; onAction?
       {card.nextAction ? (
         <button
           onClick={() => onAction?.(card.nextAction!.target)}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-[15px] font-semibold text-brand-foreground"
+          className="mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-brand px-5 text-[17px] font-semibold text-on-brand"
         >
           {card.nextAction.label}
-          <ArrowRight className="size-4" />
+          <ArrowRight className="size-[18px]" />
         </button>
       ) : null}
     </div>
   );
 }
 
-const SOURCE_STYLE: Record<EvidenceSource, { border: string; label: string }> = {
-  instructor: { border: "border-l-brand", label: "text-brand" },
-  student: { border: "border-l-good", label: "text-good" },
-  vector: { border: "border-l-hairline", label: "text-foreground-faint" },
-  faa: { border: "border-l-amber", label: "text-amber" },
-};
-
-function EvidenceRow({ source, label, text }: { source: EvidenceSource; label: string; text: string }) {
-  const style = SOURCE_STYLE[source];
-  const quoted = source === "instructor" || source === "student";
-  return (
-    <div className={cn("border-l-2 pl-3", style.border)}>
-      <p className={cn("flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide", style.label)}>
-        {quoted ? <Quote className="size-2.5" /> : null}
-        {label}
-      </p>
-      <p className={cn("mt-0.5 text-sm text-foreground-soft", quoted && "italic")}>
-        {quoted ? `"${text}"` : text}
-      </p>
-    </div>
-  );
+/** Maps a schema source onto the shared, deliberately quiet evidence rule. */
+function toneFor(source: EvidenceSource): "instructor" | "student" | "neutral" {
+  return source === "instructor" ? "instructor" : source === "student" ? "student" : "neutral";
 }

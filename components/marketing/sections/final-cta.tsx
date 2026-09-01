@@ -18,9 +18,9 @@ export function FinalCta() {
 
         <Reveal delay={80}>
           <h2 className="font-display mt-12 text-balance text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">
-            Ready to <span className="text-brand">get better</span>
+            Ready to get more out of
             <br />
-            every flight?
+            <span className="text-brand">every flight lesson?</span>
           </h2>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-white/75">
             <li className="text-balance">No credit card required</li>
@@ -33,7 +33,7 @@ export function FinalCta() {
           <TrackedLink
             href="/signup"
             event="start_free"
-            className="rounded-lg bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-bright hover:text-[#101727]"
+            className="rounded-lg bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-bright"
           >
             Start Free
           </TrackedLink>

@@ -1,86 +1,202 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, ChevronRight } from "lucide-react";
-import { INSTRUCTOR, NEXT_LESSON, STRUCTURED, STUDENT } from "@/lib/prototype/vector-data";
+import { ArrowRight, Mic, Plane, Plus, Radar, PlaneLanding, PlaneTakeoff } from "lucide-react";
+import {
+  Evidence,
+  PageTitle,
+  Panel,
+  PanelButton,
+  PanelEyebrow,
+  PanelHeadline,
+  PanelMeta,
+  PrimaryButton,
+  QuietRow,
+  Screen,
+  Section,
+  SecondaryButton,
+} from "@/components/prototype/ui";
+import { INSTRUCTOR, NEXT_LESSON, PENDING_FLIGHT, STRUCTURED, STUDENT } from "@/lib/prototype/vector-data";
+import { FLIGHT_DEFAULTS } from "@/lib/prototype/flights";
 
 export const metadata: Metadata = { title: "Home — AfterFlight", robots: { index: false, follow: false } };
 
 /**
- * Home answers exactly one question: what should I do before I fly again?
+ * Home is state-aware, and that is the point of this screen.
  *
- * Everything that is not an answer to that question has moved to Train,
- * Debrief or Progress. The previous version showed every capability at once
- * in a flat stack of equal-weight cards, which is why it read as a long page
- * instead of a product -- there was nothing to look at first.
+ * The previous version assumed a debrief had already happened, which meant it
+ * had nothing to say in the twenty minutes that matter most -- the ones right
+ * after shutdown, when the details are still in the student's head and the
+ * debrief is the only thing worth doing. Two states:
  *
- * Above the fold: who, when, the two things that matter, one quote from the
- * instructor, one primary action.
+ *   A. flown, not debriefed  -> START DEBRIEF is the single obvious action
+ *   B. between flights       -> TRAIN WITH VECTOR against Thursday's focus
+ *
+ * Both answer the same question: what should I do now?
  */
-export default function PrototypeHome() {
+export default async function PrototypeHome({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
+  const { state } = await searchParams;
+  if (state === "landed") return <JustLanded />;
+  if (state === "flown") return <JustFlew />;
+  return <BetweenFlights />;
+}
+
+/* --------------------------------------------- STATE B: flew, not added yet */
+
+/**
+ * The student flew and AfterFlight has no record of it.
+ *
+ * Note what this screen does NOT say. An earlier version said "we found your
+ * flight" and showed one ADS-B match -- but ADS-B tracks an AIRPLANE, not a
+ * person, and a club trainer flies three or four students a day. AfterFlight
+ * cannot know which of those was Mia, so it does not claim to. It offers to do
+ * the typing, and asks her to do the identifying, which is the only part
+ * nobody else can do.
+ */
+function JustLanded() {
   return (
-    <div className="flex flex-col gap-6 px-5 pt-6">
-      <div>
-        <p className="text-sm text-foreground-faint">Good afternoon</p>
-        <h1 className="text-[32px] font-semibold leading-none tracking-tight text-foreground">{STUDENT.firstName}</h1>
-      </div>
+    <Screen>
+      <PageTitle kicker="Good afternoon">{STUDENT.firstName}</PageTitle>
 
-      {/* The one card that matters. Visually dominant on purpose. */}
-      <section className="rounded-2xl bg-brand p-5 text-brand-foreground">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-80">Next flight</p>
-        <p className="mt-1.5 text-2xl font-semibold leading-tight">
-          {NEXT_LESSON.date} &middot; {NEXT_LESSON.time}
+      <Panel>
+        <PanelEyebrow icon={<Radar className="size-3.5" aria-hidden />}>Flew today?</PanelEyebrow>
+        <PanelHeadline>Add it while it&rsquo;s fresh</PanelHeadline>
+        <p className="mt-3 text-[15px] leading-relaxed text-panel-foreground-soft">
+          Give us the tail number and we&rsquo;ll pull up what {FLIGHT_DEFAULTS.recentAircraft[0]!.tailNumber} and
+          your other aircraft flew today. You pick which one was yours.
         </p>
-        <p className="mt-1 text-sm opacity-85">
-          {INSTRUCTOR.firstName} &middot; Crosswind / Short Field
-        </p>
-      </section>
-
-      <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground-faint">Focus on 2 things</h2>
-        <div className="mt-3 flex flex-col gap-2.5">
-          {STRUCTURED.nextFlightFocus.map((f, i) => (
-            <div key={f} className="flex items-center gap-3 rounded-xl border border-hairline px-4 py-3.5">
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-xs font-semibold tabular-nums text-foreground-soft">
-                {i + 1}
-              </span>
-              <span className="text-[15px] font-medium text-foreground">{f}</span>
-            </div>
-          ))}
+        <div className="mt-6">
+          <PanelButton href="/prototype/vector/flights/new">
+            <Plus className="size-[18px]" aria-hidden />
+            Add flight
+          </PanelButton>
         </div>
-      </section>
-
-      <section>
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground-faint">
-          {INSTRUCTOR.firstName}&rsquo;s key reminder
-        </h2>
-        <blockquote className="mt-3 border-l-2 border-brand pl-4 text-[15px] italic leading-relaxed text-foreground-soft">
-          &ldquo;{STRUCTURED.instructorEmphasis[0]!.quote}&rdquo;
-        </blockquote>
-      </section>
-
-      {/* One obvious action. */}
-      <Link
-        href="/prototype/vector/train"
-        className="flex items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-4 text-[15px] font-semibold text-surface"
-      >
-        Train with Vector
-        <ArrowRight className="size-4" />
-      </Link>
+      </Panel>
 
       <div className="flex flex-col">
-        <SecondaryLink href="/prototype/vector/debrief" label="Review last debrief" meta="Aug 29" />
-        <SecondaryLink href="/prototype/vector/progress" label="See progress" meta="4 skills" />
+        <QuietRow href="/prototype/vector/flights" label="My flights" meta="5" />
+        <QuietRow href="/prototype/vector/progress" label="See progress" meta="4 skills" />
       </div>
-    </div>
+    </Screen>
   );
 }
 
-function SecondaryLink({ href, label, meta }: { href: string; label: string; meta: string }) {
+/* -------------------------------------------------- STATE A: needs debrief */
+
+function JustFlew() {
   return (
-    <Link href={href} className="flex items-center gap-3 border-b border-hairline py-4 last:border-b-0">
-      <span className="flex-1 text-[15px] text-foreground">{label}</span>
-      <span className="text-sm text-foreground-faint">{meta}</span>
-      <ChevronRight className="size-4 text-foreground-faint" />
-    </Link>
+    <Screen>
+      <PageTitle kicker="Good afternoon">{STUDENT.firstName}</PageTitle>
+
+      <Panel>
+        <PanelEyebrow icon={<PlaneLanding className="size-3.5" aria-hidden />}>Flight complete</PanelEyebrow>
+        <PanelHeadline>{PENDING_FLIGHT.lesson}</PanelHeadline>
+        <PanelMeta>
+          {PENDING_FLIGHT.instructor} · {PENDING_FLIGHT.date} · {PENDING_FLIGHT.duration} hrs
+        </PanelMeta>
+        {/* The reason to act now, not a feature description. */}
+        <p className="mt-5 text-[15px] leading-relaxed text-panel-foreground-soft">
+          Capture what mattered while it&rsquo;s fresh.
+        </p>
+        <div className="mt-4 flex flex-col gap-2.5">
+          <PanelButton href="/prototype/vector/debrief/new">
+            <Mic className="size-[18px]" aria-hidden />
+            Start debrief
+          </PanelButton>
+          <div className="flex gap-2.5">
+            <SecondaryButton href="/prototype/vector/debrief/new?mode=reflection" onPanel>
+              My reflection
+            </SecondaryButton>
+            <SecondaryButton href="/prototype/vector/flights/aug-29" onPanel>
+              View flight
+            </SecondaryButton>
+          </div>
+        </div>
+      </Panel>
+
+      {/* Nothing else competes. Everything below is navigation, not action. */}
+      <div className="flex flex-col">
+        <QuietRow href="/prototype/vector/flights" label="My flights" meta="5" />
+        <QuietRow href="/prototype/vector/debrief" label="Past debriefs" meta="3" />
+      </div>
+
+      <p className="text-[13px] leading-relaxed text-foreground-faint">
+        Your audio is transcribed and then discarded. AfterFlight keeps the training record, not the recording.
+      </p>
+    </Screen>
+  );
+}
+
+/* ----------------------------------------------- STATE B: between flights */
+
+function BetweenFlights() {
+  return (
+    <Screen>
+      <PageTitle kicker="Good afternoon">{STUDENT.firstName}</PageTitle>
+
+      <Panel>
+        <PanelEyebrow icon={<PlaneTakeoff className="size-3.5" aria-hidden />}>Next flight</PanelEyebrow>
+        <PanelHeadline>
+          {NEXT_LESSON.date} · {NEXT_LESSON.time}
+        </PanelHeadline>
+        <PanelMeta>
+          {INSTRUCTOR.firstName} · Crosswind + Short Field
+        </PanelMeta>
+
+        <div className="mt-6 border-t border-panel-hairline pt-5">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-panel-foreground-soft">
+            Focus on 2 things
+          </p>
+          <ol className="mt-3 flex flex-col gap-3">
+            {STRUCTURED.nextFlightFocus.map((f, i) => (
+              <li key={f} className="flex items-start gap-3.5">
+                <span className="mt-0.5 flex size-[22px] shrink-0 items-center justify-center rounded-full bg-panel-elevated text-[13px] font-semibold tabular-nums text-panel-foreground-soft">
+                  {i + 1}
+                </span>
+                <span className="text-[17px] leading-snug">{f}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </Panel>
+
+      <Section title={<>{INSTRUCTOR.firstName}&rsquo;s key reminder</>}>
+        <Evidence label={INSTRUCTOR.firstName} tone="instructor" text={STRUCTURED.instructorEmphasis[0]!.quote} />
+      </Section>
+
+      <div className="flex flex-col gap-2.5">
+        <PrimaryButton href="/prototype/vector/train">
+          Train with Vector
+          <ArrowRight className="size-[18px]" aria-hidden />
+        </PrimaryButton>
+        {/* Vector is a brand name a first-time student cannot define. Say what
+            it is at the point they are asked to tap it. */}
+        <p className="px-1 text-[13px] leading-relaxed text-foreground-faint">
+          Vector is your AI flight trainer. It knows what {INSTRUCTOR.firstName} flagged and helps you prepare before{" "}
+          {NEXT_LESSON.date}.
+        </p>
+      </div>
+
+      {/*
+       * Three ways in, in the order they are worth offering. Start Flight
+       * records directly and owns the session clock; adding afterwards is the
+       * fallback when the phone was not running. The detection path lives
+       * inside Add Flight, since it needs a tail number first.
+       */}
+      <div className="flex gap-2.5">
+        <SecondaryButton href="/prototype/vector/fly">
+          <Plane className="size-[18px]" aria-hidden />
+          Start flight
+        </SecondaryButton>
+        <SecondaryButton href="/prototype/vector/flights/new">
+          <Plus className="size-[18px]" aria-hidden />
+          Add a flight
+        </SecondaryButton>
+      </div>
+
+      <div className="flex flex-col">
+        <QuietRow href="/prototype/vector/flights" label="My flights" meta="5" />
+        <QuietRow href="/prototype/vector/debrief/latest" label="Review last debrief" meta="Aug 29" />
+        <QuietRow href="/prototype/vector/progress" label="See progress" meta="4 skills" />
+      </div>
+    </Screen>
   );
 }

@@ -49,3 +49,9 @@ next-env.d.ts
 
 # integration-test audio artifact (lib/deepgram-tts.integration.test.ts)
 tts-check.mp3
+
+# Mobile app has its own install
+apps/mobile/node_modules/
+apps/mobile/.expo/
+apps/mobile/ios/
+apps/mobile/android/

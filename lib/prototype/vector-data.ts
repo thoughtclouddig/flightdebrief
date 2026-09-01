@@ -158,7 +158,24 @@ export const NEXT_LESSON = { date: "Thursday", time: "9:00 AM", instructor: INST
  */
 export type SkillState = "Needs Work" | "Improving" | "Meets Standard";
 
+/**
+ * FAA ACS Areas of Operation, used as a quiet structural layer.
+ *
+ * The point of carrying these is that the product reads as real flight
+ * training rather than generic AI coaching. It is deliberately NOT an ACS
+ * database: one Area name on a skill, the task code only on the skill-detail
+ * screen, and no matrix anywhere.
+ */
+export const ACS_AREAS = {
+  landings: "Takeoffs, Landings & Go-Arounds",
+  airport: "Airport & Traffic Pattern Operations",
+} as const;
+
+export type AcsArea = (typeof ACS_AREAS)[keyof typeof ACS_AREAS];
+
 export interface SkillScore {
+  /** URL-safe id. The skill-detail route keys off this. */
+  slug: string;
   skill: string;
   /** Out of `max`. Never summed across skills -- see the note above. */
   score: number;
@@ -174,10 +191,16 @@ export interface SkillScore {
   next: string;
   /** Set when this skill is also in the recurrence set, so the two surfaces agree. */
   recurring?: { lessons: number; instructors: number };
+  /** ACS Area of Operation this task lives under, plus its task code. */
+  acsArea: AcsArea;
+  acsCode: string;
+  /** The last few assessments of this one skill. Never summed with any other. */
+  trend: { label: string; score: number; state: SkillState }[];
 }
 
 export const SKILL_SCORES: SkillScore[] = [
   {
+    slug: "crosswind-landing",
     skill: "Crosswind Landing",
     score: 3,
     max: 4,
@@ -188,8 +211,16 @@ export const SKILL_SCORES: SkillScore[] = [
     vectorRead:
       "You're close here. The centerline work is done -- the remaining issue is holding the correction through touchdown, which is the part that's still costing you consistency.",
     next: "A short review, then the crosswind chair-fly scenario before Thursday.",
+    acsArea: ACS_AREAS.landings,
+    acsCode: "PA.IV.E",
+    trend: [
+      { label: "Jul 18", score: 2, state: "Needs Work" },
+      { label: "Aug 12", score: 2, state: "Needs Work" },
+      { label: "Aug 29", score: 3, state: "Improving" },
+    ],
   },
   {
+    slug: "stabilized-approach",
     skill: "Stabilized Approach",
     score: 2,
     max: 4,
@@ -201,8 +232,16 @@ export const SKILL_SCORES: SkillScore[] = [
       "This is the older of your two open items and the one that has survived a change of instructor. The pattern is that speed control slips when the pattern gets busy, so the fix is earlier configuration rather than more attention on short final.",
     next: "Configuration complete before the turn to final. 65 KIAS by short final or go around.",
     recurring: { lessons: 3, instructors: 2 },
+    acsArea: ACS_AREAS.landings,
+    acsCode: "PA.IV.A",
+    trend: [
+      { label: "Jul 18", score: 1, state: "Needs Work" },
+      { label: "Aug 12", score: 2, state: "Needs Work" },
+      { label: "Aug 29", score: 2, state: "Needs Work" },
+    ],
   },
   {
+    slug: "short-field-landing",
     skill: "Short-Field Landing",
     score: 4,
     max: 4,
@@ -211,8 +250,16 @@ export const SKILL_SCORES: SkillScore[] = [
     studentTake: "You felt short-field went well.",
     vectorRead: "You and Jake agree here, and this is the one skill from Thursday he didn't leave open.",
     next: "Nothing before Thursday. Keep it warm.",
+    acsArea: ACS_AREAS.landings,
+    acsCode: "PA.IV.G",
+    trend: [
+      { label: "Jul 18", score: 3, state: "Improving" },
+      { label: "Aug 12", score: 3, state: "Improving" },
+      { label: "Aug 29", score: 4, state: "Meets Standard" },
+    ],
   },
   {
+    slug: "radio-work",
     skill: "Radio Work",
     score: 4,
     max: 4,
@@ -221,7 +268,58 @@ export const SKILL_SCORES: SkillScore[] = [
     studentTake: null,
     vectorRead: "Confident and clear for three lessons running -- this stopped being a problem a while ago.",
     next: "Nothing.",
+    acsArea: ACS_AREAS.airport,
+    acsCode: "PA.III.A",
+    trend: [
+      { label: "Jul 18", score: 3, state: "Improving" },
+      { label: "Aug 12", score: 4, state: "Meets Standard" },
+      { label: "Aug 29", score: 4, state: "Meets Standard" },
+    ],
   },
+];
+
+/** Lookup by slug for the skill-detail route. */
+export function skillBySlug(slug: string): SkillScore | undefined {
+  return SKILL_SCORES.find((s) => s.slug === slug);
+}
+
+/** Skills grouped under their ACS Area of Operation, in list order. */
+export function skillsByAcsArea(): { area: AcsArea; skills: SkillScore[] }[] {
+  const order: AcsArea[] = [ACS_AREAS.landings, ACS_AREAS.airport];
+  return order
+    .map((area) => ({ area, skills: SKILL_SCORES.filter((s) => s.acsArea === area) }))
+    .filter((g) => g.skills.length > 0);
+}
+
+/**
+ * The flight that has landed but has not been debriefed yet.
+ *
+ * Home is state-aware because a home screen that assumes a debrief already
+ * happened has nothing to say in the twenty minutes that matter most -- the
+ * ones right after shutdown, when the details are still in the student's head.
+ */
+export const PENDING_FLIGHT = {
+  date: "Today",
+  landedAt: "2:14 PM",
+  lesson: "Crosswind + Short Field",
+  instructor: INSTRUCTOR.firstName,
+  aircraft: "N4521P · Cessna 172S",
+  duration: "1.4",
+};
+
+export interface DebriefRecord {
+  id: string;
+  date: string;
+  instructor: string;
+  lesson: string;
+  length: string;
+}
+
+/** Debrief history. The Debrief tab is a place to START one, not only to read one. */
+export const DEBRIEFS: DebriefRecord[] = [
+  { id: "latest", date: "Aug 29", instructor: INSTRUCTOR.firstName, lesson: "Crosswind + Short Field", length: "1:12" },
+  { id: "aug-12", date: "Aug 12", instructor: INSTRUCTOR.firstName, lesson: "Pattern work + Go-arounds", length: "0:58" },
+  { id: "jul-18", date: "Jul 18", instructor: PRIOR_INSTRUCTOR.firstName, lesson: "Slow flight + Landings", length: "1:31" },
 ];
 
 export interface QuizQuestion {

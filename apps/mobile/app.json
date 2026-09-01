@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "AfterFlight",
+    "slug": "afterflight",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "afterflight",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.getafterflight.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "UIBackgroundModes": ["location"],
+        "NSLocationWhenInUseUsageDescription": "AfterFlight uses your location to record your flight path while a flight is active.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "AfterFlight records your active flight while your screen is locked or another aviation app is open. Location is only used while a flight is recording."
+      }
+    },
+    "android": {
+      "package": "com.getafterflight.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "AfterFlight records your active flight while your screen is locked or another aviation app is open.",
+          "locationWhenInUsePermission": "AfterFlight uses your location to record your flight path while a flight is active.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      "expo-secure-store",
+      "expo-sqlite"
+    ],
+    "extra": {
+      "apiBaseUrl": "https://getafterflight.com"
+    }
+  }
+}

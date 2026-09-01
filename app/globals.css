@@ -51,6 +51,61 @@
   --danger: #c0362b;
   --danger-ink: #7a2019;
   --danger-soft: #f8dcd8;
+
+  /*
+   * Panel -- the dark navy functional surface.
+   *
+   * AfterFlight's visual signature is a dark panel on a light canvas, not a
+   * wall-to-wall dark app. The panel is where the product makes a claim ("this
+   * is your next flight", "this is what to train"); everything around it stays
+   * paper. Used sparingly: one panel per screen, occasionally two.
+   */
+  --panel: #142033;
+  --panel-elevated: #1b283d;
+  --panel-foreground: #f7f9fb;
+  --panel-foreground-soft: #9da7b8;
+  --panel-hairline: #2a3a52;
+
+  /*
+   * Text and icons sitting ON a brand-orange fill.
+   *
+   * White by request. Worth knowing what it costs: white on the brand orange
+   * #f07621 measures 2.87:1, under the 4.5:1 AA floor for text this size,
+   * where navy measures 5.7:1. The button is large, high-contrast against the
+   * page and never the only signal, so it is legible in practice -- but it is
+   * a deliberate exception, not a passing pair. Swapping this one token back
+   * to #142033 reverts every orange fill in the prototype at once.
+   */
+  --on-brand: #ffffff;
+
+  /*
+   * Skill state. A separate scale from --brand on purpose: orange means "tap
+   * this", so a skill that needs work must never look like a button.
+   *
+   * Two variants per state because contrast is a property of the pair, not the
+   * colour. The bright versions clear 4.5:1 on --panel and fail badly on paper
+   * (#48be83 on white is 2.3:1); the deep versions do the reverse. Use the
+   * -on-panel pair anywhere the ground is --panel or the app is in dark mode.
+   */
+  --state-good: #1f7a4c;
+  --state-improving: #2c6c93;
+  --state-attention: #9a6612;
+  /*
+   * A separate, golder value for the meter fill.
+   *
+   * The text and the fill have different contrast obligations: a label must
+   * clear 4.5:1 (WCAG 1.4.3) and a graphical object only 3:1 (1.4.11). The
+   * label value read as brown because it was carrying the stricter of the two
+   * requirements for both jobs. #a87b0e is 3.82 on white and 3.50 on the
+   * sunken canvas -- clear on both grounds a meter actually sits on, and
+   * visibly gold rather than mud. Truer goldenrod (#b8860b) drops to 2.98 on
+   * the sunken canvas, which is where the skill-detail meter lives, so this is
+   * as gold as the pair will carry.
+   */
+  --state-attention-fill: #a87b0e;
+  --state-good-on-panel: #48be83;
+  --state-improving-on-panel: #6f9fbd;
+  --state-attention-on-panel: #e6a23c;
 }
 
 @theme inline {
@@ -74,6 +129,19 @@
   --color-danger: var(--danger);
   --color-danger-ink: var(--danger-ink);
   --color-danger-soft: var(--danger-soft);
+  --color-panel: var(--panel);
+  --color-panel-elevated: var(--panel-elevated);
+  --color-panel-foreground: var(--panel-foreground);
+  --color-panel-foreground-soft: var(--panel-foreground-soft);
+  --color-panel-hairline: var(--panel-hairline);
+  --color-on-brand: var(--on-brand);
+  --color-state-good: var(--state-good);
+  --color-state-improving: var(--state-improving);
+  --color-state-attention: var(--state-attention);
+  --color-state-attention-fill: var(--state-attention-fill);
+  --color-state-good-on-panel: var(--state-good-on-panel);
+  --color-state-improving-on-panel: var(--state-improving-on-panel);
+  --color-state-attention-on-panel: var(--state-attention-on-panel);
   --font-sans: var(--font-archivo);
   --font-display: var(--font-archivo);
 
@@ -121,6 +189,26 @@
     --danger: #e0665a;
     --danger-ink: #f8d3ce;
     --danger-soft: #3a1613;
+
+    /* In dark mode the canvas is already navy, so the panel has to sit ABOVE it
+       rather than below -- same role, inverted relationship. */
+    --panel: #1b283d;
+    --panel-elevated: #24334a;
+    --panel-foreground: #f7f9fb;
+    --panel-foreground-soft: #9da7b8;
+    --panel-hairline: #33415c;
+
+    --on-brand: #ffffff;
+
+    /* The paper-ground variants are unusable here; the state scale collapses onto
+       the bright pair for both grounds. */
+    --state-good: #48be83;
+    --state-improving: #6f9fbd;
+    --state-attention: #e6a23c;
+    --state-attention-fill: #e6a23c;
+    --state-good-on-panel: #48be83;
+    --state-improving-on-panel: #6f9fbd;
+    --state-attention-on-panel: #e6a23c;
   }
 }
 
@@ -149,6 +237,25 @@
   --danger: #e0665a;
   --danger-ink: #f8d3ce;
   --danger-soft: #3a1613;
+
+  /* In dark mode the canvas is already navy, so the panel has to sit ABOVE it
+     rather than below -- same role, inverted relationship. */
+  --panel: #1b283d;
+  --panel-elevated: #24334a;
+  --panel-foreground: #f7f9fb;
+  --panel-foreground-soft: #9da7b8;
+  --panel-hairline: #33415c;
+
+  --on-brand: #ffffff;
+
+  /* The paper-ground variants are unusable here; the state scale collapses onto
+     the bright pair for both grounds. */
+  --state-good: #48be83;
+  --state-improving: #6f9fbd;
+  --state-attention: #e6a23c;
+  --state-good-on-panel: #48be83;
+  --state-improving-on-panel: #6f9fbd;
+  --state-attention-on-panel: #e6a23c;
 }
 
 /*

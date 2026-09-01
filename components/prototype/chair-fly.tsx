@@ -89,7 +89,7 @@ export function ChairFly() {
         {!started ? (
           <button
             onClick={begin}
-            className="self-start rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground"
+            className="self-start rounded-lg bg-brand px-4 py-2 text-sm font-medium text-on-brand"
           >
             Start the scenario
           </button>
