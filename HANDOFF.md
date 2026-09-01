@@ -138,6 +138,37 @@ as done.
 
 ---
 
+## Next up: homepage messaging reframe (briefed, not started)
+
+A full brief was given on 2026-08-31 and **no work was done on it** — the
+session ran out of context first. Nothing was changed; the homepage is exactly
+as `aa512b9` left it.
+
+The strategic centre:
+
+- **Why:** every flight should build on the last
+- **Category:** the between-flight training system for student pilots
+- **Outcome:** build proficiency faster, waste fewer expensive flight hours
+- **Explicitly NOT** "a flight tracking app" — the recorder is a proof point
+  and an input, not the promise
+
+Hero becomes: eyebrow *"Better flight training starts between flights"*,
+headline *"Show up ready for your next lesson."*, primary CTA *"Start Your
+First Flight"*.
+
+Structural asks: keep every existing section (this is copy and hierarchy, not
+a rebuild); add a Start Flight product-proof section; add an economic-stakes
+section sized to host a training-cost calculator later; demote CFI and Schools
+below the student story in both page and nav.
+
+Guardrails: no guaranteed savings, no "ready to solo/checkride", never lead
+with AI, telemetry, tracking or transcription.
+
+The full brief is in the session transcript. Ask the user to re-paste it — it
+is long and specific, and working from this summary alone would lose detail.
+
+---
+
 ## Known-open, roughly in priority order
 
 1. `apps/mobile` install → prebuild → dev build → device test
