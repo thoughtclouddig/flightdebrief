@@ -1,4 +1,4 @@
-# Handoff — AfterFlight, as of `a4b1238`
+# Handoff — AfterFlight, as of `447fd8f`
 
 Written to survive a session boundary. Read this and `design-system/afterflight/MASTER.md`
 before touching the prototype, the flight-analysis stack, or the mobile app.
@@ -342,6 +342,76 @@ Default assumption for a fresh session: **verify `git rev-list --left-right
 
 ---
 
+## The database, and the trap that looks like data loss
+
+**Production is Replit's managed Postgres**, whose host resolves to `helium`.
+That is what the deployed site has always used, and as of 2026-09-01 it is what
+the workspace uses too.
+
+It did not used to be. Six credentials — `DATABASE_URL` plus `PGHOST`,
+`PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` — had been set **by hand** in
+Replit Secrets, pointing at a *different* Neon database
+(`ep-holy-frog-ayvh6m5d…`, database `neondb`). A manually-set secret shadows the
+managed integration, so:
+
+- the workspace read and wrote `ep-holy-frog`
+- the deployment, which had **no** database keys in its own secrets scope, read
+  and wrote `helium`
+- the two diverged for weeks, and local work never touched production
+
+Replit reports this as *"External database detected"* and **refuses to publish**
+until the six secrets are removed. Removing them is correct.
+
+### Why this reads as catastrophe and is not
+
+Deleting the six and restarting makes the counts change:
+
+| | users | orgs | flights | debriefs |
+|---|---|---|---|---|
+| `ep-holy-frog` (was in the workspace) | 27 | 7 | 83 | 79 |
+| `helium` (production) | 31 | 9 | 154 | 82 |
+
+Nothing was deleted. **Deleting a secret removes a password, not data** — both
+databases still exist, intact. The numbers move because you stopped reading the
+wrong one.
+
+**The check that actually settles which database is production is not the data.
+It is the Deployment's own secrets scope.** If `DATABASE_URL`/`PG*` are absent
+there, the live site uses the managed database, and the managed one is
+production by definition. Row counts cannot tell you this — the stale copy had
+*more* recent-looking data in some tables.
+
+Do not trust Replit's Database panel to answer it either. While the secrets are
+in place the panel reports the shadowed value, so it will happily confirm a host
+that is not the one the deployment uses. That confirmation is what sent this
+session down the wrong path.
+
+### If you ever do this again
+
+```bash
+# 1. Is a file overriding too? Secrets are not the only shadow.
+grep -nE "DATABASE_URL|^PG" .env.local || echo clean
+
+# 2. Back up somewhere that SURVIVES A RESTART. /home/runner does not --
+#    `kill 1` wipes it, and a dump written there is gone. ~/workspace persists.
+pg_dump "$DATABASE_URL" -f ~/workspace/backup.sql
+
+# 3. Keep it out of git. ~/workspace IS the repo and *.sql was not ignored.
+echo "*-backup.sql" >> .gitignore
+
+# 4. Delete the six secrets, restart the CONTAINER (env is injected at start,
+#    restarting the dev server inherits the old values), then verify.
+node -e "const u=new URL(process.env.DATABASE_URL); console.log(u.hostname)"
+```
+
+Then download the dump off Replit. A file on a container is not a backup.
+
+`SEED_DEMO_DATA` and `FORCE_RESEED` sit in the deployment secrets and are inert:
+`postgres-repository.ts:1615` returns `false` on `REPLIT_DEPLOYMENT` before
+either is read. Dead config, not a risk.
+
+---
+
 ## Site gate
 
 Code-complete and untouched. One secret drives it: `SITE_ACCESS_CODE`, unset or
@@ -364,9 +434,32 @@ Measured with the gate on, `curl` against the running server:
 
 | Route | | |
 |---|---|---|
-| `/`, `/how-it-works`, `/demo`, `/prototype/vector`, `/prototype/vector/progress` | `307` | gated |
+| **`/`** | **`200`** | **gated — see below, this is NOT a hole** |
+| `/how-it-works`, `/demo`, `/prototype/vector`, `/prototype/vector/progress` | `307` → `/gate` | gated |
 | `/gate`, `/login` | `200` | reachable |
 | `/invite/accept` | `307` → `/login` | its own no-token logic, **not** the gate |
+
+**`/` returns 200 when the gate is ON, and an earlier version of this table said
+`307`.** That wrong row cost an hour on 2026-09-01: the live site was checked
+after publishing, `/` came back `200`, and it was read as the gate having
+failed. `proxy.ts:55` **rewrites** the root rather than redirecting it —
+
+```js
+if (pathname === "/") return NextResponse.rewrite(gateUrl);
+return NextResponse.redirect(gateUrl);
+```
+
+— so the gate page is served *at* your domain without exposing the marketing
+page underneath. Confirm by title, not status code:
+
+```bash
+curl -s "$APP_BASE_URL/" | grep -oE "<title>[^<]*</title>"
+```
+
+`<title>AfterFlight</title>` is the gate (`app/gate/page.tsx`). The real homepage
+says `AfterFlight — Make every flight build on the last.` The decisive check is
+that `/prototype/vector` redirects to `/gate?next=…`, since that whole branch
+only runs when `isSiteGateEnabled()` is true.
 
 That last row is the one to re-check if you ever touch this. `/invite/accept`
 must never redirect to `/gate`, or an invited user cannot accept while the site
@@ -390,10 +483,11 @@ the dev server binds IPv4 only, so `127.0.0.1` is required or everything reads
 for p in / /prototype/vector; do curl -s -o /dev/null -w "$p %{http_code}\n" "http://127.0.0.1:3000$p"; done
 ```
 
-**Still open:** a published Deployment may carry its own secrets scope. Setting
-`SITE_ACCESS_CODE` on the workspace does not necessarily apply it to the
-published site, and if it is missing there the site publishes fully public with
-no error. Verify against the public URL after publishing, not just locally.
+**Resolved 2026-09-01.** `SITE_ACCESS_CODE` *is* in the Deployment's own secrets
+scope, and the gate was verified live at `getafterflight.com` after publishing:
+`/` serves the gate page, `/prototype/vector` redirects to `/gate?next=…`. The
+principle still holds for any future secret — a Deployment carries its own
+scope, and the database keys in the section above were the proof.
 
 ---
 
@@ -661,8 +755,12 @@ Longer-standing:
     that were later corrected
 14. Tasks #156 (home progress rail), #157 (solo signup smoke test), #158
     (homepage stage-two positioning, held pending 20 CFI discovery calls)
-15. `npm run build` has never been run successfully outside Replit
-    (`DATABASE_URL`), so a publish is still its first real test
+15. ~~`npm run build` has never been run successfully outside Replit~~
+    **Resolved 2026-09-01.** It builds clean on Replit: 108 static pages, no
+    errors. Note what that proves — the four `/prototype/vector/progress/[skill]`
+    routes are prerendered (SSG), so the build *executes* their render. Before
+    the `"use client"` fix on `assessment-comparison.tsx` they threw, which means
+    a green build is now independent evidence that fix holds.
 
 ---
 
