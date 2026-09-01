@@ -168,7 +168,7 @@ export type SkillState = "Needs Work" | "Improving" | "Meets Standard";
  */
 export const ACS_AREAS = {
   landings: "Takeoffs, Landings & Go-Arounds",
-  airport: "Airport & Traffic Pattern Operations",
+  airport: "Airport & Seaplane Base Operations",
 } as const;
 
 export type AcsArea = (typeof ACS_AREAS)[keyof typeof ACS_AREAS];
@@ -212,7 +212,7 @@ export const SKILL_SCORES: SkillScore[] = [
       "You're close here. The centerline work is done -- the remaining issue is holding the correction through touchdown, which is the part that's still costing you consistency.",
     next: "A short review, then the crosswind chair-fly scenario before Thursday.",
     acsArea: ACS_AREAS.landings,
-    acsCode: "PA.IV.E",
+    acsCode: "PA.IV.B",
     trend: [
       { label: "Jul 18", score: 2, state: "Needs Work" },
       { label: "Aug 12", score: 2, state: "Needs Work" },
@@ -233,7 +233,7 @@ export const SKILL_SCORES: SkillScore[] = [
     next: "Configuration complete before the turn to final. 65 KIAS by short final or go around.",
     recurring: { lessons: 3, instructors: 2 },
     acsArea: ACS_AREAS.landings,
-    acsCode: "PA.IV.A",
+    acsCode: "PA.IV.B",
     trend: [
       { label: "Jul 18", score: 1, state: "Needs Work" },
       { label: "Aug 12", score: 2, state: "Needs Work" },
@@ -251,7 +251,7 @@ export const SKILL_SCORES: SkillScore[] = [
     vectorRead: "You and Jake agree here, and this is the one skill from Thursday he didn't leave open.",
     next: "Nothing before Thursday. Keep it warm.",
     acsArea: ACS_AREAS.landings,
-    acsCode: "PA.IV.G",
+    acsCode: "PA.IV.F",
     trend: [
       { label: "Jul 18", score: 3, state: "Improving" },
       { label: "Aug 12", score: 3, state: "Improving" },
@@ -281,14 +281,6 @@ export const SKILL_SCORES: SkillScore[] = [
 /** Lookup by slug for the skill-detail route. */
 export function skillBySlug(slug: string): SkillScore | undefined {
   return SKILL_SCORES.find((s) => s.slug === slug);
-}
-
-/** Skills grouped under their ACS Area of Operation, in list order. */
-export function skillsByAcsArea(): { area: AcsArea; skills: SkillScore[] }[] {
-  const order: AcsArea[] = [ACS_AREAS.landings, ACS_AREAS.airport];
-  return order
-    .map((area) => ({ area, skills: SKILL_SCORES.filter((s) => s.acsArea === area) }))
-    .filter((g) => g.skills.length > 0);
 }
 
 /**
@@ -396,7 +388,7 @@ export const CONCEPTS: Record<
       "Rudder holds the nose straight; aileron holds you on centerline. Different jobs.",
       "Don't relax anything until you're taxi speed",
     ],
-    sources: ["FAA Airplane Flying Handbook, Ch. 9 — Crosswind Approach and Landing", "ACS: PA.IV.E — Crosswind Approach and Landing"],
+    sources: ["FAA Airplane Flying Handbook, Ch. 9 — Crosswind Approach and Landing", "ACS: PA.IV.B — Normal Approach and Landing (crosswind conditions)"],
   },
   "stabilized-approach-speed": {
     title: "Getting stabilized earlier",
@@ -411,7 +403,7 @@ export const CONCEPTS: Record<
       "65 KIAS by short final -- if it isn't there, it isn't stable",
       "If you're still fixing speed at the threshold, go around",
     ],
-    sources: ["FAA Airplane Flying Handbook, Ch. 8 — Approaches and Landings", "ACS: PA.IV.A — Normal Approach and Landing"],
+    sources: ["FAA Airplane Flying Handbook, Ch. 8 — Approaches and Landings", "ACS: PA.IV.B — Normal Approach and Landing"],
   },
 };
 

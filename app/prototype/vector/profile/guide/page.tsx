@@ -94,7 +94,7 @@ export default function GuidePage() {
             There is no overall score and no readiness percentage. Whether you&rsquo;re ready to solo or take a
             checkride is your instructor&rsquo;s call.
           </p>
-          <AcsBadge area={ACS_AREAS.landings} code="PA.IV.E" />
+          <AcsBadge area={ACS_AREAS.landings} code="PA.IV.B" />
           <p className="text-[15px] leading-relaxed text-foreground-soft">
             Skills are tagged to their FAA Airman Certification Standards area, so what you practice here lines up
             with what you&rsquo;ll be tested on.

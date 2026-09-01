@@ -25,7 +25,7 @@ gate is live, the prototype sits behind it, and the rebuilt debrief flow is
 deployed to Replit.
 
 `npm run build` fails locally with `DATABASE_URL is not set` — expected without
-the Replit DB, and unrelated to any of this. `tsc`, `eslint` and 365 tests pass.
+the Replit DB, and unrelated to any of this. `tsc`, `eslint` and 376 tests pass.
 
 **`npx eslint .` reports ~577 errors that are not yours.** They are all inside
 `.claude/worktrees/**/node_modules`. The project's own tree has exactly one, a
@@ -402,6 +402,60 @@ Three things that cost real time in the session that produced this section:
   filename.
 - `ffmpeg` here has **no AVIF muxer** and `avifenc` is not installed.
   `sips -s format avif -s formatOptions 65 -Z 2000 in.png --out out.avif` works.
+
+---
+
+## Progress — Skills and ACS are two different questions
+
+**Read this before editing `lib/prototype/acs.ts` or the Progress tabs.** They
+used to be the same four rows regrouped under an Area heading, which made the
+ACS tab look like a relabelled Skills tab because that is exactly what it was.
+
+|  | Answers | Shape |
+|---|---|---|
+| **Skills** | "What am I getting better at?" | Flat, tappable list in the student's own vocabulary. Unchanged. |
+| **ACS** | "How am I tracking against what I'll have to demonstrate?" | Published Area of Operation → Task, led by a readiness summary. |
+
+**The load-bearing difference is the rows with no score.** A skills list can
+only ever contain what has been assessed; the checkride question is mostly
+about what has *not* been. Five of the eight tasks show **Not assessed yet**
+with **no meter** — a 0-of-4 meter would claim the instructor assessed this and
+found nothing, when the lesson simply has not happened. Do not "fill in" those
+rows.
+
+**No second scoring model.** A task sits at the *lowest* level of the skills
+assessed under it, on the same three-state scale — a task is not at standard
+while a component of it is not. That is an ACS rollup, which MASTER.md §2
+already sanctions as one of the three places a state colour may appear.
+
+**The readiness summary is counts, not a verdict.** "2 of 3 assessed tasks
+meeting standard", and the not-assessed count is rendered directly beneath it
+in the same panel. That pairing is deliberate and a test enforces it: without
+the denominator being *assessed* and the remainder stated, the number reads as
+"two-thirds ready", which is precisely the aggregate readiness verdict this
+product does not make. No percentage. The signoff is still Jake's, and the
+InfoTip says so.
+
+### Task codes were wrong and are now single-sourced
+
+The seed had crosswind at `PA.IV.E`, stabilized approach at `PA.IV.A` and
+short-field at `PA.IV.G`, and `PA.IV.E` was additionally hardcoded into
+`/compare` and `/profile/guide`. None of it matched the published task letters,
+and adding real task names would have made the two views contradict each other
+on screen.
+
+Corrected to the tasks the skills actually sit under: crosswind **and**
+stabilized approach are both `PA.IV.B` *Normal Approach and Landing* — crosswind
+is a **condition** of that task in the ACS, not a task of its own — and
+short-field is `PA.IV.F`. `acs.test.ts` asserts every skill's own `acsCode` and
+`acsArea` match the task claiming it, so they cannot drift apart again.
+
+`ACS_AREAS.airport` was renamed to the published **"Airport & Seaplane Base
+Operations"**. It looks odd above a land trainer's radio work and it is correct;
+`PA.III.A` already belonged to that Area.
+
+`skillsByAcsArea()` is gone — the ACS view is built from the task structure now
+and nothing else called it.
 
 ---
 

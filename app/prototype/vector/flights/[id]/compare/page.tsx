@@ -174,7 +174,7 @@ export default async function ComparePage({ params }: { params: Promise<{ id: st
         />
       </Section>
 
-      <AcsBadge area={ACS_AREAS.landings} code="PA.IV.E" />
+      <AcsBadge area={ACS_AREAS.landings} code="PA.IV.B" />
 
       <div className="flex flex-col gap-2.5">
         <PrimaryButton href="/prototype/vector/train">Train this with Vector</PrimaryButton>
