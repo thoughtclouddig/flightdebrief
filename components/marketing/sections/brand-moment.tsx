@@ -10,7 +10,7 @@ import { Reveal } from "@/components/marketing/reveal";
 const PROBLEMS = [
   {
     title: "Hard to remember",
-    copy: "The details that mattered right after landing are easy to forget by tomorrow.",
+    copy: "The details that mattered right after landing are easy to forget by the next lesson — especially if it is with a different instructor.",
   },
   {
     title: "Hard to practice",
@@ -82,8 +82,9 @@ export function BrandMoment() {
           className="mx-auto mt-8 max-w-md text-balance text-lg text-[#4b545d] sm:max-w-2xl"
           style={{ textShadow: "0 1px 10px rgba(255,255,255,0.9)" }}
         >
-          Your instructor gives you feedback after every lesson. But if you don&rsquo;t fully understand it,
-          practice it, and carry it into the next flight, you can spend the next lesson{" "}
+          Your instructor gives you feedback after every lesson. But if it isn&rsquo;t understood, practiced and
+          carried into the next flight &mdash; which is sometimes flown with a different instructor &mdash; you
+          can spend expensive airplane time{" "}
           <span className="text-brand">relearning the same things.</span>
         </p>
       </Reveal>

@@ -17,8 +17,8 @@ export function NextFlight() {
       <div className="mx-auto max-w-[1100px]">
         <SectionHead
           eyebrow="Next flight"
-          headline="Know exactly what to work on before you fly again."
-          body="AfterFlight builds your next-flight prep from the flight you just flew — not from a syllabus template."
+          headline="Your next flight starts where your last one left off."
+          body="Instead of showing up trying to remember where the last lesson ended, you arrive knowing what to focus on. Built from the flight you just flew — not from a syllabus template."
         />
         <NextFlightCard />
       </div>

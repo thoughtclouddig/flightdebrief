@@ -22,8 +22,8 @@ export function DebriefReplay() {
       <div className="mx-auto max-w-[1100px]">
         <SectionHead
           eyebrow="Debrief replay"
-          headline="Hear the important part again."
-          body="After the debrief, AfterFlight turns the conversation into a short recap the student can replay on the drive home, or in the car park before the next lesson."
+          headline="It starts with what your instructor said."
+          body="AfterFlight captures what happened in the lesson and what your instructor wants you working on — the foundation for everything that comes next. It also becomes a short recap you can replay on the drive home."
         />
 
         <DebriefRecapDemo showHeading={false} className="mt-14" />

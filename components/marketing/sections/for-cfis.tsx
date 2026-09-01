@@ -24,7 +24,7 @@ export function ForCfis() {
               You teach. AfterFlight handles the <span className="text-brand">follow-through.</span>
             </>
           }
-          body="Give your normal debrief. AfterFlight turns it into the student's recap, training focus, Vector review and next-flight prep — without another page of notes."
+          body="Give your normal debrief. AfterFlight turns it into the student's training focus, Vector review and next-flight prep — and carries your priorities forward, so continuity survives an instructor change."
         />
 
         <Reveal delay={120} className="mx-auto mt-14 max-w-[860px]">

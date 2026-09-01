@@ -89,8 +89,8 @@ export function HowItWorks() {
       <div className="mx-auto max-w-[1320px]">
         <SectionHead
           eyebrow="How it works"
-          headline="One flight, four steps, no wasted lesson."
-          body="The debrief already happens. AfterFlight is what turns it into something you can actually train against."
+          headline="Fly. Debrief. Train. Fly again."
+          body="The loop that makes a lesson carry forward. The debrief already happens — AfterFlight is what turns it into training you can actually do before the next one."
         />
 
         {/* Mobile: the peeking-card slider's density (translucent overlay card,

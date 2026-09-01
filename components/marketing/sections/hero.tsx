@@ -25,6 +25,11 @@ export function Hero() {
               four and pushing the CTA below the fold. Negative tracking buys
               the width that costs.
 
+              Re-checked when the headline changed: "Make every flight" is
+              wider than "build on" or "the last.", and narrower than the
+              "Show up ready" these numbers were originally cut for, so the
+              existing ends hold with more slack than before rather than less.
+
               Both clamp ends are set by the longest line rather than by eye.
               Measured in the real Archivo face, "Show up ready" renders 600px
               wide at 68px -- so it needs roughly 8.8px of column per px of
@@ -47,13 +52,13 @@ export function Hero() {
             className="font-display mt-4 max-w-2xl text-[clamp(2.125rem,5.6vw,3.75rem)] font-extrabold leading-[1.0] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
-            Show up ready <br />
-            for your next <br />
-            <span className="text-brand">lesson.</span>
+            Make every flight <br />
+            build on <br />
+            <span className="text-brand">the last.</span>
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#68717D]">
-            AfterFlight connects every flight with your instructor&rsquo;s feedback and personalized training, so
-            you show up better prepared, build proficiency faster, and waste fewer expensive flight hours.
+            AfterFlight turns each lesson into a personalized plan for what to review, practice, and focus on
+            next &mdash; so you show up prepared, avoid relearning, and build proficiency faster.
           </p>
 
           <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
@@ -67,7 +72,7 @@ export function Hero() {
 
           <div className="mt-8 flex flex-col items-stretch gap-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <CtaLink href="/signup">Start Your First Flight</CtaLink>
+              <CtaLink href="/signup">Try AfterFlight Free</CtaLink>
               <CtaLink href="#how-it-works" variant="secondary" className="whitespace-nowrap">
                 See How It Works
               </CtaLink>

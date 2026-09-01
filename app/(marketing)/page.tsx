@@ -20,9 +20,9 @@ import { FounderStory } from "@/components/marketing/sections/founder-story";
 import { FinalCta } from "@/components/marketing/sections/final-cta";
 
 export const metadata: Metadata = {
-  title: "AfterFlight — Show up ready for your next lesson.",
+  title: "AfterFlight — Make every flight build on the last.",
   description:
-    "AfterFlight is the between-flight training system for student pilots. It connects every flight with your instructor's feedback and personalized training, so you show up better prepared, build proficiency faster, and waste fewer expensive flight hours.",
+    "AfterFlight is the between-flight training system for student pilots. It turns each lesson into a personalized plan for what to review, practice and focus on next, so you show up prepared, avoid relearning, and build proficiency faster.",
   alternates: appOrigin() ? { canonical: appOrigin()! } : undefined,
 };
 
@@ -41,6 +41,14 @@ export const metadata: Metadata = {
  * before the page addresses a second audience; the section itself is
  * unchanged. FounderStory is new and sits last before the close, where it
  * reads as provenance rather than as a pitch.
+ *
+ * The continuity pass reordered the middle of the page to match the story it
+ * now tells: problem, the loop, the DEBRIEF as the input, what that input
+ * produces (the perception gap, training, Vector), the next flight it feeds,
+ * and progress compounding across all of it. DebriefReplay had drifted to
+ * eighth, which stopped working the moment its headline became "It starts
+ * with what your instructor said" -- a section claiming to be the start
+ * cannot sit after the three things it starts.
  *
  * FlightRecordingPreview is the native recorder, and it sits AFTER every
  * shipped section on purpose. It began as a product-proof walkthrough in
@@ -73,12 +81,12 @@ export default function MarketingHomePage() {
       <Hero />
       <BrandMoment />
       <HowItWorks />
+      <DebriefReplay />
+      <PerceptionGap />
+      <PersonalizedTraining />
       <VectorSection />
       <NextFlight />
-      <PersonalizedTraining />
-      <PerceptionGap />
       <SkillProgress />
-      <DebriefReplay />
       <FlightRecordingPreview />
       <DebriefDoctrine />
       <Proof />

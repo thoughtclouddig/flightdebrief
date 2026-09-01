@@ -30,7 +30,7 @@ const SECONDARY = [
   {
     icon: Building2,
     title: "Flight Schools",
-    copy: "A consistent debrief process across your instructors, and progress you can actually see.",
+    copy: "Training continuity that survives an instructor change, and progress you can actually see.",
     cta: "For schools",
     href: "/schools",
   },

@@ -19,9 +19,9 @@ export function FinalCta() {
 
         <Reveal delay={80}>
           <h2 className="font-display mt-12 text-balance text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl">
-            Every flight should
+            Show up ready for
             <br />
-            <span className="text-brand">build on the last.</span>
+            <span className="text-brand">your next lesson.</span>
           </h2>
           <p className="mx-auto mt-5 max-w-lg text-balance text-lg leading-relaxed text-white/75">
             Turn your flight, your instructor&rsquo;s feedback, and your between-flight training into a clear path
@@ -40,7 +40,7 @@ export function FinalCta() {
             event="start_free"
             className="rounded-lg bg-brand px-8 py-3.5 text-sm font-semibold text-white hover:bg-brand-bright"
           >
-            Start Your First Flight
+            Try AfterFlight Free
           </TrackedLink>
           <Link
             href="/#how-it-works"
