@@ -53,7 +53,7 @@ export function SectionHead({
       {/*
        * Short bodies balance; long ones do not.
        *
-       * text-balance evens out line lengths, which is what a two or three line
+       * text-pretty evens out line lengths, which is what a two or three line
        * standfirst wants -- but browsers stop balancing past roughly six lines
        * and fall back to normal wrapping, which strands the last line.
        *

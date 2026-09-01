@@ -102,7 +102,7 @@ export function EverythingThatMatters() {
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             What actually happens after you land.
           </h2>
-          <p className="mt-4 text-balance text-lg text-[#68717D]">
+          <p className="mt-4 text-pretty text-lg text-[#68717D]">
             The same debrief you already do -- rated separately, discussed together, and turned into a clear
             record and a plan for next time.
           </p>
@@ -118,7 +118,7 @@ export function EverythingThatMatters() {
               <PhotoVisual src={card.src} alt={card.alt} label={`Step ${i + 1}`} />
               <div>
                 <p className="font-display text-balance text-xl font-bold text-[#101727]">{card.headline}</p>
-                <p className="text-balance mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
+                <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
               </div>
             </Reveal>
           ))}
@@ -166,10 +166,10 @@ export function EverythingThatMatters() {
                   <span className="relative z-[1] inline-flex w-fit items-center gap-2 self-start rounded-full bg-brand px-3 py-[7px] text-xs font-extrabold tracking-[0.12em] text-white uppercase">
                     Step {i + 1}: {card.stepLabel}
                   </span>
-                  <p className="relative z-[1] mt-3 line-clamp-2 text-balance text-[22px] leading-[1.25] font-extrabold tracking-[-0.01em] text-[#101727]">
+                  <p className="relative z-[1] mt-3 line-clamp-2 text-pretty text-[22px] leading-[1.25] font-extrabold tracking-[-0.01em] text-[#101727]">
                     {card.headline}
                   </p>
-                  <p className="relative z-[1] mt-2 line-clamp-2 text-balance text-base leading-[1.4] text-[#101727]">
+                  <p className="relative z-[1] mt-2 line-clamp-2 text-pretty text-base leading-[1.4] text-[#101727]">
                     {card.copy}
                   </p>
                 </div>

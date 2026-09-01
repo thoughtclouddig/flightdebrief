@@ -165,7 +165,7 @@ export default async function ArticlePage(props: PageProps<"/field-notes/[topicS
               answer below delivers it. At the old size the two competed, and
               a reader met two summaries before any content. */}
           {article.dek ? (
-            <p className="mt-4 max-w-[52ch] text-balance text-[17px] leading-relaxed text-[#68717D]">{article.dek}</p>
+            <p className="mt-4 max-w-[52ch] text-pretty text-[17px] leading-relaxed text-[#68717D]">{article.dek}</p>
           ) : null}
           {/* Read time sits with the byline because it answers the question a
               reader has at exactly this point: is this worth starting now. */}

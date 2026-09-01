@@ -31,12 +31,12 @@ export function TrainingEconomics() {
               Flight training is too expensive to keep{" "}
               <span className="text-brand">relearning the same lesson.</span>
             </h2>
-            <p className="mt-5 text-balance text-lg text-[#68717D]">
+            <p className="mt-5 text-pretty text-lg text-[#68717D]">
               When feedback gets lost between flights, students can spend expensive airplane time rebuilding
               context instead of progressing. A 1.5-hour training flight can cost hundreds of dollars, and the
               hour you spend re-covering last lesson is an hour you paid for twice.
             </p>
-            <p className="mt-4 text-balance text-lg text-[#68717D]">
+            <p className="mt-4 text-pretty text-lg text-[#68717D]">
               <strong className="text-[#101727]">AfterFlight carries your instructor&rsquo;s feedback forward</strong>,
               so the next lesson starts where the last one finished.
             </p>
@@ -55,7 +55,7 @@ export function TrainingEconomics() {
                   </span>
                   <div>
                     <p className="font-display text-xl font-bold text-[#101727]">{b.title}</p>
-                    <p className="mt-1 text-balance text-base text-[#68717D]">{b.copy}</p>
+                    <p className="mt-1 text-pretty text-base text-[#68717D]">{b.copy}</p>
                   </div>
                 </div>
               ))}
@@ -69,7 +69,7 @@ export function TrainingEconomics() {
               <h3 className="font-display text-balance text-3xl font-bold leading-tight text-[#101727] sm:text-4xl">
                 What does one repeated lesson cost you?
               </h3>
-              <p className="mt-4 text-balance text-lg leading-relaxed text-[#68717D]">
+              <p className="mt-4 text-pretty text-lg leading-relaxed text-[#68717D]">
                 The most expensive place to learn something twice is in the airplane.
               </p>
             </div>
@@ -104,7 +104,7 @@ export function TrainingEconomics() {
           *
           * From lg the container is 1024px and the size is capped so the long
           * line stays inside it. Below lg the break is dropped entirely and
-          * text-balance is left to split the sentence, which it does evenly --
+          * text-pretty is left to split the sentence, which it does evenly --
           * a balanced wrap cannot produce the orphan a hand-placed break did.
           */}
         <p className="font-display text-balance text-3xl font-bold leading-snug text-white sm:text-4xl lg:text-[clamp(2.5rem,4.2vw,3rem)]">

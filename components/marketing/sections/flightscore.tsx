@@ -46,7 +46,7 @@ export function FlightScoreSection() {
             <br />
             Know what needs work.
           </h2>
-          <p className="mt-4 text-balance text-lg text-[#68717D]">
+          <p className="mt-4 text-pretty text-lg text-[#68717D]">
             AfterFlight turns your instructor-reviewed debriefs into a clear picture of your training over time
             &mdash; showing where you&rsquo;re improving, where you&rsquo;re consistent, and what deserves
             attention next.
@@ -74,7 +74,7 @@ export function FlightScoreSection() {
               return (
                 <SlideInRight key={category.label} delay={150 + i * 90} className="flex items-center gap-5 py-5">
                   <Icon className={`size-7 shrink-0 ${TONE_TEXT_CLASS[category.tone]}`} />
-                  <span className="text-balance flex-1 text-lg font-medium text-[#101727]">{category.label}</span>
+                  <span className="text-pretty flex-1 text-lg font-medium text-[#101727]">{category.label}</span>
                   {trend ? (
                     <span className="flex items-center gap-2 text-sm font-semibold text-[#101727]">
                       <span className={`size-2.5 shrink-0 rounded-full ${trend.dotClass}`} aria-hidden="true" />

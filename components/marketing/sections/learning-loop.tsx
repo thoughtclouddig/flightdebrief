@@ -60,7 +60,7 @@ export function LearningLoop() {
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             AfterFlight fits into the way you already train.
           </h2>
-          <p className="mt-4 text-balance text-lg text-[#68717D]">
+          <p className="mt-4 text-pretty text-lg text-[#68717D]">
             You fly. You debrief, like you always have. AfterFlight captures and organizes that conversation, so
             you show up to the next lesson better prepared.
           </p>
@@ -84,7 +84,7 @@ export function LearningLoop() {
               </div>
               <div>
                 <p className="font-display text-balance text-xl font-bold text-[#101727]">{frame.headline}</p>
-                <p className="text-balance mt-1.5 text-base text-[#68717D]">{frame.copy}</p>
+                <p className="text-pretty mt-1.5 text-base text-[#68717D]">{frame.copy}</p>
               </div>
             </Reveal>
           ))}
@@ -94,7 +94,7 @@ export function LearningLoop() {
           <h3 className="font-display text-balance text-xl font-bold text-[#101727] sm:text-2xl">
             Why three formats, not one
           </h3>
-          <p className="text-balance mt-3 text-base text-[#68717D]">
+          <p className="text-pretty mt-3 text-base text-[#68717D]">
             Memory research on multimedia learning has repeatedly found that pairing spoken and written review
             measurably improves retention over either alone.
           </p>
@@ -105,7 +105,7 @@ export function LearningLoop() {
                   <Icon className="size-5 text-brand" strokeWidth={2} />
                 </span>
                 <p className="text-balance font-display text-base font-bold text-[#101727]">{label}</p>
-                <p className="text-balance text-base text-[#68717D]">{copy}</p>
+                <p className="text-pretty text-base text-[#68717D]">{copy}</p>
               </div>
             ))}
           </div>

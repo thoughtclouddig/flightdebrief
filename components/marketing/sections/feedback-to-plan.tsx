@@ -53,7 +53,7 @@ export function FeedbackToPlan() {
           <h2 className="font-display text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             A better debrief gives you a better next flight.
           </h2>
-          <p className="mt-4 text-balance text-lg text-[#68717D]">
+          <p className="mt-4 text-pretty text-lg text-[#68717D]">
             AfterFlight connects what happened, what your instructor said, what the ACS requires, and what to
             study&mdash;then turns it into a clear objective for your next flight.
           </p>
@@ -73,11 +73,11 @@ export function FeedbackToPlan() {
 
               <ThreadBlock icon={Target} eyebrow="Area to improve">
                 <p className="text-balance font-display text-lg font-bold text-[#101727]">Altitude control</p>
-                <p className="text-balance mt-1 text-sm text-[#68717D]">Altitude increased 180 ft during the second half of the turn.</p>
+                <p className="text-pretty mt-1 text-sm text-[#68717D]">Altitude increased 180 ft during the second half of the turn.</p>
               </ThreadBlock>
 
               <ThreadBlock icon={MessagesSquare} eyebrow="Your instructor said">
-                <p className="text-balance text-[15px] italic leading-relaxed text-[#101727]">
+                <p className="text-pretty text-[15px] italic leading-relaxed text-[#101727]">
                   &ldquo;Get the trim set before entry and use the horizon as your primary outside reference.&rdquo;
                 </p>
               </ThreadBlock>
@@ -85,7 +85,7 @@ export function FeedbackToPlan() {
               <ThreadBlock icon={ShieldCheck} eyebrow="ACS connection">
                 <p className="text-balance text-xs font-bold uppercase tracking-wide text-[#8c97a2]">FAA Airman Certification Standards</p>
                 <p className="text-balance font-display mt-1 text-base font-bold text-[#101727]">Steep Turns &middot; PA.V.A.S3</p>
-                <p className="text-balance mt-0.5 text-sm text-[#68717D]">Maintain altitude &plusmn;100 feet</p>
+                <p className="text-pretty mt-0.5 text-sm text-[#68717D]">Maintain altitude &plusmn;100 feet</p>
                 <a href="#" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand hover:underline">
                   View ACS standard <ArrowRight className="size-3.5" />
                 </a>
@@ -127,10 +127,10 @@ export function FeedbackToPlan() {
               &rdquo;
             </span>
           </p>
-          <p className="text-balance mt-3 text-sm font-semibold text-[#4b545d]">
+          <p className="text-pretty mt-3 text-sm font-semibold text-[#4b545d]">
             Ian Wilder <span className="font-normal text-[#4b545d]/70">&mdash; AOPA Flight Training</span>
           </p>
-          <p className="text-balance mt-1 text-xs text-[#4b545d]/60">Source: AOPA Flight Training</p>
+          <p className="text-pretty mt-1 text-xs text-[#4b545d]/60">Source: AOPA Flight Training</p>
         </Reveal>
       </div>
     </section>

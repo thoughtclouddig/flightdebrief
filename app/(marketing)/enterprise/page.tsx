@@ -115,7 +115,7 @@ export default function EnterprisePage() {
           >
             Turn every debrief into training intelligence.
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-balance text-lg leading-relaxed text-white/70">
+          <p className="mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed text-white/70">
             Every day, your instructors talk with students about what went well, what needs work, and what comes
             next. AfterFlight captures those debriefs in a consistent structure and turns them into training data
             your organization can actually use.
@@ -134,7 +134,7 @@ export default function EnterprisePage() {
             <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
               One debrief. Structured from the start.
             </h2>
-            <p className="mt-4 text-balance text-lg text-[#68717D]">
+            <p className="mt-4 text-pretty text-lg text-[#68717D]">
               After each flight, the student and instructor walk through a guided debrief. AfterFlight captures
               the instructor&rsquo;s observations and turns the conversation into a structured record of the
               lesson.
@@ -146,7 +146,7 @@ export default function EnterprisePage() {
               <Reveal key={item.title} delay={i * 80} className="flex flex-col items-start gap-3">
                 <item.icon className="size-8 text-brand" strokeWidth={1.5} />
                 <h3 className="font-display text-base font-bold uppercase tracking-wide text-[#101727]">{item.title}</h3>
-                <p className="text-balance text-sm text-[#68717D]">{item.copy}</p>
+                <p className="text-pretty text-sm text-[#68717D]">{item.copy}</p>
               </Reveal>
             ))}
           </div>
@@ -176,7 +176,7 @@ export default function EnterprisePage() {
               <p className="font-display text-xl font-bold text-[#101727] sm:text-2xl">
                 The instructor remains <span className="text-brand">the authority.</span>
               </p>
-              <p className="mt-3 text-balance text-[#68717D]">
+              <p className="mt-3 text-pretty text-[#68717D]">
                 AfterFlight structures and carries forward instructor-reviewed observations. It does not invent an
                 AI grade for the flight.
               </p>
@@ -192,7 +192,7 @@ export default function EnterprisePage() {
             <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
               Now imagine that across your entire operation.
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-balance text-lg text-[#68717D]">
+            <p className="mx-auto mt-4 max-w-2xl text-pretty text-lg text-[#68717D]">
               Instead of thousands of debriefs disappearing into notebooks, memory, or disconnected records,
               AfterFlight builds a structured training history for every student.
             </p>
@@ -223,7 +223,7 @@ export default function EnterprisePage() {
               <Reveal key={level.title} delay={i * 100} className="flex flex-col items-start gap-3">
                 <level.icon className="size-8 text-brand" strokeWidth={1.5} />
                 <h3 className="font-display text-base font-bold uppercase tracking-wide text-[#101727]">{level.title}</h3>
-                <p className="text-balance text-sm text-[#68717D]">{level.copy}</p>
+                <p className="text-pretty text-sm text-[#68717D]">{level.copy}</p>
               </Reveal>
             ))}
           </div>
@@ -318,7 +318,7 @@ export default function EnterprisePage() {
           <h2 className="font-display mt-4 text-balance text-3xl font-bold leading-tight text-white sm:text-4xl">
             See what your training is telling you.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-balance text-lg text-white/70">
+          <p className="mx-auto mt-4 max-w-xl text-pretty text-lg text-white/70">
             Turn the debriefs already happening across your organization into a clearer picture of student
             progress, training patterns, and what needs attention next.
           </p>

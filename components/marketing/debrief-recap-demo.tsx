@@ -81,7 +81,7 @@ export function DebriefRecapDemo({ showHeading = true, className }: { showHeadin
             <h3 className="font-display text-balance text-2xl font-bold text-[#101727] sm:text-3xl">
               Hear what the student takes with them.
             </h3>
-            <p className="text-balance mx-auto mt-3 max-w-xl text-base leading-relaxed text-[#68717D]">
+            <p className="text-pretty mx-auto mt-3 max-w-xl text-base leading-relaxed text-[#68717D]">
               After the CFI and student finish their debrief, AfterFlight turns the conversation into a personalized
               audio recap they can replay anytime.
             </p>

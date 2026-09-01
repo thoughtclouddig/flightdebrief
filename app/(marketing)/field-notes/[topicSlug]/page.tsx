@@ -66,7 +66,7 @@ export default async function ResourceTopicPage(props: PageProps<"/field-notes/[
           <h1 className="font-display mt-2 text-balance text-4xl font-bold text-[#101727] sm:text-5xl" style={{ textTransform: "none" }}>
             {topic.name}
           </h1>
-          {topic.description ? <p className="mt-3 text-balance text-lg leading-relaxed text-[#68717D]">{topic.description}</p> : null}
+          {topic.description ? <p className="mt-3 text-pretty text-lg leading-relaxed text-[#68717D]">{topic.description}</p> : null}
         </Reveal>
 
         <Reveal delay={100} className="mt-12">

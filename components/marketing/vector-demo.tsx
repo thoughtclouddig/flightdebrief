@@ -145,7 +145,7 @@ export function VectorDemo() {
                     type="button"
                     onClick={() => pick(i)}
                     className={cn(
-                      "w-full cursor-pointer rounded-2xl border px-4 py-3.5 text-balance text-left text-base leading-snug text-white transition-colors duration-200",
+                      "w-full cursor-pointer rounded-2xl border px-4 py-3.5 text-pretty text-left text-base leading-snug text-white transition-colors duration-200",
                       i === index && !tookOver
                         ? "border-brand bg-[#22304a]"
                         : "border-[#2a3a52] bg-[#1b283d] hover:border-[#9da7b8]",
@@ -185,12 +185,12 @@ export function VectorDemo() {
                 generic assistant cannot produce. */}
             <blockquote className="border-l-2 border-brand/70 pl-4">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#9da7b8]">{answer.evidence.who}</p>
-              <p className="mt-1.5 text-balance text-base italic leading-relaxed text-white">
+              <p className="mt-1.5 text-pretty text-base italic leading-relaxed text-white">
                 &ldquo;{answer.evidence.quote}&rdquo;
               </p>
             </blockquote>
 
-            <p className="text-balance text-base leading-relaxed text-[#c8d0dc]">{answer.body}</p>
+            <p className="text-pretty text-base leading-relaxed text-[#c8d0dc]">{answer.body}</p>
 
             <ul className="flex flex-col gap-2.5">
               {answer.points.map((p) => (

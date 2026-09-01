@@ -25,7 +25,7 @@ export function LegalSection({ title, children }: { title: string; children: Rea
     <div>
       <h2 className="font-display text-xl font-bold text-[#101727]">{title}</h2>
       {/*
-       * [&_p] rather than plain text-balance on the wrapper.
+       * [&_p] rather than plain text-pretty on the wrapper.
        *
        * text-wrap inherits, but globals.css sets `p { text-wrap: pretty }` as
        * an element rule -- and an element rule on the child beats a value
@@ -33,7 +33,7 @@ export function LegalSection({ title, children }: { title: string; children: Rea
        * paragraphs inside it. These run three to five lines, which is the
        * length balance is for; several were ending at 8-16% of the measure.
        */}
-      <div className="mt-3 flex flex-col gap-3 leading-relaxed text-[#68717D] [&_p]:text-balance">{children}</div>
+      <div className="mt-3 flex flex-col gap-3 leading-relaxed text-[#68717D] [&_p]:text-pretty">{children}</div>
     </div>
   );
 }

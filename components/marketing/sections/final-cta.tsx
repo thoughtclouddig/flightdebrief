@@ -23,14 +23,14 @@ export function FinalCta() {
             <br />
             <span className="text-brand">your next lesson.</span>
           </h2>
-          <p className="mx-auto mt-5 max-w-lg text-balance text-lg leading-relaxed text-white/75">
+          <p className="mx-auto mt-5 max-w-lg text-pretty text-lg leading-relaxed text-white/75">
             Turn your flight, your instructor&rsquo;s feedback, and your between-flight training into a clear path
             forward.
           </p>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-white/75">
-            <li className="text-balance">No credit card required</li>
-            <li className="text-balance">Free to start</li>
-            <li className="text-balance">Cancel anytime</li>
+            <li className="text-pretty">No credit card required</li>
+            <li className="text-pretty">Free to start</li>
+            <li className="text-pretty">Cancel anytime</li>
           </ul>
         </Reveal>
 
@@ -51,7 +51,7 @@ export function FinalCta() {
         </Reveal>
 
         <Reveal delay={250}>
-          <p className="text-balance mt-6 text-xs text-white/55">Join pilots and instructors improving every day.</p>
+          <p className="text-pretty mt-6 text-xs text-white/55">Join pilots and instructors improving every day.</p>
         </Reveal>
       </div>
     </section>

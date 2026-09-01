@@ -11,7 +11,7 @@ export function Cfis() {
           <h2 className="font-display mt-3 text-balance text-4xl font-extrabold uppercase leading-[1.02] text-white sm:text-5xl">
             Know where you left off.
           </h2>
-          <p className="mt-5 max-w-md text-balance text-[17px] leading-relaxed text-white/70">
+          <p className="mt-5 max-w-md text-pretty text-[17px] leading-relaxed text-white/70">
             Walk onto the ramp knowing what happened last time, what still needs work, and what today&rsquo;s lesson
             should focus on.
           </p>

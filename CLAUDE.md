@@ -30,6 +30,11 @@ A wrapped block of text never ends with a single word, and its last line is
 never under ~45% of its widest line. "Balanced" is a claim about line **width**,
 not word count.
 
+**`text-balance` is for headings, never for body copy.** It shortens the measure
+to even the lines out — correct for a short centered headline, wrong for a
+paragraph, which then stops filling its column and rags differently from the
+paragraph above it. Body copy and list items use `text-pretty`.
+
 ```bash
 npm run dev          # in another shell
 npm run check:copy   # measures every text block at 375 / 768 / 1024 / 1440

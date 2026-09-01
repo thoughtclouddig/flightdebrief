@@ -124,7 +124,7 @@ export function BrandMoment() {
                   {p.title}
                 </span>
               </dt>
-              <dd className="text-balance mt-1.5 text-[15px] leading-relaxed text-[#4b545d]">{p.copy}</dd>
+              <dd className="text-pretty mt-1.5 text-[15px] leading-relaxed text-[#4b545d]">{p.copy}</dd>
             </div>
           ))}
         </dl>

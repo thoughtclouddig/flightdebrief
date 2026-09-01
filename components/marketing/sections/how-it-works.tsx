@@ -165,7 +165,7 @@ export function HowItWorks() {
               <PhotoVisual src={card.src} alt={card.alt} label={`Step ${i + 1}: ${"chipLabel" in card ? card.chipLabel : card.label}`} />
               <div>
                 <p className="font-display text-balance text-xl font-bold text-[#101727]">{card.headline}</p>
-                <p className="text-balance mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
+                <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
               </div>
             </Reveal>
           ))}
@@ -229,10 +229,10 @@ export function HowItWorks() {
                    * stops growing anyway. Measure before adding a longer
                    * headline.
                    */}
-                  <p className="relative z-[1] mt-3 text-balance text-[clamp(17.5px,2.4vw,23px)] leading-[1.25] font-extrabold tracking-[-0.01em] text-[#101727]">
+                  <p className="relative z-[1] mt-3 text-pretty text-[clamp(17.5px,2.4vw,23px)] leading-[1.25] font-extrabold tracking-[-0.01em] text-[#101727]">
                     {card.headline}
                   </p>
-                  <p className="relative z-[1] mt-2 text-balance text-base leading-[1.4] text-[#101727]">{card.copy}</p>
+                  <p className="relative z-[1] mt-2 text-pretty text-base leading-[1.4] text-[#101727]">{card.copy}</p>
                 </div>
               </div>
             ))}

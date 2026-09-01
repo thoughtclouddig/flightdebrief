@@ -100,7 +100,7 @@ export function NextFlightCard() {
 
           <Block title="What your instructor wants continued" show={step >= 1}>
             <blockquote className="border-l-2 border-brand/60 pl-4">
-              <p className="text-balance text-lg italic leading-relaxed text-[#4b545d]">
+              <p className="text-pretty text-lg italic leading-relaxed text-[#4b545d]">
                 &ldquo;Maintain 65 KIAS through short final.&rdquo;
               </p>
               <footer className="mt-1 text-sm font-medium text-[#68717D]">Jake, after Tuesday&rsquo;s flight</footer>
@@ -171,7 +171,7 @@ export function NextFlightCard() {
                     <Sparkles className="size-3.5" aria-hidden />
                     Vector · 3-minute review
                   </p>
-                  <p className="mt-2 text-balance text-base leading-relaxed text-[#dfe4ec]">
+                  <p className="mt-2 text-pretty text-base leading-relaxed text-[#dfe4ec]">
                     Why the correction has to keep increasing as you slow &mdash; then two questions from
                     Thursday&rsquo;s flight.
                   </p>

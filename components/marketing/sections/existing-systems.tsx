@@ -22,7 +22,7 @@ export function ExistingSystems() {
           <h2 className="font-display mt-3 text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
             Keep the systems you already use.
           </h2>
-          <p className="mx-auto mt-5 max-w-md text-balance text-[17px] leading-relaxed text-foreground-soft">
+          <p className="mx-auto mt-5 max-w-md text-pretty text-[17px] leading-relaxed text-foreground-soft">
             Your scheduling platform handles the operation. AfterFlight handles the training continuity.
           </p>
         </Reveal>
@@ -30,17 +30,17 @@ export function ExistingSystems() {
         <Reveal delay={150} className="mx-auto mt-12 flex max-w-xs flex-col items-center gap-3">
           <div className="w-full rounded-lg border border-hairline bg-surface p-5 text-center">
             <p className="text-balance text-xs font-semibold uppercase tracking-wide text-foreground-faint">Scheduling system</p>
-            <p className="text-balance mt-2 text-sm text-foreground-soft">{SCHEDULING_ITEMS.join(" · ")}</p>
+            <p className="text-pretty mt-2 text-sm text-foreground-soft">{SCHEDULING_ITEMS.join(" · ")}</p>
           </div>
 
           <ArrowDown className="size-5 text-foreground-faint" />
 
           <div className="w-full rounded-lg border border-brand p-5 text-center">
             <p className="font-display text-sm font-extrabold uppercase tracking-wide text-brand">AfterFlight</p>
-            <p className="text-balance mt-2 text-sm text-foreground-soft">{AFTERFLIGHT_ITEMS.join(" · ")}</p>
+            <p className="text-pretty mt-2 text-sm text-foreground-soft">{AFTERFLIGHT_ITEMS.join(" · ")}</p>
           </div>
 
-          <p className="text-balance mt-3 text-xs text-foreground-faint">Flight Schedule Pro integration planned.</p>
+          <p className="text-pretty mt-3 text-xs text-foreground-faint">Flight Schedule Pro integration planned.</p>
         </Reveal>
       </div>
     </section>

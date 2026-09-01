@@ -37,19 +37,33 @@ const WIDTHS = [375, 768, 1024, 1440];
  */
 const RATIO = 0.45;
 /**
- * Long blocks get a looser bar. A ragged last line is normal in a seven-line
- * body paragraph and wrong in a three-line headline, so the strict ratio
- * applies to display-length blocks and long copy only has to avoid a stub.
+ * Long blocks get a looser bar, and the cutoff is low on purpose.
+ *
+ * A ragged last line is normal in body copy and wrong in a headline, so the
+ * strict ratio only applies to display-length blocks. Setting this too high
+ * caused real damage once: chasing the ratio on multi-line body copy led to
+ * text-balance being applied across the marketing site, and balance works by
+ * SHORTENING THE MEASURE -- left-aligned paragraphs stopped filling their
+ * column (440px of a 493px column) and every paragraph ragged differently.
+ *
+ * Rule of thumb the numbers encode: text-balance is for headings, which are
+ * short and usually centered. Body copy gets text-pretty and fills its
+ * measure. Do not "fix" a body paragraph by balancing it.
  */
-const LONG_LINES = 5;
-const LONG_RATIO = 0.25;
+const DISPLAY_ONLY = true;
+const LONG_RATIO = 0.2;
+// 0.2 rather than 0.25 after looking at what each bar actually caught. Between
+// them sit last lines of 20-24% -- four or five words on a ragged-right
+// paragraph, which is ordinary body typography and not worth a rewrite. Below
+// 20% is a genuine stub. Setting this is a judgement call, so it is written
+// down rather than quietly tuned until the count reached zero.
 
 const JSON_OUT = process.argv.includes("--json");
 const paths = process.argv.slice(2).filter((a) => a.startsWith("/"));
 const PATHS = paths.length ? paths : ["/", "/how-it-works", "/pricing"];
 
 /** Splits an element's rendered text into lines using per-character rects. */
-const MEASURE = `(minRatio, longLines, longRatio) => {
+const MEASURE = `(minRatio, looseRatio) => {
   const SELECTOR = "p, h1, h2, h3, h4, h5, h6, li, dt, dd, blockquote, figcaption";
   function lines(el) {
     const range = document.createRange();
@@ -87,11 +101,25 @@ const MEASURE = `(minRatio, longLines, longRatio) => {
     // Width only. A one-word last line is fine when that word FILLS the
     // measure -- "follow-through." at 100% of the widest line is not an
     // orphan, and counting words flagged a dozen of those.
-    const bar = ls.length > longLines ? longRatio : minRatio;
+    // Headings get the strict bar; body copy only has to avoid a bad stub.
+    //
+    // Line count is the wrong discriminator -- a two-line body paragraph
+    // ending short is normal typography, and holding it to the strict ratio is
+    // what drove text-balance onto body copy and stopped paragraphs filling
+    // their columns. What actually matters is whether the block is display
+    // type: a heading tag, a display face, or centered.
+    const cs = getComputedStyle(el);
+    const isDisplay =
+      /^H[1-6]$/.test(el.tagName) ||
+      cs.textAlign === "center" ||
+      (cs.fontFamily || "").toLowerCase().includes("archivo expanded") ||
+      el.className.includes("font-display") ||
+      parseFloat(cs.fontSize) >= 24;
+    const bar = isDisplay ? minRatio : looseRatio;
     if (ratio < bar) {
       found.push({
         text: text.slice(0, 80), lines: ls.length, lastWords: last,
-        tag: el.tagName.toLowerCase(), cls: el.getAttribute("class") ?? "",
+        tag: el.tagName.toLowerCase(), cls: el.getAttribute("class") ?? "", align: cs.textAlign,
         last: ls[ls.length - 1].text, pct: Math.round(ratio * 100),
         fault: last === 1 ? "orphan" : "stub",
       });
@@ -124,7 +152,7 @@ for (const path of PATHS) {
       step();
     }));
     await page.waitForTimeout(400);
-    const found = await page.evaluate(`(${MEASURE})(${RATIO}, ${LONG_LINES}, ${LONG_RATIO})`);
+    const found = await page.evaluate(`(${MEASURE})(${RATIO}, ${LONG_RATIO})`);
     for (const f of found) {
       failures++;
       if (JSON_OUT) { console.log(JSON.stringify({ path, width, ...f })); continue; }

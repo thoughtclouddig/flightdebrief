@@ -12,7 +12,7 @@ export function Students() {
           <h2 className="font-display mt-3 text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
             See your training take shape.
           </h2>
-          <p className="mt-5 max-w-md text-balance text-[17px] leading-relaxed text-foreground-soft">
+          <p className="mt-5 max-w-md text-pretty text-[17px] leading-relaxed text-foreground-soft">
             Every flight becomes part of one continuous record — not another conversation you have to remember on
             your own.
           </p>
@@ -29,7 +29,7 @@ export function Students() {
             <CardContent className="flex flex-col gap-2 text-sm">
               {DEMO_STUDENT_PROGRESS.improving.map((item) => (
                 <div key={item} className="flex items-center justify-between text-foreground">
-                  <span className="text-balance">{item}</span>
+                  <span className="text-pretty">{item}</span>
                   <ArrowUp className="size-3.5 text-good" />
                 </div>
               ))}
@@ -45,7 +45,7 @@ export function Students() {
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm text-foreground">
               {DEMO_STUDENT_PROGRESS.workingOn.map((item) => (
-                <span key={item} className="text-balance">{item}</span>
+                <span key={item} className="text-pretty">{item}</span>
               ))}
             </CardContent>
           </Card>
@@ -59,7 +59,7 @@ export function Students() {
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm text-foreground">
               {DEMO_STUDENT_PROGRESS.nextUp.map((item) => (
-                <span key={item} className="text-balance">{item}</span>
+                <span key={item} className="text-pretty">{item}</span>
               ))}
             </CardContent>
           </Card>

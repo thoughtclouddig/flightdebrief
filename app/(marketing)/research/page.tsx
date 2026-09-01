@@ -30,7 +30,7 @@ export default async function ResearchHubPage() {
           <h1 className="font-display mt-2 text-balance text-4xl font-bold text-[#101727] sm:text-5xl" style={{ textTransform: "none" }}>
             AfterFlight Research
           </h1>
-          <p className="mt-3 text-balance text-lg leading-relaxed text-[#68717D]">
+          <p className="mt-3 text-pretty text-lg leading-relaxed text-[#68717D]">
             Original findings from AfterFlight&rsquo;s anonymized, aggregate debrief data -- published as the dataset
             matures, never before it does.
           </p>
@@ -38,7 +38,7 @@ export default async function ResearchHubPage() {
 
         <Reveal delay={100} className="mt-10 flex flex-col gap-5">
           {reports.length === 0 ? (
-            <p className="text-balance leading-relaxed text-[#68717D]">
+            <p className="text-pretty leading-relaxed text-[#68717D]">
               Nothing published yet. AfterFlight publishes research once there&rsquo;s enough real, anonymized debrief
               data to support a finding -- check back as the dataset grows.
             </p>
@@ -55,7 +55,7 @@ export default async function ResearchHubPage() {
                 ) : null}
                 <div>
                   <p className="font-display text-lg font-bold text-[#101727]">{report.title}</p>
-                  {report.summary ? <p className="mt-1.5 text-balance text-[#68717D]">{report.summary}</p> : null}
+                  {report.summary ? <p className="mt-1.5 text-pretty text-[#68717D]">{report.summary}</p> : null}
                 </div>
               </Link>
             ))

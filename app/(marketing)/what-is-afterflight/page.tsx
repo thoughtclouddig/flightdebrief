@@ -152,7 +152,7 @@ export default function WhatIsAfterFlightPage() {
 
           <div className="border-t border-hairline pt-8">
             <h2 className="font-display text-xl font-bold text-[#101727]">What AfterFlight is not</h2>
-            <p className="mt-3 text-balance leading-relaxed text-[#68717D]">
+            <p className="mt-3 text-pretty leading-relaxed text-[#68717D]">
               AfterFlight does not evaluate flight safety, certify proficiency, or replace a CFI&rsquo;s judgment. It
               organizes and preserves what the CFI and student actually discussed -- it never originates new flight
               instruction.

@@ -53,7 +53,7 @@ export function WhoItsFor() {
             <h3 className="font-display mt-5 text-balance text-3xl font-bold text-white sm:text-4xl">
               {PRIMARY.title}
             </h3>
-            <p className="text-balance mt-3 max-w-xl text-lg leading-relaxed text-[#9da7b8]">{PRIMARY.copy}</p>
+            <p className="text-pretty mt-3 max-w-xl text-lg leading-relaxed text-[#9da7b8]">{PRIMARY.copy}</p>
             <Link
               href={PRIMARY.href}
               className="mt-7 inline-flex min-h-[52px] items-center gap-2 rounded-xl bg-brand px-7 text-base font-semibold text-white transition-colors hover:bg-brand-bright"
@@ -70,7 +70,7 @@ export function WhoItsFor() {
               <div className="flex h-full flex-col items-start gap-3 rounded-[24px] border border-black/[0.07] bg-white px-7 py-7">
                 <a.icon className="size-7 text-brand" strokeWidth={1.5} aria-hidden />
                 <h3 className="font-display text-xl font-bold text-[#101727]">{a.title}</h3>
-                <p className="text-balance text-base leading-relaxed text-[#68717D]">{a.copy}</p>
+                <p className="text-pretty text-base leading-relaxed text-[#68717D]">{a.copy}</p>
                 <Link
                   href={a.href}
                   className="mt-auto inline-flex items-center gap-1.5 pt-3 text-base font-semibold text-brand hover:underline"

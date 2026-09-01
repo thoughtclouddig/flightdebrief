@@ -35,7 +35,7 @@ export function ForCfis() {
                 className="flex items-center gap-4 rounded-2xl border border-black/[0.06] bg-[#f4f5f6] px-5 py-5 lg:flex-col lg:items-start lg:gap-3"
               >
                 <span className="font-display text-2xl font-extrabold tabular-nums text-brand">{i + 1}</span>
-                <span className="text-balance text-lg font-medium leading-snug text-[#101727]">{step}</span>
+                <span className="text-pretty text-lg font-medium leading-snug text-[#101727]">{step}</span>
               </li>
             ))}
           </ol>

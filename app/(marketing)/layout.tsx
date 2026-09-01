@@ -157,7 +157,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
                   className="h-8 w-auto"
                 />
               </Link>
-              <p className="mt-4 text-balance text-[#56636f]">
+              <p className="mt-4 text-pretty text-[#56636f]">
                 AfterFlight captures the post-flight debrief and turns it into a structured plan for the next
                 lesson&mdash;for students, CFIs, and flight schools.
               </p>

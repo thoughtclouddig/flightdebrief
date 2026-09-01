@@ -17,7 +17,7 @@ export function Pricing() {
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             Get better every flight.
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-balance text-[#68717D]">
+          <p className="mx-auto mt-3 max-w-xl text-pretty text-[#68717D]">
             Start as a pilot or CFI. Bring AfterFlight to your entire school when you&rsquo;re ready.
           </p>
         </Reveal>
@@ -41,18 +41,18 @@ export function Pricing() {
                 <p className={cn("text-balance font-display text-lg font-bold uppercase tracking-wide text-[#101727]", tier.featured && "mt-2")}>
                   {tier.name}
                 </p>
-                <p className="text-balance mt-1.5 text-base text-[#68717D]">{tier.audience}</p>
+                <p className="text-pretty mt-1.5 text-base text-[#68717D]">{tier.audience}</p>
                 <p className="mt-6">
                   <span className="font-display text-[clamp(2.75rem,2rem+3vw,3.75rem)] font-extrabold tracking-tight text-[#101727]">
                     {tier.price}
                   </span>
                   {tier.priceSuffix ? <span className="text-base text-[#68717D]/70">{tier.priceSuffix}</span> : null}
                 </p>
-                {tier.priceNote ? <p className="text-balance mt-1 text-base font-semibold text-brand">{tier.priceNote}</p> : null}
+                {tier.priceNote ? <p className="text-pretty mt-1 text-base font-semibold text-brand">{tier.priceNote}</p> : null}
 
                 <ul className="mt-8 flex flex-1 flex-col gap-4 border-t border-[#e4e7ea] pt-8">
                   {tier.features.map((feature) => (
-                    <li key={feature} className="text-balance flex items-start gap-3 text-base text-[#4b545d]">
+                    <li key={feature} className="text-pretty flex items-start gap-3 text-base text-[#4b545d]">
                       <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-brand/10">
                         <Check className="size-3.5 text-brand" strokeWidth={3} />
                       </span>
@@ -62,7 +62,7 @@ export function Pricing() {
                 </ul>
 
                 {tier.valueAnchor ? (
-                  <p className="text-balance mt-5 text-sm font-semibold text-brand">{tier.valueAnchor}</p>
+                  <p className="text-pretty mt-5 text-sm font-semibold text-brand">{tier.valueAnchor}</p>
                 ) : null}
 
                 <TrackedLink
@@ -110,7 +110,7 @@ export function Pricing() {
                   <br />
                   {ENTERPRISE_PRICING.sectionHeadlineLine2}
                 </h3>
-                <p className="mt-4 max-w-md text-balance text-white/70">{ENTERPRISE_PRICING.sectionCopy}</p>
+                <p className="mt-4 max-w-md text-pretty text-white/70">{ENTERPRISE_PRICING.sectionCopy}</p>
                 <p className="text-balance mt-6 font-display text-xl font-bold text-white">{ENTERPRISE_PRICING.sectionPriceLabel}</p>
 
                 <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
@@ -123,7 +123,7 @@ export function Pricing() {
                     <ArrowRight className="size-5 transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
                   </TrackedLink>
                 </div>
-                <p className="mt-5 max-w-md text-balance text-sm text-white/60">{ENTERPRISE_PRICING.sectionSupportingLine}</p>
+                <p className="mt-5 max-w-md text-pretty text-sm text-white/60">{ENTERPRISE_PRICING.sectionSupportingLine}</p>
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -131,7 +131,7 @@ export function Pricing() {
                   <div key={tile.title} className="rounded-xl border border-white/10 bg-white/[0.04] p-5">
                     <span className="block h-0.5 w-6 bg-brand" aria-hidden="true" />
                     <p className="text-balance mt-3 text-sm font-bold uppercase tracking-wide text-white">{tile.title}</p>
-                    <p className="mt-1.5 text-balance text-[13px] leading-relaxed text-white/55">{tile.description}</p>
+                    <p className="mt-1.5 text-pretty text-[13px] leading-relaxed text-white/55">{tile.description}</p>
                   </div>
                 ))}
               </div>

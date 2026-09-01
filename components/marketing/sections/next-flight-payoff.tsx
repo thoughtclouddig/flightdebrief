@@ -21,7 +21,7 @@ export function NextFlightPayoff() {
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             Every flight builds on the last one.
           </h2>
-          <p className="mt-4 text-balance text-lg text-[#68717D]">
+          <p className="mt-4 text-pretty text-lg text-[#68717D]">
             AfterFlight turns every debrief into a clear plan for what comes next.
           </p>
         </Reveal>
@@ -35,7 +35,7 @@ export function NextFlightPayoff() {
             />
             <div>
               <p className="font-display text-balance text-xl font-bold text-[#101727]">The next lesson starts here.</p>
-              <p className="text-balance mt-2 text-base leading-relaxed text-[#68717D]">
+              <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">
                 Know what to work on, what to study, and what comes next.
               </p>
             </div>
@@ -49,7 +49,7 @@ export function NextFlightPayoff() {
             />
             <div>
               <p className="font-display text-balance text-xl font-bold text-[#101727]">Ready for what comes next.</p>
-              <p className="text-balance mt-2 text-base leading-relaxed text-[#68717D]">
+              <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">
                 Start the next lesson knowing exactly where you left off.
               </p>
             </div>
@@ -58,7 +58,7 @@ export function NextFlightPayoff() {
 
         <Reveal delay={300} className="mt-10 flex items-center justify-center gap-3">
           <Users className="size-5 shrink-0 text-brand" />
-          <p className="text-balance text-lg font-medium text-[#101727]">Different instructor? Same training history.</p>
+          <p className="text-pretty text-lg font-medium text-[#101727]">Different instructor? Same training history.</p>
         </Reveal>
       </div>
     </section>

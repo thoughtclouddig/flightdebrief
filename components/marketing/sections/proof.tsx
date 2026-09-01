@@ -78,7 +78,7 @@ export function Proof() {
         <RevealUp delay={750} className="mx-auto mt-8 max-w-md text-center sm:max-w-lg">
           <p className="text-base text-[#8c97a2]">46 studies &middot; 2,136 participants</p>
 
-          <p className="mt-6 text-balance text-xs leading-relaxed text-[#8c97a2]">
+          <p className="mt-6 text-pretty text-xs leading-relaxed text-[#8c97a2]">
             Sources: FAA Aviation Instructor&rsquo;s Handbook &middot; NASA aviation training research
             <br />
             Tannenbaum &amp; Cerasoli, Human Factors

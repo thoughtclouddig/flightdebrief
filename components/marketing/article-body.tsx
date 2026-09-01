@@ -33,7 +33,7 @@ function Paragraphs({ text, className }: { text: string; className?: string }) {
         <p
           key={i}
           lang="en"
-          className={`hyphens-auto text-balance text-[17.5px] leading-[1.8] text-[#3f474f] ${MEASURE}`}
+          className={`hyphens-auto text-pretty text-[17.5px] leading-[1.8] text-[#3f474f] ${MEASURE}`}
         >
           {p}
         </p>
@@ -74,7 +74,7 @@ export function ArticleBody({
       {/* Stepped down from 23px and narrowed. Large type only reads as
           emphasis when it's short; a 90-word answer set at 23px across the
           full measure is just a second headline the reader has to get past. */}
-      <p className="max-w-[54ch] border-t-[3px] border-brand pt-6 text-balance text-[19.5px] font-medium leading-[1.6] text-[#101727]">
+      <p className="max-w-[54ch] border-t-[3px] border-brand pt-6 text-pretty text-[19.5px] font-medium leading-[1.6] text-[#101727]">
         {body.answer}
       </p>
 
@@ -88,7 +88,7 @@ export function ArticleBody({
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">Key facts</p>
           <ul className="mt-3 flex flex-col gap-2">
             {body.keyFacts.map((fact, i) => (
-              <li key={i} className="flex gap-3 text-balance text-[17px] leading-relaxed text-[#3f474f]">
+              <li key={i} className="flex gap-3 text-pretty text-[17px] leading-relaxed text-[#3f474f]">
                 <span aria-hidden className="mt-[0.6em] size-1.5 shrink-0 rounded-full bg-brand" />
                 <span>{fact}</span>
               </li>
@@ -111,7 +111,7 @@ export function ArticleBody({
           {section.steps && section.steps.length > 0 ? (
             <ol className={`mt-5 flex flex-col gap-3 ${MEASURE}`}>
               {section.steps.map((step, j) => (
-                <li key={j} className="flex gap-3.5 text-balance text-[17px] leading-[1.7] text-[#3f474f]">
+                <li key={j} className="flex gap-3.5 text-pretty text-[17px] leading-[1.7] text-[#3f474f]">
                   <span
                     aria-hidden
                     className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[#f4f5f6] text-[13px] font-bold text-[#101727]"
@@ -131,7 +131,7 @@ export function ArticleBody({
           {section.tip ? (
             <aside className={`mt-6 border-l-[3px] border-brand py-0.5 pl-5 ${MEASURE}`}>
               <p className="text-[11px] font-bold uppercase tracking-[0.11em] text-[#68717D]">Instructor tip</p>
-              <p className="mt-1.5 text-balance text-[16.5px] leading-[1.7] text-[#3f474f]">{section.tip}</p>
+              <p className="mt-1.5 text-pretty text-[16.5px] leading-[1.7] text-[#3f474f]">{section.tip}</p>
             </aside>
           ) : null}
 
@@ -156,7 +156,7 @@ export function ArticleBody({
               ].map((side, j) => (
                 <div key={j} className="rounded-lg border border-[#e4e7ea] px-5 py-4">
                   <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-[#68717D]">{side.label}</p>
-                  <p className="mt-2 text-balance text-[15.5px] leading-[1.65] text-[#3f474f]">{side.text}</p>
+                  <p className="mt-2 text-pretty text-[15.5px] leading-[1.65] text-[#3f474f]">{side.text}</p>
                 </div>
               ))}
             </div>
@@ -168,7 +168,7 @@ export function ArticleBody({
           {section.checklist && section.checklist.length > 0 ? (
             <ul className={`mt-5 flex flex-col gap-2.5 ${MEASURE}`}>
               {section.checklist.map((item, j) => (
-                <li key={j} className="flex gap-3 text-balance text-[17px] leading-[1.7] text-[#3f474f]">
+                <li key={j} className="flex gap-3 text-pretty text-[17px] leading-[1.7] text-[#3f474f]">
                   <svg
                     aria-hidden
                     viewBox="0 0 20 20"
@@ -214,7 +214,7 @@ export function ArticleBody({
             {body.faq.map((item, i) => (
               <div key={i}>
                 <dt className={`text-[17px] font-semibold text-[#101727] ${MEASURE}`}>{item.question}</dt>
-                <dd className={`mt-2 text-balance text-[17px] leading-[1.75] text-[#3f474f] ${MEASURE}`}>
+                <dd className={`mt-2 text-pretty text-[17px] leading-[1.75] text-[#3f474f] ${MEASURE}`}>
                   {item.answer}
                 </dd>
               </div>

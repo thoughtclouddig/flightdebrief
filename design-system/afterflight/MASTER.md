@@ -401,8 +401,12 @@ translate offsets 8–16px. Transform and opacity only.
 
 **No orphans, no stubs.** A wrapped block never ends with a single word, and
 its last line is never under ~45% of its widest line — "balanced" is a claim
-about line WIDTH, not word count. Body copy relies on `text-balance` /
-`text-pretty`; a display headline that has to break in a particular place uses
+about line WIDTH, not word count.
+
+**`text-balance` is for headings only.** It works by shortening the measure,
+which is right for a short centered headline and wrong for body copy: a
+balanced paragraph stops filling its column and each one rags differently.
+Body copy and list items get `text-pretty` and fill the measure; a display headline that has to break in a particular place uses
 explicit `lg:block` spans rather than a tuned character cap, which only holds
 until someone edits a word. Checked by `npm run check:copy`, which measures
 what actually rendered at 375 / 768 / 1024 / 1440.

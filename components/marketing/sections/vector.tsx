@@ -58,13 +58,13 @@ export function VectorSection() {
             <p className="font-display text-balance text-2xl font-bold leading-tight text-[#101727] sm:text-3xl">
               Vector knows how you fly.
             </p>
-            <p className="text-balance mt-3 text-lg leading-relaxed text-[#68717D]">
+            <p className="text-pretty mt-3 text-lg leading-relaxed text-[#68717D]">
               Not generic questions about airplanes in general &mdash; the specific things your own flying keeps
               doing, and the ones your instructor has stopped having to mention.
             </p>
             <ul className="mt-7 grid grid-cols-1 gap-x-8 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-1">
               {KNOWS.map((k) => (
-                <li key={k} className="flex items-start gap-3 text-balance text-base text-[#101727]">
+                <li key={k} className="flex items-start gap-3 text-pretty text-base text-[#101727]">
                   <span className="mt-2 size-1.5 shrink-0 rounded-full bg-brand" aria-hidden />
                   {k}
                 </li>
@@ -73,11 +73,11 @@ export function VectorSection() {
             {/* The economic claim, stated in the student's terms: hours are the
                 currency of flight training, and a lesson spent relearning
                 something is an hour they paid for twice. */}
-            <p className="mt-8 text-balance text-lg leading-relaxed text-[#101727]">
+            <p className="mt-8 text-pretty text-lg leading-relaxed text-[#101727]">
               That&rsquo;s the difference between studying and training. You stop spending lessons relearning what
               you already covered, and get to the certificate on fewer hours.
             </p>
-            <p className="mt-4 text-balance text-base leading-relaxed text-[#68717D]">
+            <p className="mt-4 text-pretty text-base leading-relaxed text-[#68717D]">
               Vector starts with your actual training record, and reaches for the FAA Airplane Flying Handbook, the
               ACS and your POH when the answer needs a source.
             </p>
