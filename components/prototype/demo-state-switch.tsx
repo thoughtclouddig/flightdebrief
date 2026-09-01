@@ -20,13 +20,13 @@ export function DemoStateSwitch() {
   return (
     <div className="flex items-center gap-1 rounded-full bg-surface-sunken p-0.5">
       <Opt href="/prototype/vector?state=landed" active={state === "landed"}>
-        Just landed
+        Flew, not logged
       </Opt>
       <Opt href="/prototype/vector?state=flown" active={state === "flown"}>
-        Just flew
+        Flight logged
       </Opt>
       <Opt href="/prototype/vector" active={!state}>
-        Between
+        Between flights
       </Opt>
     </div>
   );

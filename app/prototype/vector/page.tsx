@@ -101,14 +101,13 @@ function JustFlew() {
             <Mic className="size-[18px]" aria-hidden />
             Start debrief
           </PanelButton>
-          <div className="flex gap-2.5">
-            <SecondaryButton href="/prototype/vector/debrief/new?mode=reflection" onPanel>
-              My reflection
-            </SecondaryButton>
-            <SecondaryButton href="/prototype/vector/flights/aug-29" onPanel>
-              View flight
-            </SecondaryButton>
-          </div>
+          {/* "My reflection" used to open a separate reflection-only path.
+              The debrief is one guided flow now -- the student's assessment is
+              step one of it -- so a second entry point would re-create exactly
+              the fork that made the comparison skippable. */}
+          <SecondaryButton href="/prototype/vector/flights/aug-29" onPanel>
+            View flight
+          </SecondaryButton>
         </div>
       </Panel>
 

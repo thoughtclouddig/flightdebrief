@@ -172,10 +172,12 @@ function Setup({
         <TriangleAlert className="mt-0.5 size-5 shrink-0 text-state-attention" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block text-[17px] font-medium text-foreground">Keep this screen open</span>
+          {/* Three lines, and the substance is unchanged: the limitation, the
+              consequence, and the way round it. Shortened by cutting the
+              restatement, not the warning. */}
           <span className="mt-1 block text-[15px] leading-relaxed text-foreground-soft">
-            In the browser, recording pauses when the screen locks or you switch apps. The AfterFlight mobile app
-            records with the phone in your flight bag &mdash; until then, keep AfterFlight open, or add the flight
-            afterwards.
+            In the browser, recording pauses if the screen locks or you switch apps. Keep AfterFlight open &mdash; or
+            just add the flight afterwards.
           </span>
         </span>
       </Card>

@@ -454,7 +454,23 @@ export function compareSegments(
 }
 
 /** mm:ss from the flight clock. Replay shows elapsed, not wall time. */
+/**
+ * Elapsed time from engine start, as a pilot would read it.
+ *
+ * Rolls into hours past sixty minutes. A 1.4-hour flight previously showed
+ * "89:05", which is arithmetically right and unreadable in context: nobody
+ * flying a 1.4 Hobbs hour thinks in eighty-nine minutes, and the number
+ * invites a second of mental division every time it is glanced at. Seconds
+ * stay because this drives a scrubber, where they are the unit of control.
+ *
+ * Logbook/Hobbs values are decimal hours and are formatted elsewhere -- this
+ * is playback position, not flight time, and the two should not converge.
+ */
 export function formatElapsed(ms: number): string {
   const total = Math.max(0, Math.round(ms / 1000));
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  const ss = String(seconds).padStart(2, "0");
+  return hours > 0 ? `${hours}:${String(minutes).padStart(2, "0")}:${ss}` : `${minutes}:${ss}`;
 }

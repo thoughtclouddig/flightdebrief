@@ -14,12 +14,15 @@ import {
   Screen,
   Section,
 } from "@/components/prototype/ui";
+import { ObjectiveComparison } from "@/components/prototype/assessment-comparison";
+import { agreementSummary } from "@/lib/prototype/assessment";
 import { cn } from "@/lib/utils";
 import {
   ACS_AREAS,
   INSTRUCTOR,
   INSTRUCTOR_DEBRIEF,
   LAST_FLIGHT,
+  PERCEPTION_GAPS,
   STRUCTURED,
   STUDENT_REFLECTION,
   SUGGESTED,
@@ -136,18 +139,45 @@ export default function DebriefDetail() {
         </Section>
       ) : null}
 
-      <Section title={<>Where you and {INSTRUCTOR.firstName} landed</>} flush>
-        <Card className="flex flex-col gap-6">
-          <Evidence label="You" tone="student" text="Crosswinds felt pretty good." />
-          <Evidence
-            label={INSTRUCTOR.firstName}
-            tone="instructor"
-            text="Centerline improved. Correction still needs consistency through touchdown."
-          />
-          <p className="rounded-xl bg-surface-sunken px-4 py-3.5 text-[15px] leading-relaxed text-foreground-soft">
-            You both saw progress. {INSTRUCTOR.firstName} still wants more consistency through touchdown.
-          </p>
-        </Card>
+      {/*
+        * Every objective, both ratings, agreements included.
+        *
+        * This was three hardcoded strings describing one objective, which
+        * reduced an assessment to an anecdote and silently dropped the two
+        * objectives where Mia and Jake agreed. Agreement is the information a
+        * student needs in order to trust their own read of a flight, so a view
+        * that only ever surfaces gaps teaches the wrong lesson about their own
+        * judgement.
+        *
+        * The per-objective views below are summaries, not transcript, so
+        * neither voice is quoted -- see the note in vector-data.ts. The
+        * verbatim recordings live behind View transcript.
+        */}
+      <Section title={<>How you both saw it</>} flush>
+        <p className="mb-4 text-[15px] leading-relaxed text-foreground-soft">
+          {agreementSummary(
+            PERCEPTION_GAPS.map((g) => ({ student: g.studentLevel, instructor: g.instructorLevel })),
+          )}
+        </p>
+        <div className="flex flex-col gap-3">
+          {PERCEPTION_GAPS.map((g) => (
+            <ObjectiveComparison
+              key={g.task}
+              task={g.task}
+              student={g.studentLevel}
+              instructor={g.instructorLevel}
+              instructorName={INSTRUCTOR.firstName}
+            >
+              <Evidence label="You" tone="student" quoted={false} text={g.studentView} />
+              <Evidence label={INSTRUCTOR.firstName} tone="instructor" quoted={false} text={g.instructorView} />
+              {g.takeaway ? (
+                <p className="rounded-xl bg-surface-sunken px-4 py-3.5 text-[15px] leading-relaxed text-foreground-soft">
+                  {g.takeaway}
+                </p>
+              ) : null}
+            </ObjectiveComparison>
+          ))}
+        </div>
       </Section>
 
       {asking ? (

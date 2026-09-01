@@ -50,14 +50,48 @@ export default async function ComparePage({ params }: { params: Promise<{ id: st
   const momentB = analysis.moments.find((m) => m.segmentId === b.id);
 
   const pts = analysis.telemetry.points;
-  const lats = pts.map((p) => p.lat);
-  const lons = pts.map((p) => p.lon);
+
+  /*
+   * Fit to what is actually drawn.
+   *
+   * These bounds used to come from the whole flight while only the two
+   * approach segments were rendered, so both attempts were squeezed into
+   * whatever fraction of the full-flight extent the approaches happened to
+   * occupy -- in practice a flat smear across the bottom of an empty box, on
+   * the one screen whose entire purpose is comparing two shapes.
+   *
+   * Scale is a single factor for both axes rather than one per axis. Fitting
+   * each axis independently stretches the picture to fill the frame, and on a
+   * ground track that is a lie: it would make a wide shallow turn and a tight
+   * one look alike, which is the exact difference the student is here to see.
+   * Longitude is multiplied by cos(lat) first so a degree of longitude and a
+   * degree of latitude cover comparable ground at this latitude.
+   */
+  const shown = [...pts.slice(a.startIndex, a.endIndex + 1), ...pts.slice(b.startIndex, b.endIndex + 1)];
+  const lats = shown.map((p) => p.lat);
+  const lons = shown.map((p) => p.lon);
   const minLat = Math.min(...lats);
   const maxLat = Math.max(...lats);
   const minLon = Math.min(...lons);
   const maxLon = Math.max(...lons);
-  const x = (lon: number) => ((lon - minLon) / (maxLon - minLon || 1)) * 264 + 18;
-  const y = (lat: number) => (1 - (lat - minLat) / (maxLat - minLat || 1)) * 164 + 18;
+
+  const PAD = 18;
+  const BOX_W = 300;
+  const BOX_H = 200;
+  const innerW = BOX_W - PAD * 2;
+  const innerH = BOX_H - PAD * 2;
+
+  const lonScale = Math.cos(((minLat + maxLat) / 2) * (Math.PI / 180));
+  const spanX = Math.max((maxLon - minLon) * lonScale, 1e-9);
+  const spanY = Math.max(maxLat - minLat, 1e-9);
+  const scale = Math.min(innerW / spanX, innerH / spanY);
+
+  // Centre the fitted track in whichever axis has slack left over.
+  const offsetX = PAD + (innerW - spanX * scale) / 2;
+  const offsetY = PAD + (innerH - spanY * scale) / 2;
+
+  const x = (lon: number) => offsetX + (lon - minLon) * lonScale * scale;
+  const y = (lat: number) => offsetY + (maxLat - lat) * scale;
   const path = (s: typeof a) =>
     pts
       .slice(s.startIndex, s.endIndex + 1)

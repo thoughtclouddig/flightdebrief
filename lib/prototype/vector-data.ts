@@ -16,7 +16,7 @@ import type { PerformanceLevelCode } from "@/lib/performance-levels";
  * of the same source -- which is what the real product does.
  */
 
-export const STUDENT = { firstName: "Mia", fullName: "Mia Chen", hours: 28.4, certificate: "Private Pilot" };
+export const STUDENT = { firstName: "Mia", fullName: "Mia Chen", hours: 28.4, certificate: "Student Pilot" };
 export const INSTRUCTOR = { firstName: "Jake", fullName: "Jake Alvarez" };
 export const PRIOR_INSTRUCTOR = { firstName: "Dana", fullName: "Dana Whitfield" };
 

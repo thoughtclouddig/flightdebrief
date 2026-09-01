@@ -14,6 +14,8 @@ import {
   StateLabel,
   TrendStrip,
 } from "@/components/prototype/ui";
+import { ObjectiveComparison } from "@/components/prototype/assessment-comparison";
+import { objectiveForSkill } from "@/lib/prototype/assessment";
 import { INSTRUCTOR, SKILL_SCORES, skillBySlug } from "@/lib/prototype/vector-data";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -37,6 +39,7 @@ export default async function SkillDetail({ params }: { params: Promise<{ skill:
   const { skill: slug } = await params;
   const skill = skillBySlug(slug);
   if (!skill) notFound();
+  const gap = objectiveForSkill(skill.skill);
 
   return (
     <Screen>
@@ -58,6 +61,28 @@ export default async function SkillDetail({ params }: { params: Promise<{ skill:
           <AcsBadge area={skill.acsArea} code={skill.acsCode} />
         </div>
       </div>
+
+      {/*
+        * Both assessments of this skill from the most recent flight, when the
+        * flight rated it.
+        *
+        * Skill detail previously showed the instructor's judgement with the
+        * student's remark underneath as supporting colour, which quietly
+        * ranked the two. They are two independent assessments of the same
+        * objective, and seeing the distance between them is the point -- it is
+        * how a student learns to calibrate their own read of a flight against
+        * the standard.
+        */}
+      {gap ? (
+        <Section title={<>How you both saw it</>} flush>
+          <ObjectiveComparison
+            task={gap.task}
+            student={gap.studentLevel}
+            instructor={gap.instructorLevel}
+            instructorName={INSTRUCTOR.firstName}
+          />
+        </Section>
+      ) : null}
 
       <Section title={<>Latest evidence</>}>
         <div className="flex flex-col gap-6">

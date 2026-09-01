@@ -1,9 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Check, Mic, PenLine, Square, UserRound } from "lucide-react";
+import { ArrowRight, Check, Mic, Square } from "lucide-react";
 import {
   AcsBadge,
   BackLink,
@@ -17,75 +16,101 @@ import {
   Screen,
   Section,
   SecondaryButton,
+  stateTone,
 } from "@/components/prototype/ui";
+import { ObjectiveComparison } from "@/components/prototype/assessment-comparison";
 import { cn } from "@/lib/utils";
-import { ACS_AREAS, INSTRUCTOR, PENDING_FLIGHT, STRUCTURED } from "@/lib/prototype/vector-data";
+import type { PerformanceLevelCode } from "@/lib/performance-levels";
+import {
+  ASSESSMENT_LEVELS,
+  agreementSummary,
+  levelLabel,
+  levelState,
+  type Rater,
+} from "@/lib/prototype/assessment";
+import { ACS_AREAS, INSTRUCTOR, PENDING_FLIGHT, PERCEPTION_GAPS, STRUCTURED } from "@/lib/prototype/vector-data";
 import { flightById, formatHours } from "@/lib/prototype/flights";
 
-/**
- * The flight this debrief belongs to.
- *
- * Every debrief carries a flight id -- there is no orphan-debrief path. The
- * debrief is the interpretation of a specific hour in a specific airplane, and
- * a summary that cannot say which flight it came from cannot feed recurrence,
- * carry-forward, or Vector's context.
- */
 const FLIGHT = flightById("aug-29")!;
 
-type Stage = "who" | "ready" | "recording" | "processing" | "review" | "reflection" | "done";
-type Voice = "instructor" | "student";
+/** The lesson objectives are the unit of assessment, and both people rate this same list. */
+const OBJECTIVES = PERCEPTION_GAPS.map((g) => g.task);
+
+type Stage =
+  | "objectives"
+  | "student"
+  | "handoff"
+  | "instructor"
+  | "reveal"
+  | "ready"
+  | "recording"
+  | "processing"
+  | "review";
+
+type Ratings = Partial<Record<string, PerformanceLevelCode>>;
 
 /**
- * Debrief capture.
+ * The guided debrief.
  *
- * Target interaction is four beats: tap -> talk -> stop -> done. Everything
- * else on this flow is in service of not interrupting those four. In
- * particular the instructor never fills in a form -- they talk, exactly as
- * they already do, and the structure is derived afterwards for the student to
- * confirm.
+ * The old flow opened by asking who was giving feedback and then ran one of
+ * two independent paths. That framing was the mistake: it treated the
+ * student's view and the instructor's view as alternative content, so the
+ * comparison between them -- the thing that actually teaches -- was optional
+ * and usually skipped. The lesson objective is the unit of assessment, both
+ * people rate the same list, and the flow does not branch.
  *
- * The student reflection is collected as its own step and, when both are being
- * captured, BEFORE the full instructor interpretation is shown. The
- * perception-gap feature is only meaningful if the two inputs are independent;
- * showing Jake's read first would just be asking Mia to agree with it.
+ * Order is load-bearing. The student rates first and their answers stay hidden
+ * through the handoff, because an instructor who can see "Felt Solid" before
+ * rating is no longer producing an independent judgement, and a comparison
+ * between a judgement and an echo of it is worthless. Recording comes last,
+ * once both sides can see where they differed, so the conversation has
+ * something specific to be about.
  */
 export default function NewDebriefPage() {
-  return (
-    <Suspense fallback={null}>
-      <NewDebrief />
-    </Suspense>
-  );
-}
-
-function NewDebrief() {
-  const params = useSearchParams();
-  const reflectionOnly = params.get("mode") === "reflection";
-  const [stage, setStage] = useState<Stage>(reflectionOnly ? "reflection" : "who");
-  const [voice, setVoice] = useState<Voice>("instructor");
+  const [stage, setStage] = useState<Stage>("objectives");
+  const [studentRatings, setStudentRatings] = useState<Ratings>({});
+  const [instructorRatings, setInstructorRatings] = useState<Ratings>({});
 
   return (
     <Screen>
       {stage === "recording" ? null : <BackLink href="/prototype/vector/debrief">Debriefs</BackLink>}
 
-      {stage === "who" ? <Who onPick={(v) => { setVoice(v); setStage("ready"); }} /> : null}
-      {stage === "ready" ? <Ready voice={voice} onStart={() => setStage("recording")} /> : null}
-      {stage === "recording" ? <Recording voice={voice} onStop={() => setStage("processing")} /> : null}
-      {stage === "processing" ? <Processing onDone={() => setStage(voice === "instructor" ? "reflection" : "review")} /> : null}
-      {stage === "reflection" ? <Reflection onNext={() => setStage("review")} /> : null}
+      {stage === "objectives" ? <Objectives onStart={() => setStage("student")} /> : null}
+      {stage === "student" ? (
+        <Assess
+          rater="student"
+          ratings={studentRatings}
+          onRate={(task, level) => setStudentRatings((r) => ({ ...r, [task]: level }))}
+          onDone={() => setStage("handoff")}
+        />
+      ) : null}
+      {stage === "handoff" ? <Handoff onContinue={() => setStage("instructor")} /> : null}
+      {stage === "instructor" ? (
+        <Assess
+          rater="instructor"
+          ratings={instructorRatings}
+          onRate={(task, level) => setInstructorRatings((r) => ({ ...r, [task]: level }))}
+          onDone={() => setStage("reveal")}
+        />
+      ) : null}
+      {stage === "reveal" ? (
+        <Reveal student={studentRatings} instructor={instructorRatings} onNext={() => setStage("ready")} />
+      ) : null}
+      {stage === "ready" ? <Ready onStart={() => setStage("recording")} /> : null}
+      {stage === "recording" ? <Recording onStop={() => setStage("processing")} /> : null}
+      {stage === "processing" ? <Processing onDone={() => setStage("review")} /> : null}
       {stage === "review" ? <Review /> : null}
     </Screen>
   );
 }
 
-/* ------------------------------------------------------------- 1. who */
+/* ------------------------------------------------------ 1. objectives */
 
-function Who({ onPick }: { onPick: (v: Voice) => void }) {
+function Objectives({ onStart }: { onStart: () => void }) {
   return (
     <>
-      <PageTitle kicker={`${PENDING_FLIGHT.lesson} · ${PENDING_FLIGHT.date}`}>Start debrief</PageTitle>
+      <PageTitle kicker="Today's lesson">{PENDING_FLIGHT.lesson}</PageTitle>
 
-      {/* The flight, stated before anything is recorded, so it is obvious
-          what this debrief will be attached to. */}
       <Card className="flex items-center gap-3">
         <span className="min-w-0 flex-1">
           <span className="block text-[17px] font-medium text-foreground">
@@ -100,59 +125,187 @@ function Who({ onPick }: { onPick: (v: Voice) => void }) {
         </Link>
       </Card>
 
-      <Section title={<>Who is giving feedback?</>} flush>
-        <div className="flex flex-col gap-3">
-          <Choice
-            icon={<UserRound className="size-5" aria-hidden />}
-            title={`${INSTRUCTOR.firstName}'s debrief`}
-            body="Record what your instructor says about the flight."
-            onClick={() => onPick("instructor")}
-          />
-          <Choice
-            icon={<PenLine className="size-5" aria-hidden />}
-            title="My reflection"
-            body="How the flight felt to you, in your own words."
-            onClick={() => onPick("student")}
-          />
-        </div>
+      <Section title={<>Today&rsquo;s objectives</>}>
+        <ul className="flex flex-col gap-3">
+          {OBJECTIVES.map((o, i) => (
+            <li key={o} className="flex items-baseline gap-3 text-[17px] leading-snug text-foreground">
+              <span className="text-[13px] font-semibold tabular-nums text-foreground-faint">{i + 1}</span>
+              {o}
+            </li>
+          ))}
+        </ul>
       </Section>
+
+      <p className="text-[15px] leading-relaxed text-foreground-soft">
+        You&rsquo;ll rate each one first, then hand the phone to {INSTRUCTOR.firstName}. Your answers stay hidden
+        until you&rsquo;ve both finished.
+      </p>
+
+      <PrimaryButton onClick={onStart}>Start debrief</PrimaryButton>
     </>
   );
 }
 
-function Choice({ icon, title, body, onClick }: { icon: React.ReactNode; title: string; body: string; onClick: () => void }) {
+/* -------------------------------------------------- 2 + 4. assessment */
+
+function Assess({
+  rater,
+  ratings,
+  onRate,
+  onDone,
+}: {
+  rater: Rater;
+  ratings: Ratings;
+  onRate: (task: string, level: PerformanceLevelCode) => void;
+  onDone: () => void;
+}) {
+  const student = rater === "student";
+  const done = OBJECTIVES.every((o) => ratings[o]);
+  const count = OBJECTIVES.filter((o) => ratings[o]).length;
+
   return (
-    <Card onClick={onClick} className="flex items-start gap-4">
-      <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-foreground-soft">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[17px] font-medium text-foreground">{title}</span>
-        <span className="mt-0.5 block text-[15px] leading-relaxed text-foreground-soft">{body}</span>
-      </span>
-    </Card>
+    <>
+      <PageTitle kicker={student ? "Your assessment" : `${INSTRUCTOR.firstName}'s assessment`}>
+        {student ? "How did this feel to you?" : "How did the student perform?"}
+      </PageTitle>
+
+      <p className="-mt-4 text-[17px] leading-relaxed text-foreground-soft">
+        {student
+          ? "Your own read of the flight, before you see anything else. There is no wrong answer here — it is what you thought."
+          : `Rate the same objectives ${student ? "" : "independently"}. You will both see the comparison next.`}
+      </p>
+
+      <div className="flex flex-col gap-3">
+        {OBJECTIVES.map((task) => (
+          <Card key={task} className="flex flex-col gap-4">
+            <p className="text-[17px] font-medium leading-snug text-foreground">{task}</p>
+            <LevelPicker rater={rater} value={ratings[task] ?? null} onChange={(level) => onRate(task, level)} />
+          </Card>
+        ))}
+      </div>
+
+      <PrimaryButton onClick={done ? onDone : undefined}>
+        {done ? (student ? "Hand over to " + INSTRUCTOR.firstName : "See the comparison") : `${count} of ${OBJECTIVES.length} rated`}
+      </PrimaryButton>
+    </>
   );
 }
 
-/* ------------------------------------------------------------ 2. ready */
+/**
+ * Three levels, shown as three equal choices rather than a 1-2-3 scale.
+ *
+ * Numbers would invite arithmetic across objectives, and an average of these
+ * is precisely the aggregate readiness verdict this product does not make.
+ */
+function LevelPicker({
+  rater,
+  value,
+  onChange,
+}: {
+  rater: Rater;
+  value: PerformanceLevelCode | null;
+  onChange: (level: PerformanceLevelCode) => void;
+}) {
+  return (
+    <div className="flex gap-2" role="group">
+      {ASSESSMENT_LEVELS.map((code) => {
+        const selected = value === code;
+        const tone = stateTone(levelState(code));
+        return (
+          <button
+            key={code}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange(code)}
+            className={cn(
+              "min-h-[44px] flex-1 cursor-pointer rounded-xl border px-2 py-2.5 text-[15px] font-medium transition-colors",
+              selected
+                ? `${tone.fill} border-transparent text-white`
+                : "border-hairline bg-transparent text-foreground-soft hover:bg-surface-sunken",
+            )}
+          >
+            {levelLabel(code, rater)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
-function Ready({ voice, onStart }: { voice: Voice; onStart: () => void }) {
-  const instructor = voice === "instructor";
+/* --------------------------------------------------------- 3. handoff */
+
+function Handoff({ onContinue }: { onContinue: () => void }) {
   return (
     <>
-      <PageTitle kicker={`${PENDING_FLIGHT.lesson} · ${PENDING_FLIGHT.date}`}>
-        {instructor ? `Record ${INSTRUCTOR.firstName}'s debrief` : "Record your reflection"}
-      </PageTitle>
+      <Panel className="flex flex-col gap-4 py-10 text-center">
+        <PanelEyebrow icon={<ArrowRight className="size-3.5" aria-hidden />}>Your part is done</PanelEyebrow>
+        <PanelHeadline>Hand the device to {INSTRUCTOR.firstName}</PanelHeadline>
+        <p className="text-[15px] leading-relaxed text-panel-foreground-soft">
+          {INSTRUCTOR.firstName} will rate the same objectives. Your answers stay hidden until they finish, so their
+          read of the flight stays their own.
+        </p>
+      </Panel>
+
+      <PrimaryButton onClick={onContinue}>I&rsquo;m {INSTRUCTOR.firstName} &mdash; continue</PrimaryButton>
+    </>
+  );
+}
+
+/* ---------------------------------------------------------- 5. reveal */
+
+function Reveal({
+  student,
+  instructor,
+  onNext,
+}: {
+  student: Ratings;
+  instructor: Ratings;
+  onNext: () => void;
+}) {
+  const rows = OBJECTIVES.map((task) => ({
+    task,
+    student: student[task]!,
+    instructor: instructor[task]!,
+  })).filter((r) => r.student && r.instructor);
+
+  return (
+    <>
+      <PageTitle kicker={`${PENDING_FLIGHT.lesson} · ${PENDING_FLIGHT.date}`}>How you both saw it</PageTitle>
+
+      <p className="-mt-4 text-[17px] leading-relaxed text-foreground-soft">{agreementSummary(rows)}</p>
+
+      <div className="flex flex-col gap-3">
+        {rows.map((r) => (
+          <ObjectiveComparison
+            key={r.task}
+            task={r.task}
+            student={r.student}
+            instructor={r.instructor}
+            instructorName={INSTRUCTOR.firstName}
+          />
+        ))}
+      </div>
+
+      <PrimaryButton onClick={onNext}>Talk it through</PrimaryButton>
+    </>
+  );
+}
+
+/* ----------------------------------------------------------- 6. ready */
+
+function Ready({ onStart }: { onStart: () => void }) {
+  return (
+    <>
+      <PageTitle kicker={`${PENDING_FLIGHT.lesson} · ${PENDING_FLIGHT.date}`}>Talk it through</PageTitle>
       <p className="-mt-4 text-[17px] leading-relaxed text-foreground-soft">
-        {instructor
-          ? "Hand them your phone, or record the conversation together. There's nothing to fill in — just talk through the flight the way you normally would."
-          : "How did the flight feel to you? Say it before you read what your instructor said, so both views stay your own."}
+        Review where you agreed, where you saw the flight differently, and what should carry into the next lesson.
+        There&rsquo;s nothing to fill in &mdash; just talk.
       </p>
 
       <div className="flex flex-col items-center gap-6 py-6">
         <button
           onClick={onStart}
-          aria-label="Start recording"
+          aria-label="Start debrief recording"
           className="flex size-[132px] cursor-pointer items-center justify-center rounded-full bg-brand text-on-brand transition-transform duration-200 active:scale-[0.97]"
         >
           <Mic className="size-11" strokeWidth={1.8} aria-hidden />
@@ -160,7 +313,7 @@ function Ready({ voice, onStart }: { voice: Voice; onStart: () => void }) {
         <p className="text-[15px] text-foreground-faint">About 90 seconds is plenty</p>
       </div>
 
-      <PrimaryButton onClick={onStart}>Start recording</PrimaryButton>
+      <PrimaryButton onClick={onStart}>Start debrief recording</PrimaryButton>
       <p className="-mt-4 text-center text-[13px] leading-relaxed text-foreground-faint">
         Your audio is transcribed and then discarded. AfterFlight keeps the training record, not the recording.
       </p>
@@ -168,14 +321,9 @@ function Ready({ voice, onStart }: { voice: Voice; onStart: () => void }) {
   );
 }
 
-/* -------------------------------------------------------- 3. recording */
+/* ------------------------------------------------------- 7. recording */
 
-/**
- * Minimal chrome on purpose: what's being captured, a live timer, a waveform
- * that proves the microphone is alive, and one unmistakable stop. No settings,
- * no navigation, no confirmation mid-recording.
- */
-function Recording({ voice, onStop }: { voice: Voice; onStop: () => void }) {
+function Recording({ onStop }: { onStop: () => void }) {
   const [seconds, setSeconds] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setSeconds((s) => s + 1), 1000);
@@ -185,42 +333,38 @@ function Recording({ voice, onStop }: { voice: Voice; onStop: () => void }) {
   const ss = String(seconds % 60).padStart(2, "0");
 
   return (
-    <>
-      <Panel className="flex flex-col items-center gap-7 py-10">
-        <div className="flex items-center gap-2">
-          <span className="size-2 animate-pulse rounded-full bg-brand" aria-hidden />
-          <span className="text-[13px] font-semibold uppercase tracking-[0.1em] text-panel-foreground-soft">
-            Recording {voice === "instructor" ? INSTRUCTOR.firstName : "you"}
-          </span>
-        </div>
+    <Panel className="flex flex-col items-center gap-7 py-10">
+      <div className="flex items-center gap-2">
+        <span className="size-2 animate-pulse rounded-full bg-brand" aria-hidden />
+        <span className="text-[13px] font-semibold uppercase tracking-[0.1em] text-panel-foreground-soft">
+          Recording the debrief
+        </span>
+      </div>
 
-        <p className="text-[52px] font-semibold leading-none tabular-nums tracking-tight" aria-live="off">
-          {mm}:{ss}
-        </p>
+      <p className="text-[52px] font-semibold leading-none tabular-nums tracking-tight" aria-live="off">
+        {mm}:{ss}
+      </p>
 
-        <Waveform />
+      <Waveform />
 
-        <button
-          onClick={onStop}
-          aria-label="Stop recording"
-          className="flex size-20 cursor-pointer items-center justify-center rounded-full bg-panel-foreground text-panel transition-transform duration-200 active:scale-[0.97]"
-        >
-          <Square className="size-7 fill-current" aria-hidden />
-        </button>
-        <p className="text-[15px] text-panel-foreground-soft">Tap to stop when you&rsquo;re done</p>
-      </Panel>
-    </>
+      <button
+        onClick={onStop}
+        aria-label="Stop recording"
+        className="flex size-20 cursor-pointer items-center justify-center rounded-full bg-panel-foreground text-panel transition-transform duration-200 active:scale-[0.97]"
+      >
+        <Square className="size-7 fill-current" aria-hidden />
+      </button>
+      <p className="text-[15px] text-panel-foreground-soft">Tap to stop when you&rsquo;re done</p>
+    </Panel>
   );
 }
 
-/** Presentational only in the prototype; the shipped recorder drives this from live input levels. */
 const WAVEFORM_BARS = Array.from({ length: 34 }, (_, i) => 0.25 + Math.abs(Math.sin(i * 1.7)) * 0.75);
 
 function Waveform() {
-  const bars = WAVEFORM_BARS;
   return (
     <div className="flex h-14 w-full items-center justify-center gap-[3px]" aria-hidden>
-      {bars.map((h, i) => (
+      {WAVEFORM_BARS.map((h, i) => (
         <span
           key={i}
           className="w-[3px] animate-pulse rounded-full bg-brand/70"
@@ -231,12 +375,8 @@ function Waveform() {
   );
 }
 
-/* ------------------------------------------------------- 4. processing */
+/* ------------------------------------------------------ 8. processing */
 
-/**
- * Named steps rather than a bar that lies. The student should be able to tell
- * it is working on THEIR flight, not spinning.
- */
 const STEPS = ["Transcribing the debrief", "Finding what mattered", "Matching to ACS areas", "Building your next flight"];
 
 function Processing({ onDone }: { onDone: () => void }) {
@@ -272,31 +412,7 @@ function Processing({ onDone }: { onDone: () => void }) {
   );
 }
 
-/* -------------------------------------------------------- 5. reflection */
-
-function Reflection({ onNext }: { onNext: () => void }) {
-  return (
-    <>
-      <PageTitle kicker="Before you read the debrief">Your turn</PageTitle>
-      <p className="-mt-4 text-[17px] leading-relaxed text-foreground-soft">
-        How did the flight feel to you? Answering first is what makes the comparison worth reading &mdash; if you see{" "}
-        {INSTRUCTOR.firstName}&rsquo;s view first, you&rsquo;ll just agree with it.
-      </p>
-      <div className="flex flex-col gap-2.5">
-        <PrimaryButton onClick={onNext}>
-          <Mic className="size-[18px]" aria-hidden />
-          Speak reflection
-        </PrimaryButton>
-        <div className="flex gap-2.5">
-          <SecondaryButton onClick={onNext}>Type instead</SecondaryButton>
-          <SecondaryButton onClick={onNext}>Skip for now</SecondaryButton>
-        </div>
-      </div>
-    </>
-  );
-}
-
-/* ------------------------------------------------------------ 6. review */
+/* ---------------------------------------------------------- 9. review */
 
 function Review() {
   return (
