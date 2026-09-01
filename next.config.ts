@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
   // The auth e2e run (e2e/auth-journey.mjs) spawns a second dev server on its
   // own port; a separate distDir keeps it from colliding with the main one.
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
+  // Development and E2E servers generate their own route-validator files.
+  // Keep production type-checking isolated from those concurrently-written
+  // caches; a partially-written dev validator must never break publishing.
+  typescript: {
+    tsconfigPath: process.env.AFTERFLIGHT_BUILD ? "tsconfig.build.json" : "tsconfig.json",
+  },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },

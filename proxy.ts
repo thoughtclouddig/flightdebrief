@@ -49,6 +49,10 @@ export async function proxy(request: NextRequest) {
     if (!passed) {
       const gateUrl = new URL("/gate", request.url);
       gateUrl.searchParams.set("next", pathname);
+      // Autoscale probes GET / and expects a successful response. Render the
+      // protected gate at the root without exposing the marketing page; other
+      // marketing URLs still redirect so their destination is preserved.
+      if (pathname === "/") return NextResponse.rewrite(gateUrl);
       return NextResponse.redirect(gateUrl);
     }
     return NextResponse.next();
