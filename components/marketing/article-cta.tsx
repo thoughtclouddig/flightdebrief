@@ -91,7 +91,7 @@ export function ArticleCta({ topicSlug }: { topicSlug: string | null }) {
         <p className="font-display mt-2 text-balance text-[26px] font-bold leading-[1.15] tracking-normal text-[#101727]">
           {cta.heading}
         </p>
-        <p className="mt-3 max-w-[58ch] text-pretty text-[17px] leading-relaxed text-[#3f474f]">{cta.line}</p>
+        <p className="mt-3 max-w-[58ch] text-balance text-[17px] leading-relaxed text-[#3f474f]">{cta.line}</p>
         <Link
           href={href}
           className="mt-6 inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-brand-bright hover:text-[#101727]"

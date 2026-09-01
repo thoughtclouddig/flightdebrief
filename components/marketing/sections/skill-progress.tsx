@@ -78,13 +78,13 @@ export function SkillProgress() {
                 <dl className="mt-6 flex flex-col gap-5">
                   <div>
                     <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">Why</dt>
-                    <dd className="mt-2 text-pretty text-lg italic leading-relaxed text-[#4b545d]">
+                    <dd className="mt-2 text-balance text-lg italic leading-relaxed text-[#4b545d]">
                       &ldquo;{s.why}&rdquo;
                     </dd>
                   </div>
                   <div>
                     <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">Next</dt>
-                    <dd className="mt-2 text-pretty text-lg leading-relaxed text-[#101727]">{s.next}</dd>
+                    <dd className="mt-2 text-balance text-lg leading-relaxed text-[#101727]">{s.next}</dd>
                   </div>
                 </dl>
               </article>

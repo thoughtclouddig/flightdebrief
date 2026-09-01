@@ -12,7 +12,7 @@ export function Students() {
           <h2 className="font-display mt-3 text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
             See your training take shape.
           </h2>
-          <p className="mt-5 max-w-md text-pretty text-[17px] leading-relaxed text-foreground-soft">
+          <p className="mt-5 max-w-md text-balance text-[17px] leading-relaxed text-foreground-soft">
             Every flight becomes part of one continuous record — not another conversation you have to remember on
             your own.
           </p>

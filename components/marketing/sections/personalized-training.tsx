@@ -23,7 +23,7 @@ const STAGES = [
   {
     label: "What Jake said",
     body: (
-      <blockquote className="border-l-[3px] border-brand pl-5 text-pretty text-lg italic leading-relaxed text-[#4b545d]">
+      <blockquote className="border-l-[3px] border-brand pl-5 text-balance text-lg italic leading-relaxed text-[#4b545d]">
         &ldquo;Centerline control improved, but correction is still being relaxed through touchdown.&rdquo;
       </blockquote>
     ),
@@ -31,7 +31,7 @@ const STAGES = [
   {
     label: "What Vector explains",
     body: (
-      <p className="text-pretty text-lg leading-relaxed text-[#101727]">
+      <p className="text-balance text-lg leading-relaxed text-[#101727]">
         Why control input needs to <em className="font-semibold not-italic">increase</em> as the airplane slows &mdash;
         the same aileron does less work at 55 knots than it did at 70.
       </p>
@@ -40,7 +40,7 @@ const STAGES = [
   {
     label: "How you check it stuck",
     body: (
-      <p className="text-pretty text-lg leading-relaxed text-[#101727]">
+      <p className="text-balance text-lg leading-relaxed text-[#101727]">
         Three questions drawn from <span className="font-semibold">your</span> flight, not a written-test bank.
       </p>
     ),
@@ -73,7 +73,7 @@ export function PersonalizedTraining() {
           <div className="overflow-hidden rounded-[28px] border border-black/[0.07] bg-white shadow-[0_24px_50px_-28px_rgba(16,23,39,0.22)]">
             <div className="border-b border-black/[0.07] px-7 py-7 sm:px-10">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Crosswind landings</p>
-              <p className="font-display mt-1.5 text-2xl font-bold leading-tight text-[#101727] sm:text-3xl">
+              <p className="font-display mt-1.5 text-balance text-2xl font-bold leading-tight text-[#101727] sm:text-3xl">
                 From one line in your debrief to something you can practice.
               </p>
             </div>
@@ -87,7 +87,7 @@ export function PersonalizedTraining() {
             </ol>
 
             {/* Sources named, and deliberately last. Grounding, not the product. */}
-            <p className="bg-[#f4f5f6] px-7 py-5 text-sm text-[#68717D] sm:px-10">
+            <p className="bg-[#f4f5f6] px-7 py-5 text-balance text-sm text-[#68717D] sm:px-10">
               Grounded in the FAA Airplane Flying Handbook and the Airman Certification Standards.
             </p>
           </div>

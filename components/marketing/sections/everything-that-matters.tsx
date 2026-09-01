@@ -118,7 +118,7 @@ export function EverythingThatMatters() {
               <PhotoVisual src={card.src} alt={card.alt} label={`Step ${i + 1}`} />
               <div>
                 <p className="font-display text-balance text-xl font-bold text-[#101727]">{card.headline}</p>
-                <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
+                <p className="text-balance mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
               </div>
             </Reveal>
           ))}
@@ -169,7 +169,7 @@ export function EverythingThatMatters() {
                   <p className="relative z-[1] mt-3 line-clamp-2 text-balance text-[22px] leading-[1.25] font-extrabold tracking-[-0.01em] text-[#101727]">
                     {card.headline}
                   </p>
-                  <p className="relative z-[1] mt-2 line-clamp-2 text-pretty text-base leading-[1.4] text-[#101727]">
+                  <p className="relative z-[1] mt-2 line-clamp-2 text-balance text-base leading-[1.4] text-[#101727]">
                     {card.copy}
                   </p>
                 </div>

@@ -84,7 +84,7 @@ export function LearningLoop() {
               </div>
               <div>
                 <p className="font-display text-balance text-xl font-bold text-[#101727]">{frame.headline}</p>
-                <p className="text-pretty mt-1.5 text-base text-[#68717D]">{frame.copy}</p>
+                <p className="text-balance mt-1.5 text-base text-[#68717D]">{frame.copy}</p>
               </div>
             </Reveal>
           ))}
@@ -105,7 +105,7 @@ export function LearningLoop() {
                   <Icon className="size-5 text-brand" strokeWidth={2} />
                 </span>
                 <p className="text-balance font-display text-base font-bold text-[#101727]">{label}</p>
-                <p className="text-pretty text-base text-[#68717D]">{copy}</p>
+                <p className="text-balance text-base text-[#68717D]">{copy}</p>
               </div>
             ))}
           </div>

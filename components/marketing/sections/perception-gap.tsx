@@ -93,7 +93,7 @@ function View({
           without a colored hairline floating above a photograph. */}
       <div className={`flex flex-1 flex-col border-t-[3px] px-7 py-7 ${accent}`}>
         <figcaption className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">{label}</figcaption>
-        <blockquote className="mt-3 text-pretty text-lg italic leading-relaxed text-[#101727]">
+        <blockquote className="mt-3 text-balance text-lg italic leading-relaxed text-[#101727]">
           &ldquo;{quote}&rdquo;
         </blockquote>
       </div>

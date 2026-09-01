@@ -105,7 +105,7 @@ export default async function FieldNotesHubPage(props: PageProps<"/field-notes">
           >
             Field Notes
           </h1>
-          <p className="mt-3 max-w-[64ch] text-pretty text-lg leading-relaxed text-[#68717D]">
+          <p className="mt-3 max-w-[64ch] text-balance text-lg leading-relaxed text-[#68717D]">
             Guidance for student pilots, CFIs, and flight schools -- grounded in how structured debriefing actually
             works.
           </p>
@@ -182,11 +182,11 @@ export default async function FieldNotesHubPage(props: PageProps<"/field-notes">
                           {item.topic.name}
                         </span>
                       ) : null}
-                      <h2 className="font-display mt-3 text-pretty text-[19px] font-bold leading-[1.3] text-[#101727] group-hover:text-brand">
+                      <h2 className="font-display mt-3 text-balance text-[19px] font-bold leading-[1.3] text-[#101727] group-hover:text-brand">
                         {formatHeadline(item.title)}
                       </h2>
                       {item.dek ? (
-                        <p className="mt-2 line-clamp-3 text-pretty text-[15px] leading-relaxed text-[#68717D]">
+                        <p className="mt-2 line-clamp-3 text-balance text-[15px] leading-relaxed text-[#68717D]">
                           {item.dek}
                         </p>
                       ) : null}

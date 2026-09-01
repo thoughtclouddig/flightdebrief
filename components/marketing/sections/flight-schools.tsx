@@ -13,7 +13,7 @@ export function FlightSchools() {
           <h2 className="font-display mt-3 max-w-2xl text-balance text-4xl font-extrabold uppercase leading-[1.02] text-foreground sm:text-5xl">
             See where students keep getting stuck.
           </h2>
-          <p className="mt-5 max-w-md text-pretty text-[17px] leading-relaxed text-foreground-soft">
+          <p className="mt-5 max-w-md text-balance text-[17px] leading-relaxed text-foreground-soft">
             Every debrief adds to a clearer picture of how training is going, across every student and every CFI.
           </p>
         </Reveal>

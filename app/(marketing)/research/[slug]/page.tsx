@@ -111,7 +111,7 @@ export default async function ResearchReportPage(props: PageProps<"/research/[sl
           <h1 className="font-display mt-2 text-balance text-4xl font-bold text-[#101727] sm:text-5xl" style={{ textTransform: "none" }}>
             {report.title}
           </h1>
-          {report.summary ? <p className="mt-3 max-w-3xl text-pretty text-lg leading-relaxed text-[#68717D]">{report.summary}</p> : null}
+          {report.summary ? <p className="mt-3 max-w-3xl text-balance text-lg leading-relaxed text-[#68717D]">{report.summary}</p> : null}
           <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-[#68717D]">
             <span className="rounded-full bg-[#f4f5f6] px-3 py-1 font-medium text-[#101727]">{report.authorName}</span>
             {report.reviewerName ? <span>Reviewed by {report.reviewerName}</span> : null}
@@ -134,7 +134,7 @@ export default async function ResearchReportPage(props: PageProps<"/research/[sl
           {DETAIL_FIELDS.filter((f) => report[f.key]).map((f) => (
             <div key={f.key}>
               <h2 className="font-display text-xl font-bold text-[#101727]">{f.label}</h2>
-              <p className="mt-3 text-pretty leading-relaxed text-[#68717D]">{report[f.key]}</p>
+              <p className="mt-3 text-balance leading-relaxed text-[#68717D]">{report[f.key]}</p>
             </div>
           ))}
 

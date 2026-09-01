@@ -25,21 +25,31 @@ const WIDTHS = [375, 768, 1024, 1440];
 /**
  * Two separate faults, because they are different problems.
  *
- *   orphan    the last line is a single word -- the classic dangling word
- *   stub      the last line is under RATIO of the widest line -- "balanced"
- *             is a statement about WIDTH, not word count. "The proven power
- *             of / structured debriefing." is 3 words then 2 and reads fine;
- *             "Why does every flight feel / like a reset?" is 5 then 3 and
- *             looks broken, because the second line is half the width.
+ * The test is WIDTH, not word count, and that distinction took two passes to
+ * get right. Counting words flagged "You teach. AfterFlight handles the /
+ * follow-through." -- a one-word last line that fills 100% of the measure,
+ * which is not an orphan by any reading. What actually looks broken is a last
+ * line much shorter than the ones above it: "Why does every flight feel /
+ * like a reset?" is 5 words then 3, and the second line is half the width.
+ *
+ * `fault` still distinguishes the two shapes for reporting; only the ratio
+ * decides whether something fails.
  */
 const RATIO = 0.45;
+/**
+ * Long blocks get a looser bar. A ragged last line is normal in a seven-line
+ * body paragraph and wrong in a three-line headline, so the strict ratio
+ * applies to display-length blocks and long copy only has to avoid a stub.
+ */
+const LONG_LINES = 5;
+const LONG_RATIO = 0.25;
 
 const JSON_OUT = process.argv.includes("--json");
 const paths = process.argv.slice(2).filter((a) => a.startsWith("/"));
 const PATHS = paths.length ? paths : ["/", "/how-it-works", "/pricing"];
 
 /** Splits an element's rendered text into lines using per-character rects. */
-const MEASURE = `(minRatio) => {
+const MEASURE = `(minRatio, longLines, longRatio) => {
   const SELECTOR = "p, h1, h2, h3, h4, h5, h6, li, dt, dd, blockquote, figcaption";
   function lines(el) {
     const range = document.createRange();
@@ -74,7 +84,11 @@ const MEASURE = `(minRatio) => {
     const last = ls[ls.length - 1].text.split(/\\s+/).length;
     const widest = Math.max(...ls.map((l) => l.width));
     const ratio = ls[ls.length - 1].width / widest;
-    if (last === 1 || ratio < minRatio) {
+    // Width only. A one-word last line is fine when that word FILLS the
+    // measure -- "follow-through." at 100% of the widest line is not an
+    // orphan, and counting words flagged a dozen of those.
+    const bar = ls.length > longLines ? longRatio : minRatio;
+    if (ratio < bar) {
       found.push({
         text: text.slice(0, 80), lines: ls.length, lastWords: last,
         tag: el.tagName.toLowerCase(), cls: el.getAttribute("class") ?? "",
@@ -110,7 +124,7 @@ for (const path of PATHS) {
       step();
     }));
     await page.waitForTimeout(400);
-    const found = await page.evaluate(`(${MEASURE})(${RATIO})`);
+    const found = await page.evaluate(`(${MEASURE})(${RATIO}, ${LONG_LINES}, ${LONG_RATIO})`);
     for (const f of found) {
       failures++;
       if (JSON_OUT) { console.log(JSON.stringify({ path, width, ...f })); continue; }

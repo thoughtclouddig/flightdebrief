@@ -81,7 +81,7 @@ export function DemoPersonaCards({ delay = 0 }: { delay?: number }) {
           </div>
           <div className="flex flex-col gap-2 p-5">
             <p className="font-display text-xl font-bold text-[#101727] transition-colors group-hover:text-brand">{p.title}</p>
-            <p className="text-pretty text-base text-[#4b545d]">{p.copy}</p>
+            <p className="text-balance text-base text-[#4b545d]">{p.copy}</p>
           </div>
           {pendingHref === p.href ? (
             <span

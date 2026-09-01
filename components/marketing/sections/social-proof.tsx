@@ -30,7 +30,7 @@ export function SocialProof() {
         </Reveal>
 
         <Reveal delay={200} className="mt-8 border-l-2 border-brand/40 pl-5">
-          <p className="text-pretty text-lg italic leading-relaxed text-foreground-soft">
+          <p className="text-balance text-lg italic leading-relaxed text-foreground-soft">
             &ldquo;{SOCIAL_PROOF_QUOTE.text}&rdquo;
           </p>
           <a

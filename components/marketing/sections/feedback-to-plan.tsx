@@ -73,11 +73,11 @@ export function FeedbackToPlan() {
 
               <ThreadBlock icon={Target} eyebrow="Area to improve">
                 <p className="text-balance font-display text-lg font-bold text-[#101727]">Altitude control</p>
-                <p className="text-pretty mt-1 text-sm text-[#68717D]">Altitude increased 180 ft during the second half of the turn.</p>
+                <p className="text-balance mt-1 text-sm text-[#68717D]">Altitude increased 180 ft during the second half of the turn.</p>
               </ThreadBlock>
 
               <ThreadBlock icon={MessagesSquare} eyebrow="Your instructor said">
-                <p className="text-pretty text-[15px] italic leading-relaxed text-[#101727]">
+                <p className="text-balance text-[15px] italic leading-relaxed text-[#101727]">
                   &ldquo;Get the trim set before entry and use the horizon as your primary outside reference.&rdquo;
                 </p>
               </ThreadBlock>
@@ -106,7 +106,7 @@ export function FeedbackToPlan() {
                   {NEXT_FLIGHT_STATS.map((stat) => (
                     <div key={stat.label}>
                       <p className="text-xs font-medium text-[#8c97a2]">{stat.label}</p>
-                      <p className="font-display mt-0.5 text-pretty text-sm font-bold text-[#101727]">{stat.value}</p>
+                      <p className="font-display mt-0.5 text-balance text-sm font-bold text-[#101727]">{stat.value}</p>
                     </div>
                   ))}
                 </div>

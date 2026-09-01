@@ -79,7 +79,7 @@ export function Pricing() {
                 </TrackedLink>
 
                 {tier.upsell ? (
-                  <div className="mt-5 text-pretty text-center">
+                  <div className="mt-5 text-balance text-center">
                     <p className="text-sm text-[#68717D]">{tier.upsell.text}</p>
                     <a
                       href={tier.upsell.href}
@@ -110,7 +110,7 @@ export function Pricing() {
                   <br />
                   {ENTERPRISE_PRICING.sectionHeadlineLine2}
                 </h3>
-                <p className="mt-4 max-w-md text-pretty text-white/70">{ENTERPRISE_PRICING.sectionCopy}</p>
+                <p className="mt-4 max-w-md text-balance text-white/70">{ENTERPRISE_PRICING.sectionCopy}</p>
                 <p className="text-balance mt-6 font-display text-xl font-bold text-white">{ENTERPRISE_PRICING.sectionPriceLabel}</p>
 
                 <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
@@ -123,7 +123,7 @@ export function Pricing() {
                     <ArrowRight className="size-5 transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
                   </TrackedLink>
                 </div>
-                <p className="mt-5 max-w-md text-pretty text-sm text-white/60">{ENTERPRISE_PRICING.sectionSupportingLine}</p>
+                <p className="mt-5 max-w-md text-balance text-sm text-white/60">{ENTERPRISE_PRICING.sectionSupportingLine}</p>
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -131,7 +131,7 @@ export function Pricing() {
                   <div key={tile.title} className="rounded-xl border border-white/10 bg-white/[0.04] p-5">
                     <span className="block h-0.5 w-6 bg-brand" aria-hidden="true" />
                     <p className="text-balance mt-3 text-sm font-bold uppercase tracking-wide text-white">{tile.title}</p>
-                    <p className="mt-1.5 text-pretty text-[13px] leading-relaxed text-white/55">{tile.description}</p>
+                    <p className="mt-1.5 text-balance text-[13px] leading-relaxed text-white/55">{tile.description}</p>
                   </div>
                 ))}
               </div>

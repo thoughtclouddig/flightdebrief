@@ -46,7 +46,7 @@ export function Hero() {
             Make every flight <br />
             build on <span className="text-brand">the last.</span>
           </h1>
-          <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#68717D]">
+          <p className="mt-6 max-w-lg text-balance text-lg leading-relaxed text-[#68717D]">
             AfterFlight turns each lesson into a personalized plan for what to review, practice, and focus on
             next &mdash; so you show up prepared, avoid relearning, and build proficiency faster.
           </p>

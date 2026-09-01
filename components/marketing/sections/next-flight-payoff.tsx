@@ -35,7 +35,7 @@ export function NextFlightPayoff() {
             />
             <div>
               <p className="font-display text-balance text-xl font-bold text-[#101727]">The next lesson starts here.</p>
-              <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">
+              <p className="text-balance mt-2 text-base leading-relaxed text-[#68717D]">
                 Know what to work on, what to study, and what comes next.
               </p>
             </div>
@@ -49,7 +49,7 @@ export function NextFlightPayoff() {
             />
             <div>
               <p className="font-display text-balance text-xl font-bold text-[#101727]">Ready for what comes next.</p>
-              <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">
+              <p className="text-balance mt-2 text-base leading-relaxed text-[#68717D]">
                 Start the next lesson knowing exactly where you left off.
               </p>
             </div>
