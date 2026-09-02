@@ -60,30 +60,39 @@ export function Capabilities() {
           <p className="text-balance text-lg font-bold uppercase tracking-[0.16em] text-brand sm:text-xl">
             Between your flights
           </p>
-          <p className="font-display mt-3 text-balance text-3xl font-bold leading-[1.05] text-[#101727] sm:text-4xl">
+          <p className="font-display mt-3 text-balance text-4xl font-bold leading-[1.05] text-[#101727] sm:text-5xl">
             Your next flight gets easier before you fly it.
           </p>
         </Reveal>
 
         <Reveal delay={150} className="mt-12">
           {/* Four across at xl, not lg. "Instructor Continuity" needs 249px and a
-            quarter of this container at a 1024px viewport is about 214px -- no
-            readable label size fits that, so at lg it goes two-up rather than
-            wrapping the label. */}
-          <dl className="grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2 xl:grid-cols-4">
+            quarter of this container at a 1024px viewport is about 214px --
+            less once card padding is taken out -- so below xl it goes two-up
+            rather than wrapping the label. */}
+          <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {CAPABILITIES.map((c) => (
-              <div key={c.title} className="border-t-2 border-[#101727]/15 pt-6">
-                {/* 112px displayed, 336px source. These carry real detail --
-                    the tablet has six inner panels, the seat has stitching --
-                    and below about 100px none of it reads, which is what made
-                    the first pass at 72px still feel small. 3x source covers
-                    the densest phone; the set is 47KB against 548KB for the
-                    500px originals. */}
-                <Image src={c.src} alt="" width={112} height={112} className="size-[112px]" unoptimized />
-                <dt className="font-display mt-4 text-[15px] font-bold uppercase tracking-wide text-[#101727]">
-                  {c.title}
-                </dt>
-                <dd className="text-balance mt-1.5 text-[15px] leading-relaxed text-[#4b545d]">{c.copy}</dd>
+              <div
+                key={c.title}
+                className="flex flex-col overflow-hidden rounded-2xl border border-[#101727]/10 bg-white"
+              >
+                {/* The illustration gets its own tinted panel rather than
+                    sitting on the page. On white it floated with nothing to
+                    hold it; a sunken band gives each card a consistent visual
+                    anchor and makes four different drawings read as one set. */}
+                <div className="flex items-center justify-center bg-[#f4f5f6] py-7">
+                  <Image src={c.src} alt="" width={112} height={112} className="size-[112px]" unoptimized />
+                </div>
+                <div className="px-5 pb-6 pt-5">
+                  {/* 13px, and the card's own padding is why. "Instructor Continuity"
+                      measures 249px at 15px; a quarter of this container at xl
+                      is 277px, less 40px of padding, which leaves 237px. The
+                      label has to fit the card, not the column. */}
+                  <dt className="font-display text-[13px] font-bold uppercase tracking-wide text-[#101727]">
+                    {c.title}
+                  </dt>
+                  <dd className="text-balance mt-1.5 text-[15px] leading-relaxed text-[#4b545d]">{c.copy}</dd>
+                </div>
               </div>
             ))}
           </dl>

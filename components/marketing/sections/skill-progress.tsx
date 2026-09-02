@@ -53,7 +53,15 @@ export function SkillProgress() {
       <div className="mx-auto max-w-[1100px]">
         <SectionHead
           eyebrow="Progress"
-          headline="See what's improving, and what still needs work."
+          headline={
+            <>
+              {/* Two lines, stated. At the default 48px "and what still needs
+                  work." measures 716px against a 672px column, so balance had
+                  no two-line solution and broke it into three. */}
+              <span className="sm:block">See what&rsquo;s improving,</span>{" "}
+              <span className="sm:block">and what still needs work.</span>
+            </>
+          }
           body="Progress with the evidence behind it — your instructor's own words from the flights you actually flew."
         />
 

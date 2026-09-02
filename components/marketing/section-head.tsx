@@ -52,7 +52,7 @@ export function SectionHead({
             // which defeats the stated break entirely. 3.1rem leaves ~20px.
             // Any word change in that headline needs re-measuring.
             ? "text-[clamp(1.6rem,7vw,2.25rem)] sm:text-[clamp(2.6rem,5.2vw,3.1rem)]"
-            : "text-4xl sm:text-5xl",
+            : "text-4xl sm:text-[clamp(2.5rem,3.4vw,2.75rem)]",
           // AFTER the size, and that ordering is the whole trick.
           //
           // Tailwind's text-* utilities set font-size AND line-height together,
