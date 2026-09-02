@@ -41,6 +41,14 @@ function Emphasized({ text }: { text: string }) {
   );
 }
 
+/*
+ * The featured card is no longer lifted.
+ *
+ * lg:-translate-y-3 raised it 12px, which put its price and feature list on a
+ * different line from the other two and made the row read as misaligned. The
+ * emphasis survives in the brand border, the shadow and the badge -- three
+ * signals, none of which cost the row its alignment.
+ */
 const HOMEPAGE_TIERS = PRICING_TIERS.filter((t) => t.id === "pilot" || t.id === "cfi" || t.id === "school-core");
 import { cn } from "@/lib/utils";
 
@@ -68,7 +76,7 @@ export function Pricing() {
                 className={cn(
                   "relative flex h-full flex-col rounded-3xl border bg-white p-10 transition-shadow",
                   tier.featured
-                    ? "border-brand shadow-[0_2px_4px_rgba(16,23,39,0.04),0_32px_64px_-24px_rgba(240,118,33,0.28)] lg:-translate-y-3"
+                    ? "border-brand shadow-[0_2px_4px_rgba(16,23,39,0.04),0_32px_64px_-24px_rgba(240,118,33,0.28)]"
                     : "border-slate-200 shadow-[0_2px_4px_rgba(16,23,39,0.03),0_16px_40px_-20px_rgba(16,23,39,0.14)]",
                 )}
               >
@@ -80,14 +88,22 @@ export function Pricing() {
                 <p className={cn("text-balance font-display text-lg font-bold uppercase tracking-wide text-[#101727]", tier.featured && "mt-2")}>
                   {tier.name}
                 </p>
-                <p className="text-pretty mt-1.5 text-base text-[#68717D]">{tier.audience}</p>
+                {/* Two lines reserved. "For individual flight instructors." is one
+                    line and the other two are two, which pushed each card's
+                    price to a different height and made the row read as
+                    misaligned rather than as three comparable plans. */}
+                <p className="text-pretty mt-1.5 min-h-[3rem] text-base text-[#68717D]">{tier.audience}</p>
                 <p className="mt-6">
                   <span className="font-display text-[clamp(2.75rem,2rem+3vw,3.75rem)] font-extrabold tracking-tight text-[#101727]">
                     {tier.price}
                   </span>
                   {tier.priceSuffix ? <span className="text-base text-[#68717D]/70">{tier.priceSuffix}</span> : null}
                 </p>
-                {tier.priceNote ? <p className="text-pretty mt-1 text-base font-semibold text-brand">{tier.priceNote}</p> : null}
+                {/* Reserved whether or not the tier has one, so the feature lists
+                    start level too -- only Pilot carries an annual note. */}
+                <p className="text-pretty mt-1 min-h-[1.5rem] text-base font-semibold text-brand">
+                  {tier.priceNote ?? "\u00a0"}
+                </p>
 
                 <ul className="mt-8 flex flex-1 flex-col gap-4 border-t border-[#e4e7ea] pt-8">
                   {tier.features.map((feature) => (
@@ -107,12 +123,14 @@ export function Pricing() {
                 <TrackedLink
                   href={tier.signupHref}
                   event={tier.analyticsEvent}
-                  className={cn(
-                    "mt-9 rounded-xl px-6 py-3.5 text-center text-base font-bold transition-transform hover:scale-[1.02]",
-                    tier.featured
-                      ? "bg-brand text-white shadow-lg shadow-brand/25 hover:bg-brand-bright hover:text-[#101727]"
-                      : "border border-slate-300 text-[#101727] hover:border-[#101727]",
-                  )}
+                  // Every tier gets the orange fill. Outlining two of three
+                  // made the CFI plan look like the one being sold on a page
+                  // whose subject is the student, and an outlined button next
+                  // to a filled one reads as the lesser option rather than an
+                  // equal choice. whitespace-nowrap because the labels have to
+                  // fit: about 223px of usable width once the card's padding
+                  // and the button's own px-6 are taken out.
+                  className="mt-9 whitespace-nowrap rounded-xl bg-brand px-6 py-3.5 text-center text-base font-bold text-white shadow-lg shadow-brand/25 transition-transform hover:scale-[1.02] hover:bg-brand-bright hover:text-[#101727]"
                 >
                   {tier.cta}
                 </TrackedLink>

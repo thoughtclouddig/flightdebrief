@@ -56,7 +56,7 @@ export const PRICING_TIERS: PricingTier[] = [
       "Works on all devices",
       "Your first 3 flights are FREE",
     ],
-    cta: "Get Your First 3 Flights Free",
+    cta: "Start Free",
     signupHref: "/signup/student",
     analyticsEvent: "select_pilot",
   },
@@ -93,7 +93,7 @@ export const PRICING_TIERS: PricingTier[] = [
       "Spot students losing training continuity",
       "Lightweight aircraft directory",
     ],
-    cta: "Create Free School Account",
+    cta: "Create School Account",
     signupHref: "/signup/school",
     // Event name kept as select_school_pro deliberately: renaming it would
     // split this tier's history in analytics across the rename. The tier it

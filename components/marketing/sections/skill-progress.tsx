@@ -79,20 +79,30 @@ export function SkillProgress() {
           by an algorithm.
         </p>
 
-        <div className="mx-auto mt-8 flex max-w-[760px] flex-col gap-5">
+        {/* Three across, not stacked. As a vertical list of three full-width
+            cards the section was mostly scrolling -- and the three skills are
+            a set to compare, not a sequence to read in order. */}
+        <div className="mx-auto mt-8 grid max-w-[1180px] gap-6 lg:grid-cols-3">
           {SKILLS.map((s, i) => (
             <Reveal key={s.skill} delay={100 + i * 90}>
               <article className="rounded-2xl border border-black/[0.06] bg-[#f4f5f6] px-7 py-7 sm:px-9">
-                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-                  <h3 className="font-display text-xl font-bold text-[#101727] sm:text-2xl">{s.skill}</h3>
-                  <div className="flex items-center gap-3.5">
+                {/* Stacked inside the card too. Title, meter and state sat on
+                    one justified row when the card was 760px wide; in a third
+                    of that they collide. */}
+                <h3 className="font-display text-xl font-bold text-[#101727]">{s.skill}</h3>
+                {/* State above its meter, not beside it. Side by side needs
+                    about 282px -- 110px of meter plus a "Meets Standard" chip
+                    -- against roughly 280px of content width in a third-width
+                    card, so the longest label was being clipped. */}
+                <div className="mt-3 flex flex-col items-start gap-2.5">
+                  <div className="flex flex-col items-start gap-2.5">
                     {/* Four segments rather than "3/4": the level is read in one
                         glance, and the number survives for screen readers. */}
                     <span className="flex items-center gap-1" role="img" aria-label={`${s.state}, ${s.score} of 4`}>
                       {[0, 1, 2, 3].map((n) => (
                         <span
                           key={n}
-                          className={`h-2.5 w-7 rounded-full ${n < s.score ? s.fill : "bg-[#c7ccd1]"}`}
+                          className={`h-2.5 w-6 rounded-full ${n < s.score ? s.fill : "bg-[#c7ccd1]"}`}
                         />
                       ))}
                     </span>
@@ -101,7 +111,7 @@ export function SkillProgress() {
                         same color as its meter. Visible without becoming the
                         loudest thing on the card -- the skill name still leads. */}
                     <span
-                      className={`rounded-md px-2.5 py-1 text-sm font-bold uppercase tracking-[0.06em] ${s.tone} ${s.chip}`}
+                      className={`order-first rounded-md px-2.5 py-1 text-[13px] font-bold uppercase tracking-[0.06em] ${s.tone} ${s.chip}`}
                     >
                       {s.state}
                     </span>
@@ -111,13 +121,13 @@ export function SkillProgress() {
                 <dl className="mt-6 flex flex-col gap-5">
                   <div>
                     <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">Why</dt>
-                    <dd className="mt-2 text-pretty text-lg italic leading-relaxed text-[#4b545d]">
+                    <dd className="mt-2 text-pretty text-base italic leading-relaxed text-[#4b545d]">
                       &ldquo;{s.why}&rdquo;
                     </dd>
                   </div>
                   <div>
                     <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">Next</dt>
-                    <dd className="mt-2 text-pretty text-lg leading-relaxed text-[#101727]">{s.next}</dd>
+                    <dd className="mt-2 text-pretty text-base leading-relaxed text-[#101727]">{s.next}</dd>
                   </div>
                 </dl>
               </article>
