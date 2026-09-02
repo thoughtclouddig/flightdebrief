@@ -30,8 +30,10 @@ export function Reveal({
     <div
       ref={ref}
       className={cn(
-        "reveal transition-[opacity,transform] duration-700 ease-out",
-        inView ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
+        "reveal transition-[opacity,transform] duration-500 ease-out",
+        // 12px, not 24. Halving the travel halves how far anything can be
+        // seen moving if the early trigger has not fully finished.
+        inView ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
         // Render the final state outright when the visitor has asked for
         // reduced motion. This was missing, so every Reveal on the site still
         // slid and faded regardless of the setting -- the one thing the

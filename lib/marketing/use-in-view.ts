@@ -43,7 +43,16 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(options?: Inte
       // would stay invisible forever. threshold: 0 fires on first overlap
       // regardless of the target's height; rootMargin still controls how
       // early/late that counts as "in view".
-      { threshold: 0, rootMargin: "-40px", ...options },
+      // Fires BEFORE the block reaches the viewport, not 40px after.
+      //
+      // "-40px" shrank the root on every side, so a reveal began only once the
+      // element was already on screen and then kept moving for 700ms while the
+      // reader scrolled past it. That is what reads as a jump: content sliding
+      // under a moving eye. Growing the root 25% below the fold starts the
+      // animation early enough that most of it is spent off screen, so the
+      // block is settled by the time it can be read. The small top inset stays,
+      // so nothing triggers while scrolling upward past it.
+      { threshold: 0, rootMargin: "-40px 0px 25% 0px", ...options },
     );
     observer.observe(el);
     return () => {
