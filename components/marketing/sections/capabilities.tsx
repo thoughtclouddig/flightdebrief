@@ -55,7 +55,7 @@ const CAPABILITIES = [
 export function Capabilities() {
   return (
     <section className="bg-white px-6 py-20 sm:py-24">
-      <div className="mx-auto max-w-[1100px]">
+      <div className="mx-auto max-w-[1180px]">
         <Reveal className="mx-auto max-w-2xl text-center">
           <p className="text-balance text-lg font-bold uppercase tracking-[0.16em] text-brand sm:text-xl">
             Between your flights
@@ -66,7 +66,11 @@ export function Capabilities() {
         </Reveal>
 
         <Reveal delay={150} className="mt-12">
-          <dl className="grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Four across at xl, not lg. "Instructor Continuity" needs 249px and a
+            quarter of this container at a 1024px viewport is about 214px -- no
+            readable label size fits that, so at lg it goes two-up rather than
+            wrapping the label. */}
+          <dl className="grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2 xl:grid-cols-4">
             {CAPABILITIES.map((c) => (
               <div key={c.title} className="border-t-2 border-[#101727]/15 pt-6">
                 {/* 112px displayed, 336px source. These carry real detail --

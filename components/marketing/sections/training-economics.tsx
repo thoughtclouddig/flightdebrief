@@ -29,10 +29,12 @@ export function TrainingEconomics() {
     <>
     <section id="training-economics" className="bg-white px-6 py-28 sm:py-36">
       <div className="mx-auto max-w-[1320px]">
-        {/* The calculator gets the larger column. Equal halves made the section's
-            only interactive, checkable element the same size as the paragraph
-            arguing for it -- and the figure is the part a reader can test. */}
-        <div className="grid grid-cols-1 items-center gap-x-14 gap-y-12 lg:grid-cols-[0.85fr_1.15fr]">
+        {/* Equal columns. A first attempt gave the calculator 1.15fr against
+            0.85fr, which cramped the headline into four lines and made the
+            calculator read as an oversized slab rather than a denser one. The
+            weight problem was never the column width -- it was the double
+            container below. */}
+        <div className="grid grid-cols-1 items-center gap-x-14 gap-y-12 lg:grid-cols-2">
           <Reveal>
             <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Make Every Training Hour Count</p>
             <h2 className="font-display mt-3 text-balance text-3xl font-bold leading-tight text-[#101727] sm:text-4xl">
@@ -47,7 +49,10 @@ export function TrainingEconomics() {
           </Reveal>
 
           <Reveal delay={100}>
-            <div className="rounded-2xl bg-[#f4f5f6] px-6 py-10 sm:px-8 sm:py-10">
+            {/* No grey wrapper. The calculator already renders its own white
+                card, so boxing it again produced a card inside a box with two
+                sets of padding -- most of the column's height was margin. */}
+            <div>
               <TrainingCostCalculator />
               {/* Part of the output, not fine print under it. The figure above
                   is the student's own arithmetic, and saying so is what keeps

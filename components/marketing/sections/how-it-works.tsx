@@ -259,8 +259,8 @@ export function HowItWorks() {
                 >
                   <span
                     className={cn(
-                      "text-[15px] font-extrabold transition-colors",
-                      i === active ? "text-brand" : "text-[#101727]/[0.16]",
+                      "text-[17px] font-extrabold tabular-nums transition-colors",
+                      i === active ? "text-brand" : "text-[#101727]/30",
                     )}
                   >
                     {String(i + 1).padStart(2, "0")}
@@ -273,8 +273,12 @@ export function HowItWorks() {
                   />
                   <span
                     className={cn(
-                      "max-w-full truncate text-xs font-semibold transition-colors",
-                      i === active ? "text-brand" : "text-[#68717D]/70",
+                      // 15px, not 12px, and full-strength ink rather than a
+                      // 70%-opacity gray. These four words are the page's
+                      // mental model; at text-xs they read as a caption on the
+                      // carousel instead of the model itself.
+                      "max-w-full truncate text-[15px] font-bold transition-colors",
+                      i === active ? "text-brand" : "text-[#68717D]",
                     )}
                   >
                     {card.label}
