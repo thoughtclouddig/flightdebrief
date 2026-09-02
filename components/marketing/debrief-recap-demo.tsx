@@ -73,7 +73,17 @@ export function DebriefRecapDemo({ showHeading = true, className }: { showHeadin
 
   return (
     <Reveal className={cn("mt-20", className)}>
-      <div className="mx-auto max-w-4xl rounded-3xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm sm:px-16 sm:py-16">
+      {/* One card on a phone, two from sm up.
+          
+          Nested cards cost 56px of padding per side at 320px -- 24 from this
+          one and 32 from the panel inside it -- which left about 88px of text
+          beside a 56px avatar and wrapped "Mia's Debrief Recap" onto three
+          lines. The inner panel drops its own border, fill and padding below
+          sm and this card becomes the only container, so the content gets the
+          width back. It cannot be the other way round: the inner fill is
+          #f4f5f6 and so is the section it sits in, so dropping THIS card on a
+          phone would make the panel vanish into the page. */}
+      <div className="mx-auto max-w-4xl rounded-3xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm sm:px-16 sm:py-16">
         {/* The homepage's Debrief Replay section supplies its own heading, so
             this one is suppressed there rather than repeated. */}
         {showHeading ? (
@@ -90,11 +100,11 @@ export function DebriefRecapDemo({ showHeading = true, className }: { showHeadin
 
         <div
           className={cn(
-            "mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-[#f4f5f6] p-8 text-left sm:p-10",
+            "mx-auto max-w-2xl border-0 bg-transparent p-0 text-left sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-[#f4f5f6] sm:p-10",
             showHeading && "mt-10",
           )}
         >
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
             {/* A real photo (not a flat brand-orange initial) so this identity
                 chip doesn't visually compete with the orange play button below it. */}
             <span className="relative size-14 shrink-0 overflow-hidden rounded-full">
@@ -102,16 +112,16 @@ export function DebriefRecapDemo({ showHeading = true, className }: { showHeadin
             </span>
             <div>
               <p className="font-display text-lg font-bold text-[#101727]">Mia&rsquo;s Debrief Recap</p>
-              <p className="text-sm text-[#414B57]">Based on her conversation with Jake, her CFI</p>
+              <p className="text-sm text-[#414B57]">From her debrief with Jake, her CFI</p>
             </div>
           </div>
 
-          <div className="mt-8 flex items-center gap-5">
+          <div className="mt-6 flex items-center gap-3 sm:mt-8 sm:gap-5">
             <button
               type="button"
               onClick={togglePlay}
               aria-label={playing ? "Pause Mia's Recap" : "Play Mia's Recap"}
-              className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand text-white transition-[transform,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand/25 active:translate-y-0"
+              className="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand text-white sm:size-14 transition-[transform,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand/25 active:translate-y-0"
             >
               {playing ? <Pause className="size-6" /> : <Play className="ml-0.5 size-6" />}
             </button>

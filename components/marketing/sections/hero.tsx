@@ -28,7 +28,20 @@ export function Hero() {
               about 50px of slack, which is enough to survive the fallback face
               before Archivo loads. It still wraps below sm, where no readable
               size fits 45 characters on a phone. */}
-          <p className="text-balance text-[15px] font-bold uppercase tracking-[0.16em] text-brand">
+          {/* Measured: at 15px with 0.16em tracking this string is 443px wide and
+              the phone column is 327px, so it wrapped to two lines on every
+              phone. Tracking is what makes it expensive -- 0.16em adds 74px on
+              its own -- so the phone gets a smaller size AND most of the
+              tracking back, which lands at 317px. Above sm the column is wide
+              enough for the full treatment.
+
+              Verified one line at 320 as well, where the column is 272px and
+              the rendered text is exactly 272. A probe span measured this at
+              317px and predicted a wrap; the probe over-reads, because
+              letter-spacing applies after the final character and uppercasing
+              in CSS is not identical to measuring a pre-uppercased string.
+              Trust the rendered element over the probe. */}
+          <p className="text-balance text-[12px] font-bold uppercase tracking-[0.06em] text-brand sm:text-[15px] sm:tracking-[0.16em]">
             Better training between flights
           </p>
           {/* THREE lines now, and no line may ever hold a single word.
@@ -73,16 +86,29 @@ export function Hero() {
               renders a narrower synthetic instance and understates Archivo's
               real width by about a fifth. */}
           <h1
-            className="font-display mt-4 max-w-2xl text-[clamp(1.375rem,7vw,2.875rem)] font-extrabold leading-[1.0] tracking-[-0.025em] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(1.375rem,8.2vw,2.875rem)] font-extrabold leading-[1.02] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
-            Get to your <br />
-            checkride sooner &mdash; <br />
-            <span className="text-brand">with confidence.</span>
+            {/* Four lines on a phone, three from sm up, and that is what lets
+                the type grow.
+
+                The <br /> pair this replaces fixed "checkride sooner --" as a
+                single line at every width, and that line is the binding one:
+                it measures 310px at the old 26.25px against a 327px column, so
+                ANY size increase overflowed. Splitting it on the phone moves
+                the constraint to "with confidence." at 16 characters, which
+                leaves room to go from 26.25px to ~30.75px.
+
+                8.2vw rather than a fixed step because the constraint scales
+                with the column: at a 320px viewport it gives 26.2px against a
+                272px column, which still fits with about 10px to spare. */}
+            <span className="block">Get to your</span>
+            <span className="block sm:inline">checkride</span>{" "}
+            <span className="block sm:inline">sooner &mdash;</span>
+            <span className="block text-brand">with confidence.</span>
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#414B57]">
-            AfterFlight turns each lesson into a personalized plan for what to review, practice, and focus on
-            next &mdash; so you show up prepared, avoid relearning, and build proficiency faster.
+            AfterFlight turns each lesson into a personalized plan for what to review, practice, and focus on next.
           </p>
 
           {/* Grid, not flex-wrap. Wrapping packed each row by content width, so

@@ -36,10 +36,9 @@ export default function HowItWorksPage() {
 
       <LegalSection title="What it costs your instructors">
         <p>
-          Ninety seconds, and no typing. Tap record, give the debrief, tap stop. There is no grading grid to complete,
-          no AI output to review and approve, and no signature step. This matters more than any feature: software that
-          asks instructors for unpaid minutes after a lesson gets quietly abandoned, and yours are already late for the
-          next student.
+          Ninety seconds, and no typing. Tap record, give the debrief, tap stop. No grading grid, no AI output to
+          review and approve, no signature step. This matters more than any feature: software that asks instructors
+          for unpaid minutes after a lesson gets quietly abandoned.
         </p>
       </LegalSection>
 
@@ -72,9 +71,8 @@ export default function HowItWorksPage() {
         </p>
         <p>
           It also notices when a weakness has persisted across a change of instructor &mdash; something no single
-          instructor is in a position to see, because each of them only has their own lessons. That is reported as a
-          property of the skill: a problem that has outlived two teachers is usually about the skill, not about either
-          of them.
+          instructor can see, because each of them only has their own lessons. That is reported as a property of the
+          skill, since a problem outliving two teachers is usually about the skill rather than the teaching.
         </p>
       </LegalSection>
 
@@ -82,8 +80,8 @@ export default function HowItWorksPage() {
         <p>
           AfterFlight does not store the recording. Audio is transcribed as it happens and discarded &mdash; there is
           no archive to produce, export, or subpoena. Consent is captured before recording starts and stamped with the
-          version of the text the person actually saw. Transcripts age out on a retention schedule you control, while
-          the structured training record is kept, so a student never loses their history.
+          version of the text the person actually saw. Transcripts age out on a schedule you control, while the
+          structured training record is kept so a student keeps their history.
         </p>
         <p>
           The specifics, in writing, are at{" "}

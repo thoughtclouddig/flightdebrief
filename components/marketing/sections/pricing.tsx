@@ -74,7 +74,10 @@ export function Pricing() {
             <Reveal key={tier.id} delay={i * 100}>
               <div
                 className={cn(
-                  "relative flex h-full flex-col rounded-3xl border bg-white p-10 transition-shadow",
+                  // p-10 on a phone leaves 215px of text beside the check icon, which
+                  // wrapped the longer feature lines even after they were shortened.
+                  // The card is full width there, so the padding is what costs the room.
+                  "relative flex h-full flex-col rounded-3xl border bg-white p-7 transition-shadow sm:p-10",
                   tier.featured
                     ? "border-brand shadow-[0_2px_4px_rgba(16,23,39,0.04),0_32px_64px_-24px_rgba(240,118,33,0.28)]"
                     : "border-slate-200 shadow-[0_2px_4px_rgba(16,23,39,0.03),0_16px_40px_-20px_rgba(16,23,39,0.14)]",
