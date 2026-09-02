@@ -13,7 +13,7 @@ import { SectionHead } from "@/components/marketing/section-head";
  */
 export function NextFlight() {
   return (
-    <section className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
+    <section id="next-flight" className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-[1100px]">
         <SectionHead
           eyebrow="Next flight"

@@ -16,12 +16,19 @@ import { Menu, Plus, X } from "lucide-react";
  * product, not a way to navigate it.
  *
  * These four are the student's journey in the order the page tells it, so the
- * header and the page agree: understand the loop, see what happens between
- * lessons, see it add up, then the price.
+ * header and the page agree: understand the loop, see what the next flight
+ * looks like, see it add up, then the price.
+ *
+ * "Next Flight" rather than "Between Flights". It names a real product
+ * concept a student already understands instead of describing a period of
+ * time, and it is the concrete thing they want -- a better next lesson. The
+ * between-flight capabilities are unchanged and keep their own
+ * #between-flights anchor; this simply points the nav at the outcome rather
+ * than at the interval.
  */
 const PRIMARY_LINKS = [
   { href: "/#how-it-works", label: "How It Works" },
-  { href: "/#between-flights", label: "Between Flights" },
+  { href: "/#next-flight", label: "Next Flight" },
   { href: "/#progress", label: "Progress" },
   // Pricing stays last because it is adjacent to the signup CTA, and content
   // belongs before the ask rather than after it.
