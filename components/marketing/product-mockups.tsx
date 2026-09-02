@@ -4,7 +4,7 @@ import { ArrowRight, CheckCircle2, ClipboardList, Target } from "lucide-react";
 const DEBRIEF_ROWS = [
   { icon: CheckCircle2, label: "4 things went well", tint: "#dcfce7", ink: "#16803d" },
   { icon: Target, label: "2 areas to improve", tint: "#fef3c7", ink: "#b45309" },
-  { icon: ClipboardList, label: "3 action items", tint: "#f1f2f4", ink: "#56636f" },
+  { icon: ClipboardList, label: "3 action items", tint: "#f1f2f4", ink: "#414B57" },
   { icon: ArrowRight, label: "Next lesson ready", tint: "#fde3d0", ink: "#b8540f" },
 ];
 

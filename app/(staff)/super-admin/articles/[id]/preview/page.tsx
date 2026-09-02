@@ -68,13 +68,13 @@ export default async function ArticlePreviewPage(props: PageProps<"/super-admin/
       <div className="bg-white px-6 py-14">
         <div className="mx-auto max-w-3xl">
           {topic ? (
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">{topic.name}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">{topic.name}</p>
           ) : null}
           <h1 className="font-display mt-3 text-balance text-[2.75rem] font-bold leading-[1.05] tracking-normal text-[#101727] sm:text-[3.5rem]">
             {article.title}
           </h1>
           {article.dek ? (
-            <p className="mt-5 max-w-[52ch] text-pretty text-[17px] leading-relaxed text-[#68717D]">{article.dek}</p>
+            <p className="mt-5 max-w-[52ch] text-pretty text-[17px] leading-relaxed text-[#414B57]">{article.dek}</p>
           ) : null}
 
           <div className="mt-10">
@@ -95,7 +95,7 @@ export default async function ArticlePreviewPage(props: PageProps<"/super-admin/
                 unsourced one looked identical here, which is precisely the
                 confusion the research pass exists to remove. */}
             <section className="mt-14 border-t border-slate-200 pt-8">
-              <h2 className="font-display text-sm font-bold uppercase tracking-[0.12em] text-[#68717D]">
+              <h2 className="font-display text-sm font-bold uppercase tracking-[0.12em] text-[#4E5A67]">
                 Sources ({article.sources.length})
               </h2>
               {article.sources.length === 0 ? (
@@ -107,7 +107,7 @@ export default async function ArticlePreviewPage(props: PageProps<"/super-admin/
                 <ul className="mt-4 flex flex-col gap-3">
                   {article.sources.map((source, i) => (
                     <li key={i} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      <span className="rounded-md bg-[#f4f5f6] px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#56636f]">
+                      <span className="rounded-md bg-[#f4f5f6] px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#4E5A67]">
                         {SOURCE_TYPE_LABEL[source.sourceType] ?? source.sourceType}
                       </span>
                       <a

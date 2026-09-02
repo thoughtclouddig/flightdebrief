@@ -76,7 +76,7 @@ export default function DevLoginPage() {
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-2xl px-6 py-16">
         <h1 className="font-display text-3xl font-bold text-[#101727]">Dev login</h1>
-        <p className="mt-2 text-sm text-[#56636f]">
+        <p className="mt-2 text-sm text-[#414B57]">
           Never available in a real deployment (same guard as demo seeding). Click a name to sign in as that seed
           persona instantly — no magic-link email required.
         </p>
@@ -96,7 +96,7 @@ export default function DevLoginPage() {
                       className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-brand hover:bg-brand/5"
                     >
                       <span className="font-medium text-[#101727]">{email}</span>
-                      <span className="text-sm text-[#56636f]">Super Admin</span>
+                      <span className="text-sm text-[#414B57]">Super Admin</span>
                     </Link>
                   </li>
                 ))}
@@ -115,7 +115,7 @@ export default function DevLoginPage() {
                       className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-brand hover:bg-brand/5"
                     >
                       <span className="font-medium text-[#101727]">{user.name}</span>
-                      <span className="text-sm text-[#56636f]">{role}</span>
+                      <span className="text-sm text-[#414B57]">{role}</span>
                     </Link>
                   </li>
                 ))}

@@ -71,7 +71,7 @@ const CARDS = [
   {
     label: "Get Checkride Ready",
     headline: "Show up with a plan.",
-    copy: "Build proficiency every flight — and get closer to your certificate.",
+    copy: "Get better every flight, and closer to your certificate.",
     src: "/images/marketing/how-it-works-6.avif",
     alt: "AfterFlight showing the three focus areas for a student's next flight",
   },

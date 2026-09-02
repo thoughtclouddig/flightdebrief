@@ -61,8 +61,12 @@ export function StageRail({
 
   return (
     <nav aria-label={`${stage} stage`} className="hidden lg:block lg:sticky lg:top-28 lg:self-start">
-      <p className="font-display text-[13px] font-bold uppercase tracking-[0.22em] text-brand">{stage}</p>
-      <p className="mt-4 text-pretty text-[15px] leading-relaxed text-[#414B57]">{framing}</p>
+      {/* text-sm is 17px in this theme. It was 13px, which put the stage
+          label BELOW the module eyebrows it parents -- those are text-xs,
+          which is 15px here, not the 12px the class name suggests. A parent
+          label reading smaller than its children is the wrong way round. */}
+      <p className="font-display text-sm font-bold uppercase tracking-[0.22em] text-brand">{stage}</p>
+      <p className="mt-4 text-pretty text-xs leading-relaxed text-[#414B57]">{framing}</p>
 
       <ol className="mt-8 flex flex-col">
         {modules.map((m, i) => {
@@ -84,7 +88,7 @@ export function StageRail({
               >
                 <span
                   className={cn(
-                    "text-[15px] leading-snug motion-safe:transition-colors motion-safe:duration-300",
+                    "text-sm leading-snug motion-safe:transition-colors motion-safe:duration-300",
                     on ? "font-semibold text-[#101727]" : "text-[#414B57] group-hover:text-[#101727]",
                   )}
                 >

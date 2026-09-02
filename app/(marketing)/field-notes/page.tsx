@@ -178,7 +178,7 @@ export default async function FieldNotesHubPage(props: PageProps<"/field-notes">
                     </div>
                     <div className="flex flex-1 flex-col p-5">
                       {item.topic ? (
-                        <span className="inline-flex w-fit rounded-md bg-[#f4f5f6] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.09em] text-[#56636f]">
+                        <span className="inline-flex w-fit rounded-md bg-[#f4f5f6] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.09em] text-[#4E5A67]">
                           {item.topic.name}
                         </span>
                       ) : null}

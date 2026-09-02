@@ -55,10 +55,10 @@ const MODULES = [
 ] as const;
 
 const KNOWS = [
-  "Which corrections you relax, and when",
-  "The weak area two instructors have now flagged",
-  "Where your read of a flight differs from your CFI's",
-  "What you have already proven",
+  "That you stop holding the crosswind correction in the flare",
+  "What two different instructors have both told you",
+  "The landings you thought were fine that Jake did not",
+  "What you have already got right, so it stops asking",
 ] as const;
 
 export function DebriefStage() {
@@ -103,7 +103,7 @@ export function DebriefStage() {
                   <span className="text-brand sm:block">your instructor landed.</span>
                 </>
               }
-              body="You record how the flight felt to you before you see their debrief. When the two readings differ, that gap is usually the most useful thing in the lesson."
+              body="You say how the flight felt before you see what your instructor said. When the two do not match, that is usually the most useful thing in the lesson."
             >
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Reveal delay={100}>
@@ -173,7 +173,7 @@ export function DebriefStage() {
                   <span className="text-brand sm:block">in their own words.</span>
                 </>
               }
-              body="AfterFlight captures what happened in the lesson and what your instructor wants you working on, then turns it into a short recap for the drive home."
+              body="Your instructor talks. AfterFlight turns it into a short recap you can play on the drive home, in their voice, not a summary of it."
             >
               {/* The demo supplies its own white card, which is the raised
                   ground this module is meant to sit on -- so it is not wrapped
@@ -197,7 +197,7 @@ export function DebriefStage() {
                  "What it knows" -- so the standfirst was spending four lines
                  to preview a list the reader reaches two seconds later. It
                  now makes the distinction and stops. */
-              body="Not a chatbot you have to brief first. Vector opens already knowing what your instructor flagged and what keeps coming back."
+              body="You don't have to explain your training to it first. Vector already knows what Jake said last flight, and what he has said three times now."
             >
               <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-start lg:gap-14">
                 <Reveal delay={100}>
@@ -205,14 +205,14 @@ export function DebriefStage() {
                 </Reveal>
 
                 <Reveal delay={200}>
-                  <p className="font-display text-balance text-2xl font-bold leading-tight text-[#101727]">
-                    Vector knows how you fly.
-                  </p>
-                  <p className="text-pretty mt-3 text-lg leading-relaxed text-[#414B57]">
-                    Not generic questions about airplanes in general &mdash; the specific things your own flying keeps
-                    doing, and the ones your instructor has stopped having to mention.
-                  </p>
-                  <p className="mt-7 text-xs font-bold uppercase tracking-[0.16em] text-[#4E5A67]">What it knows</p>
+                  {/* "Vector knows how you fly." and the paragraph under it are
+                      gone. The module standfirst two inches above already says
+                      Vector opens already knowing what the instructor flagged
+                      and what keeps coming back; these restated it twice more,
+                      so the reader met the same claim three times before
+                      reaching the one thing that proves it -- the list. The
+                      list is the argument, and it now starts immediately. */}
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#4E5A67]">What Vector knows</p>
                   <ul className="mt-3 grid grid-cols-1 gap-x-8 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-1">
                     {KNOWS.map((k) => (
                       <li key={k} className="flex items-start gap-3 text-pretty text-base text-[#101727]">
@@ -223,13 +223,11 @@ export function DebriefStage() {
                   </ul>
                   <div className="mt-8 rounded-lg border-l-[3px] border-brand bg-white px-6 py-5">
                     <p className="text-pretty text-lg font-semibold leading-relaxed text-[#101727]">
-                      That&rsquo;s the difference between studying and training &mdash; you stop spending lessons
-                      relearning what you already covered.
+                      You stop paying for lessons that re-cover the last one.
                     </p>
                   </div>
                   <p className="mt-5 text-pretty text-sm leading-relaxed text-[#4E5A67]">
-                    Vector starts with your training record, then reaches for the FAA Airplane Flying Handbook, the
-                    ACS or your POH when an answer needs a source.
+                    Answers come from your training record, plus the FAA handbooks and the ACS.
                   </p>
                 </Reveal>
               </div>

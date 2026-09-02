@@ -57,9 +57,8 @@ export function TrainingEconomics() {
               <span className="text-brand">relearning the same lesson.</span>
             </h2>
             <p className="mt-5 text-pretty text-lg text-[#414B57]">
-              When feedback gets lost between flights, students can spend expensive airplane time rebuilding
-              context instead of progressing. A 1.5-hour training flight can cost hundreds of dollars, and the
-              hour you spend re-covering last lesson is an hour you paid for twice.
+              When the last lesson gets forgotten, you spend the first half of the next one catching up. That is an
+              hour of airplane you paid for twice.
             </p>
           </Reveal>
 

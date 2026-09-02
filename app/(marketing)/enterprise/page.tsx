@@ -41,7 +41,7 @@ const CAPTURED = [
 const DEBRIEF_EXAMPLE = [
   { icon: CheckCircle2, tone: "#16803d", label: "What Went Well", sub: "4 observations" },
   { icon: Target, tone: "#b45309", label: "What Needs Work", sub: "Steep turns · altitude" },
-  { icon: ListChecks, tone: "#56636f", label: "Action Items", sub: "3 next steps" },
+  { icon: ListChecks, tone: "#414B57", label: "Action Items", sub: "3 next steps" },
   { icon: Compass, tone: "#f07621", label: "Next Flight", sub: "Ready to practice" },
 ] as const;
 

@@ -11,8 +11,8 @@ import { DebriefSummaryMockupCard } from "@/components/marketing/product-mockups
 // grid gives each column about 244px, and the first draft of the fourth
 // ("Show up prepared every lesson") was the only one long enough to wrap.
 const BENEFITS = [
-  "Carry feedback forward",
-  "Build proficiency faster",
+  "Nothing gets forgotten",
+  "Get better faster",
   "Show up prepared",
   "Waste fewer flight hours",
 ];
@@ -108,7 +108,7 @@ export function Hero() {
             <span className="block text-brand">with confidence.</span>
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#414B57]">
-            AfterFlight turns each lesson into a personalized plan for what to review, practice, and focus on next.
+            After every lesson, you get one page telling you what to work on before you fly again.
           </p>
 
           {/* Grid, not flex-wrap. Wrapping packed each row by content width, so

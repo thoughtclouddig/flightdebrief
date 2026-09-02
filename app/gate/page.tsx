@@ -24,7 +24,7 @@ export default async function GatePage({
           priority
           className="mx-auto h-6 w-auto"
         />
-        <p className="mt-6 text-sm text-[#56636f]">This site is private. Enter the access code to continue.</p>
+        <p className="mt-6 text-sm text-[#414B57]">This site is private. Enter the access code to continue.</p>
 
         <form action="/api/gate" method="POST" className="mt-6 flex flex-col gap-3">
           {next ? <input type="hidden" name="next" value={next} /> : null}

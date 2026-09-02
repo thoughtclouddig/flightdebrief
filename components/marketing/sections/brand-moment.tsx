@@ -10,15 +10,15 @@ import { Reveal } from "@/components/marketing/reveal";
 const PROBLEMS = [
   {
     title: "Hard to remember",
-    copy: "The details that mattered right after landing are easy to forget by the next lesson — especially if it is with a different instructor.",
+    copy: "What mattered right after landing is gone by the next lesson.",
   },
   {
     title: "Hard to practice",
-    copy: "\u201cWork on landings\u201d isn\u2019t a study plan. Students often leave without knowing exactly what to do between flights.",
+    copy: "\u201cWork on landings\u201d is not a plan. You leave not knowing what to do.",
   },
   {
     title: "Easy to repeat",
-    copy: "The same weak area can show up again and again without ever becoming the focus of between-flight training.",
+    copy: "The same weak spot comes back for months and never gets practiced.",
   },
 ] as const;
 
@@ -129,11 +129,11 @@ export function BrandMoment() {
                 <span className="font-display text-xs font-extrabold tabular-nums tracking-[0.1em] text-brand">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span className="font-display text-[15px] font-bold uppercase tracking-wide text-[#101727]">
+                <span className="font-display text-sm font-bold uppercase tracking-wide text-[#101727]">
                   {p.title}
                 </span>
               </dt>
-              <dd className="text-pretty mt-1.5 text-[15px] leading-relaxed text-[#4b545d]">{p.copy}</dd>
+              <dd className="text-pretty mt-1.5 text-sm leading-relaxed text-[#414B57]">{p.copy}</dd>
             </div>
           ))}
         </dl>

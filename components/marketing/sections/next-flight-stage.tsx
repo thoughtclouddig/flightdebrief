@@ -84,7 +84,7 @@ export function NextFlightStage() {
                   <span className="text-brand sm:block">where your last one left off.</span>
                 </>
               }
-              body="Instead of showing up trying to remember where the last lesson ended, you arrive knowing what to focus on. Built from the flight you just flew — not from a syllabus template."
+              body="You show up knowing what you are working on, not trying to remember how the last lesson ended."
             >
               <NextFlightCard className="mx-0 mt-0 max-w-none" />
             </StageModule>
@@ -99,7 +99,7 @@ export function NextFlightStage() {
                   Don&rsquo;t just read about the problem. <span className="text-brand">Fix it.</span>
                 </>
               }
-              body="AfterFlight turns the weak areas from your flight into short training sessions, flight-specific questions, and cues you can carry into the cockpit."
+              body="The parts you struggled with become a short drill, a few questions, and two or three cues to take back to the airplane."
             >
               <PersonalizedTrainingCard className="mx-0 max-w-none" />
             </StageModule>
@@ -111,7 +111,7 @@ export function NextFlightStage() {
               className="mt-24 sm:mt-32"
               eyebrow="Between your flights"
               headline="Your next flight gets easier before you fly it."
-              body="The days between lessons are the cheapest training time you have. These are the four things AfterFlight gives you to spend them on."
+              body="The days between lessons are the cheapest training time you get. Here is what to spend them on."
             >
               <CapabilityCards columns={2} />
             </StageModule>

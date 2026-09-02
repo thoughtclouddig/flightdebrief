@@ -211,7 +211,7 @@ export default function SchoolsPage() {
                     <p className="font-display truncate text-sm font-bold tracking-tight text-[#101727]">
                       Scottsdale Flight Academy
                     </p>
-                    <Pill tone="#56636f">This Month</Pill>
+                    <Pill tone="#414B57">This Month</Pill>
                   </>
                 }
               >

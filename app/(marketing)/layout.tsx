@@ -89,8 +89,8 @@ const LIGHT_SCOPE_STYLE = {
   "--danger-ink": "#7a2019",
   "--danger-soft": "#f8dcd8",
   "--foreground": "#101727",
-  "--foreground-soft": "#56636f",
-  "--foreground-faint": "#414B57",
+  "--foreground-soft": "#414B57",
+  "--foreground-faint": "#4E5A67",
   "--hairline": "#c7ccd1",
   "--surface": "#ffffff",
   "--surface-sunken": "#e9ebed",
@@ -105,8 +105,8 @@ const LIGHT_SCOPE_STYLE = {
   "--color-danger-ink": "#7a2019",
   "--color-danger-soft": "#f8dcd8",
   "--color-foreground": "#101727",
-  "--color-foreground-soft": "#56636f",
-  "--color-foreground-faint": "#414B57",
+  "--color-foreground-soft": "#414B57",
+  "--color-foreground-faint": "#4E5A67",
   "--color-hairline": "#c7ccd1",
   "--color-surface": "#ffffff",
   "--color-surface-sunken": "#e9ebed",
@@ -157,9 +157,8 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
                   className="h-8 w-auto"
                 />
               </Link>
-              <p className="mt-4 text-pretty text-[#56636f]">
-                AfterFlight turns every flight into a personalized plan for what to review, practice, and focus
-                on next&mdash;so you show up prepared and make every lesson count.
+              <p className="mt-4 text-pretty text-[#414B57]">
+                After every lesson, you get one page telling you what to work on before you fly again.
               </p>
               {/* Quieter, and deliberately second. The old blurb led with the
                   mechanism ("captures the post-flight debrief") and gave
@@ -183,7 +182,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
                   <ul className="mt-3 flex flex-col gap-2">
                     {column.links.map((link) => (
                       <li key={link.href}>
-                        <Link href={link.href} className="text-[#56636f] hover:text-[#101727]">
+                        <Link href={link.href} className="text-[#414B57] hover:text-[#101727]">
                           {link.label}
                         </Link>
                       </li>
@@ -195,7 +194,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
           </div>
 
           <div className="mt-14 border-t border-slate-200 pt-8">
-            <p className="text-xs text-[#56636f]">&copy; {new Date().getFullYear()} AfterFlight. Get better every flight.</p>
+            <p className="text-xs text-[#4E5A67]">&copy; {new Date().getFullYear()} AfterFlight. Get better every flight.</p>
           </div>
         </div>
       </footer>

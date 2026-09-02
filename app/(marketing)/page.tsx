@@ -15,7 +15,7 @@ import { FinalCta } from "@/components/marketing/sections/final-cta";
 export const metadata: Metadata = {
   title: "AfterFlight — Make every flight build on the last.",
   description:
-    "AfterFlight is the between-flight training system for student pilots. It turns each lesson into a personalized plan for what to review, practice and focus on next, so you show up prepared, avoid relearning, and build proficiency faster.",
+    "AfterFlight is training between flights, for student pilots. After every lesson you get one page telling you what to work on before you fly again, built from what your instructor actually said.",
   alternates: appOrigin() ? { canonical: appOrigin()! } : undefined,
 };
 
