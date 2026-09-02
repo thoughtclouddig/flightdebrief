@@ -43,7 +43,16 @@ export const metadata: Metadata = {
  * now tells: problem, the loop, the debrief and what it produces, the next
  * flight it feeds, and progress compounding across all of it.
  *
- * Capabilities sits directly under NextFlight, not after Progress. The nav's
+ * The middle of the page is grouped into the four process stages the nav
+ * names -- Debrief, Prepare, Next Flight, Progress -- and the grouping decides
+ * the order rather than the other way round. Vector moved up into Debrief
+ * because it is the product understanding what the lesson contained;
+ * PersonalizedTraining and Capabilities moved together into Prepare because
+ * both answer "what do I do before I fly again"; and Capabilities moved back
+ * ABOVE NextFlight, reversing a change from the commit before, because
+ * preparation precedes the flight it prepares you for.
+ *
+ * (previously) Capabilities sat directly under NextFlight, not after Progress. The nav's
  * second item is "Next Flight", and the between-flight preparation -- study,
  * chair flying, continuity, ACS readiness -- is what makes a next flight
  * better. With Progress in between, clicking Next Flight landed a visitor on
@@ -89,12 +98,16 @@ export default function MarketingHomePage() {
       <Hero />
       <BrandMoment />
       <HowItWorks />
+      {/* DEBRIEF */}
       <PerceptionGap />
       <DebriefReplay />
-      <PersonalizedTraining />
       <VectorSection />
-      <NextFlight />
+      {/* PREPARE */}
+      <PersonalizedTraining />
       <Capabilities />
+      {/* NEXT FLIGHT */}
+      <NextFlight />
+      {/* PROGRESS */}
       <SkillProgress />
       <DebriefDoctrine />
       <Proof />

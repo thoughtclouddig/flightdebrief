@@ -7,32 +7,25 @@ import Image from "next/image";
 import { Menu, Plus, X } from "lucide-react";
 
 /**
- * Four primary destinations, and everything else demoted.
+ * The nav IS the process.
  *
- * The bar had six product links plus a More menu, which asked a visitor to
- * choose between Live Demo, How It Works, Vector, Progress and Pricing before
- * knowing what any of them were. Vector is a feature inside the loop rather
- * than a peer of it, and Live Demo is a thing you do after you understand the
- * product, not a way to navigate it.
+ * Debrief -> Prepare -> Next Flight -> Progress. Four stages in the order a
+ * student lives them, so a first-time visitor can scan the header and
+ * understand how AfterFlight works without opening anything.
  *
- * These four are the student's journey in the order the page tells it, so the
- * header and the page agree: understand the loop, see what the next flight
- * looks like, see it add up, then the price.
+ * This replaced How It Works / Next Flight / Progress / Pricing, where two of
+ * the four named site categories rather than product stages. Pricing is not a
+ * step in anyone's training and moved to the secondary menu; "How It Works" was
+ * describing the thing these four items now demonstrate.
  *
- * "Next Flight" rather than "Between Flights". It names a real product
- * concept a student already understands instead of describing a period of
- * time, and it is the concrete thing they want -- a better next lesson. The
- * between-flight capabilities are unchanged and keep their own
- * #between-flights anchor; this simply points the nav at the outcome rather
- * than at the interval.
+ * The page order matches, and had to be changed to make that true -- see the
+ * stage comments in app/(marketing)/page.tsx.
  */
 const PRIMARY_LINKS = [
-  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/#debrief", label: "Debrief" },
+  { href: "/#prepare", label: "Prepare" },
   { href: "/#next-flight", label: "Next Flight" },
   { href: "/#progress", label: "Progress" },
-  // Pricing stays last because it is adjacent to the signup CTA, and content
-  // belongs before the ask rather than after it.
-  { href: "/#pricing", label: "Pricing" },
 ];
 
 /**
@@ -60,6 +53,9 @@ const SECONDARY_GROUPS = [
   {
     label: "Company",
     links: [
+      // Pricing leads the menu: demoted out of the primary row because it is
+      // not a step in the process, but it is still the most-wanted link here.
+      { href: "/#pricing", label: "Pricing" },
       { href: "/demo", label: "Live Demo" },
       { href: "/what-is-afterflight", label: "What Is AfterFlight" },
       { href: "/field-notes", label: "Field Notes" },

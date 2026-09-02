@@ -57,7 +57,7 @@ const STAGES = [
 
 export function PersonalizedTraining() {
   return (
-    <section className="bg-white px-6 py-24 sm:py-32">
+    <section id="prepare" className="bg-white px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-[1100px]">
         <SectionHead
           eyebrow="Personalized training"
