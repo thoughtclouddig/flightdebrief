@@ -60,7 +60,15 @@ const LONG_RATIO = 0.2;
 
 const JSON_OUT = process.argv.includes("--json");
 const paths = process.argv.slice(2).filter((a) => a.startsWith("/"));
-const PATHS = paths.length ? paths : ["/", "/how-it-works", "/pricing"];
+/*
+ * "/pricing" was in this list and returns 404 -- pricing is a section of the
+ * homepage, not a route -- so every clean run was really two pages plus an
+ * error page, and the reported count overstated the coverage. Replaced with
+ * the marketing pages that actually exist and carry real prose.
+ */
+const PATHS = paths.length
+  ? paths
+  : ["/", "/how-it-works", "/instructors", "/schools", "/what-is-afterflight"];
 
 /** Splits an element's rendered text into lines using per-character rects. */
 const MEASURE = `(minRatio, looseRatio) => {
