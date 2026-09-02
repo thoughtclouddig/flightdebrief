@@ -5,7 +5,7 @@ import { TrackedLink } from "@/components/marketing/tracked-link";
 import { PRICING_TIERS } from "@/lib/marketing/pricing";
 
 /**
- * The homepage shows Pilot and CFI. Not Flight School Pro, and not Enterprise.
+ * The homepage shows Pilot, CFI and School Core. Not Enterprise.
  *
  * It used to render all three side by side with an Enterprise panel beneath,
  * which asked a student to compare their own plan against a school plan and a
@@ -18,7 +18,7 @@ import { PRICING_TIERS } from "@/lib/marketing/pricing";
  * its own page. Filtered by id rather than sliced so a reordering of the
  * source array cannot silently change which plans a student is shown.
  */
-const HOMEPAGE_TIERS = PRICING_TIERS.filter((t) => t.id === "pilot" || t.id === "cfi");
+const HOMEPAGE_TIERS = PRICING_TIERS.filter((t) => t.id === "pilot" || t.id === "cfi" || t.id === "school-core");
 import { cn } from "@/lib/utils";
 
 export function Pricing() {
@@ -38,7 +38,7 @@ export function Pricing() {
           </p>
         </Reveal>
 
-        <div className="mx-auto mt-14 grid max-w-3xl gap-8 md:grid-cols-2">
+        <div className="mx-auto mt-14 grid max-w-[1100px] gap-8 md:grid-cols-2 lg:grid-cols-3">
           {HOMEPAGE_TIERS.map((tier, i) => (
             <Reveal key={tier.id} delay={i * 100}>
               <div

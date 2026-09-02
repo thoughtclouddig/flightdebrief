@@ -1,5 +1,5 @@
 export interface PricingTier {
-  id: "pilot" | "cfi" | "flight-school-pro";
+  id: "pilot" | "cfi" | "school-core";
   name: string;
   audience: string;
   price: string;
@@ -27,6 +27,13 @@ export interface PricingTier {
  * Deployment scope.
  *
  * Pilot moved $9.99/$99 -> $19.99/$169 on 2026-09-01.
+ *
+ * The school tier became School Core, free, on 2026-09-02. It was Flight
+ * School Pro at $99/month/location. School Pro is a future paid tier and is
+ * deliberately NOT published -- there is no differentiated paid value defined
+ * for it yet, and keeping a price live to justify itself is how a product
+ * ends up defending a number rather than earning one. Do not reinstate the
+ * $99 without that value existing.
  *
  * Read by the homepage, /what-is-afterflight (pricing FAQ *and* its
  * product structured data) and /enterprise. A price edit here is a
@@ -73,28 +80,25 @@ export const PRICING_TIERS: PricingTier[] = [
     analyticsEvent: "select_cfi",
   },
   {
-    id: "flight-school-pro",
-    name: "Flight School Pro",
+    id: "school-core",
+    name: "School Core",
     audience: "For independent flight schools and training organizations.",
-    price: "$99",
-    priceSuffix: "/month/location",
-    priceNote: "or $990/year/location — save 17%",
+    price: "Free",
+    priceSuffix: "",
     features: [
+      "Student and instructor rosters",
+      "Assign students to instructors",
       "See every student's training progress",
-      "Identify recurring training gaps",
-      "See debrief adoption across CFIs",
-      "Spot students who may be falling behind",
-      "Track ACS proficiency across the school",
-      "Manage students & instructors in one place",
+      "Debrief visibility across your CFIs",
+      "Spot students losing training continuity",
+      "Lightweight aircraft directory",
     ],
-    cta: "Start Your 25 Free Debriefs",
+    cta: "Create Free School Account",
     signupHref: "/signup/school",
+    // Event name kept as select_school_pro deliberately: renaming it would
+    // split this tier's history in analytics across the rename. The tier it
+    // points at changed; the funnel step did not.
     analyticsEvent: "select_school_pro",
-    upsell: {
-      text: "Multiple locations, campuses, or training programs?",
-      linkLabel: "Explore AfterFlight Enterprise",
-      href: "/enterprise",
-    },
   },
 ];
 

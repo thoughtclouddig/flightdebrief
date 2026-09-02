@@ -128,7 +128,7 @@ export default function WhatIsAfterFlightPage() {
 
           <AnswerBlock
             question="What does it cost?"
-            answer={`Pilot is ${PRICING_TIERS[0].price}${PRICING_TIERS[0].priceSuffix} (${PRICING_TIERS[0].priceNote}). CFI is free. Flight School Pro is ${PRICING_TIERS[2].price}${PRICING_TIERS[2].priceSuffix} (${PRICING_TIERS[2].priceNote}). Enterprise is custom annual pricing for multi-location organizations.`}
+            answer={`Pilot is ${PRICING_TIERS[0].price}${PRICING_TIERS[0].priceSuffix} (${PRICING_TIERS[0].priceNote}). CFI is free. School Core is free. Enterprise is custom annual pricing for multi-location organizations.`}
           >
             <p>
               See the full breakdown on the <Link href="/#pricing" className="text-brand hover:underline">pricing section</Link> of

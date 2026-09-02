@@ -67,7 +67,7 @@ export default function SchoolsPage() {
                   Try AfterFlight with your school
                 </CtaLink>
               </div>
-              <p className="mt-4 text-sm font-semibold text-brand">Your first 25 debriefs are free.</p>
+              <p className="mt-4 text-sm font-semibold text-brand">Free for your whole school.</p>
               <p className="mt-2 text-sm text-[#68717D]">
                 <Link href="/how-it-works" className="underline underline-offset-2 hover:text-[#101727]">
                   How it works
@@ -297,13 +297,9 @@ export default function SchoolsPage() {
       <section className="bg-white px-6 py-20 sm:py-28">
         <div className="mx-auto max-w-[1320px]">
           <Reveal className="mx-auto max-w-2xl rounded-2xl border-2 border-brand bg-white p-10 text-center shadow-lg shadow-brand/10 sm:p-12">
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">School Pro Pricing</p>
-            <p className="font-display mt-4 text-[clamp(3rem,2.25rem+3vw,4.5rem)] font-bold text-[#101727]">
-              $99
-              <span className="ml-2 text-base tracking-normal font-medium text-[#68717D] sm:text-xl">/month/location</span>
-            </p>
-            <p className="mt-1.5 text-sm font-semibold text-brand">or $990/year/location &mdash; save 17%</p>
-            <p className="mt-2 text-base font-semibold text-brand">Your first 25 debriefs are free.</p>
+            <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">School Core Pricing</p>
+            <p className="font-display mt-4 text-[clamp(3rem,2.25rem+3vw,4.5rem)] font-bold text-[#101727]">Free</p>
+            <p className="mt-2 text-base font-semibold text-brand">No card, no per-seat pricing, no debrief limit.</p>
             <p className="mt-4 text-lg text-[#68717D] tracking-[0.01em]">
               Try AfterFlight with a few instructors and students before you commit &mdash; for&nbsp;independent
               flight schools and individual training locations.
@@ -316,7 +312,7 @@ export default function SchoolsPage() {
             </div>
 
             <p className="mt-6 border-t border-slate-200 pt-6 text-pretty text-base font-semibold text-[#101727]">
-              Student Pilot subscriptions are separate and not included in School Pro.
+              Student Pilot subscriptions are separate and billed to the student.
             </p>
           </Reveal>
 
@@ -351,7 +347,7 @@ export default function SchoolsPage() {
           </p>
           <div className="mt-8 flex justify-center">
             <CtaLink href="/signup/school" className="w-full justify-center sm:w-auto">
-              Try your first 25 debriefs free
+              Create your free school account
             </CtaLink>
           </div>
         </Reveal>

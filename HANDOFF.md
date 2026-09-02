@@ -263,10 +263,80 @@ together" — which is the product's positioning made visible.
 
 ---
 
+## Replit publishing diverges git, and it looks like a broken deploy
+
+**Every publish creates an EMPTY commit on Replit** titled `Published your App`,
+authored `Replit-Commit-Author: Deployment`. No files change. It exists only to
+mark the build.
+
+Those commits put Replit ahead of GitHub. Combined with `pull.ff only` -- set
+deliberately, see the section below -- `git pull` then **refuses**, silently, and
+the workspace stops receiving pushed work. On 2026-09-02 this hid **seven**
+commits: the homepage had been rebuilt, published, and verified locally, while
+Replit sat on two empty publish markers and served the old page. It presents as
+"I updated the homepage but I'm seeing the old one", which points debugging at
+the code rather than at git.
+
+The tell is that `git rev-list --left-right --count origin/main...HEAD` reads
+`0 2` -- and **`0` does not mean up to date.** That command compares against the
+*local* copy of `origin/main`, which only moves on fetch. Always fetch first:
+
+```bash
+git fetch origin
+git log --oneline origin/main..HEAD   # on Replit only
+git log --oneline HEAD..origin/main   # on GitHub only
+```
+
+If the Replit-only commits are the empty publish markers, they are safe to drop:
+
+```bash
+git branch replit-before-reset        # costs nothing, keeps an escape hatch
+git reset --hard origin/main
+```
+
+Check before assuming: `git show --stat <sha>` on a publish marker lists no
+files. If it lists any, it is not a marker and must not be discarded.
+
+**This recurs on every publish.** Fetch and check `origin/main..HEAD` *before*
+pulling, rather than after the site looks wrong.
+
+### Three surfaces, three different versions
+
+A change is not live until it has passed all three, and they fail
+independently:
+
+| Surface | Serves | Moves when |
+|---|---|---|
+| Replit preview | `.next` | dev server restarts (`kill 1`) |
+| `npm run build` | `.next-build` | run manually — **does not deploy** |
+| Published site | `.next-build` on Cloud Run | **Publish** is clicked |
+
+`npm run build` succeeding is not a deploy, and a correct preview says nothing
+about the published site. Confirm the deployment by content, not by assumption --
+the homepage is gated, so follow the gate:
+
+```bash
+curl -s -L -c /tmp/g.txt -b /tmp/g.txt -d "code=$SITE_ACCESS_CODE" "$APP_BASE_URL/api/gate" -o /dev/null
+curl -s -L -b /tmp/g.txt "$APP_BASE_URL/" | grep -oE "Get to your|Make every flight" | head -1
+```
+
+Ruled out on 2026-09-02 and not worth re-testing: the deployment config is
+correct (`build = npm run build`, `run = npm run start`, so the dist directories
+match), and nothing is CDN-cached (`no-store`, no `age` header). When the
+published site is stale, the deploy has not run.
+
+---
+
 ## Pricing — display strings and the amount actually charged are separate
 
-**Pilot moved `$9.99/$99` -> `$19.99/$169 (~30%)` on 2026-09-01, in the copy
-only.** The site now advertises a price that Stripe may not yet charge.
+**Pilot moved `$9.99/$99` -> `$19.99/$169 (~30%)` on 2026-09-01.** Stripe was
+aligned on 2026-09-02 and both intervals verified against the API:
+`$19.99 / month` and `$169.00 / year`. Read the amounts rather than trusting
+that the variables are set -- a populated but stale id fails silently:
+
+```bash
+for k in STRIPE_PRICE_PILOT_MONTHLY STRIPE_PRICE_PILOT_ANNUAL; do id=$(printenv $k); printf "%-28s " "$k"; curl -s -u "$STRIPE_SECRET_KEY:" "https://api.stripe.com/v1/prices/$id" | python3 -c "import json,sys;d=json.load(sys.stdin);a=d.get('unit_amount');r=d.get('recurring') or {};print(f\"\${a/100:.2f} / {r.get('interval','?')}\" if a is not None else '?')"; done
+```
 
 `lib/stripe.ts` bills whatever `STRIPE_PRICE_PILOT_MONTHLY` and
 `STRIPE_PRICE_PILOT_ANNUAL` point at. **Nothing in this repository sets an
