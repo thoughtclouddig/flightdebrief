@@ -6,33 +6,62 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown, Menu, X } from "lucide-react";
 
-// Student-first, and the split is the point rather than a tidy-up. A flat bar
-// listing "For Instructors" and "For Schools" beside the product links tells a
-// student pilot that this site is addressed to three audiences and leaves them
-// to work out which one they are. The primary row is now the product they
-// would actually be buying; the audience pages move one interaction away,
-// which is demotion, not removal -- both remain one click from every page,
-// and both keep their footer links.
-const NAV_LINKS = [
-  { href: "/demo", label: "Live Demo" },
+/**
+ * Four primary destinations, and everything else demoted.
+ *
+ * The bar had six product links plus a More menu, which asked a visitor to
+ * choose between Live Demo, How It Works, Vector, Progress and Pricing before
+ * knowing what any of them were. Vector is a feature inside the loop rather
+ * than a peer of it, and Live Demo is a thing you do after you understand the
+ * product, not a way to navigate it.
+ *
+ * These four are the student's journey in the order the page tells it, so the
+ * header and the page agree: understand the loop, see what happens between
+ * lessons, see it add up, then the price.
+ */
+const PRIMARY_LINKS = [
   { href: "/#how-it-works", label: "How It Works" },
-  { href: "/#vector", label: "Vector" },
+  { href: "/#between-flights", label: "Between Flights" },
   { href: "/#progress", label: "Progress" },
   // Pricing stays last because it is adjacent to the signup CTA, and content
   // belongs before the ask rather than after it.
   { href: "/#pricing", label: "Pricing" },
 ];
 
-const MORE_LINKS = [
-  { href: "/instructors", label: "For Instructors" },
-  { href: "/schools", label: "For Flight Schools" },
-  { href: "/field-notes", label: "Field Notes" },
+/**
+ * Secondary, and the grouping is the demotion.
+ *
+ * A flat bar listing "For Instructors" beside the product links tells a student
+ * pilot the site is addressed to three audiences and leaves them to work out
+ * which one they are. These stay one interaction away rather than removed --
+ * every one also keeps its footer link.
+ */
+const SECONDARY_GROUPS = [
+  {
+    label: "For CFIs & Schools",
+    links: [
+      { href: "/instructors", label: "For Instructors" },
+      { href: "/schools", label: "For Flight Schools" },
+      { href: "/enterprise", label: "Enterprise" },
+    ],
+  },
+  {
+    label: "Company",
+    links: [
+      { href: "/demo", label: "Live Demo" },
+      { href: "/what-is-afterflight", label: "What Is AfterFlight" },
+      { href: "/field-notes", label: "Field Notes" },
+      { href: "/privacy", label: "Privacy" },
+      { href: "/terms", label: "Terms" },
+    ],
+  },
 ];
 
 export function MarketingNav() {
   const [open, setOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreRef = useRef<HTMLDivElement>(null);
+  // One open-at-a-time: opening either secondary menu closes the other.
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   // Close on any navigation. Adjusting state during render (React's own
@@ -43,7 +72,7 @@ export function MarketingNav() {
   if (pathname !== lastPathname) {
     setLastPathname(pathname);
     setOpen(false);
-    setMoreOpen(false);
+    setOpenGroup(null);
   }
 
   // A hash-only link ("/#pricing") changes neither pathname nor the mounted
@@ -54,7 +83,7 @@ export function MarketingNav() {
   useEffect(() => {
     const close = () => {
       setOpen(false);
-      setMoreOpen(false);
+      setOpenGroup(null);
     };
     window.addEventListener("hashchange", close);
     return () => window.removeEventListener("hashchange", close);
@@ -65,12 +94,12 @@ export function MarketingNav() {
   // receives the event, and Escape because a disclosure that can only be
   // dismissed with a mouse is not keyboard-operable.
   useEffect(() => {
-    if (!moreOpen) return;
+    if (!openGroup) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (!moreRef.current?.contains(e.target as Node)) setMoreOpen(false);
+      if (!menuRef.current?.contains(e.target as Node)) setOpenGroup(null);
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMoreOpen(false);
+      if (e.key === "Escape") setOpenGroup(null);
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -78,7 +107,7 @@ export function MarketingNav() {
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [moreOpen]);
+  }, [openGroup]);
 
   // Don't leave the page scrollable behind an open full-screen menu.
   useEffect(() => {
@@ -129,57 +158,61 @@ export function MarketingNav() {
           />
         </Link>
 
-        <nav className="hidden items-center gap-7 text-[15px] font-medium text-[#68717D] lg:flex">
-          {NAV_LINKS.map((link) => {
-            const active = !link.href.includes("#") && pathname === link.href;
-            return (
+        <nav className="hidden items-center lg:flex">
+          {/* Primary: ink, semibold, generous spacing. Secondary sits after a
+              divider in lighter gray at a smaller size, so the four read as the
+              header and the rest reads as the overflow. */}
+          <div className="flex items-center gap-7 text-[15px] font-semibold text-[#101727]">
+            {PRIMARY_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                aria-current={active ? "page" : undefined}
-                className={
-                  "border-b-2 pb-0.5 transition-colors hover:border-brand hover:text-[#101727] " +
-                  (active ? "border-brand text-[#101727]" : "border-transparent")
-                }
+                className="border-b-2 border-transparent pb-0.5 transition-colors hover:border-brand"
               >
                 {link.label}
               </Link>
-            );
-          })}
+            ))}
+          </div>
 
-          <div ref={moreRef} className="relative">
-            <button
-              type="button"
-              aria-expanded={moreOpen}
-              aria-haspopup="true"
-              onClick={() => setMoreOpen((v) => !v)}
-              className={
-                "flex cursor-pointer items-center gap-1 border-b-2 pb-0.5 transition-colors hover:border-brand hover:text-[#101727] " +
-                (moreOpen ? "border-brand text-[#101727]" : "border-transparent")
-              }
-            >
-              More
-              <ChevronDown
-                className={"size-4 transition-transform " + (moreOpen ? "rotate-180" : "")}
-                aria-hidden
-              />
-            </button>
+          <span className="mx-6 h-5 w-px bg-slate-200" aria-hidden />
 
-            {moreOpen ? (
-              <div className="absolute right-0 top-full z-50 mt-3 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white py-1.5 shadow-lg">
-                {MORE_LINKS.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMoreOpen(false)}
-                    aria-current={pathname === link.href ? "page" : undefined}
-                    className="flex min-h-[44px] items-center px-4 text-[15px] font-medium text-[#101727] hover:bg-[#f4f5f6]"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+          <div className="flex items-center gap-5 text-sm font-medium text-[#68717D]">
+            {SECONDARY_GROUPS.map((group) => (
+              <div key={group.label} ref={group.label === openGroup ? menuRef : undefined} className="relative">
+                <button
+                  type="button"
+                  aria-expanded={openGroup === group.label}
+                  aria-haspopup="true"
+                  onClick={() => setOpenGroup((v) => (v === group.label ? null : group.label))}
+                  className={
+                    "flex cursor-pointer items-center gap-1 transition-colors hover:text-[#101727] " +
+                    (openGroup === group.label ? "text-[#101727]" : "")
+                  }
+                >
+                  {group.label}
+                  <ChevronDown
+                    className={"size-4 transition-transform " + (openGroup === group.label ? "rotate-180" : "")}
+                    aria-hidden
+                  />
+                </button>
+
+                {openGroup === group.label ? (
+                  <div className="absolute right-0 top-full z-50 mt-3 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white py-1.5 shadow-lg">
+                    {group.links.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setOpenGroup(null)}
+                        aria-current={pathname === link.href ? "page" : undefined}
+                        className="flex min-h-[44px] items-center px-4 text-[15px] font-medium text-[#101727] hover:bg-[#f4f5f6]"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            ))}
           </div>
         </nav>
 
@@ -217,38 +250,41 @@ export function MarketingNav() {
           />
           <nav className="fixed inset-x-0 top-16 z-40 max-h-[calc(100dvh-4rem)] overflow-y-auto border-b border-slate-200 bg-white shadow-lg lg:hidden">
             <div className="flex flex-col px-6 py-2">
-              {NAV_LINKS.map((link) => {
-                const active = !link.href.includes("#") && pathname === link.href;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    aria-current={active ? "page" : undefined}
-                    className={
-                      "flex min-h-[52px] items-center border-b border-slate-100 pl-3 text-base font-semibold text-[#101727] last:border-b-0 " +
-                      (active ? "border-l-2 border-l-brand" : "border-l-2 border-l-transparent")
-                    }
-                  >
-                    {link.label}
-                  </Link>
-                );
-              })}
-              {/* Same demotion as the desktop "More" menu, expressed the way a
-                  narrow viewport can carry it: still present, still one tap,
-                  visibly a second tier rather than a peer of the product links. */}
-              <p className="px-3 pb-2 pt-5 text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">More</p>
-              {MORE_LINKS.map((link) => (
+              {/* The same hierarchy a narrow viewport can carry: the four
+                  primary destinations at full size with ink weight, then the
+                  secondary groups under their own labels at a smaller size in
+                  gray. Flattening everything into one list would make "Terms"
+                  a peer of "Pricing". */}
+              {PRIMARY_LINKS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  aria-current={pathname === link.href ? "page" : undefined}
-                  className="flex min-h-[52px] items-center border-b border-slate-100 pl-3 text-base font-medium text-[#68717D] last:border-b-0"
+                  className="flex min-h-[56px] items-center border-b border-slate-100 border-l-2 border-l-transparent pl-3 text-[17px] font-bold text-[#101727]"
                 >
                   {link.label}
                 </Link>
               ))}
+
+              {SECONDARY_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <p className="px-3 pb-1 pt-6 text-xs font-bold uppercase tracking-[0.14em] text-[#8c97a2]">
+                    {group.label}
+                  </p>
+                  {group.links.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      aria-current={pathname === link.href ? "page" : undefined}
+                      className="flex min-h-[48px] items-center border-b border-slate-100 pl-3 text-[15px] font-medium text-[#68717D] last:border-b-0"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              ))}
+
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}

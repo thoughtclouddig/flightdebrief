@@ -54,7 +54,7 @@ const CAPABILITIES = [
 
 export function Capabilities() {
   return (
-    <section className="bg-white px-6 py-20 sm:py-24">
+    <section id="between-flights" className="bg-white px-6 py-20 sm:py-24">
       <div className="mx-auto max-w-[1180px]">
         <Reveal className="mx-auto max-w-2xl text-center">
           <p className="text-balance text-lg font-bold uppercase tracking-[0.16em] text-brand sm:text-xl">
