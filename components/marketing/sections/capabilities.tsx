@@ -32,59 +32,76 @@ import { Reveal } from "@/components/marketing/reveal";
  * Purpose-built marks, not stock glyphs.
  *
  * Lucide has nothing for "rehearse the procedure in your head" or "progress
- * toward a published standard", and reaching for a generic book or checkmark
- * would say less than the words underneath already do. These are four line
- * drawings on one system: 24px box, 1.5 stroke, round caps, currentColor, and
- * one brand-orange accent each marking the thing that matters -- the point in
- * the sequence, the highlighted passage, the changed instructor, the standard
- * being reached.
+ * toward a published standard", and a generic book or checkmark would say less
+ * than the words underneath already do.
+ *
+ * Drawn twice. The first pass was 24px at 1.5 stroke and read as faint
+ * scratches at homepage size -- delicate is the opposite of what an aviation
+ * training product should look like. These are 32px at 2.25, which is heavy
+ * enough to register instantly, with silhouettes simple enough to survive it.
+ *
+ * One system: 24 viewBox, round caps, currentColor for the structure, and
+ * exactly one brand-orange element per mark carrying the meaning -- the step
+ * being rehearsed, the highlighted passage, the thread that survives, the
+ * standard being reached.
  */
-const ICON = "size-6 shrink-0";
-const S = { fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round" } as const;
+const ICON = "size-8 shrink-0 text-[#101727]";
+const S = {
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2.25,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
 
-/** Highlighted passage: lines of text with one picked out. */
+/** Study: a page of text with one line picked out as the relevant one. */
 function StudyMark() {
   return (
     <svg viewBox="0 0 24 24" className={ICON} aria-hidden {...S}>
-      <path d="M4 5h16M4 9h16M4 17h10" />
-      <path d="M4 13h9" className="text-brand" stroke="currentColor" strokeWidth={3} />
+      <path d="M5 3.5h14v17H5z" />
+      <path d="M8.5 8h7M8.5 16h4" />
+      <path d="M8.5 12h7" stroke="var(--color-brand, #f07621)" strokeWidth={3.25} />
     </svg>
   );
 }
 
-/** Cockpit flow: a hand path stepping through control positions. */
+/**
+ * Chair flying: a three-step procedure with a loop back to the top.
+ *
+ * The first attempt was a wandering line with dots, which read as "flow" or
+ * "thinking" rather than rehearsal. A numbered sequence you run again is the
+ * actual idea, and the orange marks the step being worked.
+ */
 function ChairFlyMark() {
   return (
     <svg viewBox="0 0 24 24" className={ICON} aria-hidden {...S}>
-      <path d="M4 18c2.5 0 3-4 5.5-4s3 4 5.5 4 3-4 5-4" />
-      <circle cx="4" cy="18" r="1.4" />
-      <circle cx="9.5" cy="14" r="1.4" />
-      <circle cx="15" cy="18" r="1.4" className="text-brand" stroke="currentColor" />
-      <path d="M12 4v4" />
+      <path d="M10 5.5h9M10 12h9M10 18.5h9" />
+      <circle cx="5.5" cy="5.5" r="1.6" />
+      <circle cx="5.5" cy="18.5" r="1.6" />
+      <circle cx="5.5" cy="12" r="2.1" fill="var(--color-brand, #f07621)" stroke="var(--color-brand, #f07621)" />
     </svg>
   );
 }
 
-/** Continuity: a thread carried across a change of instructor. */
+/** Continuity: the thread that survives a change of instructor. */
 function ContinuityMark() {
   return (
     <svg viewBox="0 0 24 24" className={ICON} aria-hidden {...S}>
-      <circle cx="6" cy="8" r="2.6" />
-      <circle cx="18" cy="8" r="2.6" className="text-brand" stroke="currentColor" />
-      <path d="M3 20c0-2.4 1.6-4 3-4" />
-      <path d="M21 20c0-2.4-1.6-4-3-4" />
-      <path d="M8.6 8h6.8" strokeDasharray="2 2.4" />
+      <circle cx="6" cy="7" r="2.8" />
+      <circle cx="18" cy="7" r="2.8" />
+      <path d="M4 20c0-2.8 2-4.6 4-4.6M20 20c0-2.8-2-4.6-4-4.6" />
+      <path d="M6 12.5h12" stroke="var(--color-brand, #f07621)" strokeWidth={3.25} />
     </svg>
   );
 }
 
-/** ACS: stepped tasks rising toward a standard. */
+/** ACS: tasks stepping up toward the published standard. */
 function AcsMark() {
   return (
     <svg viewBox="0 0 24 24" className={ICON} aria-hidden {...S}>
-      <path d="M3 20h18" />
-      <path d="M6 20v-4M11 20v-8M16 20v-5" />
-      <path d="M16 15V6h5" className="text-brand" stroke="currentColor" strokeWidth={2} />
+      <path d="M3.5 20.5h17" />
+      <path d="M7 20.5v-5M12 20.5v-9" />
+      <path d="M17 20.5V7h4" stroke="var(--color-brand, #f07621)" strokeWidth={3.25} />
     </svg>
   );
 }
@@ -128,7 +145,7 @@ export function Capabilities() {
         <Reveal delay={150} className="mt-12">
           <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
             {CAPABILITIES.map((c) => (
-              <div key={c.title} className="border-t border-[#101727]/12 pt-5">
+              <div key={c.title} className="border-t-2 border-[#101727]/15 pt-5">
                 <c.Mark />
                 <dt className="font-display mt-3 text-[15px] font-bold uppercase tracking-wide text-[#101727]">
                   {c.title}
