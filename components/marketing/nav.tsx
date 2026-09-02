@@ -9,29 +9,44 @@ import { Menu, Plus, X } from "lucide-react";
 /**
  * The nav IS the process.
  *
- * Overview -> Debrief -> Next Flight -> Progress. Four stages in the order a
- * student lives them, so a first-time visitor can scan the header and
- * understand how AfterFlight works without opening anything.
+ * Three destinations and a More menu, chosen by what a visitor actually
+ * arrives wanting: what is this, can I see it, what does it cost.
  *
- * Overview leads because a visitor needs the loop before the stages inside it;
- * it points at the existing How It Works carousel rather than a new section.
- * Prepare is gone as a nav item and folded into Next Flight -- the preparation
- * only matters because of the flight it serves, and "what should I do next"
- * is one question rather than two.
+ * This replaced Overview / Debrief / Next Flight / Progress, four anchors into
+ * one page. Those read as a table of contents rather than navigation: they
+ * only parse once you already know what AfterFlight is, and "Overview" was a
+ * filler label sitting among three real stage names to fill a slot in a
+ * four-item pattern. The cost was the whole visible tier -- Pricing, the live
+ * demo, and both other audiences were all behind an unlabeled "+", which is
+ * the money question and the strongest asset on the site hidden behind a
+ * plus sign.
  *
- * This replaced How It Works / Next Flight / Progress / Pricing, where two of
- * the four named site categories rather than product stages. Pricing is not a
- * step in anyone's training and moved to the secondary menu; "How It Works" was
- * describing the thing these four items now demonstrate.
+ * The stage labels were not wrong, just in the wrong place. They belong in the
+ * page as a rail that tracks while you read -- see the Debrief stage rail --
+ * not in the header competing with navigation.
  *
- * The page order matches, and had to be changed to make that true -- see the
- * stage comments in app/(marketing)/page.tsx.
+ * No audience is named here, and that is deliberate. "For X" links exist to
+ * serve people the default page does not, and this homepage IS the student
+ * page -- student-first from the hero down. A "For Students" item would point
+ * from the students' page to the students' page, and a student who read a
+ * student-focused hero and then saw it would reasonably wonder what they had
+ * just been reading. Naming CFIs and schools while students had no slot had
+ * the opposite problem: it implied the main page was written for someone
+ * else. Naming nobody is neutral, and the commercial priority is carried by
+ * the homepage being the student page and Start Free going to student signup.
+ *
+ * How It Works points at the homepage carousel, NOT at /how-it-works. That
+ * route is "How AfterFlight Works -- For School Owners" and covers what gets
+ * captured, who sees what, and what happens when an instructor leaves. It is
+ * an institutional trust page, so it sits in the schools group below.
+ *
+ * The page anchors #overview, #debrief, #next-flight and #progress all stay:
+ * the hero, the final CTA, the footer and the Debrief rail still use them.
  */
 const PRIMARY_LINKS = [
-  { href: "/#overview", label: "Overview" },
-  { href: "/#debrief", label: "Debrief" },
-  { href: "/#next-flight", label: "Next Flight" },
-  { href: "/#progress", label: "Progress" },
+  { href: "/#overview", label: "How It Works" },
+  { href: "/demo", label: "Demo" },
+  { href: "/#pricing", label: "Pricing" },
 ];
 
 /**
@@ -54,15 +69,12 @@ const SECONDARY_GROUPS = [
     links: [
       { href: "/instructors", label: "For Instructors" },
       { href: "/schools", label: "For Flight Schools" },
+      { href: "/how-it-works", label: "How It Works for Schools" },
     ],
   },
   {
     label: "Company",
     links: [
-      // Pricing leads the menu: demoted out of the primary row because it is
-      // not a step in the process, but it is still the most-wanted link here.
-      { href: "/#pricing", label: "Pricing" },
-      { href: "/demo", label: "Live Demo" },
       { href: "/what-is-afterflight", label: "What Is AfterFlight" },
       { href: "/field-notes", label: "Field Notes" },
     ],
