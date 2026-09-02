@@ -50,7 +50,7 @@ export function TrainingCostCalculator() {
     <div className="grid grid-cols-1 gap-7 rounded-2xl border border-black/[0.06] bg-white px-7 py-8 sm:px-9 sm:py-9">
       <div className="flex flex-col gap-7">
         <div>
-          <label htmlFor={rateId} className="block text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">
+          <label htmlFor={rateId} className="block text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">
             Aircraft + instructor rate
           </label>
           <div className="mt-2.5 flex items-center gap-2">
@@ -68,12 +68,12 @@ export function TrainingCostCalculator() {
               onChange={(e) => setRate(e.target.valueAsNumber)}
               className="h-11 w-32 rounded-lg border border-[#d5d9dd] px-3 text-base font-semibold tabular-nums text-[#101727] focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
             />
-            <span className="text-base text-[#68717D]">per hour</span>
+            <span className="text-base text-[#414B57]">per hour</span>
           </div>
         </div>
 
         <div>
-          <label htmlFor={hoursId} className="block text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">
+          <label htmlFor={hoursId} className="block text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">
             Hours spent repeating or rebuilding context
           </label>
           <div className="mt-3 flex items-center gap-4">
@@ -95,7 +95,7 @@ export function TrainingCostCalculator() {
       </div>
 
       <div className="border-t border-black/[0.08] pt-7">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">That costs you</p>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">That costs you</p>
         {/* aria-live so the figure is announced as the slider moves; the
             equation stays visible because the number alone is not checkable. */}
         <p
@@ -104,7 +104,7 @@ export function TrainingCostCalculator() {
         >
           {CURRENCY.format(total)}
         </p>
-        <p className="mt-3 text-sm tabular-nums text-[#68717D]">
+        <p className="mt-3 text-sm tabular-nums text-[#414B57]">
           {hours} {hours === 1 ? "hour" : "hours"} &times; {CURRENCY.format(safeRate)}/hr
         </p>
       </div>

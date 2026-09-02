@@ -81,7 +81,7 @@ export function DebriefRecapDemo({ showHeading = true, className }: { showHeadin
             <h3 className="font-display text-balance text-2xl font-bold text-[#101727] sm:text-3xl">
               Hear what the student takes with them.
             </h3>
-            <p className="text-pretty mx-auto mt-3 max-w-xl text-base leading-relaxed text-[#68717D]">
+            <p className="text-pretty mx-auto mt-3 max-w-xl text-base leading-relaxed text-[#414B57]">
               After the CFI and student finish their debrief, AfterFlight turns the conversation into a personalized
               audio recap they can replay anytime.
             </p>
@@ -102,7 +102,7 @@ export function DebriefRecapDemo({ showHeading = true, className }: { showHeadin
             </span>
             <div>
               <p className="font-display text-lg font-bold text-[#101727]">Mia&rsquo;s Debrief Recap</p>
-              <p className="text-sm text-[#68717D]">Based on her conversation with Jake, her CFI</p>
+              <p className="text-sm text-[#414B57]">Based on her conversation with Jake, her CFI</p>
             </div>
           </div>
 
@@ -129,15 +129,15 @@ export function DebriefRecapDemo({ showHeading = true, className }: { showHeadin
               ))}
             </div>
 
-            <span className="shrink-0 text-sm font-medium tabular-nums text-[#68717D]">
+            <span className="shrink-0 text-sm font-medium tabular-nums text-[#414B57]">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
           </div>
 
-          <p className="mt-5 text-xs font-medium uppercase tracking-wide text-[#68717D]/70">AfterFlight Digital Debriefer</p>
+          <p className="mt-5 text-xs font-medium uppercase tracking-wide text-[#4E5A67]/70">AfterFlight Digital Debriefer</p>
         </div>
 
-        <p className="mt-6 text-sm font-medium text-[#68717D]">
+        <p className="mt-6 text-sm font-medium text-[#4E5A67]">
           What went well &middot; What to improve &middot; What to study &middot; What&rsquo;s next
         </p>
 

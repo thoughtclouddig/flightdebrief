@@ -102,7 +102,7 @@ export function EverythingThatMatters() {
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             What actually happens after you land.
           </h2>
-          <p className="mt-4 text-pretty text-lg text-[#68717D]">
+          <p className="mt-4 text-pretty text-lg text-[#414B57]">
             The same debrief you already do -- rated separately, discussed together, and turned into a clear
             record and a plan for next time.
           </p>
@@ -118,7 +118,7 @@ export function EverythingThatMatters() {
               <PhotoVisual src={card.src} alt={card.alt} label={`Step ${i + 1}`} />
               <div>
                 <p className="font-display text-balance text-xl font-bold text-[#101727]">{card.headline}</p>
-                <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
+                <p className="text-pretty mt-2 text-base leading-relaxed text-[#414B57]">{card.copy}</p>
               </div>
             </Reveal>
           ))}
@@ -205,7 +205,7 @@ export function EverythingThatMatters() {
                   <span
                     className={cn(
                       "max-w-full truncate text-xs font-semibold transition-colors",
-                      i === active ? "text-brand" : "text-[#68717D]/70",
+                      i === active ? "text-brand" : "text-[#414B57]/70",
                     )}
                   >
                     {card.stepLabel}

@@ -23,7 +23,7 @@ export function FounderStory() {
           I built AfterFlight because I kept losing the thread.
         </h2>
 
-        <div className="mt-6 flex flex-col gap-4 text-pretty text-lg leading-relaxed text-[#68717D]">
+        <div className="mt-6 flex flex-col gap-4 text-pretty text-lg leading-relaxed text-[#414B57]">
           <p>
             Across multiple instructors, the debrief was often the weakest part of my training. Important
             feedback got rushed, forgotten, or disconnected from the next lesson. Sometimes I showed up days
@@ -45,7 +45,7 @@ export function FounderStory() {
             person wrote it. */}
         <div className="mt-7 border-t border-black/[0.08] pt-5">
           <p className="font-display text-lg font-bold text-[#101727]">Andy Renk</p>
-          <p className="mt-0.5 text-[15px] text-[#68717D]">Founder, AfterFlight</p>
+          <p className="mt-0.5 text-[15px] text-[#414B57]">Founder, AfterFlight</p>
         </div>
       </Reveal>
     </section>

@@ -45,7 +45,7 @@ export function AudioPrivacyNote() {
 
   return (
     <>
-      <p className="mx-auto mt-9 max-w-xl text-balance text-center text-sm leading-relaxed text-[#68717D]">
+      <p className="mx-auto mt-9 max-w-xl text-balance text-center text-sm leading-relaxed text-[#414B57]">
         Your audio is transcribed and then discarded. AfterFlight keeps the training record, not the recording &mdash;{" "}
         <button
           type="button"
@@ -76,7 +76,7 @@ export function AudioPrivacyNote() {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close"
-              className="absolute right-4 top-4 flex size-9 cursor-pointer items-center justify-center rounded-lg text-[#68717D] transition-colors hover:bg-[#f4f5f6] hover:text-[#101727]"
+              className="absolute right-4 top-4 flex size-9 cursor-pointer items-center justify-center rounded-lg text-[#414B57] transition-colors hover:bg-[#f4f5f6] hover:text-[#101727]"
             >
               <X className="size-5" />
             </button>
@@ -97,7 +97,7 @@ export function AudioPrivacyNote() {
                       <span className="text-brand tabular-nums">{i + 1}. </span>
                       {s.title}
                     </p>
-                    <p className="mt-1 text-pretty text-sm leading-relaxed text-[#68717D]">{s.copy}</p>
+                    <p className="mt-1 text-pretty text-sm leading-relaxed text-[#414B57]">{s.copy}</p>
                   </div>
                 </li>
               ))}

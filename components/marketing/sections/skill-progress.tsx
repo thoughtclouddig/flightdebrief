@@ -70,7 +70,7 @@ export function SkillProgress() {
             something. The wording is the student's half of the two-vocabulary
             model in lib/prototype/assessment.ts; a CFI sees Meets Standard
             where a student sees Felt Solid, over the same underlying code. */}
-        <p className="mx-auto mt-10 max-w-[700px] text-balance text-center text-sm text-[#68717D]">
+        <p className="mx-auto mt-10 max-w-[700px] text-balance text-center text-sm text-[#414B57]">
           Every skill sits somewhere on the same scale &mdash;{" "}
           <span className="font-semibold text-[#9a6612]">Needs Work</span>,{" "}
           <span className="font-semibold text-[#2c6c93]">Improving</span>,{" "}
@@ -124,13 +124,13 @@ export function SkillProgress() {
 
                 <dl className="mt-6 flex flex-col gap-5">
                   <div>
-                    <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">Why</dt>
+                    <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Why</dt>
                     <dd className="mt-2 text-pretty text-base italic leading-relaxed text-[#4b545d]">
                       &ldquo;{s.why}&rdquo;
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">Next</dt>
+                    <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Next</dt>
                     <dd className="mt-2 text-pretty text-base leading-relaxed text-[#101727]">{s.next}</dd>
                   </div>
                 </dl>
@@ -139,7 +139,7 @@ export function SkillProgress() {
           ))}
         </div>
 
-        <p className="mx-auto mt-10 max-w-xl text-balance text-center text-sm leading-relaxed text-[#68717D]">
+        <p className="mx-auto mt-10 max-w-xl text-balance text-center text-sm leading-relaxed text-[#414B57]">
           No overall score, and no readiness percentage. Whether you&rsquo;re ready to solo or take a checkride is
           your instructor&rsquo;s call, not ours.
         </p>

@@ -89,7 +89,7 @@ export function NextFlightCard() {
             <ol className="flex flex-col gap-3">
               {FOCUS.map((f, i) => (
                 <li key={f} className="flex items-start gap-3.5">
-                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-[#f4f5f6] text-sm font-bold tabular-nums text-[#68717D]">
+                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-[#f4f5f6] text-sm font-bold tabular-nums text-[#414B57]">
                     {i + 1}
                   </span>
                   <span className="text-lg leading-snug text-[#101727]">{f}</span>
@@ -103,7 +103,7 @@ export function NextFlightCard() {
               <p className="text-pretty text-lg italic leading-relaxed text-[#4b545d]">
                 &ldquo;Maintain 65 KIAS through short final.&rdquo;
               </p>
-              <footer className="mt-1 text-sm font-medium text-[#68717D]">Jake, after Tuesday&rsquo;s flight</footer>
+              <footer className="mt-1 text-sm font-medium text-[#414B57]">Jake, after Tuesday&rsquo;s flight</footer>
             </blockquote>
           </Block>
 

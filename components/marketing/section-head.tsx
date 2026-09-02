@@ -82,7 +82,7 @@ export function SectionHead({
       {body ? (
         <p
           className={cn(
-            "mt-4 text-lg leading-relaxed text-[#68717D]",
+            "mt-4 text-lg leading-relaxed text-[#414B57]",
             typeof body === "string" && body.length > 150 ? "text-pretty sm:text-balance" : "text-balance",
           )}
         >

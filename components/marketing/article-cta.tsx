@@ -87,7 +87,7 @@ export function ArticleCta({ topicSlug }: { topicSlug: string | null }) {
           click, and a tinted panel behind the text would break that. */}
       <div aria-hidden className="h-1 bg-brand" />
       <div className="px-7 py-7 sm:px-8 sm:py-8">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">AfterFlight</p>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">AfterFlight</p>
         <p className="font-display mt-2 text-balance text-[26px] font-bold leading-[1.15] tracking-normal text-[#101727]">
           {cta.heading}
         </p>

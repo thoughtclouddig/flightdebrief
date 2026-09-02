@@ -173,7 +173,7 @@ export function HowItWorks() {
               <PhotoVisual src={card.src} alt={card.alt} label={`Step ${i + 1}: ${card.label}`} />
               <div>
                 <p className="font-display text-balance text-xl font-bold text-[#101727]">{card.headline}</p>
-                <p className="text-pretty mt-2 text-base leading-relaxed text-[#68717D]">{card.copy}</p>
+                <p className="text-pretty mt-2 text-base leading-relaxed text-[#414B57]">{card.copy}</p>
               </div>
             </Reveal>
           ))}
@@ -278,7 +278,7 @@ export function HowItWorks() {
                       // mental model; at text-xs they read as a caption on the
                       // carousel instead of the model itself.
                       "max-w-full truncate text-[15px] font-bold transition-colors",
-                      i === active ? "text-brand" : "text-[#68717D]",
+                      i === active ? "text-brand" : "text-[#414B57]",
                     )}
                   >
                     {card.label}

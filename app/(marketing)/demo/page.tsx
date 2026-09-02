@@ -19,7 +19,7 @@ export default function DemoPage() {
           <h1 className="font-display mx-auto mt-3 max-w-3xl text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             Try the real product. No signup.
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-pretty text-lg text-[#68717D]">
+          <p className="mx-auto mt-4 max-w-xl text-pretty text-lg text-[#414B57]">
             Every click here is the real app, populated with realistic data. Log your own flight, complete a
             debrief, or step into a CFI&rsquo;s roster of students. Nothing you do here is permanent -- it resets
             automatically.

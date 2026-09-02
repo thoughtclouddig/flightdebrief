@@ -70,7 +70,7 @@ export function WhoItsFor() {
               <div className="flex h-full flex-col items-start gap-3 rounded-2xl border border-black/[0.07] bg-white px-7 py-7">
                 <a.icon className="size-7 text-brand" strokeWidth={1.5} aria-hidden />
                 <h3 className="font-display text-xl font-bold text-[#101727]">{a.title}</h3>
-                <p className="text-pretty text-base leading-relaxed text-[#68717D]">{a.copy}</p>
+                <p className="text-pretty text-base leading-relaxed text-[#414B57]">{a.copy}</p>
                 <Link
                   href={a.href}
                   className="mt-auto inline-flex items-center gap-1.5 pt-3 text-base font-semibold text-brand hover:underline"

@@ -224,7 +224,7 @@ export function MarketingNav() {
               <div className="absolute right-0 top-full z-50 mt-3 w-60 overflow-hidden rounded-lg border border-slate-200 bg-white py-2 shadow-lg">
                 {SECONDARY_GROUPS.map((group, i) => (
                   <div key={group.label} className={i > 0 ? "mt-1 border-t border-slate-100 pt-1" : undefined}>
-                    <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#68717D]">
+                    <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#4E5A67]">
                       {group.label}
                     </p>
                     {group.links.map((link) => (
@@ -246,7 +246,7 @@ export function MarketingNav() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-4 lg:gap-5">
-          <Link href="/login" className="hidden text-[15px] font-medium text-[#68717D] transition-colors hover:text-[#101727] sm:block">
+          <Link href="/login" className="hidden text-[15px] font-medium text-[#414B57] transition-colors hover:text-[#101727] sm:block">
             Log in
           </Link>
           <Link
@@ -297,7 +297,7 @@ export function MarketingNav() {
 
               {SECONDARY_GROUPS.map((group) => (
                 <div key={group.label}>
-                  <p className="px-3 pb-1 pt-6 text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">
+                  <p className="px-3 pb-1 pt-6 text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">
                     {group.label}
                   </p>
                   {group.links.map((link) => (
@@ -306,7 +306,7 @@ export function MarketingNav() {
                       href={link.href}
                       onClick={() => setOpen(false)}
                       aria-current={pathname === link.href ? "page" : undefined}
-                      className="flex min-h-[48px] items-center border-b border-slate-100 pl-3 text-[15px] font-medium text-[#68717D] last:border-b-0"
+                      className="flex min-h-[48px] items-center border-b border-slate-100 pl-3 text-[15px] font-medium text-[#414B57] last:border-b-0"
                     >
                       {link.label}
                     </Link>

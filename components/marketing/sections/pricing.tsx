@@ -64,7 +64,7 @@ export function Pricing() {
           <h2 className="font-display mt-3 text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             Get better every flight.
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-pretty text-[#68717D]">
+          <p className="mx-auto mt-3 max-w-xl text-pretty text-[#414B57]">
             Start free for your first 3 flights. Your instructor&rsquo;s access is always free.
           </p>
         </Reveal>
@@ -92,12 +92,12 @@ export function Pricing() {
                     line and the other two are two, which pushed each card's
                     price to a different height and made the row read as
                     misaligned rather than as three comparable plans. */}
-                <p className="text-pretty mt-1.5 min-h-[3rem] text-base text-[#68717D]">{tier.audience}</p>
+                <p className="text-pretty mt-1.5 min-h-[3rem] text-base text-[#414B57]">{tier.audience}</p>
                 <p className="mt-6">
                   <span className="font-display text-[clamp(2.75rem,2rem+3vw,3.75rem)] font-extrabold tracking-tight text-[#101727]">
                     {tier.price}
                   </span>
-                  {tier.priceSuffix ? <span className="text-base text-[#68717D]/70">{tier.priceSuffix}</span> : null}
+                  {tier.priceSuffix ? <span className="text-base text-[#414B57]/70">{tier.priceSuffix}</span> : null}
                 </p>
                 {/* Reserved whether or not the tier has one, so the feature lists
                     start level too -- only Pilot carries an annual note. */}
@@ -137,7 +137,7 @@ export function Pricing() {
 
                 {tier.upsell ? (
                   <div className="mt-5 text-balance text-center">
-                    <p className="text-sm text-[#68717D]">{tier.upsell.text}</p>
+                    <p className="text-sm text-[#414B57]">{tier.upsell.text}</p>
                     <a
                       href={tier.upsell.href}
                       className="mt-1 inline-flex items-center gap-1 text-sm font-bold text-brand hover:underline"

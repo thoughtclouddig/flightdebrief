@@ -66,12 +66,12 @@ export default async function ResourceTopicPage(props: PageProps<"/field-notes/[
           <h1 className="font-display mt-2 text-balance text-4xl font-bold text-[#101727] sm:text-5xl" style={{ textTransform: "none" }}>
             {topic.name}
           </h1>
-          {topic.description ? <p className="mt-3 text-pretty text-lg leading-relaxed text-[#68717D]">{topic.description}</p> : null}
+          {topic.description ? <p className="mt-3 text-pretty text-lg leading-relaxed text-[#414B57]">{topic.description}</p> : null}
         </Reveal>
 
         <Reveal delay={100} className="mt-12">
           {articles.length === 0 ? (
-            <p className="text-[#68717D]">Nothing published in this topic yet -- check back soon.</p>
+            <p className="text-[#414B57]">Nothing published in this topic yet -- check back soon.</p>
           ) : (
             <ul className="flex flex-col gap-6">
               {articles.map((article) => (
@@ -87,7 +87,7 @@ export default async function ResourceTopicPage(props: PageProps<"/field-notes/[
                     ) : null}
                     <div>
                       <p className="font-display text-xl font-bold text-[#101727] group-hover:text-brand">{formatHeadline(article.title)}</p>
-                      {article.dek ? <p className="mt-1 text-[#68717D]">{article.dek}</p> : null}
+                      {article.dek ? <p className="mt-1 text-[#414B57]">{article.dek}</p> : null}
                     </div>
                   </Link>
                 </li>

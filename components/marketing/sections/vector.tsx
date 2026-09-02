@@ -58,11 +58,11 @@ export function VectorSection() {
             <p className="font-display text-balance text-2xl font-bold leading-tight text-[#101727] sm:text-3xl">
               Vector knows how you fly.
             </p>
-            <p className="text-pretty mt-3 text-lg leading-relaxed text-[#68717D]">
+            <p className="text-pretty mt-3 text-lg leading-relaxed text-[#414B57]">
               Not generic questions about airplanes in general &mdash; the specific things your own flying keeps
               doing, and the ones your instructor has stopped having to mention.
             </p>
-            <p className="mt-7 text-xs font-bold uppercase tracking-[0.16em] text-[#68717D]">What it knows</p>
+            <p className="mt-7 text-xs font-bold uppercase tracking-[0.16em] text-[#4E5A67]">What it knows</p>
             <ul className="mt-3 grid grid-cols-1 gap-x-8 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-1">
               {KNOWS.map((k) => (
                 <li key={k} className="flex items-start gap-3 text-pretty text-base text-[#101727]">
@@ -84,7 +84,7 @@ export function VectorSection() {
                 relearning what you already covered.
               </p>
             </div>
-            <p className="mt-5 text-pretty text-sm leading-relaxed text-[#68717D]">
+            <p className="mt-5 text-pretty text-sm leading-relaxed text-[#414B57]">
               Vector starts with your actual training record, and reaches for the FAA Airplane Flying Handbook, the
               ACS and your POH when the answer needs a source.
             </p>

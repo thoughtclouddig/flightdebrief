@@ -57,7 +57,7 @@ export default function SchoolsPage() {
               >
                 See what&rsquo;s happening between the schedule and the checkride.
               </h1>
-              <p className="mt-6 max-w-md text-pretty text-lg leading-relaxed text-[#68717D] tracking-[0.01em]">
+              <p className="mt-6 max-w-md text-pretty text-lg leading-relaxed text-[#414B57] tracking-[0.01em]">
                 AfterFlight turns the post-flight debriefs already happening across your school into better student
                 continuity, clearer instructor handoffs, and visibility into where training is getting stuck.
               </p>
@@ -68,7 +68,7 @@ export default function SchoolsPage() {
                 </CtaLink>
               </div>
               <p className="mt-4 text-sm font-semibold text-brand">Free for your whole school.</p>
-              <p className="mt-2 text-sm text-[#68717D]">
+              <p className="mt-2 text-sm text-[#414B57]">
                 <Link href="/how-it-works" className="underline underline-offset-2 hover:text-[#101727]">
                   How it works
                 </Link>{" "}
@@ -140,7 +140,7 @@ export default function SchoolsPage() {
             <h2 className="font-display mt-3 text-balance text-3xl font-bold text-[#101727] sm:text-4xl">
               Every debrief becomes part of the training picture.
             </h2>
-            <p className="mt-5 text-pretty text-lg text-[#68717D] tracking-[0.01em]">
+            <p className="mt-5 text-pretty text-lg text-[#414B57] tracking-[0.01em]">
               The CFI and student have the same post-flight conversation they&rsquo;re already having. AfterFlight
               captures and organizes it &mdash; and what begins as one debrief becomes useful at every level.
             </p>
@@ -151,7 +151,7 @@ export default function SchoolsPage() {
               <Reveal key={item.title} delay={i * 100} className="flex flex-col items-center gap-3 text-center">
                 <item.icon className="size-8 text-brand" strokeWidth={1.5} />
                 <h3 className="font-display text-lg font-bold uppercase tracking-wide text-[#101727]">{item.title}</h3>
-                <p className="text-pretty text-[#68717D] tracking-[0.01em]">{item.copy}</p>
+                <p className="text-pretty text-[#4E5A67] tracking-[0.01em]">{item.copy}</p>
               </Reveal>
             ))}
           </div>
@@ -167,13 +167,13 @@ export default function SchoolsPage() {
               <h2 className="font-display mt-3 text-balance text-3xl font-bold text-[#101727] sm:text-4xl">
                 Different instructor. Same training history.
               </h2>
-              <p className="mt-4 text-pretty text-[#68717D] tracking-[0.01em]">
+              <p className="mt-4 text-pretty text-[#414B57] tracking-[0.01em]">
                 Students don&rsquo;t always fly with the same instructor &mdash; schedule changes, CFI availability,
                 stage and check flights, turnover, transfers. The next instructor shouldn&rsquo;t have to
                 reconstruct a student&rsquo;s recent training from scratch. AfterFlight carries the context from
                 previous debriefs forward.
               </p>
-              <p className="mt-4 text-pretty text-base text-[#68717D] tracking-[0.01em]">
+              <p className="mt-4 text-pretty text-base text-[#414B57] tracking-[0.01em]">
                 This is about instructional continuity &mdash; not a replacement for official logbooks, training
                 records, or endorsements.
               </p>
@@ -198,7 +198,7 @@ export default function SchoolsPage() {
               <h2 className="font-display mt-3 text-balance text-3xl font-bold text-[#101727] sm:text-4xl">
                 See where students keep getting stuck.
               </h2>
-              <p className="mt-4 text-pretty text-lg text-[#68717D] tracking-[0.01em]">
+              <p className="mt-4 text-pretty text-lg text-[#414B57] tracking-[0.01em]">
                 Recurring deficiencies, repeated training objectives, ACS areas that keep coming up, students who
                 need more attention &mdash; patterns across many students that a single lesson could never show.
               </p>
@@ -237,7 +237,7 @@ export default function SchoolsPage() {
               <span className="text-brand">Fourteen students struggling with stabilized approaches is information
               for the school.</span>
             </p>
-            <p className="mt-4 text-pretty text-[#68717D] tracking-[0.01em]">
+            <p className="mt-4 text-pretty text-[#414B57] tracking-[0.01em]">
               That kind of visibility can point to curriculum opportunities, ground-instruction gaps, recurring ACS
               weaknesses, or areas worth additional emphasis. AfterFlight surfaces the pattern &mdash; your training
               leadership makes the call on what it means.
@@ -253,7 +253,7 @@ export default function SchoolsPage() {
             <h2 className="font-display text-balance text-3xl font-bold text-[#101727] sm:text-4xl">
               Give instructors continuity. Give leadership visibility.
             </h2>
-            <p className="mt-5 text-pretty text-lg text-[#68717D] tracking-[0.01em]">
+            <p className="mt-5 text-pretty text-lg text-[#414B57] tracking-[0.01em]">
               AfterFlight should help CFIs teach, not create another administrative burden. Leadership gains
               visibility because useful information is captured naturally through training &mdash; not because
               instructors filled out another long form.
@@ -266,7 +266,7 @@ export default function SchoolsPage() {
                   {item.step}
                 </span>
                 <h3 className="font-display text-lg font-bold text-[#101727]">{item.title}</h3>
-                <p className="text-pretty text-base text-[#68717D] tracking-[0.01em]">{item.copy}</p>
+                <p className="text-pretty text-base text-[#414B57] tracking-[0.01em]">{item.copy}</p>
               </Reveal>
             ))}
           </div>
@@ -300,7 +300,7 @@ export default function SchoolsPage() {
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">School Core Pricing</p>
             <p className="font-display mt-4 text-[clamp(3rem,2.25rem+3vw,4.5rem)] font-bold text-[#101727]">Free</p>
             <p className="mt-2 text-base font-semibold text-brand">No card, no per-seat pricing, no debrief limit.</p>
-            <p className="mt-4 text-lg text-[#68717D] tracking-[0.01em]">
+            <p className="mt-4 text-lg text-[#414B57] tracking-[0.01em]">
               Try AfterFlight with a few instructors and students before you commit &mdash; for&nbsp;independent
               flight schools and individual training locations.
             </p>

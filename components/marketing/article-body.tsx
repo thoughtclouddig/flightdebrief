@@ -85,7 +85,7 @@ export function ArticleBody({
 
       {body.keyFacts.length > 0 ? (
         <div className={`rounded-lg border border-[#e4e7ea] bg-[#fafafb] px-6 py-5 ${MEASURE}`}>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">Key facts</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Key facts</p>
           <ul className="mt-3 flex flex-col gap-2">
             {body.keyFacts.map((fact, i) => (
               <li key={i} className="flex gap-3 text-pretty text-[17px] leading-relaxed text-[#3f474f]">
@@ -130,7 +130,7 @@ export function ArticleBody({
               decoration rather than meaning. */}
           {section.tip ? (
             <aside className={`mt-6 border-l-[3px] border-brand py-0.5 pl-5 ${MEASURE}`}>
-              <p className="text-[11px] font-bold uppercase tracking-[0.11em] text-[#68717D]">Instructor tip</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.11em] text-[#4E5A67]">Instructor tip</p>
               <p className="mt-1.5 text-pretty text-[16.5px] leading-[1.7] text-[#3f474f]">{section.tip}</p>
             </aside>
           ) : null}
@@ -155,7 +155,7 @@ export function ArticleBody({
                 { label: section.comparison.rightLabel, text: section.comparison.right },
               ].map((side, j) => (
                 <div key={j} className="rounded-lg border border-[#e4e7ea] px-5 py-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-[#68717D]">{side.label}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-[#4E5A67]">{side.label}</p>
                   <p className="mt-2 text-pretty text-[15.5px] leading-[1.65] text-[#3f474f]">{side.text}</p>
                 </div>
               ))}
@@ -189,7 +189,7 @@ export function ArticleBody({
               {/* eslint-disable-next-line @next/next/no-img-element -- served from /api/media */}
               <img src={section.image.url} alt="" loading="lazy" className="aspect-[16/9] w-full rounded-xl object-cover" />
               {section.image.caption ? (
-                <figcaption className="mt-2.5 text-[13.5px] leading-relaxed text-[#68717D]">
+                <figcaption className="mt-2.5 text-[13.5px] leading-relaxed text-[#414B57]">
                   {section.image.caption}
                 </figcaption>
               ) : null}

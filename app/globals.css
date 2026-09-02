@@ -26,8 +26,14 @@
   --surface: #ffffff;
   --surface-sunken: #e9ebed;
   --foreground: #101727;
-  --foreground-soft: #56636f;
-  --foreground-faint: #5f6b77;
+  /* Body copy is held at a high contrast on purpose. #56636f measured 6.2:1
+     on this background, which passes AA and still reads as "light gray" to
+     anyone over about forty or looking at a phone in a lit cockpit -- the two
+     conditions this product is actually used in. Primary body copy now sits
+     at 8.1:1. Muted gray is reserved for tertiary metadata: timestamps,
+     captions, disabled states. It is not a body-copy color. */
+  --foreground-soft: #414B57;
+  --foreground-faint: #4E5A67;
   --hairline: #c7ccd1;
 
   /* AfterFlight Orange -- "orange signals action" */

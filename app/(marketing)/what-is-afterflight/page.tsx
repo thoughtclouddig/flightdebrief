@@ -42,7 +42,7 @@ export default function WhatIsAfterFlightPage() {
           <h1 className="font-display text-balance text-4xl font-bold text-[#101727] sm:text-5xl" style={{ textTransform: "none" }}>
             What Is AfterFlight?
           </h1>
-          <p className="mt-3 text-sm text-[#68717D]/70">Last updated: August 25, 2026</p>
+          <p className="mt-3 text-sm text-[#414B57]/70">Last updated: August 25, 2026</p>
         </Reveal>
 
         <Reveal delay={100} className="mt-12 flex flex-col gap-10">
@@ -152,7 +152,7 @@ export default function WhatIsAfterFlightPage() {
 
           <div className="border-t border-hairline pt-8">
             <h2 className="font-display text-xl font-bold text-[#101727]">What AfterFlight is not</h2>
-            <p className="mt-3 text-pretty leading-relaxed text-[#68717D]">
+            <p className="mt-3 text-pretty leading-relaxed text-[#414B57]">
               AfterFlight does not evaluate flight safety, certify proficiency, or replace a CFI&rsquo;s judgment. It
               organizes and preserves what the CFI and student actually discussed -- it never originates new flight
               instruction.

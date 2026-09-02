@@ -29,7 +29,7 @@ function ThreadBlock({
         {!last ? <span className="mt-2 w-px flex-1 bg-black/[0.08]" /> : null}
       </div>
       <div className={last ? "pb-1" : "pb-10"}>
-        <p className="text-balance text-xs font-bold uppercase tracking-[0.14em] text-[#8c97a2]">{eyebrow}</p>
+        <p className="text-balance text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">{eyebrow}</p>
         <div className="mt-2">{children}</div>
       </div>
     </div>
@@ -53,7 +53,7 @@ export function FeedbackToPlan() {
           <h2 className="font-display text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             A better debrief gives you a better next flight.
           </h2>
-          <p className="mt-4 text-pretty text-lg text-[#68717D]">
+          <p className="mt-4 text-pretty text-lg text-[#414B57]">
             AfterFlight connects what happened, what your instructor said, what the ACS requires, and what to
             study&mdash;then turns it into a clear objective for your next flight.
           </p>
@@ -73,7 +73,7 @@ export function FeedbackToPlan() {
 
               <ThreadBlock icon={Target} eyebrow="Area to improve">
                 <p className="text-balance font-display text-lg font-bold text-[#101727]">Altitude control</p>
-                <p className="text-pretty mt-1 text-sm text-[#68717D]">Altitude increased 180 ft during the second half of the turn.</p>
+                <p className="text-pretty mt-1 text-sm text-[#414B57]">Altitude increased 180 ft during the second half of the turn.</p>
               </ThreadBlock>
 
               <ThreadBlock icon={MessagesSquare} eyebrow="Your instructor said">
@@ -83,16 +83,16 @@ export function FeedbackToPlan() {
               </ThreadBlock>
 
               <ThreadBlock icon={ShieldCheck} eyebrow="ACS connection">
-                <p className="text-balance text-xs font-bold uppercase tracking-wide text-[#8c97a2]">FAA Airman Certification Standards</p>
+                <p className="text-balance text-xs font-bold uppercase tracking-wide text-[#4E5A67]">FAA Airman Certification Standards</p>
                 <p className="text-balance font-display mt-1 text-base font-bold text-[#101727]">Steep Turns &middot; PA.V.A.S3</p>
-                <p className="text-pretty mt-0.5 text-sm text-[#68717D]">Maintain altitude &plusmn;100 feet</p>
+                <p className="text-pretty mt-0.5 text-sm text-[#414B57]">Maintain altitude &plusmn;100 feet</p>
                 <a href="#" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand hover:underline">
                   View ACS standard <ArrowRight className="size-3.5" />
                 </a>
               </ThreadBlock>
 
               <ThreadBlock icon={BookOpen} eyebrow="Study this">
-                <p className="text-balance text-xs font-bold uppercase tracking-wide text-[#8c97a2]">FAA Airplane Flying Handbook</p>
+                <p className="text-balance text-xs font-bold uppercase tracking-wide text-[#4E5A67]">FAA Airplane Flying Handbook</p>
                 <p className="text-balance font-display mt-1 text-base font-bold text-[#101727]">
                   Performance Maneuvers &middot; Steep Turns
                 </p>
@@ -105,7 +105,7 @@ export function FeedbackToPlan() {
                 <div className="grid grid-cols-3 gap-2 sm:gap-4">
                   {NEXT_FLIGHT_STATS.map((stat) => (
                     <div key={stat.label}>
-                      <p className="text-xs font-medium text-[#8c97a2]">{stat.label}</p>
+                      <p className="text-xs font-medium text-[#4E5A67]">{stat.label}</p>
                       <p className="font-display mt-0.5 text-balance text-sm font-bold text-[#101727]">{stat.value}</p>
                     </div>
                   ))}

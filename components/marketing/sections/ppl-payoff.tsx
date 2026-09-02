@@ -32,7 +32,7 @@ export function PplPayoff() {
           <p className="font-display text-balance text-4xl font-bold text-[#101727] sm:text-5xl">
             Every flight <span className="text-brand">gets you closer.</span>
           </p>
-          <p className="mt-3 text-pretty text-[#68717D]">Better debriefs. Better preparation. Better pilots.</p>
+          <p className="mt-3 text-pretty text-[#414B57]">Better debriefs. Better preparation. Better pilots.</p>
         </div>
 
         {/* Content is duplicated so the loop point (-50%) is seamless; the marquee is paused under prefers-reduced-motion instead of hidden, since the photos themselves aren't decorative. */}

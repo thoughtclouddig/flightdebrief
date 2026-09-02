@@ -50,7 +50,7 @@ export function TrainingEconomics() {
               Flight training is too expensive to keep{" "}
               <span className="text-brand">relearning the same lesson.</span>
             </h2>
-            <p className="mt-5 text-pretty text-lg text-[#68717D]">
+            <p className="mt-5 text-pretty text-lg text-[#414B57]">
               When feedback gets lost between flights, students can spend expensive airplane time rebuilding
               context instead of progressing. A 1.5-hour training flight can cost hundreds of dollars, and the
               hour you spend re-covering last lesson is an hour you paid for twice.
@@ -66,7 +66,7 @@ export function TrainingEconomics() {
               {/* Part of the output, not fine print under it. The figure above
                   is the student's own arithmetic, and saying so is what keeps
                   it from reading as a projected saving. */}
-              <p className="mx-auto mt-7 max-w-md text-balance text-center text-sm leading-relaxed text-[#68717D]">
+              <p className="mx-auto mt-7 max-w-md text-balance text-center text-sm leading-relaxed text-[#414B57]">
                 This calculator is illustrative and uses the numbers you enter. AfterFlight does not guarantee a
                 specific reduction in training time or cost.
               </p>

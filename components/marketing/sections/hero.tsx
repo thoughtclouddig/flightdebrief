@@ -80,7 +80,7 @@ export function Hero() {
             checkride sooner &mdash; <br />
             <span className="text-brand">with confidence.</span>
           </h1>
-          <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#68717D]">
+          <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#414B57]">
             AfterFlight turns each lesson into a personalized plan for what to review, practice, and focus on
             next &mdash; so you show up prepared, avoid relearning, and build proficiency faster.
           </p>
@@ -109,7 +109,7 @@ export function Hero() {
                 where it read as fine print on the price. It now lives beside
                 the recorder itself, in the Debrief Replay section, which is
                 where someone is actually wondering about it. */}
-            <p className="text-balance text-center text-sm font-medium text-[#68717D] sm:text-left">
+            <p className="text-balance text-center text-sm font-medium text-[#414B57] sm:text-left">
               No credit card &middot; Free to start
             </p>
           </div>

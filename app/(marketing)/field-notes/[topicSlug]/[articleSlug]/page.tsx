@@ -165,11 +165,11 @@ export default async function ArticlePage(props: PageProps<"/field-notes/[topicS
               answer below delivers it. At the old size the two competed, and
               a reader met two summaries before any content. */}
           {article.dek ? (
-            <p className="mt-4 max-w-[52ch] text-pretty text-[17px] leading-relaxed text-[#68717D]">{article.dek}</p>
+            <p className="mt-4 max-w-[52ch] text-pretty text-[17px] leading-relaxed text-[#414B57]">{article.dek}</p>
           ) : null}
           {/* Read time sits with the byline because it answers the question a
               reader has at exactly this point: is this worth starting now. */}
-          <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[#68717D]">
+          <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-[#414B57]">
             <span className="rounded-full bg-[#f4f5f6] px-3 py-1 font-medium text-[#101727]">{article.authorName}</span>
             {article.publishedAt ? (
               <span>{new Date(article.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
@@ -230,7 +230,7 @@ export default async function ArticlePage(props: PageProps<"/field-notes/[topicS
                 the question is "what should I read next", and a title alone
                 doesn't answer it -- the image and dek are what make the
                 choice. */}
-            <h2 className="font-display text-sm font-bold uppercase tracking-[0.12em] text-[#68717D]">Keep reading</h2>
+            <h2 className="font-display text-sm font-bold uppercase tracking-[0.12em] text-[#4E5A67]">Keep reading</h2>
             <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
               {related.map((a) => {
                 const src = heroImageSrc("articles", a.id, a.imageUrl);
@@ -251,7 +251,7 @@ export default async function ArticlePage(props: PageProps<"/field-notes/[topicS
                         {formatHeadline(a.title)}
                       </p>
                       {a.dek ? (
-                        <p className="mt-2 line-clamp-2 text-[14px] leading-relaxed text-[#68717D]">{a.dek}</p>
+                        <p className="mt-2 line-clamp-2 text-[14px] leading-relaxed text-[#414B57]">{a.dek}</p>
                       ) : null}
                     </div>
                   </Link>

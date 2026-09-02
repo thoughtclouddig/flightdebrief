@@ -87,7 +87,7 @@ export function PersonalizedTraining() {
             </ol>
 
             {/* Sources named, and deliberately last. Grounding, not the product. */}
-            <p className="bg-[#f4f5f6] px-7 py-5 text-pretty text-sm text-[#68717D] sm:px-10">
+            <p className="bg-[#f4f5f6] px-7 py-5 text-pretty text-sm text-[#414B57] sm:px-10">
               Grounded in the FAA Airplane Flying Handbook and the Airman Certification Standards.
             </p>
           </div>

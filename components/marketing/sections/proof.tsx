@@ -59,7 +59,7 @@ export function Proof() {
         </RevealUp>
 
         <RevealUp delay={600} className="mx-auto mt-10 border-t border-[#e4e7ea] pt-8">
-          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-[#68717D]">According to studies by</p>
+          <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-[#4E5A67]">According to studies by</p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-3 sm:gap-x-8">
             <span className="font-display text-base font-bold tracking-[0.06em] text-[#4b545d] sm:text-xl sm:tracking-[0.1em]">
               FAA
@@ -76,9 +76,9 @@ export function Proof() {
         </RevealUp>
 
         <RevealUp delay={750} className="mx-auto mt-8 max-w-md text-center sm:max-w-lg">
-          <p className="text-base text-[#68717D]">46 studies &middot; 2,136 participants</p>
+          <p className="text-base text-[#414B57]">46 studies &middot; 2,136 participants</p>
 
-          <p className="mt-6 text-pretty text-xs leading-relaxed text-[#68717D]">
+          <p className="mt-6 text-pretty text-xs leading-relaxed text-[#414B57]">
             Sources: FAA Aviation Instructor&rsquo;s Handbook &middot; NASA aviation training research
             <br />
             Tannenbaum &amp; Cerasoli, Human Factors

@@ -35,18 +35,18 @@ export function FlightRecordingPreview() {
           Next: start the flight, then put the phone away.
         </h2>
 
-        <p className="mt-5 text-pretty text-lg leading-relaxed text-[#68717D]">
+        <p className="mt-5 text-pretty text-lg leading-relaxed text-[#414B57]">
           Today you tell AfterFlight what you flew. We&rsquo;re building a native app that will record the flight
           in the background while you fly, so your debrief can point at a specific approach instead of a
           remembered one.
         </p>
 
-        <p className="mt-4 text-pretty text-lg leading-relaxed text-[#68717D]">
+        <p className="mt-4 text-pretty text-lg leading-relaxed text-[#414B57]">
           It won&rsquo;t change how the debrief works &mdash; it will make it more specific. AfterFlight isn&rsquo;t
           becoming a flight tracker; the flight is the input, and the next lesson is still the point.
         </p>
 
-        <p className="mt-6 border-t border-black/[0.08] pt-5 text-pretty text-sm leading-relaxed text-[#68717D]">
+        <p className="mt-6 border-t border-black/[0.08] pt-5 text-pretty text-sm leading-relaxed text-[#414B57]">
           Not available yet, and not required to use AfterFlight.
         </p>
       </Reveal>
