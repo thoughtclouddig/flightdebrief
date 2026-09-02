@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Reveal } from "@/components/marketing/reveal";
 
 /**
@@ -28,102 +29,24 @@ import { Reveal } from "@/components/marketing/reveal";
  * ending on "on now." at 16% of the measure.
  */
 
-/**
- * Purpose-built marks, not stock glyphs.
- *
- * Lucide has nothing for "rehearse the procedure in your head" or "progress
- * toward a published standard", and a generic book or checkmark would say less
- * than the words underneath already do.
- *
- * Drawn twice. The first pass was 24px at 1.5 stroke and read as faint
- * scratches at homepage size -- delicate is the opposite of what an aviation
- * training product should look like. These are 32px at 2.25, which is heavy
- * enough to register instantly, with silhouettes simple enough to survive it.
- *
- * One system: 24 viewBox, round caps, currentColor for the structure, and
- * exactly one brand-orange element per mark carrying the meaning -- the step
- * being rehearsed, the highlighted passage, the thread that survives, the
- * standard being reached.
- */
-const ICON = "size-8 shrink-0 text-[#101727]";
-const S = {
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 2.25,
-  strokeLinecap: "round",
-  strokeLinejoin: "round",
-} as const;
-
-/** Study: a page of text with one line picked out as the relevant one. */
-function StudyMark() {
-  return (
-    <svg viewBox="0 0 24 24" className={ICON} aria-hidden {...S}>
-      <path d="M5 3.5h14v17H5z" />
-      <path d="M8.5 8h7M8.5 16h4" />
-      <path d="M8.5 12h7" stroke="var(--color-brand, #f07621)" strokeWidth={3.25} />
-    </svg>
-  );
-}
-
-/**
- * Chair flying: a three-step procedure with a loop back to the top.
- *
- * The first attempt was a wandering line with dots, which read as "flow" or
- * "thinking" rather than rehearsal. A numbered sequence you run again is the
- * actual idea, and the orange marks the step being worked.
- */
-function ChairFlyMark() {
-  return (
-    <svg viewBox="0 0 24 24" className={ICON} aria-hidden {...S}>
-      <path d="M10 5.5h9M10 12h9M10 18.5h9" />
-      <circle cx="5.5" cy="5.5" r="1.6" />
-      <circle cx="5.5" cy="18.5" r="1.6" />
-      <circle cx="5.5" cy="12" r="2.1" fill="var(--color-brand, #f07621)" stroke="var(--color-brand, #f07621)" />
-    </svg>
-  );
-}
-
-/** Continuity: the thread that survives a change of instructor. */
-function ContinuityMark() {
-  return (
-    <svg viewBox="0 0 24 24" className={ICON} aria-hidden {...S}>
-      <circle cx="6" cy="7" r="2.8" />
-      <circle cx="18" cy="7" r="2.8" />
-      <path d="M4 20c0-2.8 2-4.6 4-4.6M20 20c0-2.8-2-4.6-4-4.6" />
-      <path d="M6 12.5h12" stroke="var(--color-brand, #f07621)" strokeWidth={3.25} />
-    </svg>
-  );
-}
-
-/** ACS: tasks stepping up toward the published standard. */
-function AcsMark() {
-  return (
-    <svg viewBox="0 0 24 24" className={ICON} aria-hidden {...S}>
-      <path d="M3.5 20.5h17" />
-      <path d="M7 20.5v-5M12 20.5v-9" />
-      <path d="M17 20.5V7h4" stroke="var(--color-brand, #f07621)" strokeWidth={3.25} />
-    </svg>
-  );
-}
-
 const CAPABILITIES = [
   {
-    Mark: StudyMark,
+    src: "/images/capabilities/recommended-study.avif",
     title: "Recommended Study",
     copy: "Review material relevant to what you're working on now.",
   },
   {
-    Mark: ChairFlyMark,
+    src: "/images/capabilities/chair-flying.avif",
     title: "Chair Flying",
     copy: "Rehearse the maneuver before you're back in the airplane.",
   },
   {
-    Mark: ContinuityMark,
+    src: "/images/capabilities/instructor-continuity.avif",
     title: "Instructor Continuity",
     copy: "Your history and priorities carry forward when instructors change.",
   },
   {
-    Mark: AcsMark,
+    src: "/images/capabilities/acs-readiness.avif",
     title: "ACS Readiness",
     copy: "See how your training is building toward checkride standards.",
   },
@@ -143,11 +66,17 @@ export function Capabilities() {
         </Reveal>
 
         <Reveal delay={150} className="mt-12">
-          <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+          <dl className="grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {CAPABILITIES.map((c) => (
-              <div key={c.title} className="border-t-2 border-[#101727]/15 pt-5">
-                <c.Mark />
-                <dt className="font-display mt-3 text-[15px] font-bold uppercase tracking-wide text-[#101727]">
+              <div key={c.title} className="border-t-2 border-[#101727]/15 pt-6">
+                {/* 112px displayed, 336px source. These carry real detail --
+                    the tablet has six inner panels, the seat has stitching --
+                    and below about 100px none of it reads, which is what made
+                    the first pass at 72px still feel small. 3x source covers
+                    the densest phone; the set is 47KB against 548KB for the
+                    500px originals. */}
+                <Image src={c.src} alt="" width={112} height={112} className="size-[112px]" unoptimized />
+                <dt className="font-display mt-4 text-[15px] font-bold uppercase tracking-wide text-[#101727]">
                   {c.title}
                 </dt>
                 <dd className="text-balance mt-1.5 text-[15px] leading-relaxed text-[#4b545d]">{c.copy}</dd>

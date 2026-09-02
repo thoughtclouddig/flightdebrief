@@ -56,3 +56,12 @@ apps/mobile/.expo/
 apps/mobile/ios/
 apps/mobile/android/
 *-backup.sql
+
+# design source art -- keep working files (.ai, full-size exports) out of the
+# repo. The shipped assets live in public/images/ and are already optimized;
+# committing 500px PNGs and Illustrator files alongside them doubles the
+# weight for no build-time benefit.
+*.ai
+/afterflight-*-icon*.png
+/afterflght*.png
+/icon*.png
