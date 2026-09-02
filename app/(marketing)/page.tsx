@@ -3,12 +3,10 @@ import { appOrigin } from "@/lib/email";
 import { Hero } from "@/components/marketing/sections/hero";
 import { BrandMoment } from "@/components/marketing/sections/brand-moment";
 import { HowItWorks } from "@/components/marketing/sections/how-it-works";
-import { VectorSection } from "@/components/marketing/sections/vector";
 import { NextFlight } from "@/components/marketing/sections/next-flight";
 import { PersonalizedTraining } from "@/components/marketing/sections/personalized-training";
-import { PerceptionGap } from "@/components/marketing/sections/perception-gap";
+import { DebriefStage } from "@/components/marketing/sections/debrief-stage";
 import { SkillProgress } from "@/components/marketing/sections/skill-progress";
-import { DebriefReplay } from "@/components/marketing/sections/debrief-replay";
 import { DebriefDoctrine } from "@/components/marketing/sections/debrief-doctrine";
 import { Proof } from "@/components/marketing/sections/proof";
 import { TrainingEconomics } from "@/components/marketing/sections/training-economics";
@@ -99,9 +97,12 @@ export default function MarketingHomePage() {
       <BrandMoment />
       <HowItWorks />
       {/* OVERVIEW is HowItWorks, above. DEBRIEF: */}
-      <PerceptionGap />
-      <DebriefReplay />
-      <VectorSection />
+      {/* PROTOTYPE. Revert = restore the three lines below and drop this one.
+          PerceptionGap, DebriefReplay and VectorSection are still present and
+          unmodified; DebriefStage duplicates what it needs rather than
+          importing them, so nothing else has to change back. */}
+      <DebriefStage />
+      {/* <PerceptionGap /> <DebriefReplay /> <VectorSection /> */}
       {/* NEXT FLIGHT -- the plan first, then the preparation that serves it */}
       <NextFlight />
       <PersonalizedTraining />
