@@ -98,15 +98,14 @@ export default function MarketingHomePage() {
       <Hero />
       <BrandMoment />
       <HowItWorks />
-      {/* DEBRIEF */}
+      {/* OVERVIEW is HowItWorks, above. DEBRIEF: */}
       <PerceptionGap />
       <DebriefReplay />
       <VectorSection />
-      {/* PREPARE */}
+      {/* NEXT FLIGHT -- the plan first, then the preparation that serves it */}
+      <NextFlight />
       <PersonalizedTraining />
       <Capabilities />
-      {/* NEXT FLIGHT */}
-      <NextFlight />
       {/* PROGRESS */}
       <SkillProgress />
       <DebriefDoctrine />

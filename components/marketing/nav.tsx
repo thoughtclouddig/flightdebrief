@@ -9,9 +9,15 @@ import { Menu, Plus, X } from "lucide-react";
 /**
  * The nav IS the process.
  *
- * Debrief -> Prepare -> Next Flight -> Progress. Four stages in the order a
+ * Overview -> Debrief -> Next Flight -> Progress. Four stages in the order a
  * student lives them, so a first-time visitor can scan the header and
  * understand how AfterFlight works without opening anything.
+ *
+ * Overview leads because a visitor needs the loop before the stages inside it;
+ * it points at the existing How It Works carousel rather than a new section.
+ * Prepare is gone as a nav item and folded into Next Flight -- the preparation
+ * only matters because of the flight it serves, and "what should I do next"
+ * is one question rather than two.
  *
  * This replaced How It Works / Next Flight / Progress / Pricing, where two of
  * the four named site categories rather than product stages. Pricing is not a
@@ -22,8 +28,8 @@ import { Menu, Plus, X } from "lucide-react";
  * stage comments in app/(marketing)/page.tsx.
  */
 const PRIMARY_LINKS = [
+  { href: "/#overview", label: "Overview" },
   { href: "/#debrief", label: "Debrief" },
-  { href: "/#prepare", label: "Prepare" },
   { href: "/#next-flight", label: "Next Flight" },
   { href: "/#progress", label: "Progress" },
 ];

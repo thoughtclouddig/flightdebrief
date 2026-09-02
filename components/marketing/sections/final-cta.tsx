@@ -49,7 +49,7 @@ export function FinalCta() {
             Try AfterFlight Free
           </TrackedLink>
           <Link
-            href="/#how-it-works"
+            href="/#overview"
             className="rounded-lg border border-white/20 px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
           >
             See How It Works

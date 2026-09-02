@@ -100,7 +100,7 @@ export function Hero() {
           <div className="mt-8 flex flex-col items-stretch gap-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <CtaLink href="/signup">Try AfterFlight Free</CtaLink>
-              <CtaLink href="#how-it-works" variant="secondary" className="whitespace-nowrap">
+              <CtaLink href="#overview" variant="secondary" className="whitespace-nowrap">
                 See How It Works
               </CtaLink>
             </div>

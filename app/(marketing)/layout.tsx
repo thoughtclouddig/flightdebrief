@@ -21,7 +21,7 @@ const FOOTER_COLUMNS = [
   {
     title: "Product",
     links: [
-      { href: "/#how-it-works", label: "Features" },
+      { href: "/#overview", label: "Features" },
       { href: "/#pricing", label: "Pricing" },
       { href: "/what-is-afterflight", label: "What Is AfterFlight?" },
       { href: "/how-it-works", label: "How It Works" },

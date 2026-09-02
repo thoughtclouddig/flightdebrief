@@ -147,7 +147,7 @@ export function HowItWorks() {
   }
 
   return (
-    <section id="how-it-works" className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
+    <section id="overview" className="bg-[#f4f5f6] px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-[1320px]">
         <SectionHead
           eyebrow="How it works"
