@@ -40,12 +40,16 @@ export const metadata: Metadata = {
  * reads as provenance rather than as a pitch.
  *
  * The continuity pass reordered the middle of the page to match the story it
- * now tells: problem, the loop, the DEBRIEF as the input, what that input
- * produces (the perception gap, training, Vector), the next flight it feeds,
- * and progress compounding across all of it. DebriefReplay had drifted to
- * eighth, which stopped working the moment its headline became "It starts
- * with what your instructor said" -- a section claiming to be the start
- * cannot sit after the three things it starts.
+ * now tells: problem, the loop, the debrief and what it produces, the next
+ * flight it feeds, and progress compounding across all of it.
+ *
+ * PerceptionGap now sits ABOVE DebriefReplay, by product decision. Worth
+ * knowing what that trades: DebriefReplay's headline is "It starts with what
+ * your instructor said", and it no longer starts anything -- the comparison
+ * of both readings comes first. The argument for this order is that the
+ * perception gap is the more distinctive claim and earns the visitor's
+ * attention earlier; the argument against is the word "starts". If that
+ * sentence ever changes, this order stops costing anything.
  *
  * FlightRecordingPreview is the native recorder, and it sits AFTER every
  * shipped section on purpose. It began as a product-proof walkthrough in
@@ -78,8 +82,8 @@ export default function MarketingHomePage() {
       <Hero />
       <BrandMoment />
       <HowItWorks />
-      <DebriefReplay />
       <PerceptionGap />
+      <DebriefReplay />
       <PersonalizedTraining />
       <VectorSection />
       <NextFlight />
