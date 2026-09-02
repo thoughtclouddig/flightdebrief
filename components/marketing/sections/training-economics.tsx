@@ -49,7 +49,7 @@ export function TrainingEconomics() {
           </Reveal>
 
           <Reveal delay={100}>
-            {/* No grey wrapper. The calculator already renders its own white
+            {/* No gray wrapper. The calculator already renders its own white
                 card, so boxing it again produced a card inside a box with two
                 sets of padding -- most of the column's height was margin. */}
             <div>
