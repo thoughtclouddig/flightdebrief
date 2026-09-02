@@ -176,43 +176,50 @@ export function MarketingNav() {
 
           <span className="mx-6 h-5 w-px bg-slate-200" aria-hidden />
 
-          <div className="flex items-center gap-5 text-sm font-medium text-[#68717D]">
-            {SECONDARY_GROUPS.map((group) => (
-              <div key={group.label} ref={group.label === openGroup ? menuRef : undefined} className="relative">
-                <button
-                  type="button"
-                  aria-expanded={openGroup === group.label}
-                  aria-haspopup="true"
-                  onClick={() => setOpenGroup((v) => (v === group.label ? null : group.label))}
-                  className={
-                    "flex cursor-pointer items-center gap-1 transition-colors hover:text-[#101727] " +
-                    (openGroup === group.label ? "text-[#101727]" : "")
-                  }
-                >
-                  {group.label}
-                  <ChevronDown
-                    className={"size-4 transition-transform " + (openGroup === group.label ? "rotate-180" : "")}
-                    aria-hidden
-                  />
-                </button>
+          {/* One secondary control, not two. Two triggers sitting side by side
+              still read as a second row of navigation; a single More collapses
+              the whole tier to one word, and the groups become headings inside
+              the panel where they cost nothing in the header. */}
+          <div ref={menuRef} className="relative text-sm font-medium text-[#68717D]">
+            <button
+              type="button"
+              aria-expanded={openGroup === "more"}
+              aria-haspopup="true"
+              onClick={() => setOpenGroup((v) => (v === "more" ? null : "more"))}
+              className={
+                "flex cursor-pointer items-center gap-1 transition-colors hover:text-[#101727] " +
+                (openGroup === "more" ? "text-[#101727]" : "")
+              }
+            >
+              More
+              <ChevronDown
+                className={"size-4 transition-transform " + (openGroup === "more" ? "rotate-180" : "")}
+                aria-hidden
+              />
+            </button>
 
-                {openGroup === group.label ? (
-                  <div className="absolute right-0 top-full z-50 mt-3 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white py-1.5 shadow-lg">
+            {openGroup === "more" ? (
+              <div className="absolute right-0 top-full z-50 mt-3 w-60 overflow-hidden rounded-lg border border-slate-200 bg-white py-2 shadow-lg">
+                {SECONDARY_GROUPS.map((group, i) => (
+                  <div key={group.label} className={i > 0 ? "mt-1 border-t border-slate-100 pt-1" : undefined}>
+                    <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8c97a2]">
+                      {group.label}
+                    </p>
                     {group.links.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
                         onClick={() => setOpenGroup(null)}
                         aria-current={pathname === link.href ? "page" : undefined}
-                        className="flex min-h-[44px] items-center px-4 text-[15px] font-medium text-[#101727] hover:bg-[#f4f5f6]"
+                        className="flex min-h-[40px] items-center px-4 text-[15px] font-medium text-[#101727] hover:bg-[#f4f5f6]"
                       >
                         {link.label}
                       </Link>
                     ))}
                   </div>
-                ) : null}
+                ))}
               </div>
-            ))}
+            ) : null}
           </div>
         </nav>
 
