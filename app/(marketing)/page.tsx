@@ -43,6 +43,13 @@ export const metadata: Metadata = {
  * now tells: problem, the loop, the debrief and what it produces, the next
  * flight it feeds, and progress compounding across all of it.
  *
+ * Capabilities sits directly under NextFlight, not after Progress. The nav's
+ * second item is "Next Flight", and the between-flight preparation -- study,
+ * chair flying, continuity, ACS readiness -- is what makes a next flight
+ * better. With Progress in between, clicking Next Flight landed a visitor on
+ * the card and then scrolled them into progress charts before showing any of
+ * the preparation the label implies.
+ *
  * PerceptionGap now sits ABOVE DebriefReplay, by product decision. Worth
  * knowing what that trades: DebriefReplay's headline is "It starts with what
  * your instructor said", and it no longer starts anything -- the comparison
@@ -87,8 +94,8 @@ export default function MarketingHomePage() {
       <PersonalizedTraining />
       <VectorSection />
       <NextFlight />
-      <SkillProgress />
       <Capabilities />
+      <SkillProgress />
       <DebriefDoctrine />
       <Proof />
       <TrainingEconomics />
