@@ -23,6 +23,17 @@ const CURRENCY = new Intl.NumberFormat("en-US", {
 
 const MAX_HOURS = 15;
 
+/*
+ * Stacked, not side by side.
+ *
+ * This used to split into two columns at lg, which was right when it sat in a
+ * 1000px block of its own. It now lives in one half of the economics section's
+ * two-column grid, so lg fires while the available width is about half that --
+ * "Aircraft + instructor rate" wrapped to two lines, "hours spent repeating or
+ * rebuilding context" to three, and "per hour" broke away from its input.
+ * Stacking gives every label its own line and hands the figure the full width
+ * of the column, which is the right emphasis anyway.
+ */
 export function TrainingCostCalculator() {
   const [rate, setRate] = useState(325);
   const [hours, setHours] = useState(5);
@@ -36,7 +47,7 @@ export function TrainingCostCalculator() {
   const total = safeRate * hours;
 
   return (
-    <div className="grid grid-cols-1 gap-8 rounded-[24px] border border-black/[0.06] bg-white px-7 py-8 sm:px-9 sm:py-9 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-14">
+    <div className="grid grid-cols-1 gap-7 rounded-[24px] border border-black/[0.06] bg-white px-7 py-8 sm:px-9 sm:py-9">
       <div className="flex flex-col gap-7">
         <div>
           <label htmlFor={rateId} className="block text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">
@@ -83,7 +94,7 @@ export function TrainingCostCalculator() {
         </div>
       </div>
 
-      <div className="border-t border-black/[0.08] pt-7 lg:border-l lg:border-t-0 lg:pl-14 lg:pt-0">
+      <div className="border-t border-black/[0.08] pt-7">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">That costs you</p>
         {/* aria-live so the figure is announced as the slider moves; the
             equation stays visible because the number alone is not checkable. */}

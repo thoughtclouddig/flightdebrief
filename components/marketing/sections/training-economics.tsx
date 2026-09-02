@@ -1,15 +1,20 @@
-import { Clock, PiggyBank, TrendingUp } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 import { TrainingCostCalculator } from "@/components/marketing/training-cost-calculator";
 
-const BENEFITS = [
-  { icon: PiggyBank, title: "Save money", copy: "Avoid repeat lessons and extra flight time." },
-  { icon: Clock, title: "Save time", copy: "Spend less time relearning and more time progressing." },
-  { icon: TrendingUp, title: "Improve faster", copy: "Show up prepared and make every flight count.", accent: true },
-];
-
 /**
  * The economic stakes of broken continuity, and the arithmetic behind them.
+ *
+ * ONE argument, made once in words and once in the student's own numbers.
+ * This section used to make it four times: a headline and two paragraphs, then
+ * three benefit rows (Save money / Save time / Improve faster), then the
+ * calculator under its own heading 24 units below, then the closing panel. The
+ * benefit rows were the weakest of the four -- generic and unfalsifiable next
+ * to a live figure built from the reader's own rate -- so they are gone, and
+ * the calculator moved into the space they occupied. The second paragraph went
+ * with them because it restated the first.
+ *
+ * The calculator is now the right-hand column rather than a fourth beat, which
+ * is the point: it is the only part of this argument the reader can check.
  *
  * The calculator is the reason this section exists in its current form. The
  * cost of losing the thread is the most persuasive thing about this product
@@ -36,57 +41,22 @@ export function TrainingEconomics() {
               context instead of progressing. A 1.5-hour training flight can cost hundreds of dollars, and the
               hour you spend re-covering last lesson is an hour you paid for twice.
             </p>
-            <p className="mt-4 text-pretty text-lg text-[#68717D]">
-              <strong className="text-[#101727]">AfterFlight carries your instructor&rsquo;s feedback forward</strong>,
-              so the next lesson starts where the last one finished.
-            </p>
           </Reveal>
 
           <Reveal delay={100}>
-            <div className="flex flex-col divide-y divide-black/[0.08]">
-              {BENEFITS.map((b) => (
-                <div key={b.title} className="flex items-start gap-5 py-8">
-                  <span
-                    className={`flex size-12 shrink-0 items-center justify-center rounded-full ${
-                      b.accent ? "bg-brand text-white" : "bg-[#f4f5f6] text-[#101727]"
-                    }`}
-                  >
-                    <b.icon className="size-6" strokeWidth={1.75} />
-                  </span>
-                  <div>
-                    <p className="font-display text-xl font-bold text-[#101727]">{b.title}</p>
-                    <p className="mt-1 text-pretty text-base text-[#68717D]">{b.copy}</p>
-                  </div>
-                </div>
-              ))}
+            <div className="rounded-[28px] bg-[#f4f5f6] px-6 py-10 sm:px-8 sm:py-10">
+              <TrainingCostCalculator />
+              {/* Part of the output, not fine print under it. The figure above
+                  is the student's own arithmetic, and saying so is what keeps
+                  it from reading as a projected saving. */}
+              <p className="mx-auto mt-7 max-w-md text-balance text-center text-sm leading-relaxed text-[#68717D]">
+                This calculator is illustrative and uses the numbers you enter. AfterFlight does not guarantee a
+                specific reduction in training time or cost.
+              </p>
             </div>
           </Reveal>
         </div>
 
-        <Reveal delay={150} className="mx-auto mt-24 max-w-[1000px]">
-          <div className="rounded-[28px] bg-[#f4f5f6] px-6 py-10 sm:px-10 sm:py-12">
-            <div className="mx-auto max-w-2xl text-center">
-              <h3 className="font-display text-balance text-3xl font-bold leading-tight text-[#101727] sm:text-4xl">
-                What does one repeated lesson cost you?
-              </h3>
-              <p className="mt-4 text-pretty text-lg leading-relaxed text-[#68717D]">
-                The most expensive place to learn something twice is in the airplane.
-              </p>
-            </div>
-
-            <div className="mt-9">
-              <TrainingCostCalculator />
-            </div>
-
-            {/* Part of the output, not fine print under it. The figure above is
-                the student's own arithmetic, and saying so is what keeps it
-                from reading as a projected saving. */}
-            <p className="mx-auto mt-7 max-w-xl text-balance text-center text-sm leading-relaxed text-[#68717D]">
-              This calculator is illustrative and uses the numbers you enter. AfterFlight does not guarantee a
-              specific reduction in training time or cost.
-            </p>
-          </div>
-        </Reveal>
       </div>
     </section>
 
