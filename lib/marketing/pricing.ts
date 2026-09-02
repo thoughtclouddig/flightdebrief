@@ -66,6 +66,7 @@ export const PRICING_TIERS: PricingTier[] = [
     audience: "For individual flight instructors.",
     price: "Free",
     priceSuffix: "",
+    priceNote: "Not a trial. Never per student.",
     featured: true,
     featuredLabel: "Always Free for CFIs",
     features: [
@@ -85,6 +86,7 @@ export const PRICING_TIERS: PricingTier[] = [
     audience: "For independent flight schools and training organizations.",
     price: "Free",
     priceSuffix: "",
+    priceNote: "No card. No per-seat pricing.",
     features: [
       "Student and CFI rosters",
       "Assign students to CFIs",
