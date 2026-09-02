@@ -6,10 +6,14 @@ import { DebriefSummaryMockupCard } from "@/components/marketing/product-mockups
 // Four, not three. Three left an orphan on the second row of the 2-up grid;
 // four fills both rows and reads as a set. "Show up prepared" is the existing
 // hero promise restated as a benefit, not a new claim.
+//
+// Three words each, and that is a constraint rather than a coincidence: the
+// grid gives each column about 244px, and the first draft of the fourth
+// ("Show up prepared every lesson") was the only one long enough to wrap.
 const BENEFITS = [
   "Carry feedback forward",
   "Build proficiency faster",
-  "Show up prepared every lesson",
+  "Show up prepared",
   "Waste fewer flight hours",
 ];
 
@@ -84,7 +88,7 @@ export function Hero() {
           {/* Grid, not flex-wrap. Wrapping packed each row by content width, so
               the second column began wherever the first item happened to end
               and none of the four lined up. Two even columns align them. */}
-          <ul className="mt-6 grid max-w-lg grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
+          <ul className="mt-6 grid max-w-xl grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
             {BENEFITS.map((benefit) => (
               <li key={benefit} className="flex items-center gap-1.5 text-sm font-medium text-[#101727]">
                 <CheckCircle2 className="size-4 shrink-0 text-brand" />

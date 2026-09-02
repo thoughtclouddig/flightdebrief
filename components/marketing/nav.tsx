@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { Menu, Plus, X } from "lucide-react";
 
 /**
  * Four primary destinations, and everything else demoted.
@@ -162,7 +162,7 @@ export function MarketingNav() {
           {/* Primary: ink, semibold, generous spacing. Secondary sits after a
               divider in lighter gray at a smaller size, so the four read as the
               header and the rest reads as the overflow. */}
-          <div className="flex items-center gap-7 text-[15px] font-semibold text-[#101727]">
+          <div className="flex items-center gap-7 text-[17px] font-semibold text-[#101727]">
             {PRIMARY_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -187,20 +187,23 @@ export function MarketingNav() {
               the divider and the chevron, which is enough. (A "+" was
               considered and rejected -- it means "add" in almost every other
               product, and this opens a menu.) */}
-          <div ref={menuRef} className="relative text-[15px] font-semibold text-[#68717D]">
+          <div ref={menuRef} className="relative text-[17px] font-semibold text-[#101727]">
             <button
               type="button"
               aria-expanded={openGroup === "more"}
               aria-haspopup="true"
+              aria-label="More"
               onClick={() => setOpenGroup((v) => (v === "more" ? null : "more"))}
               className={
-                "flex cursor-pointer items-center gap-1 transition-colors hover:text-[#101727] " +
-                (openGroup === "more" ? "text-[#101727]" : "")
+                // Same box metrics as the primary links, not just the same
+                // type: they carry border-b-2 + pb-0.5, and without it this
+                // button's baseline sat lower than theirs in the flex row.
+                "flex size-9 cursor-pointer items-center justify-center rounded-lg transition-colors hover:bg-[#f4f5f6] " +
+                (openGroup === "more" ? "bg-[#f4f5f6]" : "")
               }
             >
-              More
-              <ChevronDown
-                className={"size-4 transition-transform " + (openGroup === "more" ? "rotate-180" : "")}
+              <Plus
+                className={"size-5 transition-transform duration-200 " + (openGroup === "more" ? "rotate-45" : "")}
                 aria-hidden
               />
             </button>
