@@ -72,7 +72,18 @@ export function NextFlightStage() {
             <StageModule
               id={MODULES[0].id}
               eyebrow="Next flight"
-              headline="Your next flight starts where your last one left off."
+              /* Two lines, stated rather than hoped for. At 19ch this fell in
+                 three and stranded "last one left off." on its own. The orange
+                 sits on the second line because that is the claim -- every
+                 product says it has a plan for your next lesson; the part only
+                 this one can say is where the plan comes from. */
+              headlineClassName="max-w-none"
+              headline={
+                <>
+                  <span className="sm:block">Your next flight starts</span>{" "}
+                  <span className="text-brand sm:block">where your last one left off.</span>
+                </>
+              }
               body="Instead of showing up trying to remember where the last lesson ended, you arrive knowing what to focus on. Built from the flight you just flew — not from a syllabus template."
             >
               <NextFlightCard className="mx-0 mt-0 max-w-none" />
@@ -88,7 +99,7 @@ export function NextFlightStage() {
                   Don&rsquo;t just read about the problem. <span className="text-brand">Fix it.</span>
                 </>
               }
-              body="AfterFlight turns the weak areas from your actual flight into short training sessions, flight-specific questions, and cues you can carry into the cockpit next time."
+              body="AfterFlight turns the weak areas from your flight into short training sessions, flight-specific questions, and cues you can carry into the cockpit."
             >
               <PersonalizedTrainingCard className="mx-0 max-w-none" />
             </StageModule>

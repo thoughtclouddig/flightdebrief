@@ -78,10 +78,22 @@ export function Proof() {
         <RevealUp delay={750} className="mx-auto mt-8 max-w-md text-center sm:max-w-lg">
           <p className="text-base text-[#414B57]">46 studies &middot; 2,136 participants</p>
 
+          {/*
+            * Each source is one unbreakable unit, and the hard break is gone.
+            * A <br /> after the second source fought the natural wrap: the
+            * first line ragged early and left "training research" alone, then
+            * the break forced a third line regardless of how much room was
+            * left. Now the only place a line can break is after a separator,
+            * so no citation is ever split across two lines and the count of
+            * lines follows the width instead of being fixed at two.
+            *
+            * The separator is glued to the source it follows so it can never
+            * start a line on its own.
+            */}
           <p className="mt-6 text-pretty text-xs leading-relaxed text-[#414B57]">
-            Sources: FAA Aviation Instructor&rsquo;s Handbook &middot; NASA aviation training research
-            <br />
-            Tannenbaum &amp; Cerasoli, Human Factors
+            <span className="whitespace-nowrap">Sources: FAA Aviation Instructor&rsquo;s Handbook &middot;</span>{" "}
+            <span className="whitespace-nowrap">NASA aviation training research &middot;</span>{" "}
+            <span className="whitespace-nowrap">Tannenbaum &amp; Cerasoli, Human Factors</span>
           </p>
         </RevealUp>
       </div>

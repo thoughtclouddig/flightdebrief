@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Reveal } from "@/components/marketing/reveal";
+import { cn } from "@/lib/utils";
 
 /**
  * One module inside a stage band.
@@ -21,6 +22,7 @@ export function StageModule({
   body,
   children,
   className,
+  headlineClassName,
 }: {
   id: string;
   eyebrow: string;
@@ -28,6 +30,13 @@ export function StageModule({
   body: string;
   children: ReactNode;
   className?: string;
+  /**
+   * For a headline that states its own line breaks. The 19ch default is the
+   * measure that makes a ~41-character headline fall in two lines; a longer
+   * one needs either a wider measure or explicit breaks, and explicit breaks
+   * need the measure widened or they wrap again inside each stated line.
+   */
+  headlineClassName?: string;
 }) {
   return (
     <article id={id} className={`scroll-mt-28 ${className ?? ""}`}>
@@ -36,7 +45,12 @@ export function StageModule({
           <span className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{eyebrow}</span>
           <span className="h-px flex-1 bg-black/[0.09]" aria-hidden />
         </div>
-        <h3 className="font-display mt-4 max-w-[19ch] text-balance text-3xl font-bold leading-[1.08] text-[#101727] sm:text-[2.25rem]">
+        <h3
+          className={cn(
+            "font-display mt-4 max-w-[19ch] text-balance text-3xl font-bold leading-[1.08] text-[#101727] sm:text-[2.25rem]",
+            headlineClassName,
+          )}
+        >
           {headline}
         </h3>
         <p className="mt-4 max-w-[62ch] text-pretty text-lg leading-relaxed text-[#414B57]">{body}</p>

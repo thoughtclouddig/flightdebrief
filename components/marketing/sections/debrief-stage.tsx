@@ -58,7 +58,7 @@ const KNOWS = [
   "Which corrections you relax, and when",
   "The weak area two instructors have now flagged",
   "Where your read of a flight differs from your CFI's",
-  "What you have already proven you can do",
+  "What you have already proven",
 ] as const;
 
 export function DebriefStage() {
@@ -81,7 +81,7 @@ export function DebriefStage() {
         <div className="lg:grid lg:grid-cols-[210px_1fr] lg:gap-x-20 xl:grid-cols-[230px_1fr]">
           <StageRail
             stage="Debrief"
-            framing="What the lesson actually contained, in the order you find it out."
+            framing="Everything the lesson actually contained."
             modules={MODULES}
           />
 
@@ -93,7 +93,16 @@ export function DebriefStage() {
             <StageModule
               id={MODULES[0].id}
               eyebrow="Two views of the same flight"
-              headline="See where you and your instructor landed."
+              /* Orange on "your instructor", because the section's claim is
+                 that the product holds BOTH readings -- yours is the one you
+                 already have, theirs is the one you cannot see. */
+              headlineClassName="max-w-none"
+              headline={
+                <>
+                  <span className="sm:block">See where you and</span>{" "}
+                  <span className="text-brand sm:block">your instructor landed.</span>
+                </>
+              }
               body="You record how the flight felt to you before you see their debrief. When the two readings differ, that gap is usually the most useful thing in the lesson."
             >
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -154,8 +163,17 @@ export function DebriefStage() {
               id={MODULES[1].id}
               className="mt-20 sm:mt-24"
               eyebrow="Debrief replay"
-              headline="Then hear it again in their own words."
-              body="AfterFlight captures what happened in the lesson and what your instructor wants you working on, then turns it into a short recap you can replay on the drive home."
+              /* Orange on "in their own words", which is the whole promise --
+                 a replay of what the instructor actually said, not a summary
+                 the product wrote about it. */
+              headlineClassName="max-w-none"
+              headline={
+                <>
+                  <span className="sm:block">Then hear it again</span>{" "}
+                  <span className="text-brand sm:block">in their own words.</span>
+                </>
+              }
+              body="AfterFlight captures what happened in the lesson and what your instructor wants you working on, then turns it into a short recap for the drive home."
             >
               {/* The demo supplies its own white card, which is the raised
                   ground this module is meant to sit on -- so it is not wrapped
@@ -174,7 +192,12 @@ export function DebriefStage() {
                   Your AI flight trainer <span className="text-brand">between flights.</span>
                 </>
               }
-              body="Not a chatbot you have to brief first. Vector already knows how you fly — what your instructor flagged, what keeps coming back, what you've already proven — so the time between lessons goes at the thing actually holding you up."
+              /* Cut from 224 characters. It listed what Vector knows, and the
+                 column directly beneath it does exactly that under the heading
+                 "What it knows" -- so the standfirst was spending four lines
+                 to preview a list the reader reaches two seconds later. It
+                 now makes the distinction and stops. */
+              body="Not a chatbot you have to brief first. Vector opens already knowing what your instructor flagged and what keeps coming back."
             >
               <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-start lg:gap-14">
                 <Reveal delay={100}>
@@ -205,8 +228,8 @@ export function DebriefStage() {
                     </p>
                   </div>
                   <p className="mt-5 text-pretty text-sm leading-relaxed text-[#4E5A67]">
-                    Vector starts with your actual training record, and reaches for the FAA Airplane Flying Handbook,
-                    the ACS and your POH when the answer needs a source.
+                    Vector starts with your training record, then reaches for the FAA Airplane Flying Handbook, the
+                    ACS or your POH when an answer needs a source.
                   </p>
                 </Reveal>
               </div>
