@@ -89,7 +89,7 @@ export function BrandMoment() {
         </p>
       </Reveal>
 
-      <Reveal delay={300} className="relative mt-12 w-full max-w-2xl sm:mt-14">
+      <Reveal delay={300} className="relative mt-12 w-full max-w-2xl sm:mt-14 lg:max-w-[880px]">
         <div
           className="overflow-hidden rounded-xl border border-black/[0.06] bg-black/5 shadow-[0_16px_40px_-12px_rgba(16,23,39,0.25)]"
           style={{ position: "relative", height: 0, paddingBottom: "56.25%" }}
@@ -107,12 +107,21 @@ export function BrandMoment() {
       </Reveal>
 
       {/*
+       * Widths grow at lg, and only at lg.
+       *
+       * The headline block already went to 1040px there while the video stayed
+       * at 672 and this rail at 768, so on a 1400px screen the content filled
+       * barely half the frame and floated in a full-bleed photograph. Its
+       * neighbors are much wider -- HowItWorks runs to 1320 and NextFlight to
+       * 1100 -- which is what made this section read as out of balance rather
+       * than merely centred. Below lg nothing changes.
+       *
        * Deliberately small and chrome-free. These three lines exist to name
        * the problem the video is about, not to compete with it -- as cards
        * they were three more objects fighting the one thing this section is
        * built around. A rule and a numeral is enough structure.
        */}
-      <Reveal delay={450} className="relative mt-12 w-full max-w-3xl sm:mt-14">
+      <Reveal delay={450} className="relative mt-12 w-full max-w-3xl sm:mt-14 lg:max-w-[1040px]">
         <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-3">
           {PROBLEMS.map((p, i) => (
             <div key={p.title} className="border-t border-[#101727]/12 pt-4">

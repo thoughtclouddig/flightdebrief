@@ -44,10 +44,14 @@ export function SectionHead({
           // broke a fourth time and stranded "ready." -- the same failure the
           // note describes, one breakpoint down. A clamp at both ends now.
           size === "large"
-            // 3.3rem, not 3.75rem: "Fly. Learn. Get better." needs 739px at
-            // 60px and the column is 672px, so the intended two-line break
-            // could not happen at the old ceiling however it was marked up.
-            ? "text-[clamp(1.6rem,7vw,2.25rem)] sm:text-[clamp(2.75rem,5.2vw,3.3rem)]"
+            // 3.1rem. Two rounds of measurement got here, both driven by copy
+            // that grew: "Fly. Learn. Get better." needed 739px at 60px in a
+            // 672px column, which ruled out the old 3.75rem ceiling. Then
+            // "Learn" became "Debrief" -- wider -- and at 3.3rem the first
+            // half needed 694px against the same 672px column and wrapped,
+            // which defeats the stated break entirely. 3.1rem leaves ~20px.
+            // Any word change in that headline needs re-measuring.
+            ? "text-[clamp(1.6rem,7vw,2.25rem)] sm:text-[clamp(2.6rem,5.2vw,3.1rem)]"
             : "text-4xl sm:text-5xl",
           // AFTER the size, and that ordering is the whole trick.
           //

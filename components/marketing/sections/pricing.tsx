@@ -5,20 +5,20 @@ import { TrackedLink } from "@/components/marketing/tracked-link";
 import { PRICING_TIERS } from "@/lib/marketing/pricing";
 
 /**
- * The homepage shows the Pilot tier ONLY.
+ * The homepage shows Pilot and CFI. Not Flight School Pro, and not Enterprise.
  *
  * It used to render all three side by side with an Enterprise panel beneath,
- * which asked a student to compare their own plan against a CFI plan and a
- * flight-school plan before deciding. The homepage is a student journey now,
- * so the decision here is start-or-not rather than which-of-four.
+ * which asked a student to compare their own plan against a school plan and a
+ * multi-location sales pitch before deciding. Two plans is a different thing
+ * from four: the student sees what they pay, and sees that bringing their
+ * instructor costs nobody anything.
  *
- * PRICING_TIERS itself is untouched and still holds all three: /enterprise
- * and /what-is-afterflight read the same data, and the CFI and school plans
- * are sold on their own pages. Filtering by id rather than slicing so a
- * reordering of the source array cannot silently change which plan a student
- * is shown.
+ * PRICING_TIERS itself is untouched and still holds all three -- /enterprise
+ * and /what-is-afterflight read the same data, and the school plan is sold on
+ * its own page. Filtered by id rather than sliced so a reordering of the
+ * source array cannot silently change which plans a student is shown.
  */
-const STUDENT_TIER = PRICING_TIERS.filter((t) => t.id === "pilot");
+const HOMEPAGE_TIERS = PRICING_TIERS.filter((t) => t.id === "pilot" || t.id === "cfi");
 import { cn } from "@/lib/utils";
 
 export function Pricing() {
@@ -38,8 +38,8 @@ export function Pricing() {
           </p>
         </Reveal>
 
-        <div className="mx-auto mt-14 max-w-md">
-          {STUDENT_TIER.map((tier, i) => (
+        <div className="mx-auto mt-14 grid max-w-3xl gap-8 md:grid-cols-2">
+          {HOMEPAGE_TIERS.map((tier, i) => (
             <Reveal key={tier.id} delay={i * 100}>
               <div
                 className={cn(
