@@ -179,8 +179,15 @@ export function MarketingNav() {
           {/* One secondary control, not two. Two triggers sitting side by side
               still read as a second row of navigation; a single More collapses
               the whole tier to one word, and the groups become headings inside
-              the panel where they cost nothing in the header. */}
-          <div ref={menuRef} className="relative text-sm font-medium text-[#68717D]">
+              the panel where they cost nothing in the header.
+
+              Same size and weight as the primary links, differing only in
+              color. At 14px it read as accidentally smaller rather than
+              deliberately secondary; hierarchy here is gray against ink, plus
+              the divider and the chevron, which is enough. (A "+" was
+              considered and rejected -- it means "add" in almost every other
+              product, and this opens a menu.) */}
+          <div ref={menuRef} className="relative text-[15px] font-semibold text-[#68717D]">
             <button
               type="button"
               aria-expanded={openGroup === "more"}
