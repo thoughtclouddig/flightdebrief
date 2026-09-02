@@ -51,7 +51,7 @@ export function TrainingEconomics() {
             column, which reads worse than the size gain is worth. */}
         <div className="grid grid-cols-1 items-start gap-x-14 gap-y-12 lg:grid-cols-2">
           <Reveal>
-            <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Make Every Training Hour Count</p>
+            <p className="whitespace-nowrap text-xs font-bold uppercase tracking-[0.16em] text-brand">Every training hour counts</p>
             <h2 className="font-display mt-3 text-balance text-3xl font-bold leading-[1.1] text-[#101727] sm:text-4xl">
               Flight training is too expensive to keep{" "}
               <span className="text-brand">relearning the same lesson.</span>

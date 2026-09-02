@@ -125,6 +125,39 @@ const MEASURE = `(minRatio, looseRatio) => {
       });
     }
   }
+  /*
+   * Eyebrows, checked separately because the orphan rule cannot see them.
+   *
+   * That rule skips anything under four words and anything on one line, which
+   * is most eyebrows -- "Debrief replay" is two words, and the failure mode is
+   * not a ragged last line but the label breaking in half at all. A tracked
+   * run of capitals is a label, and a label that wraps reads as a mistake
+   * rather than as typography, so any wrap is a failure regardless of ratio.
+   *
+   * Identified by rendering, not by class name: uppercase, real letter-spacing
+   * and small type. That catches every eyebrow on the site without depending
+   * on which of several components happened to draw it.
+   */
+  for (const el of document.querySelectorAll("p, span, dt, figcaption, h1, h2, h3, h4, h5, h6")) {
+    const cs = getComputedStyle(el);
+    if (cs.textTransform !== "uppercase") continue;
+    if (parseFloat(cs.letterSpacing) < 1) continue;
+    if (parseFloat(cs.fontSize) > 18) continue;
+    const text = el.textContent.trim();
+    if (text.length < 3) continue;
+    // A parent whose child is the real label would double-report it.
+    if ([...el.children].some((c) => getComputedStyle(c).textTransform === "uppercase")) continue;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) continue;
+    const ls = lines(el);
+    if (ls.length < 2) continue;
+    found.push({
+      text: text.slice(0, 80), lines: ls.length, lastWords: 0,
+      tag: el.tagName.toLowerCase(), cls: el.getAttribute("class") ?? "", align: cs.textAlign,
+      last: ls[ls.length - 1].text, pct: 0, fault: "eyebrow",
+    });
+  }
+
   return found;
 }`;
 
@@ -156,16 +189,22 @@ for (const path of PATHS) {
     for (const f of found) {
       failures++;
       if (JSON_OUT) { console.log(JSON.stringify({ path, width, ...f })); continue; }
-      console.log(`${path} @${width}px  ${f.fault.toUpperCase()}  last line "${f.last}" — ${f.pct}% of the widest, ${f.lines} lines`);
-      console.log(`    ${f.text}${f.text.length >= 90 ? "..." : ""}\n`);
+      if (f.fault === "eyebrow") {
+        console.log(`${path} @${width}px  EYEBROW WRAPS onto ${f.lines} lines`);
+        console.log(`    ${f.text}${f.text.length >= 90 ? "..." : ""}\n`);
+      } else {
+        console.log(`${path} @${width}px  ${f.fault.toUpperCase()}  last line "${f.last}" — ${f.pct}% of the widest, ${f.lines} lines`);
+        console.log(`    ${f.text}${f.text.length >= 90 ? "..." : ""}\n`);
+      }
     }
   }
 }
 
 await browser.close();
 if (failures) {
-  console.log(`${failures} unbalanced block${failures === 1 ? "" : "s"}. No single-word last lines, and no last line under ${RATIO * 100}% of the widest.`);
+  console.log(`${failures} problem${failures === 1 ? "" : "s"}. No single-word last lines, no last line under ${RATIO * 100}% of the widest, and no eyebrow on more than one line.`);
   console.log("Fix by rewording, adjusting the measure (max-w-*), or splitting the block into spans.");
+  console.log("Eyebrows: shorten the label, or give it whitespace-nowrap once it is short enough to hold.");
   process.exit(1);
 }
-console.log(`No orphans or stubs across ${PATHS.length} page(s) at ${WIDTHS.join(", ")}px.`);
+console.log(`No orphans, stubs or wrapped eyebrows across ${PATHS.length} page(s) at ${WIDTHS.join(", ")}px.`);

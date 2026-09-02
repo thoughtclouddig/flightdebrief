@@ -137,7 +137,7 @@ export function VectorDemo() {
       <div className="mt-8 min-h-[430px]" aria-live="polite">
         {phase === "prompts" ? (
           <>
-            <p className="text-balance text-xs font-bold uppercase tracking-[0.14em] text-[#9da7b8]">Ask about your own training</p>
+            <p className="whitespace-nowrap text-xs font-bold uppercase tracking-[0.1em] text-[#9da7b8]">Ask about your flying</p>
             <ul className="mt-4 flex flex-col gap-2.5">
               {ANSWERS.map((a, i) => (
                 <li key={a.prompt}>

@@ -35,6 +35,13 @@ to even the lines out — correct for a short centered headline, wrong for a
 paragraph, which then stops filling its column and rags differently from the
 paragraph above it. Body copy and list items use `text-pretty`.
 
+**Eyebrows are always one line.** A tracked run of capitals is a label, and a
+label that breaks in half reads as a mistake rather than as typography. Fix it
+by shortening the words first; add `whitespace-nowrap` only once the label is
+short enough to actually hold at 375. `text-xs` is **15px** here, not 12 (see
+`--text-xs` in `app/globals.css`), so a label is about a quarter wider than the
+class name suggests -- measure, do not estimate.
+
 ```bash
 npm run dev          # in another shell
 npm run check:copy   # measures every text block at 375 / 768 / 1024 / 1440

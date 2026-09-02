@@ -12,8 +12,11 @@ export function FinalCta() {
           <p className="font-display text-balance text-lg italic leading-snug text-white/70 sm:text-xl">
             &ldquo;After four decades of flying, I still [debrief] after every flight.&rdquo;
           </p>
-          <p className="text-balance mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
-            William E. Dubois <span className="font-normal normal-case text-white/35">&mdash; Pilot, Instructor &amp; FAA Safety Team Representative</span>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
+            <span className="block whitespace-nowrap">William E. Dubois</span>
+            <span className="mt-1 block text-pretty font-normal normal-case tracking-normal text-white/35">
+              Pilot, Instructor &amp; FAA Safety Team Representative
+            </span>
           </p>
         </Reveal>
 

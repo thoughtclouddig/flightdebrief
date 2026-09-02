@@ -22,7 +22,11 @@ export function PhotoVisual({ src, alt, label }: { src: string; alt: string; lab
     <Visual>
       <Image src={src} alt={alt} fill className="object-cover" sizes="(min-width: 1024px) 420px, (min-width: 640px) 320px, 100vw" />
       {label ? (
-        <p className="absolute bottom-0 left-0 max-w-full rounded-tr-lg bg-brand px-4 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-white">
+        /* nowrap: this is the mobile path for the How It Works steps -- the
+           carousel above is hidden below md -- and "Step 4: Get Checkride
+           Ready" broke in half inside the chip. A label that wraps reads as a
+           mistake rather than as typography. */
+        <p className="absolute bottom-0 left-0 max-w-full whitespace-nowrap rounded-tr-lg bg-brand px-4 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-white">
           {label}
         </p>
       ) : null}

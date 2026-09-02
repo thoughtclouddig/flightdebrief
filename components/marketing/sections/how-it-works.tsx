@@ -218,7 +218,7 @@ export function HowItWorks() {
                   >
                     {String(i + 1).padStart(2, "0")}
                   </div>
-                  <span className="relative z-[1] inline-flex w-fit items-center gap-2 self-start rounded-full bg-brand px-3 py-[7px] text-xs font-extrabold tracking-[0.12em] text-white uppercase">
+                  <span className="relative z-[1] inline-flex w-fit items-center gap-2 self-start whitespace-nowrap rounded-full bg-brand px-3 py-[7px] text-xs font-extrabold tracking-[0.12em] text-white uppercase">
                     Step {i + 1}: {card.label}
                   </span>
                   {/*

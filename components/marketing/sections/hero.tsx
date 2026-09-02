@@ -108,7 +108,8 @@ export function Hero() {
             <span className="block text-brand">with confidence.</span>
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#414B57]">
-            After every lesson, you get one page telling you what to work on before you fly again.
+            Your instructor&rsquo;s debrief becomes one page telling you what to work on before you fly again.
+            Built from what they actually said, not a syllabus.
           </p>
 
           {/* Grid, not flex-wrap. Wrapping packed each row by content width, so
