@@ -81,7 +81,10 @@ export function Hero() {
             next &mdash; so you show up prepared, avoid relearning, and build proficiency faster.
           </p>
 
-          <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+          {/* Grid, not flex-wrap. Wrapping packed each row by content width, so
+              the second column began wherever the first item happened to end
+              and none of the four lined up. Two even columns align them. */}
+          <ul className="mt-6 grid max-w-lg grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-2">
             {BENEFITS.map((benefit) => (
               <li key={benefit} className="flex items-center gap-1.5 text-sm font-medium text-[#101727]">
                 <CheckCircle2 className="size-4 shrink-0 text-brand" />

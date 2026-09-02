@@ -30,7 +30,7 @@ function RevealUp({ children, className, delay = 0 }: { children: ReactNode; cla
 
 export function Proof() {
   return (
-    <section className="bg-white px-6 py-28 sm:py-40">
+    <section className="bg-white px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-3xl text-center">
         <RevealUp>
           <p className="text-balance text-base font-bold uppercase tracking-[0.16em] text-brand sm:text-lg">The Proof</p>

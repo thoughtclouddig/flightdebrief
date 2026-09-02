@@ -46,7 +46,7 @@ import { cn } from "@/lib/utils";
 
 export function Pricing() {
   return (
-    <section id="pricing" className="relative bg-[#f4f5f6] px-6 py-28 sm:py-36">
+    <section id="pricing" className="relative bg-[#f4f5f6] px-6 py-24 sm:py-32">
       <SectionViewEvent event="view_pricing" />
       <div className="mx-auto max-w-[1320px]">
         <Reveal className="text-center">

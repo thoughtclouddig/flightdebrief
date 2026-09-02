@@ -27,17 +27,26 @@ import { TrainingCostCalculator } from "@/components/marketing/training-cost-cal
 export function TrainingEconomics() {
   return (
     <>
-    <section id="training-economics" className="bg-white px-6 py-28 sm:py-36">
+    <section id="training-economics" className="bg-white px-6 py-24 sm:py-32">
       <div className="mx-auto max-w-[1320px]">
         {/* Equal columns. A first attempt gave the calculator 1.15fr against
             0.85fr, which cramped the headline into four lines and made the
             calculator read as an oversized slab rather than a denser one. The
             weight problem was never the column width -- it was the double
-            container below. */}
-        <div className="grid grid-cols-1 items-center gap-x-14 gap-y-12 lg:grid-cols-2">
+            container below.
+
+            items-start, not items-center. Centring left the shorter column
+            floating against the middle of the calculator card, so the headline
+            began about 110px below the card's top edge and the two sides read
+            as unrelated blocks rather than a pair.
+
+            The headline stays at text-4xl. Pushing it to 2.6rem to "match" the
+            calculator's weight made it wrap to three lines in a half-width
+            column, which reads worse than the size gain is worth. */}
+        <div className="grid grid-cols-1 items-start gap-x-14 gap-y-12 lg:grid-cols-2">
           <Reveal>
             <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Make Every Training Hour Count</p>
-            <h2 className="font-display mt-3 text-balance text-3xl font-bold leading-tight text-[#101727] sm:text-4xl">
+            <h2 className="font-display mt-3 text-balance text-3xl font-bold leading-[1.1] text-[#101727] sm:text-4xl">
               Flight training is too expensive to keep{" "}
               <span className="text-brand">relearning the same lesson.</span>
             </h2>
