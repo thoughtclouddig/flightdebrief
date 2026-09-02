@@ -101,14 +101,27 @@ export default function MarketingHomePage() {
           importing them, so nothing else has to change back. */}
       <DebriefStage />
       {/* <PerceptionGap /> <DebriefReplay /> <VectorSection /> */}
+      {/* The evidence for the claim the Debrief stage just made, and it sits
+          here because that is what it is about: the quote is an Air Force
+          instructor on structured debriefing, and Proof's own headline reads
+          "the proven power of structured debriefing". Both were sitting four
+          sections lower, between Progress and the calculator, where they
+          corroborated nothing adjacent and split the two sections that carry
+          the actual sell. They also work as release after a dense rail band --
+          a full-bleed quote and one enormous number, neither of which asks the
+          reader to study anything. */}
+      <DebriefDoctrine />
+      <Proof />
       {/* NEXT FLIGHT -- the plan first, then the preparation that serves it.
           Revert = restore the three lines below and drop this one. */}
       <NextFlightStage />
       {/* <NextFlight /> <PersonalizedTraining /> <Capabilities /> */}
-      {/* PROGRESS */}
+      {/* PROGRESS, then what progress is worth, then what it costs.
+          These two are the sell and they are now adjacent and in that order:
+          proficiency compounding, the hours and dollars that saves, the price.
+          The calculator keeps its full 1320px -- it is a two-column layout of
+          632px halves and does not survive being narrowed. */}
       <SkillProgress />
-      <DebriefDoctrine />
-      <Proof />
       <TrainingEconomics />
       <Pricing />
       <FinalCta />
