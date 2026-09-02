@@ -35,6 +35,12 @@ const PRIMARY_LINKS = [
  * pilot the site is addressed to three audiences and leaves them to work out
  * which one they are. These stay one interaction away rather than removed --
  * every one also keeps its footer link.
+ *
+ * Enterprise, Privacy and Terms are deliberately absent. Enterprise has its own
+ * sales path and does not belong in a student's overflow menu; Privacy and
+ * Terms are footer material, and putting them a click from the logo gives legal
+ * boilerplate the same standing as the product. All three keep their footer
+ * links and their routes are untouched.
  */
 const SECONDARY_GROUPS = [
   {
@@ -42,7 +48,6 @@ const SECONDARY_GROUPS = [
     links: [
       { href: "/instructors", label: "For Instructors" },
       { href: "/schools", label: "For Flight Schools" },
-      { href: "/enterprise", label: "Enterprise" },
     ],
   },
   {
@@ -51,8 +56,6 @@ const SECONDARY_GROUPS = [
       { href: "/demo", label: "Live Demo" },
       { href: "/what-is-afterflight", label: "What Is AfterFlight" },
       { href: "/field-notes", label: "Field Notes" },
-      { href: "/privacy", label: "Privacy" },
-      { href: "/terms", label: "Terms" },
     ],
   },
 ];
