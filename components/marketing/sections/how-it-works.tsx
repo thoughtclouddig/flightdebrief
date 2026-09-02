@@ -196,7 +196,7 @@ export function HowItWorks() {
                   slideRefs.current[i] = el;
                 }}
                 className={cn(
-                  "relative block aspect-[16/8.4] w-[min(90vw,1400px)] shrink-0 snap-center overflow-hidden rounded-[28px] bg-[#0d1420]",
+                  "relative block aspect-[16/8.4] w-[min(90vw,1400px)] shrink-0 snap-center overflow-hidden rounded-2xl bg-[#0d1420]",
                   "shadow-[0_30px_60px_-30px_rgba(16,23,39,0.35)] transition-opacity duration-300 ease-out",
                   i === active ? "opacity-100" : "opacity-[0.88]",
                 )}
@@ -211,7 +211,7 @@ export function HowItWorks() {
                   />
                 </div>
 
-                <div className="absolute bottom-7 left-7 z-[1] flex w-[min(520px,60%)] flex-col overflow-hidden rounded-[20px] border border-white/70 bg-white/[0.78] p-[20px_22px] shadow-[0_20px_40px_-20px_rgba(16,23,39,0.45)] backdrop-blur-[18px]">
+                <div className="absolute bottom-7 left-7 z-[1] flex w-[min(520px,60%)] flex-col overflow-hidden rounded-xl border border-white/70 bg-white/[0.78] p-[20px_22px] shadow-[0_20px_40px_-20px_rgba(16,23,39,0.45)] backdrop-blur-[18px]">
                   <div
                     aria-hidden="true"
                     className="pointer-events-none absolute -right-2 -bottom-5 text-[90px] leading-none font-extrabold tracking-[-0.04em] text-[#101727] opacity-[0.05] select-none"

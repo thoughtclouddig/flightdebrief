@@ -158,8 +158,16 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
                 />
               </Link>
               <p className="mt-4 text-pretty text-[#56636f]">
-                AfterFlight captures the post-flight debrief and turns it into a structured plan for the next
-                lesson&mdash;for students, CFIs, and flight schools.
+                AfterFlight turns every flight into a personalized plan for what to review, practice, and focus
+                on next&mdash;so you show up prepared and make every lesson count.
+              </p>
+              {/* Quieter, and deliberately second. The old blurb led with the
+                  mechanism ("captures the post-flight debrief") and gave
+                  students, CFIs and schools equal billing; the page is
+                  student-first now and the footer should not revert to the
+                  older product description. */}
+              <p className="mt-2 text-sm text-[#8c97a2]">
+                Built for student pilots. Better continuity for CFIs and flight schools.
               </p>
             </div>
 

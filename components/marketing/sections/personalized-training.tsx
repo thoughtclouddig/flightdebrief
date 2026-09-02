@@ -70,7 +70,7 @@ export function PersonalizedTraining() {
         />
 
         <Reveal delay={120} className="mx-auto mt-14 max-w-[820px]">
-          <div className="overflow-hidden rounded-[28px] border border-black/[0.07] bg-white shadow-[0_24px_50px_-28px_rgba(16,23,39,0.22)]">
+          <div className="overflow-hidden rounded-2xl border border-black/[0.07] bg-white shadow-[0_24px_50px_-28px_rgba(16,23,39,0.22)]">
             <div className="border-b border-black/[0.07] px-7 py-7 sm:px-10">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Crosswind landings</p>
               <p className="font-display mt-1.5 text-balance text-2xl font-bold leading-tight text-[#101727] sm:text-3xl">

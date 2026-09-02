@@ -3,7 +3,15 @@ import { CheckCircle2 } from "lucide-react";
 import { CtaLink } from "@/components/marketing/cta-link";
 import { DebriefSummaryMockupCard } from "@/components/marketing/product-mockups";
 
-const BENEFITS = ["Carry feedback forward", "Build proficiency faster", "Waste fewer flight hours"];
+// Four, not three. Three left an orphan on the second row of the 2-up grid;
+// four fills both rows and reads as a set. "Show up prepared" is the existing
+// hero promise restated as a benefit, not a new claim.
+const BENEFITS = [
+  "Carry feedback forward",
+  "Build proficiency faster",
+  "Show up prepared every lesson",
+  "Waste fewer flight hours",
+];
 
 export function Hero() {
   return (

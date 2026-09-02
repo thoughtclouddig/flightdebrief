@@ -56,7 +56,7 @@ export function NextFlightCard() {
 
   return (
     <div ref={ref} className="mx-auto mt-14 max-w-[720px]">
-      <div className="overflow-hidden rounded-[28px] border border-black/[0.06] bg-white shadow-[0_24px_50px_-24px_rgba(16,23,39,0.28)]">
+      <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_24px_50px_-24px_rgba(16,23,39,0.28)]">
         <div className="bg-[#142033] px-7 py-6 sm:px-9">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Your next flight</p>
           <p className="font-display mt-1.5 text-2xl font-bold text-white sm:text-3xl">

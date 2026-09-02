@@ -18,6 +18,29 @@ import { PRICING_TIERS } from "@/lib/marketing/pricing";
  * its own page. Filtered by id rather than sliced so a reordering of the
  * source array cannot silently change which plans a student is shown.
  */
+/**
+ * Renders a feature line, coloring a literal FREE in brand orange.
+ *
+ * Only the word, never the sentence -- "Your first 3 flights are FREE" needs
+ * the offer to catch the eye without the whole line shouting. Keyed off the
+ * uppercase spelling in the copy, so a tier that does not want the treatment
+ * simply writes "free".
+ */
+function Emphasized({ text }: { text: string }) {
+  const parts = text.split("FREE");
+  if (parts.length === 1) return <>{text}</>;
+  return (
+    <span>
+      {parts.map((part, i) => (
+        <span key={i}>
+          {i > 0 ? <span className="font-bold text-brand">FREE</span> : null}
+          {part}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 const HOMEPAGE_TIERS = PRICING_TIERS.filter((t) => t.id === "pilot" || t.id === "cfi" || t.id === "school-core");
 import { cn } from "@/lib/utils";
 
@@ -72,7 +95,7 @@ export function Pricing() {
                       <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-brand/10">
                         <Check className="size-3.5 text-brand" strokeWidth={3} />
                       </span>
-                      {feature}
+                      <Emphasized text={feature} />
                     </li>
                   ))}
                 </ul>

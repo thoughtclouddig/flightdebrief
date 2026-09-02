@@ -59,7 +59,7 @@ export function FlightRecordingPreview() {
         * avoid making.
         */}
       <Reveal delay={120}>
-        <div className="relative aspect-[4/3] overflow-hidden rounded-[28px] lg:aspect-[5/4]">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl lg:aspect-[5/4]">
           <Image
             src="/images/marketing/wing-view-sunset.webp"
             alt="The view over the wing of a light aircraft in cruise at sunset"

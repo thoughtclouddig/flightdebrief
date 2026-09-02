@@ -44,7 +44,7 @@ export function TrainingEconomics() {
           </Reveal>
 
           <Reveal delay={100}>
-            <div className="rounded-[28px] bg-[#f4f5f6] px-6 py-10 sm:px-8 sm:py-10">
+            <div className="rounded-2xl bg-[#f4f5f6] px-6 py-10 sm:px-8 sm:py-10">
               <TrainingCostCalculator />
               {/* Part of the output, not fine print under it. The figure above
                   is the student's own arithmetic, and saying so is what keeps

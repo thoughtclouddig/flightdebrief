@@ -111,7 +111,7 @@ export function VectorDemo() {
   }
 
   return (
-    <div className="overflow-hidden rounded-[28px] bg-[#142033] p-7 shadow-[0_30px_60px_-30px_rgba(16,23,39,0.45)] sm:p-9">
+    <div className="overflow-hidden rounded-2xl bg-[#142033] p-7 shadow-[0_30px_60px_-30px_rgba(16,23,39,0.45)] sm:p-9">
       <div className="flex items-center gap-2">
         <Sparkles className="size-5 text-brand" aria-hidden />
         <p className="text-lg font-bold tracking-tight text-white">Vector</p>

@@ -47,7 +47,7 @@ export function TrainingCostCalculator() {
   const total = safeRate * hours;
 
   return (
-    <div className="grid grid-cols-1 gap-7 rounded-[24px] border border-black/[0.06] bg-white px-7 py-8 sm:px-9 sm:py-9">
+    <div className="grid grid-cols-1 gap-7 rounded-2xl border border-black/[0.06] bg-white px-7 py-8 sm:px-9 sm:py-9">
       <div className="flex flex-col gap-7">
         <div>
           <label htmlFor={rateId} className="block text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">

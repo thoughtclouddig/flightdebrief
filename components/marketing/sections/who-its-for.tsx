@@ -48,7 +48,7 @@ export function WhoItsFor() {
         </Reveal>
 
         <Reveal delay={80} className="mx-auto mt-14 max-w-[900px]">
-          <div className="rounded-[28px] bg-[#142033] px-8 py-9 sm:px-12 sm:py-11">
+          <div className="rounded-2xl bg-[#142033] px-8 py-9 sm:px-12 sm:py-11">
             <PRIMARY.icon className="size-9 text-brand" strokeWidth={1.5} aria-hidden />
             <h3 className="font-display mt-5 text-balance text-3xl font-bold text-white sm:text-4xl">
               {PRIMARY.title}
@@ -67,7 +67,7 @@ export function WhoItsFor() {
         <div className="mx-auto mt-6 grid max-w-[900px] gap-6 sm:grid-cols-2">
           {SECONDARY.map((a, i) => (
             <Reveal key={a.title} delay={160 + i * 90}>
-              <div className="flex h-full flex-col items-start gap-3 rounded-[24px] border border-black/[0.07] bg-white px-7 py-7">
+              <div className="flex h-full flex-col items-start gap-3 rounded-2xl border border-black/[0.07] bg-white px-7 py-7">
                 <a.icon className="size-7 text-brand" strokeWidth={1.5} aria-hidden />
                 <h3 className="font-display text-xl font-bold text-[#101727]">{a.title}</h3>
                 <p className="text-pretty text-base leading-relaxed text-[#68717D]">{a.copy}</p>

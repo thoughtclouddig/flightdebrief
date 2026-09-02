@@ -52,10 +52,10 @@ export function Capabilities() {
       <div className="mx-auto max-w-[1100px]">
         <Reveal className="mx-auto max-w-2xl text-center">
           <p className="text-balance text-lg font-bold uppercase tracking-[0.16em] text-brand sm:text-xl">
-            More between your flights
+            Between your flights
           </p>
           <p className="font-display mt-3 text-balance text-3xl font-bold leading-[1.05] text-[#101727] sm:text-4xl">
-            Everything working between your flights.
+            Your next flight gets easier before you fly it.
           </p>
         </Reveal>
 

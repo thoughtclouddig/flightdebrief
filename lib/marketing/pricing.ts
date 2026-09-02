@@ -54,7 +54,7 @@ export const PRICING_TIERS: PricingTier[] = [
       "ACS-aligned feedback",
       "Custom checklists & goals",
       "Works on all devices",
-      "First 3 flights free",
+      "Your first 3 flights are FREE",
     ],
     cta: "Get Your First 3 Flights Free",
     signupHref: "/signup/student",

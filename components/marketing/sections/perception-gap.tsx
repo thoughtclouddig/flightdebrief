@@ -44,7 +44,7 @@ export function PerceptionGap() {
           </div>
 
           <Reveal delay={260} className="mt-5">
-            <div className="rounded-[24px] bg-[#142033] px-7 py-7 sm:px-9">
+            <div className="rounded-2xl bg-[#142033] px-7 py-7 sm:px-9">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Takeaway</p>
               <p className="font-display mt-2.5 text-balance text-xl font-bold leading-snug text-white sm:text-2xl">
                 You&rsquo;re making progress, but consistency is still the thing to work on before the next flight.
@@ -85,7 +85,7 @@ function View({
   alt: string;
 }) {
   return (
-    <figure className="flex h-full flex-col overflow-hidden rounded-[24px] bg-white">
+    <figure className="flex h-full flex-col overflow-hidden rounded-2xl bg-white">
       <div className="relative aspect-[16/10] w-full">
         <Image src={src} alt={alt} fill className="object-cover" sizes="(min-width: 640px) 430px, 100vw" />
       </div>

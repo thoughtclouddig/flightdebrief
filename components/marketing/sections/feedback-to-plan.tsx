@@ -61,12 +61,12 @@ export function FeedbackToPlan() {
 
         <Reveal delay={150} className="mx-auto mt-16 max-w-2xl">
           {/* iPad-style device frame: aluminum bezel + camera dot around the card, so the thread reads as a real on-device screen. */}
-          <div className="rounded-[40px] bg-gradient-to-b from-[#e4e5e8] to-[#d3d5d9] p-3 shadow-[0_1px_2px_rgba(16,23,39,0.04),0_24px_60px_-20px_rgba(16,23,39,0.16)] ring-1 ring-black/[0.08] sm:p-4">
+          <div className="rounded-3xl bg-gradient-to-b from-[#e4e5e8] to-[#d3d5d9] p-3 shadow-[0_1px_2px_rgba(16,23,39,0.04),0_24px_60px_-20px_rgba(16,23,39,0.16)] ring-1 ring-black/[0.08] sm:p-4">
             <div className="flex justify-center py-2">
               <span className="size-1.5 rounded-full bg-black/25" />
             </div>
 
-            <div className="rounded-[26px] bg-white p-5 ring-1 ring-black/[0.05] sm:p-10">
+            <div className="rounded-2xl bg-white p-5 ring-1 ring-black/[0.05] sm:p-10">
               <p className="text-balance mb-6 text-xs font-bold uppercase tracking-[0.14em] text-brand">
                 Today&rsquo;s Flight &middot; Steep Turns
               </p>
