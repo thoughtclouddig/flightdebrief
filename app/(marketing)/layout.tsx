@@ -142,7 +142,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
     <div className="bg-white font-medium" style={LIGHT_SCOPE_STYLE}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />
       <ReferralTracker />
-      <MarketingNav />
+      <MarketingNav contentPublic={isContentPublic()} />
       {children}
       <footer id="resources" className="border-t border-slate-200 bg-white px-6 pb-8 pt-16 text-sm">
         <div className="mx-auto max-w-[1320px]">

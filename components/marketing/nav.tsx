@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, Plus, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 /**
  * The nav IS the process.
@@ -87,7 +87,21 @@ const SECONDARY_GROUPS = [
   },
 ];
 
-export function MarketingNav() {
+export function MarketingNav({ contentPublic = true }: { contentPublic?: boolean }) {
+  /*
+   * Field Notes is behind CONTENT_PUBLIC, and this component cannot read it:
+   * it is "use client", so process.env.CONTENT_PUBLIC is not there at runtime.
+   * The flag is computed in the server layout and handed down, the same way
+   * that layout already gates the footer's content column.
+   *
+   * This mattered the moment Field Notes was promoted out of the More menu.
+   * lib/content/visibility.ts says the flag "covers every way the content can
+   * be discovered, not just the pages" -- and with the link hardcoded into the
+   * primary row, any environment without the flag showed a nav item that
+   * 404s, because every page under /field-notes calls notFound(). Production
+   * has the flag so it was fine there; dev does not, which is where it showed.
+   */
+  const primaryLinks = contentPublic ? PRIMARY_LINKS : PRIMARY_LINKS.filter((l) => l.href !== "/field-notes");
   const [open, setOpen] = useState(false);
   // One open-at-a-time: opening either secondary menu closes the other.
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -192,8 +206,8 @@ export function MarketingNav() {
           {/* Primary: ink, semibold, generous spacing. Secondary sits after a
               divider in lighter gray at a smaller size, so the four read as the
               header and the rest reads as the overflow. */}
-          <div className="flex items-center gap-7 text-[17px] font-semibold text-[#101727]">
-            {PRIMARY_LINKS.map((link) => (
+          <div className="flex items-center gap-6 text-[15px] font-semibold uppercase tracking-[0.06em] text-[#101727]">
+            {primaryLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -204,63 +218,18 @@ export function MarketingNav() {
             ))}
           </div>
 
-          <span className="mx-6 h-5 w-px bg-slate-200" aria-hidden />
-
-          {/* One secondary control, not two. Two triggers sitting side by side
-              still read as a second row of navigation; a single More collapses
-              the whole tier to one word, and the groups become headings inside
-              the panel where they cost nothing in the header.
-
-              Same size and weight as the primary links, differing only in
-              color. At 14px it read as accidentally smaller rather than
-              deliberately secondary; hierarchy here is gray against ink, plus
-              the divider and the chevron, which is enough. (A "+" was
-              considered and rejected -- it means "add" in almost every other
-              product, and this opens a menu.) */}
-          <div ref={menuRef} className="relative text-[17px] font-semibold text-[#101727]">
-            <button
-              type="button"
-              aria-expanded={openGroup === "more"}
-              aria-haspopup="true"
-              aria-label="More"
-              onClick={() => setOpenGroup((v) => (v === "more" ? null : "more"))}
-              className={
-                // Same box metrics as the primary links, not just the same
-                // type: they carry border-b-2 + pb-0.5, and without it this
-                // button's baseline sat lower than theirs in the flex row.
-                "flex size-9 cursor-pointer items-center justify-center rounded-lg transition-colors hover:bg-[#f4f5f6] " +
-                (openGroup === "more" ? "bg-[#f4f5f6]" : "")
-              }
-            >
-              <Plus
-                className={"size-5 transition-transform duration-200 " + (openGroup === "more" ? "rotate-45" : "")}
-                aria-hidden
-              />
-            </button>
-
-            {openGroup === "more" ? (
-              <div className="absolute right-0 top-full z-50 mt-3 w-60 overflow-hidden rounded-lg border border-slate-200 bg-white py-2 shadow-lg">
-                {SECONDARY_GROUPS.map((group, i) => (
-                  <div key={group.label} className={i > 0 ? "mt-1 border-t border-slate-100 pt-1" : undefined}>
-                    <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#4E5A67]">
-                      {group.label}
-                    </p>
-                    {group.links.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setOpenGroup(null)}
-                        aria-current={pathname === link.href ? "page" : undefined}
-                        className="flex min-h-[40px] items-center px-4 text-[15px] font-medium text-[#101727] hover:bg-[#f4f5f6]"
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
+          {/* The secondary menu is gone from the desktop header.
+              
+              It was a dropdown with two group headings, a divider and a
+              rotating icon, holding three links -- For Instructors, For Flight
+              Schools, What Is AfterFlight -- every one of which is already in
+              the footer. That is a lot of machinery to duplicate three links,
+              and once the primary row went to caps the trigger read worse
+              still: a symbol sitting among words.
+              
+              SECONDARY_GROUPS is kept and still renders in the mobile drawer,
+              which is a full-height menu with room for a secondary tier and is
+              where people expect to find everything. Nothing lost a home. */}
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-4 lg:gap-5">
@@ -302,12 +271,12 @@ export function MarketingNav() {
                   secondary groups under their own labels at a smaller size in
                   gray. Flattening everything into one list would make "Terms"
                   a peer of "Pricing". */}
-              {PRIMARY_LINKS.map((link) => (
+              {primaryLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className="flex min-h-[56px] items-center border-b border-slate-100 border-l-2 border-l-transparent pl-3 text-[17px] font-bold text-[#101727]"
+                  className="flex min-h-[56px] items-center border-b border-slate-100 border-l-2 border-l-transparent pl-3 text-[17px] font-bold uppercase tracking-[0.05em] text-[#101727]"
                 >
                   {link.label}
                 </Link>
