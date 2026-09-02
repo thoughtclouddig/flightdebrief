@@ -110,10 +110,10 @@ export function SkillProgress() {
                 * floating in it, and a smaller radius, because the softness
                 * was doing most of the genericness.
                 */}
-              <article className={`flex h-full flex-col overflow-hidden rounded-lg border border-black/[0.09] border-t-[3px] bg-white ${s.edge}`}>
+              <article className={`flex h-full flex-col overflow-hidden rounded-lg border border-black/[0.09] border-t-4 bg-white ${s.edge}`}>
                 <div className="flex flex-1 flex-col px-7 py-6 sm:px-8">
-                <h3 className="font-display text-xl font-bold leading-snug text-[#101727]">{s.skill}</h3>
-                <p className={`mt-1.5 text-[13px] font-bold uppercase tracking-[0.1em] ${s.tone}`}>{s.state}</p>
+                <h3 className="font-display text-2xl font-bold leading-tight text-[#101727]">{s.skill}</h3>
+                <p className={`mt-2 text-[14px] font-bold uppercase tracking-[0.08em] ${s.tone}`}>{s.state}</p>
 
                 {/* Square ticks, not rounded pills. Four positions on a fixed
                     scale reads as an instrument; four lozenges reads as a
@@ -127,7 +127,7 @@ export function SkillProgress() {
                   {[0, 1, 2, 3].map((n) => (
                     <span
                       key={n}
-                      className={`h-1.5 w-7 rounded-[1px] ${n < s.score ? s.fill : "bg-[#c7ccd1]"}`}
+                      className={`h-2 w-8 rounded-[1px] ${n < s.score ? s.fill : "bg-[#d3d7db]"}`}
                     />
                   ))}
                 </span>
