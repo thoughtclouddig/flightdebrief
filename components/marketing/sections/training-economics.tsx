@@ -28,7 +28,13 @@ export function TrainingEconomics() {
   return (
     <>
     <section id="training-economics" className="bg-white px-6 py-24 sm:py-32">
-      <div className="mx-auto max-w-[1320px]">
+      {/* 1180, not 1320. At 1320 this was the widest container on the page by
+          140px and the copy ran almost to the window edge at common laptop
+          widths, so the section read as unbounded next to everything above it.
+          The halves are ~562px here, which the calculator is comfortable in --
+          the width that actually breaks it is a stage band's 870px column,
+          which is why it is not in one. */}
+      <div className="mx-auto max-w-[1180px]">
         {/* Equal columns. A first attempt gave the calculator 1.15fr against
             0.85fr, which cramped the headline into four lines and made the
             calculator read as an oversized slab rather than a denser one. The

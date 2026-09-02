@@ -77,14 +77,26 @@ export function Capabilities() {
  * stage can render them under its own module head. Exported rather than
  * duplicated -- one definition of the capability set, not two.
  */
-export function CapabilityCards({ className }: { className?: string }) {
+export function CapabilityCards({
+  className,
+  columns = 4,
+}: {
+  className?: string;
+  /**
+   * Four across needs the full-width section. Inside a stage band the content
+   * column is 870px, which gives each of four cards about 197px -- narrower
+   * than the "Instructor Continuity" label needs and too tight for the
+   * illustration above it. Two across gives them ~425px each.
+   */
+  columns?: 2 | 4;
+}) {
   return (
         <Reveal delay={150} className={cn(className)}>
           {/* Four across at xl, not lg. "Instructor Continuity" needs 249px and a
             quarter of this container at a 1024px viewport is about 214px --
             less once card padding is taken out -- so below xl it goes two-up
             rather than wrapping the label. */}
-          <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          <dl className={cn("grid grid-cols-1 gap-6 sm:grid-cols-2", columns === 4 && "xl:grid-cols-4")}>
             {CAPABILITIES.map((c) => (
               <div
                 key={c.title}

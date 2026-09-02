@@ -28,6 +28,13 @@ import { StageRail } from "@/components/marketing/stage-rail";
  *    abstractions. Showing the artifact and then explaining the machinery
  *    behind it beats four abstractions followed by the reveal.
  *
+ * Module bodies align to the LEFT edge of the content column, not to its
+ * center. Both cards carry mx-auto and a max-width narrower than the column --
+ * 720px and 820px against 870px -- which centered them under a left-aligned
+ * head and read as a misalignment rather than as centering. They fill the
+ * column here; the standalone sections keep their own centering, since there
+ * the max-width is doing real work against a 1100px container.
+ *
  * The argument that DID die: the nav anchor. #next-flight had to lead the
  * stage while Next Flight was a primary nav item, or the link would skip the
  * preparation. The nav is now How It Works / Demo / Field Notes / Pricing and
@@ -68,7 +75,7 @@ export function NextFlightStage() {
               headline="Your next flight starts where your last one left off."
               body="Instead of showing up trying to remember where the last lesson ended, you arrive knowing what to focus on. Built from the flight you just flew — not from a syllabus template."
             >
-              <NextFlightCard />
+              <NextFlightCard className="mx-0 mt-0 max-w-none" />
             </StageModule>
 
             {/* Tighter, because this explains the card above it. */}
@@ -83,7 +90,7 @@ export function NextFlightStage() {
               }
               body="AfterFlight turns the weak areas from your actual flight into short training sessions, flight-specific questions, and cues you can carry into the cockpit next time."
             >
-              <PersonalizedTrainingCard />
+              <PersonalizedTrainingCard className="mx-0 max-w-none" />
             </StageModule>
 
             {/* Wider, because this changes the subject from one skill to the
@@ -95,7 +102,7 @@ export function NextFlightStage() {
               headline="Your next flight gets easier before you fly it."
               body="The days between lessons are the cheapest training time you have. These are the four things AfterFlight gives you to spend them on."
             >
-              <CapabilityCards />
+              <CapabilityCards columns={2} />
             </StageModule>
           </div>
         </div>

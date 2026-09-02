@@ -38,7 +38,7 @@ const STEP_POINTER = 5;
 const STEP_PRESSED = 6;
 const STEP_OPENED = 7;
 
-export function NextFlightCard() {
+export function NextFlightCard({ className }: { className?: string } = {}) {
   const { ref, inView } = useInView<HTMLDivElement>();
   const [step, setStep] = useState(-1);
 
@@ -55,7 +55,7 @@ export function NextFlightCard() {
   const built = step >= BLOCK_COUNT;
 
   return (
-    <div ref={ref} className="mx-auto mt-14 max-w-[720px]">
+    <div ref={ref} className={cn("mx-auto mt-14 max-w-[720px]", className)}>
       <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_24px_50px_-24px_rgba(16,23,39,0.28)]">
         <div className="bg-[#142033] px-7 py-6 sm:px-9">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Your next flight</p>

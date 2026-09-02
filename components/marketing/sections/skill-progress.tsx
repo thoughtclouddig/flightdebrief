@@ -14,35 +14,43 @@ import { SectionHead } from "@/components/marketing/section-head";
  * scoring is allowed when it is sourced, explainable and tied to specific
  * training evidence; overall readiness verdicts are not.
  */
+/*
+ * Ordered along the scale, worst to best.
+ *
+ * These were Improving, Needs Work, Meets Standard -- which is no order at
+ * all, so three cards that ARE one progression read as three arbitrary
+ * examples. Left to right they now walk the scale the paragraph above names,
+ * and the section stops needing to explain that they belong together.
+ */
 const SKILLS = [
-  {
-    skill: "Crosswind Landing",
-    score: 3,
-    state: "Improving",
-    chip: "bg-[#2c6c93]/10",
-    tone: "text-[#2c6c93]",
-    fill: "bg-[#2c6c93]",
-    why: "Jake said centerline control improved, but correction is still being relaxed through touchdown.",
-    next: "Review crosswind correction with Vector before your next flight.",
-  },
   {
     skill: "Stabilized Approach",
     score: 2,
     state: "Needs Work",
-    chip: "bg-[#9a6612]/10",
     tone: "text-[#9a6612]",
     fill: "bg-[#9a6612]",
+    edge: "border-t-[#9a6612]",
     why: "Fast on two of four approaches, and fixing the speed late rather than configuring earlier.",
     next: "Three-minute review, then a chair-fly of the pattern.",
+  },
+  {
+    skill: "Crosswind Landing",
+    score: 3,
+    state: "Improving",
+    tone: "text-[#2c6c93]",
+    fill: "bg-[#2c6c93]",
+    edge: "border-t-[#2c6c93]",
+    why: "Jake said centerline control improved, but correction is still being relaxed through touchdown.",
+    next: "Review crosswind correction with Vector before your next flight.",
   },
   {
     skill: "Short-Field Landing",
     score: 4,
     state: "Meets Standard",
-    chip: "bg-[#1f7a4c]/10",
     tone: "text-[#1f7a4c]",
     fill: "bg-[#1f7a4c]",
-    why: "Aiming point hit on three of four. Jake didn't leave this one open.",
+    edge: "border-t-[#1f7a4c]",
+    why: "Aiming point hit on three of four. Jake didn\u2019t leave this one open.",
     next: "Nothing before Thursday. Keep it warm.",
   },
 ] as const;
@@ -81,7 +89,7 @@ export function SkillProgress() {
         {/* Three across, not stacked. As a vertical list of three full-width
             cards the section was mostly scrolling -- and the three skills are
             a set to compare, not a sequence to read in order. */}
-        <div className="mx-auto mt-8 grid max-w-[1180px] gap-6 lg:grid-cols-3">
+        <div className="mt-8 grid gap-6 lg:grid-cols-3">
           {SKILLS.map((s, i) => (
             <Reveal key={s.skill} delay={100 + i * 90} className="h-full">
               {/* h-full on both the Reveal and the article. The grid stretches its
@@ -89,43 +97,44 @@ export function SkillProgress() {
                   article inside it sized to its own content, so three cards
                   with different amounts of evidence ended at three different
                   heights. */}
-              <article className="flex h-full flex-col rounded-2xl border border-black/[0.06] bg-[#f4f5f6] px-7 py-7 sm:px-9">
-                {/* Stacked inside the card too. Title, meter and state sat on
-                    one justified row when the card was 760px wide; in a third
-                    of that they collide. */}
-                <h3 className="font-display text-xl font-bold text-[#101727]">{s.skill}</h3>
-                {/* State above its meter, not beside it. Side by side needs
-                    about 282px -- 110px of meter plus a "Meets Standard" chip
-                    -- against roughly 280px of content width in a third-width
-                    card, so the longest label was being clipped. */}
-                <div className="mt-3 flex flex-col items-start gap-2.5">
-                  <div className="flex flex-col items-start gap-2.5">
-                    {/* Four segments rather than "3/4": the level is read in one
-                        glance, and the number survives for screen readers. */}
-                    <span className="flex items-center gap-1" role="img" aria-label={`${s.state}, ${s.score} of 4`}>
-                      {[0, 1, 2, 3].map((n) => (
-                        <span
-                          key={n}
-                          className={`h-2.5 w-6 rounded-full ${n < s.score ? s.fill : "bg-[#c7ccd1]"}`}
-                        />
-                      ))}
-                    </span>
-                    {/* The state is the product's actual model, so it reads as
-                        a state and not as a caption: a tinted chip carrying the
-                        same color as its meter. Visible without becoming the
-                        loudest thing on the card -- the skill name still leads. */}
+              {/*
+                * Deliberately not a tinted pill on a soft gray box. That is
+                * the default SaaS card, and three of them side by side is the
+                * shape of a pricing table, not a training record.
+                *
+                * The state drives the card instead: a 3px rule in the state
+                * color across the top -- the same device the perception-gap
+                * cards use to separate two voices -- with the state named
+                * under the skill in its own color. White ground and a real
+                * hairline, so the card sits ON the section rather than
+                * floating in it, and a smaller radius, because the softness
+                * was doing most of the genericness.
+                */}
+              <article className={`flex h-full flex-col rounded-lg border border-black/[0.09] border-t-[3px] bg-white px-7 py-6 sm:px-8 ${s.edge}`}>
+                <h3 className="font-display text-xl font-bold leading-snug text-[#101727]">{s.skill}</h3>
+                <p className={`mt-1.5 text-[13px] font-bold uppercase tracking-[0.1em] ${s.tone}`}>{s.state}</p>
+
+                {/* Square ticks, not rounded pills. Four positions on a fixed
+                    scale reads as an instrument; four lozenges reads as a
+                    progress bar toward a total, which is the one thing this
+                    number is not. */}
+                <span
+                  className="mt-4 flex items-center gap-1.5"
+                  role="img"
+                  aria-label={`${s.state}, ${s.score} of 4`}
+                >
+                  {[0, 1, 2, 3].map((n) => (
                     <span
-                      className={`order-first rounded-md px-2.5 py-1 text-[13px] font-bold uppercase tracking-[0.06em] ${s.tone} ${s.chip}`}
-                    >
-                      {s.state}
-                    </span>
-                  </div>
-                </div>
+                      key={n}
+                      className={`h-1.5 w-7 rounded-[1px] ${n < s.score ? s.fill : "bg-[#c7ccd1]"}`}
+                    />
+                  ))}
+                </span>
 
                 <dl className="mt-6 flex flex-col gap-5">
                   <div>
                     <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Why</dt>
-                    <dd className="mt-2 text-pretty text-base italic leading-relaxed text-[#4b545d]">
+                    <dd className="mt-2 text-pretty text-base italic leading-relaxed text-[#414B57]">
                       &ldquo;{s.why}&rdquo;
                     </dd>
                   </div>
