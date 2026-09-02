@@ -63,19 +63,19 @@ export default function WhatIsAfterFlightPage() {
 
           <AnswerBlock
             question="How does it work?"
-            answer="Before the debrief, the CFI and student each rate the flight separately -- their own honest take, on their own. The CFI then records the structured debrief conversation, guided by where the two ratings agree and where they don't. AfterFlight turns that conversation into an organized summary and carries the relevant parts into a Next Flight brief before the following lesson."
+            answer="The CFI and student each rate the flight on their own. The CFI then records the debrief, guided by where those two ratings agree and where they do not."
           >
             <p>Nothing changes about how the lesson itself is flown or how the debrief conversation happens -- AfterFlight organizes what already gets said, it doesn&rsquo;t change it.</p>
           </AnswerBlock>
 
           <AnswerBlock
             question="What happens during a flight-training debrief?"
-            answer="Each side rates the flight independently first. Then the CFI leads the actual conversation, walking through what went well and what needs work, with AfterFlight surfacing where the student's and CFI's independent ratings agreed or diverged so the conversation can focus on what matters."
+            answer="Each side rates the flight first, on their own. The CFI then leads the conversation, and AfterFlight shows where those two ratings agreed and where they did not."
           />
 
           <AnswerBlock
             question="What does AfterFlight produce after a debrief?"
-            answer="A written summary (what went well, what needs work, direct instructor quotes, action items), an audio recap narrated by AfterFlight's Digital Debriefer, study resources linked to the relevant FAA Airman Certification Standards, and a Next Flight brief for the following lesson."
+            answer="A written summary, an audio recap, study material tied to the relevant ACS standards, and a brief for the lesson that follows."
           >
             <p>
               The audio recap is not a replay of the CFI&rsquo;s actual voice or the original conversation -- it&rsquo;s an
@@ -96,7 +96,7 @@ export default function WhatIsAfterFlightPage() {
 
           <AnswerBlock
             question="How does it help flight schools?"
-            answer="Schools get visibility into training progress and recurring gaps across every student and instructor -- which students may be falling behind, how consistently debriefs are happening, and where proficiency trends show up across the program, not just within one CFI's memory."
+            answer="Schools can see progress and recurring gaps across every student and instructor: who may be falling behind, how consistently debriefs happen, and which weak areas repeat across the whole program rather than inside one instructor's memory."
           />
 
           <AnswerBlock
@@ -116,7 +116,7 @@ export default function WhatIsAfterFlightPage() {
 
           <AnswerBlock
             question="What role does AI play?"
-            answer="AI organizes the debrief conversation into a structured summary, generates the audio recap, and connects feedback to relevant FAA Airman Certification Standards. It does not evaluate flight safety, certify proficiency, or originate new flight instruction -- it organizes and summarizes what the CFI actually said, and every summary is written to attribute guidance to the CFI, not to AfterFlight itself."
+            answer="AI writes up the debrief, makes the audio recap, and links feedback to the ACS. It does not judge safety, certify proficiency, or add instruction the CFI did not give."
           />
 
           <AnswerBlock
@@ -153,9 +153,8 @@ export default function WhatIsAfterFlightPage() {
           <div className="border-t border-hairline pt-8">
             <h2 className="font-display text-xl font-bold text-[#101727]">What AfterFlight is not</h2>
             <p className="mt-3 text-pretty leading-relaxed text-[#414B57]">
-              AfterFlight does not evaluate flight safety, certify proficiency, or replace a CFI&rsquo;s judgment. It
-              organizes and preserves what the CFI and student actually discussed -- it never originates new flight
-              instruction.
+              AfterFlight does not judge safety, certify proficiency, or replace a CFI&rsquo;s judgment. It keeps
+              what the two of you actually said, and never adds instruction of its own.
             </p>
           </div>
         </Reveal>

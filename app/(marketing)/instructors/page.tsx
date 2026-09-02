@@ -140,8 +140,8 @@ export default function InstructorsPage() {
             The CFI teaches. AfterFlight remembers.
           </h2>
           <p className="mt-5 text-pretty text-lg text-[#414B57] tracking-[0.01em]">
-            AfterFlight captures the post-flight conversation you&rsquo;re already having and organizes your
-            guidance into something useful &mdash; for the student, and for the next lesson.
+            AfterFlight takes the debrief you already give and turns it into something the student can use
+            before the next lesson.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 text-sm font-bold uppercase tracking-wide sm:flex-row">
             <span className="rounded-full bg-[#f4f5f6] px-4 py-2 text-[#101727]">Debrief</span>
@@ -204,8 +204,8 @@ export default function InstructorsPage() {
               Your guidance doesn&rsquo;t disappear when the student leaves.
             </h2>
             <p className="mt-5 text-pretty text-lg text-[#414B57] tracking-[0.01em]">
-              You&rsquo;re still the teacher. AfterFlight just helps the student actually use what you told them
-              &mdash; giving your instruction a life beyond the ten-minute conversation after landing.
+              You&rsquo;re still the teacher. AfterFlight only makes sure the student still has what you told
+              them a week later, when they are back in the airplane.
             </p>
           </Reveal>
 

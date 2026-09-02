@@ -29,8 +29,8 @@ const SCHEDULING_KNOWS = ["Student", "Instructor", "Aircraft", "Reservation", "T
 const AFTERFLIGHT_HELPS = ["What happened", "What the instructor saw", "What needs work", "What keeps recurring", "What happens next"] as const;
 
 const LEVELS = [
-  { icon: GraduationCap, title: "Student", copy: "Knows what to study and what comes next." },
-  { icon: Users, title: "CFI", copy: "Knows where the student left off." },
+  { icon: GraduationCap, title: "Student", copy: "Knows what to study next." },
+  { icon: Users, title: "CFI", copy: "Knows where the last lesson ended." },
   { icon: Eye, title: "School", copy: "Can see patterns across training." },
 ] as const;
 
@@ -98,15 +98,17 @@ export default function SchoolsPage() {
         <div className="mx-auto max-w-[1320px]">
           <Reveal className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-balance text-3xl font-bold text-[#101727] sm:text-4xl">
-              Scheduling software manages the flight.
-              <br />
-              AfterFlight preserves what was learned from it.
+              {/* No stated break. Each half is ~38 characters and the measure
+                  holds about 28 at this size, so BOTH halves wrapped and the
+                  forced break turned two lines into four with "learned." alone
+                  on the last. Wrapping naturally lands at 91% of the measure. */}
+              Scheduling software runs the flight. AfterFlight keeps what you learned from it.
             </h2>
           </Reveal>
 
           <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-2">
             <Reveal className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-8">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8c97a2]">Your Scheduling System Knows</p>
+              <p className="whitespace-nowrap text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Your scheduler knows</p>
               <ul className="mt-2 flex flex-col gap-2.5">
                 {SCHEDULING_KNOWS.map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-[15px] text-[#101727]">
@@ -118,7 +120,7 @@ export default function SchoolsPage() {
             </Reveal>
 
             <Reveal delay={100} className="flex flex-col gap-4 rounded-2xl border border-brand/30 bg-white p-8">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand">AfterFlight Helps You Understand</p>
+              <p className="whitespace-nowrap text-xs font-bold uppercase tracking-[0.14em] text-brand">AfterFlight knows</p>
               <ul className="mt-2 flex flex-col gap-2.5">
                 {AFTERFLIGHT_HELPS.map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-[15px] text-[#101727]">
@@ -141,8 +143,8 @@ export default function SchoolsPage() {
               Every debrief becomes part of the training picture.
             </h2>
             <p className="mt-5 text-pretty text-lg text-[#414B57] tracking-[0.01em]">
-              The CFI and student have the same post-flight conversation they&rsquo;re already having. AfterFlight
-              captures and organizes it &mdash; and what begins as one debrief becomes useful at every level.
+              The CFI and student have the same conversation they always have. AfterFlight organizes it, and one
+              debrief ends up useful at every level.
             </p>
           </Reveal>
 
@@ -234,13 +236,11 @@ export default function SchoolsPage() {
             <p className="font-display text-balance text-xl font-bold text-[#101727] sm:text-2xl">
               One student struggling with stabilized approaches is a lesson.
               <br />
-              <span className="text-brand">Fourteen students struggling with stabilized approaches is information
-              for the school.</span>
+              <span className="text-brand">Fourteen is a curriculum problem.</span>
             </p>
             <p className="mt-4 text-pretty text-[#414B57] tracking-[0.01em]">
-              That kind of visibility can point to curriculum opportunities, ground-instruction gaps, recurring ACS
-              weaknesses, or areas worth additional emphasis. AfterFlight surfaces the pattern &mdash; your training
-              leadership makes the call on what it means.
+              That points at a curriculum gap, a hole in ground instruction, or an ACS area worth more time.
+              AfterFlight shows the pattern. What it means is your call.
             </p>
           </Reveal>
         </div>
@@ -297,7 +297,7 @@ export default function SchoolsPage() {
       <section className="bg-white px-6 py-20 sm:py-28">
         <div className="mx-auto max-w-[1320px]">
           <Reveal className="mx-auto max-w-2xl rounded-2xl border-2 border-brand bg-white p-10 text-center shadow-lg shadow-brand/10 sm:p-12">
-            <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand">School Core Pricing</p>
+            <p className="whitespace-nowrap text-sm font-bold uppercase tracking-[0.16em] text-brand">School Core</p>
             <p className="font-display mt-4 text-[clamp(3rem,2.25rem+3vw,4.5rem)] font-bold text-[#101727]">Free</p>
             <p className="mt-2 text-base font-semibold text-brand">No card, no per-seat pricing, no debrief limit.</p>
             <p className="mt-4 text-lg text-[#414B57] tracking-[0.01em]">
@@ -312,7 +312,7 @@ export default function SchoolsPage() {
             </div>
 
             <p className="mt-6 border-t border-slate-200 pt-6 text-pretty text-base font-semibold text-[#101727]">
-              Student Pilot subscriptions are separate and billed to the student.
+              Student subscriptions are billed separately, to the student.
             </p>
           </Reveal>
 
@@ -342,8 +342,8 @@ export default function SchoolsPage() {
             Turn every debrief into better training.
           </h2>
           <p className="mt-4 text-pretty text-white/70">
-            Give students continuity, help instructors pick up where training left off, and see where your school
-            can improve.
+            Students keep their history, instructors pick up where the last lesson ended, and you finally see
+            what the whole school needs to work on rather than one student at a time.
           </p>
           <div className="mt-8 flex justify-center">
             <CtaLink href="/signup/school" className="w-full justify-center sm:w-auto">

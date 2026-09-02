@@ -131,16 +131,24 @@ export function SkillProgress() {
                   ))}
                 </span>
 
-                <dl className="mt-6 flex flex-col gap-5">
+                {/* Three differences between the two, not one.
+                    
+                    They were both label-then-paragraph at the same size, set
+                    apart only by italics, so the card read as one block of
+                    text. WHY is evidence and NEXT is an instruction: the quote
+                    now carries a left rule that marks it as something someone
+                    said, a hairline separates the two, and NEXT is heavier and
+                    darker because it is the part you act on. */}
+                <dl className="mt-6 flex flex-col">
                   <div>
-                    <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Why</dt>
-                    <dd className="mt-2 text-pretty text-base italic leading-relaxed text-[#414B57]">
+                    <dt className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Why</dt>
+                    <dd className="mt-2 border-l-2 border-black/[0.13] pl-4 text-pretty text-base italic leading-relaxed text-[#414B57]">
                       &ldquo;{s.why}&rdquo;
                     </dd>
                   </div>
-                  <div>
-                    <dt className="text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Next</dt>
-                    <dd className="mt-2 text-pretty text-base leading-relaxed text-[#101727]">{s.next}</dd>
+                  <div className="mt-6 border-t border-black/[0.08] pt-5">
+                    <dt className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Next</dt>
+                    <dd className="mt-2 text-pretty text-base font-medium leading-relaxed text-[#101727]">{s.next}</dd>
                   </div>
                 </dl>
               </article>
@@ -148,9 +156,16 @@ export function SkillProgress() {
           ))}
         </div>
 
-        <p className="mx-auto mt-10 max-w-xl text-balance text-center text-sm leading-relaxed text-[#414B57]">
-          No overall score, and no readiness percentage. Whether you&rsquo;re ready to solo or take a checkride is
-          your instructor&rsquo;s call, not ours.
+        {/* A claim, not a footnote, and no rule above it -- the cards
+            already end on a hard edge and a second horizontal line an inch
+            below it was drawing the same boundary twice. Weight and space
+            separate this now, which is what was missing: at 17px gray with a
+            hairline it looked like small print someone was obliged to add,
+            when it is the reason the cards carry an instructor's sentence
+            instead of a number. */}
+        <p className="font-display mx-auto mt-16 max-w-[44ch] text-balance text-center text-xl font-bold leading-snug text-[#101727] sm:text-2xl">
+          No overall score, and no readiness percentage. Whether you&rsquo;re ready to solo or take a checkride is{" "}
+          <span className="text-brand">your instructor&rsquo;s call, not ours.</span>
         </p>
       </div>
     </section>

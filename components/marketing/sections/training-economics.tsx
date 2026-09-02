@@ -35,22 +35,11 @@ export function TrainingEconomics() {
           the width that actually breaks it is a stage band's 870px column,
           which is why it is not in one. */}
       <div className="mx-auto max-w-[1180px]">
-        {/* Equal columns. A first attempt gave the calculator 1.15fr against
-            0.85fr, which cramped the headline into four lines and made the
-            calculator read as an oversized slab rather than a denser one. The
-            weight problem was never the column width -- it was the double
-            container below.
-
-            items-start, not items-center. Centring left the shorter column
-            floating against the middle of the calculator card, so the headline
-            began about 110px below the card's top edge and the two sides read
-            as unrelated blocks rather than a pair.
-
-            The headline stays at text-4xl. Pushing it to 2.6rem to "match" the
-            calculator's weight made it wrap to three lines in a half-width
-            column, which reads worse than the size gain is worth. */}
-        <div className="grid grid-cols-1 items-start gap-x-14 gap-y-12 lg:grid-cols-2">
-          <Reveal>
+        {/* One column. Side by side, the headline had half the width and the
+            calculator read as a slab bolted to it; the calculator is now the
+            full measure and horizontal, which is what it wanted all along. */}
+        <div>
+          <Reveal className="mx-auto max-w-2xl text-center">
             <p className="whitespace-nowrap text-xs font-bold uppercase tracking-[0.16em] text-brand">Every training hour counts</p>
             <h2 className="font-display mt-3 text-balance text-3xl font-bold leading-[1.1] text-[#101727] sm:text-4xl">
               Flight training is too expensive to keep{" "}
@@ -62,7 +51,7 @@ export function TrainingEconomics() {
             </p>
           </Reveal>
 
-          <Reveal delay={100}>
+          <Reveal delay={100} className="mt-12">
             {/* No gray wrapper. The calculator already renders its own white
                 card, so boxing it again produced a card inside a box with two
                 sets of padding -- most of the column's height was margin. */}

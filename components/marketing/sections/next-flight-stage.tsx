@@ -71,7 +71,10 @@ export function NextFlightStage() {
           <div className="mt-14 flex flex-col lg:mt-0">
             <StageModule
               id={MODULES[0].id}
-              eyebrow="Next flight"
+              /* Not "Next flight" -- the rail two inches to the left already
+                 says that, and the card below says "Your next flight". Three
+                 labels for one thing. This one names what the module IS. */
+              eyebrow="The plan"
               /* Two lines, stated rather than hoped for. At 19ch this fell in
                  three and stranded "last one left off." on its own. The orange
                  sits on the second line because that is the claim -- every

@@ -47,8 +47,12 @@ export function TrainingCostCalculator() {
   const total = safeRate * hours;
 
   return (
-    <div className="grid grid-cols-1 gap-7 rounded-2xl border border-black/[0.06] bg-white px-7 py-8 sm:px-9 sm:py-9">
-      <div className="flex flex-col gap-7">
+    /* Three across from lg: the two inputs and the figure they produce, in
+       the order you read them. Stacked, the result sat below the fold of the
+       card and the two inputs looked like a form; side by side the number
+       moves while you are still looking at the control that moved it. */
+    <div className="grid grid-cols-1 gap-7 rounded-2xl border border-black/[0.06] bg-white px-7 py-8 sm:px-9 sm:py-9 lg:grid-cols-[1fr_1.2fr_auto] lg:items-center lg:gap-10">
+      <div>
         <div>
           <label htmlFor={rateId} className="block text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">
             Aircraft + instructor rate
@@ -71,7 +75,9 @@ export function TrainingCostCalculator() {
             <span className="text-base text-[#414B57]">per hour</span>
           </div>
         </div>
+      </div>
 
+      <div>
         <div>
           <label htmlFor={hoursId} className="block text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">
             Hours spent repeating or rebuilding context
@@ -94,7 +100,7 @@ export function TrainingCostCalculator() {
         </div>
       </div>
 
-      <div className="border-t border-black/[0.08] pt-7">
+      <div className="border-t border-black/[0.08] pt-7 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#4E5A67]">That costs you</p>
         {/* aria-live so the figure is announced as the slider moves; the
             equation stays visible because the number alone is not checkable. */}
