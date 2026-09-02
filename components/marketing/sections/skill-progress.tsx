@@ -63,7 +63,7 @@ export function SkillProgress() {
             something. The wording is the student's half of the two-vocabulary
             model in lib/prototype/assessment.ts; a CFI sees Meets Standard
             where a student sees Felt Solid, over the same underlying code. */}
-        <p className="mx-auto mt-10 max-w-[760px] text-center text-sm text-[#68717D]">
+        <p className="mx-auto mt-10 max-w-[700px] text-balance text-center text-sm text-[#68717D]">
           Every skill sits somewhere on the same scale &mdash;{" "}
           <span className="font-semibold text-[#9a6612]">Needs Work</span>,{" "}
           <span className="font-semibold text-[#2c6c93]">Improving</span>,{" "}

@@ -29,7 +29,10 @@ export function TrainingEconomics() {
     <>
     <section id="training-economics" className="bg-white px-6 py-28 sm:py-36">
       <div className="mx-auto max-w-[1320px]">
-        <div className="grid grid-cols-1 items-center gap-x-16 gap-y-14 lg:grid-cols-2">
+        {/* The calculator gets the larger column. Equal halves made the section's
+            only interactive, checkable element the same size as the paragraph
+            arguing for it -- and the figure is the part a reader can test. */}
+        <div className="grid grid-cols-1 items-center gap-x-14 gap-y-12 lg:grid-cols-[0.85fr_1.15fr]">
           <Reveal>
             <p className="text-balance text-xs font-bold uppercase tracking-[0.16em] text-brand">Make Every Training Hour Count</p>
             <h2 className="font-display mt-3 text-balance text-3xl font-bold leading-tight text-[#101727] sm:text-4xl">

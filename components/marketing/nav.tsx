@@ -166,7 +166,7 @@ export function MarketingNav() {
             </button>
 
             {moreOpen ? (
-              <div className="absolute right-0 top-full z-50 mt-3 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg">
+              <div className="absolute right-0 top-full z-50 mt-3 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white py-1.5 shadow-lg">
                 {MORE_LINKS.map((link) => (
                   <Link
                     key={link.href}

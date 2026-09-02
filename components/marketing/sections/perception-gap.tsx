@@ -1,3 +1,4 @@
+import { PlaneTakeoff } from "lucide-react";
 import Image from "next/image";
 import { Reveal } from "@/components/marketing/reveal";
 import { SectionHead } from "@/components/marketing/section-head";
@@ -44,11 +45,40 @@ export function PerceptionGap() {
           </div>
 
           <Reveal delay={260} className="mt-5">
-            <div className="rounded-2xl bg-[#142033] px-7 py-7 sm:px-9">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Takeaway</p>
-              <p className="font-display mt-2.5 text-balance text-xl font-bold leading-snug text-white sm:text-2xl">
-                You&rsquo;re making progress, but consistency is still the thing to work on before the next flight.
-              </p>
+            {/*
+             * Two columns, because one was leaving half the card empty.
+             *
+             * The takeaway ran full width as a single sentence and the right
+             * side of a 1100px card sat unused. Splitting it gives the
+             * sentence a sensible measure and lets the right column carry what
+             * makes this feel generated for one student rather than written
+             * for a brochure: which objective it came from, and what it turns
+             * into on the next flight. Nothing here is filler -- both are
+             * things the product actually produces from a debrief.
+             */}
+            <div className="grid gap-7 rounded-2xl bg-[#142033] px-7 py-7 sm:px-9 lg:grid-cols-[1.35fr_1fr] lg:gap-12">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Takeaway</p>
+                <p className="font-display mt-2.5 text-balance text-xl font-bold leading-snug text-white sm:text-2xl">
+                  You&rsquo;re making progress, but consistency is still the thing to work on before the next flight.
+                </p>
+              </div>
+
+              <dl className="flex flex-col gap-4 border-t border-white/10 pt-6 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0">
+                <div>
+                  <dt className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8c97a2]">From</dt>
+                  <dd className="mt-1 text-pretty text-[15px] font-semibold text-white">
+                    Crosswind Landings &middot; Aug 29 with Jake
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#8c97a2]">Carries into</dt>
+                  <dd className="mt-1 flex items-start gap-2.5 text-pretty text-[15px] text-[#dfe4ec]">
+                    <PlaneTakeoff className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+                    Hold the correction through touchdown
+                  </dd>
+                </div>
+              </dl>
             </div>
           </Reveal>
         </div>

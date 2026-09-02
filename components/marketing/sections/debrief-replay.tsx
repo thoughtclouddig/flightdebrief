@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AudioPrivacyNote } from "@/components/marketing/audio-privacy-note";
 import { DebriefRecapDemo } from "@/components/marketing/debrief-recap-demo";
 import { SectionHead } from "@/components/marketing/section-head";
 
@@ -29,14 +29,11 @@ export function DebriefReplay() {
         <DebriefRecapDemo showHeading={false} className="mt-14" />
 
         {/* The privacy claim is one click from the assertion, because its value
-            is that it survives being checked. */}
-        <p className="mx-auto mt-9 max-w-xl text-balance text-center text-sm leading-relaxed text-[#68717D]">
-          Your audio is transcribed and then discarded. AfterFlight keeps the training record, not the recording &mdash;{" "}
-          <Link href="/data-handling" className="underline underline-offset-2 hover:text-[#101727]">
-            here&rsquo;s exactly how that works
-          </Link>
-          .
-        </p>
+            is that it survives being checked -- but the click now opens a
+            dialog rather than sending the reader to a legal page they have to
+            navigate back from. */}
+        <AudioPrivacyNote />
+
       </div>
     </section>
   );
