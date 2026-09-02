@@ -57,7 +57,7 @@ export function NextFlightCard({ className }: { className?: string } = {}) {
   return (
     <div ref={ref} className={cn("mx-auto mt-14 max-w-[720px]", className)}>
       <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-[0_24px_50px_-24px_rgba(16,23,39,0.28)]">
-        <div className="bg-[#142033] px-7 py-6 sm:px-9">
+        <div className="bg-[#142033] px-5 py-6 sm:px-9">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Your next flight</p>
           <p className="font-display mt-1.5 text-2xl font-bold text-white sm:text-3xl">
             Thursday · Crosswind + Short Field
@@ -166,10 +166,22 @@ export function NextFlightCard({ className }: { className?: string } = {}) {
               )}
             >
               <div className="overflow-hidden">
-                <div className="rounded-2xl bg-[#142033] px-5 py-4">
-                  <p className="flex items-center gap-2 text-balance text-xs font-bold uppercase tracking-[0.14em] text-brand">
+                <div className="rounded-2xl bg-[#142033] px-4 py-4 sm:px-5">
+                  {/* No text-balance: it is for headings, and on a label it shortens
+                      the measure and forces the second line it is meant to
+                      prevent.
+                      
+                      The label was also simply too long. Measured at the
+                      theme's smallest token -- text-xs is 15px here, not 12px,
+                      on purpose -- "Vector - 3-minute review" needs 263px
+                      against 253px of column even after the card gave back
+                      padding. Shrinking the type or tightening the tracking
+                      further would have made this label quietly different from
+                      every other one on the page to hide ten pixels, so the
+                      words gave way instead: 225px, standard tracking. */}
+                  <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-brand">
                     <Sparkles className="size-3.5" aria-hidden />
-                    Vector · 3-minute review
+                    Vector review · 3 min
                   </p>
                   <p className="mt-2 text-pretty text-base leading-relaxed text-[#dfe4ec]">
                     Why the correction has to keep increasing as you slow &mdash; then two questions from
@@ -210,7 +222,7 @@ function Block({ title, show, children }: { title: string; show: boolean; childr
   return (
     <div
       className={cn(
-        "border-b border-black/[0.07] px-7 py-7 transition-[opacity,transform] duration-500 ease-out last:border-b-0 sm:px-9 sm:py-8",
+        "border-b border-black/[0.07] px-5 py-7 transition-[opacity,transform] duration-500 ease-out last:border-b-0 sm:px-9 sm:py-8",
         show ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
         "motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none",
       )}

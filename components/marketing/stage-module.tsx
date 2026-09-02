@@ -41,9 +41,22 @@ export function StageModule({
   return (
     <article id={id} className={`scroll-mt-28 ${className ?? ""}`}>
       <Reveal>
+        {/* The rule yields, not the label.
+            
+            Both were flex items with default shrink, so on a phone the rule
+            held its share and pushed the eyebrow into two lines -- "Two views
+            of the same flight" is the longest at 28 characters and it broke.
+            shrink-0 on the label plus min-w-0 on the rule inverts that: the
+            rule collapses toward zero and the label keeps its one line. At
+            320px the label measures ~261px in a 272px column, so it fits with
+            the rule fully collapsed. An eyebrow longer than about 28
+            characters would overflow instead of wrapping, which is the
+            trade -- keep them short. */}
         <div className="flex items-center gap-4">
-          <span className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{eyebrow}</span>
-          <span className="h-px flex-1 bg-black/[0.09]" aria-hidden />
+          <span className="shrink-0 whitespace-nowrap text-xs font-bold uppercase tracking-[0.16em] text-brand">
+            {eyebrow}
+          </span>
+          <span className="h-px min-w-0 flex-1 bg-black/[0.09]" aria-hidden />
         </div>
         <h3
           className={cn(
