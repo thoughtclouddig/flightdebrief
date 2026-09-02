@@ -11,6 +11,13 @@ import { SectionHead } from "@/components/marketing/section-head";
  * visitor can experience rather than read about, so it plays Mia's actual
  * recap audio.
  *
+ * The headline no longer claims to be first. It read "It starts with what
+ * your instructor said" while this section sat second, which was true then and
+ * false once the perception gap moved above it -- and the gap belongs above it,
+ * because that is the real order: the student rates the lesson before seeing
+ * the instructor's assessment, which is exactly what the guided debrief does.
+ * "Then" now does the sequencing the page actually performs.
+ *
  * Led by the moment, not the mechanism: nobody chooses a training product
  * because it has text-to-speech. Attribution stays explicit ("Based on her
  * conversation with Jake") so a replay never sounds like the app inventing
@@ -22,8 +29,8 @@ export function DebriefReplay() {
       <div className="mx-auto max-w-[1100px]">
         <SectionHead
           eyebrow="Debrief replay"
-          headline="It starts with what your instructor said."
-          body="AfterFlight captures what happened in the lesson and what your instructor wants you working on — the foundation for everything that comes next. It also becomes a short recap you can replay on the drive home."
+          headline="Then hear it again in their own words."
+          body="AfterFlight captures what happened in the lesson and what your instructor wants you working on, then turns it into a short recap you can replay on the drive home."
         />
 
         <DebriefRecapDemo showHeading={false} className="mt-14" />
