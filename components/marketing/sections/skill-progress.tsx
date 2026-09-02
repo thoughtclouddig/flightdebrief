@@ -30,7 +30,7 @@ const SKILLS = [
     tone: "text-[#9a6612]",
     fill: "bg-[#9a6612]",
     edge: "border-t-[#9a6612]",
-    why: "Fast on two of four approaches, and fixing the speed late rather than configuring earlier.",
+    why: "Fast on two of four, and fixing it late instead of configuring earlier.",
     next: "Three-minute review, then a chair-fly of the pattern.",
   },
   {
@@ -40,7 +40,7 @@ const SKILLS = [
     tone: "text-[#2c6c93]",
     fill: "bg-[#2c6c93]",
     edge: "border-t-[#2c6c93]",
-    why: "Jake said centerline control improved, but correction is still being relaxed through touchdown.",
+    why: "Centerline improved, but you relax the correction through touchdown.",
     next: "Review crosswind correction with Vector before your next flight.",
   },
   {
@@ -50,7 +50,7 @@ const SKILLS = [
     tone: "text-[#1f7a4c]",
     fill: "bg-[#1f7a4c]",
     edge: "border-t-[#1f7a4c]",
-    why: "Aiming point hit on three of four. Jake didn\u2019t leave this one open.",
+    why: "Aiming point hit on three of four.",
     next: "Nothing before Thursday. Keep it warm.",
   },
 ] as const;
@@ -110,7 +110,8 @@ export function SkillProgress() {
                 * floating in it, and a smaller radius, because the softness
                 * was doing most of the genericness.
                 */}
-              <article className={`flex h-full flex-col rounded-lg border border-black/[0.09] border-t-[3px] bg-white px-7 py-6 sm:px-8 ${s.edge}`}>
+              <article className={`flex h-full flex-col overflow-hidden rounded-lg border border-black/[0.09] border-t-[3px] bg-white ${s.edge}`}>
+                <div className="flex flex-1 flex-col px-7 py-6 sm:px-8">
                 <h3 className="font-display text-xl font-bold leading-snug text-[#101727]">{s.skill}</h3>
                 <p className={`mt-1.5 text-[13px] font-bold uppercase tracking-[0.1em] ${s.tone}`}>{s.state}</p>
 
@@ -131,26 +132,32 @@ export function SkillProgress() {
                   ))}
                 </span>
 
-                {/* Three differences between the two, not one.
+{/*
+                    A tinted footer, not another hairline.
                     
-                    They were both label-then-paragraph at the same size, set
-                    apart only by italics, so the card read as one block of
-                    text. WHY is evidence and NEXT is an instruction: the quote
-                    now carries a left rule that marks it as something someone
-                    said, a hairline separates the two, and NEXT is heavier and
-                    darker because it is the part you act on. */}
-                <dl className="mt-6 flex flex-col">
-                  <div>
-                    <dt className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Why</dt>
-                    <dd className="mt-2 border-l-2 border-black/[0.13] pl-4 text-pretty text-base italic leading-relaxed text-[#414B57]">
-                      &ldquo;{s.why}&rdquo;
-                    </dd>
-                  </div>
-                  <div className="mt-6 border-t border-black/[0.08] pt-5">
-                    <dt className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4E5A67]">Next</dt>
-                    <dd className="mt-2 text-pretty text-base font-medium leading-relaxed text-[#101727]">{s.next}</dd>
-                  </div>
-                </dl>
+                    The card holds four things -- skill, state, evidence, next
+                    step -- and they were all the same size on the same ground
+                    with rules between them, which is why it read as one run of
+                    text. A rule says "these are adjacent". A change of ground
+                    says "these are different kinds of thing", and NEXT is a
+                    different kind of thing: everything above it is a report on
+                    the last flight, and it is the only part you act on.
+                    
+                    The WHY label is gone. An 11px caps label above a quotation
+                    mark was labeling something already obvious, and it sat at
+                    the same weight as NEXT, so the two competed. The
+                    attribution under the quote does that job and carries more:
+                    it says whose judgment this is. */}
+                <blockquote className="mt-5 border-l-2 border-black/[0.13] pl-4 text-pretty text-[15px] italic leading-relaxed text-[#414B57]">
+                  &ldquo;{s.why}&rdquo;
+                </blockquote>
+                <p className="mt-2 pl-4 text-[13px] text-[#4E5A67]">Jake, your CFI</p>
+                </div>
+
+                <div className="mt-auto border-t border-black/[0.08] bg-[#f4f5f6] px-7 py-5 sm:px-8">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand">Next</p>
+                  <p className="mt-1.5 text-pretty text-[17px] font-semibold leading-snug text-[#101727]">{s.next}</p>
+                </div>
               </article>
             </Reveal>
           ))}
@@ -164,8 +171,7 @@ export function SkillProgress() {
             when it is the reason the cards carry an instructor's sentence
             instead of a number. */}
         <p className="font-display mx-auto mt-16 max-w-[44ch] text-balance text-center text-xl font-bold leading-snug text-[#101727] sm:text-2xl">
-          No overall score, and no readiness percentage. Whether you&rsquo;re ready to solo or take a checkride is{" "}
-          <span className="text-brand">your instructor&rsquo;s call, not ours.</span>
+          Readiness is <span className="text-brand">your instructor&rsquo;s call, not ours.</span>
         </p>
       </div>
     </section>

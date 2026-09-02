@@ -46,8 +46,7 @@ export function TrainingEconomics() {
               <span className="text-brand">relearning the same lesson.</span>
             </h2>
             <p className="mt-5 text-pretty text-lg text-[#414B57]">
-              When the last lesson gets forgotten, you spend the first half of the next one catching up. That is an
-              hour of airplane you paid for twice.
+              An hour of catching up is an hour of airplane you paid for twice.
             </p>
           </Reveal>
 

@@ -88,7 +88,7 @@ export function Pricing() {
                     {tier.featuredLabel}
                   </span>
                 ) : null}
-                <p className={cn("text-balance font-display text-lg font-bold uppercase tracking-wide text-[#101727]", tier.featured && "mt-2")}>
+                <p className={cn("font-display whitespace-nowrap text-2xl font-bold uppercase tracking-[0.04em] text-[#101727]", tier.featured && "mt-2")}>
                   {tier.name}
                 </p>
                 {/* Two lines reserved. "For individual flight instructors." is one
