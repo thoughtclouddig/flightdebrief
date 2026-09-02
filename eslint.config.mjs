@@ -16,6 +16,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent worktrees are gitignored scratch copies of the repo. They are not
+    // source and never deploy, but eslint was walking into them and reporting
+    // 602 errors from vendored code -- which buried the handful of real
+    // findings and made `npm run lint` useless as a gate.
+    ".claude/**",
   ]),
 ]);
 

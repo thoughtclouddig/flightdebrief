@@ -50,7 +50,6 @@ const RATIO = 0.45;
  * short and usually centered. Body copy gets text-pretty and fills its
  * measure. Do not "fix" a body paragraph by balancing it.
  */
-const DISPLAY_ONLY = true;
 const LONG_RATIO = 0.2;
 // 0.2 rather than 0.25 after looking at what each bar actually caught. Between
 // them sit last lines of 20-24% -- four or five words on a ragged-right
