@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Reveal } from "@/components/marketing/reveal";
 import { PhotoVisual } from "@/components/marketing/app-screen";
 import { SectionHead } from "@/components/marketing/section-head";
@@ -248,7 +247,7 @@ export function HowItWorks() {
         </div>
 
         <div className="relative ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] mt-7 hidden w-screen justify-center md:flex">
-          <div className="flex w-[calc(100%-48px)] max-w-[min(90vw,1400px)] items-center gap-8">
+          <div className="flex w-[calc(100%-48px)] max-w-[min(90vw,1400px)] items-center">
             <div className="flex min-w-0 flex-1 items-center">
               {CARDS.map((card, i) => (
                 <button
@@ -257,14 +256,6 @@ export function HowItWorks() {
                   onClick={() => scrollToSlide(i)}
                   className="flex flex-1 cursor-pointer flex-col items-start gap-2 bg-transparent py-1.5 text-left"
                 >
-                  <span
-                    className={cn(
-                      "text-[17px] font-extrabold tabular-nums transition-colors",
-                      i === active ? "text-brand" : "text-[#101727]/30",
-                    )}
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
                   <span
                     className={cn(
                       "h-[3px] w-full rounded-full transition-colors",
@@ -285,26 +276,6 @@ export function HowItWorks() {
                   </span>
                 </button>
               ))}
-            </div>
-            <div className="flex shrink-0 gap-2.5">
-              <button
-                type="button"
-                aria-label="Previous step"
-                disabled={active === 0}
-                onClick={() => scrollToSlide(Math.max(0, active - 1))}
-                className="flex size-12 cursor-pointer items-center justify-center rounded-full border border-[#e3e5e8] bg-white text-[#101727] transition-colors hover:enabled:border-[#101727] hover:enabled:bg-[#101727] hover:enabled:text-white disabled:cursor-default disabled:opacity-35"
-              >
-                <ChevronLeft className="size-[18px]" strokeWidth={2.2} aria-hidden />
-              </button>
-              <button
-                type="button"
-                aria-label="Next step"
-                disabled={active === CARDS.length - 1}
-                onClick={() => scrollToSlide(Math.min(CARDS.length - 1, active + 1))}
-                className="flex size-12 cursor-pointer items-center justify-center rounded-full border border-[#e3e5e8] bg-white text-[#101727] transition-colors hover:enabled:border-[#101727] hover:enabled:bg-[#101727] hover:enabled:text-white disabled:cursor-default disabled:opacity-35"
-              >
-                <ChevronRight className="size-[18px]" strokeWidth={2.2} aria-hidden />
-              </button>
             </div>
           </div>
         </div>
