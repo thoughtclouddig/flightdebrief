@@ -84,8 +84,13 @@ export function SkillProgress() {
             a set to compare, not a sequence to read in order. */}
         <div className="mx-auto mt-8 grid max-w-[1180px] gap-6 lg:grid-cols-3">
           {SKILLS.map((s, i) => (
-            <Reveal key={s.skill} delay={100 + i * 90}>
-              <article className="rounded-2xl border border-black/[0.06] bg-[#f4f5f6] px-7 py-7 sm:px-9">
+            <Reveal key={s.skill} delay={100 + i * 90} className="h-full">
+              {/* h-full on both the Reveal and the article. The grid stretches its
+                  direct children, but the Reveal wrapper was the child -- the
+                  article inside it sized to its own content, so three cards
+                  with different amounts of evidence ended at three different
+                  heights. */}
+              <article className="flex h-full flex-col rounded-2xl border border-black/[0.06] bg-[#f4f5f6] px-7 py-7 sm:px-9">
                 {/* Stacked inside the card too. Title, meter and state sat on
                     one justified row when the card was 760px wide; in a third
                     of that they collide. */}
