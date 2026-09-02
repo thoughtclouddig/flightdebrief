@@ -62,7 +62,6 @@ export function SkillProgress() {
               <span className="sm:block">and what still needs work.</span>
             </>
           }
-          body="Progress with the evidence behind it — your instructor's own words from the flights you actually flew."
         />
 
         {/* Naming the scale once. Without it three colored chips look like
