@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Reveal } from "@/components/marketing/reveal";
+import { cn } from "@/lib/utils";
 
 /**
  * The product-depth beat, and the whole point is that it stays small.
@@ -65,7 +66,20 @@ export function Capabilities() {
           </p>
         </Reveal>
 
-        <Reveal delay={150} className="mt-12">
+        <CapabilityCards className="mt-12" />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The four cards, separated from the section wrapper, so the Next Flight
+ * stage can render them under its own module head. Exported rather than
+ * duplicated -- one definition of the capability set, not two.
+ */
+export function CapabilityCards({ className }: { className?: string }) {
+  return (
+        <Reveal delay={150} className={cn(className)}>
           {/* Four across at xl, not lg. "Instructor Continuity" needs 249px and a
             quarter of this container at a 1024px viewport is about 214px --
             less once card padding is taken out -- so below xl it goes two-up
@@ -97,7 +111,5 @@ export function Capabilities() {
             ))}
           </dl>
         </Reveal>
-      </div>
-    </section>
   );
 }

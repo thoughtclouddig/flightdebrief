@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Reveal } from "@/components/marketing/reveal";
+import { cn } from "@/lib/utils";
 import { SectionHead } from "@/components/marketing/section-head";
 
 /**
@@ -69,7 +70,23 @@ export function PersonalizedTraining() {
           body="AfterFlight turns the weak areas from your actual flight into short training sessions, flight-specific questions, and cues you can carry into the cockpit next time."
         />
 
-        <Reveal delay={120} className="mx-auto mt-14 max-w-[820px]">
+        <PersonalizedTrainingCard className="mt-14" />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The card, separated from the section wrapper.
+ *
+ * The Next Flight stage renders this as a module and supplies its own head, so
+ * the body had to stop being welded to a centered SectionHead and a section's
+ * own padding. Exported rather than duplicated -- the stage bands and the
+ * standalone sections must not drift into two versions of the same card.
+ */
+export function PersonalizedTrainingCard({ className }: { className?: string }) {
+  return (
+        <Reveal delay={120} className={cn("mx-auto max-w-[820px]", className)}>
           <div className="overflow-hidden rounded-2xl border border-black/[0.07] bg-white shadow-[0_24px_50px_-28px_rgba(16,23,39,0.22)]">
             <div className="border-b border-black/[0.07] px-7 py-7 sm:px-10">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Crosswind landings</p>
@@ -92,8 +109,6 @@ export function PersonalizedTraining() {
             </p>
           </div>
         </Reveal>
-      </div>
-    </section>
   );
 }
 

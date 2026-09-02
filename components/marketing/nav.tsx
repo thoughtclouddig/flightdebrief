@@ -37,8 +37,15 @@ import { Menu, Plus, X } from "lucide-react";
  *
  * How It Works points at the homepage carousel, NOT at /how-it-works. That
  * route is "How AfterFlight Works -- For School Owners" and covers what gets
- * captured, who sees what, and what happens when an instructor leaves. It is
- * an institutional trust page, so it sits in the schools group below.
+ * captured, who sees what, and what happens when an instructor leaves -- an
+ * institutional trust page that is now unlinked from the nav entirely. It is
+ * still routable and still linked from the schools pages; if it stays
+ * unlinked it should be retired rather than left to rot.
+ *
+ * Field Notes is primary rather than secondary because it is the only item
+ * here that gives a visitor a reason to come back before they buy. Pricing
+ * stays last: it is the question people arrive with, but ending the row on it
+ * is what makes the row read as a funnel rather than a library.
  *
  * The page anchors #overview, #debrief, #next-flight and #progress all stay:
  * the hero, the final CTA, the footer and the Debrief rail still use them.
@@ -46,6 +53,7 @@ import { Menu, Plus, X } from "lucide-react";
 const PRIMARY_LINKS = [
   { href: "/#overview", label: "How It Works" },
   { href: "/demo", label: "Demo" },
+  { href: "/field-notes", label: "Field Notes" },
   { href: "/#pricing", label: "Pricing" },
 ];
 
@@ -69,14 +77,12 @@ const SECONDARY_GROUPS = [
     links: [
       { href: "/instructors", label: "For Instructors" },
       { href: "/schools", label: "For Flight Schools" },
-      { href: "/how-it-works", label: "How It Works for Schools" },
     ],
   },
   {
     label: "Company",
     links: [
       { href: "/what-is-afterflight", label: "What Is AfterFlight" },
-      { href: "/field-notes", label: "Field Notes" },
     ],
   },
 ];

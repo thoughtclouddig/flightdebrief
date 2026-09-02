@@ -3,15 +3,13 @@ import { appOrigin } from "@/lib/email";
 import { Hero } from "@/components/marketing/sections/hero";
 import { BrandMoment } from "@/components/marketing/sections/brand-moment";
 import { HowItWorks } from "@/components/marketing/sections/how-it-works";
-import { NextFlight } from "@/components/marketing/sections/next-flight";
-import { PersonalizedTraining } from "@/components/marketing/sections/personalized-training";
+import { NextFlightStage } from "@/components/marketing/sections/next-flight-stage";
 import { DebriefStage } from "@/components/marketing/sections/debrief-stage";
 import { SkillProgress } from "@/components/marketing/sections/skill-progress";
 import { DebriefDoctrine } from "@/components/marketing/sections/debrief-doctrine";
 import { Proof } from "@/components/marketing/sections/proof";
 import { TrainingEconomics } from "@/components/marketing/sections/training-economics";
 import { Pricing } from "@/components/marketing/sections/pricing";
-import { Capabilities } from "@/components/marketing/sections/capabilities";
 import { FinalCta } from "@/components/marketing/sections/final-cta";
 
 export const metadata: Metadata = {
@@ -103,10 +101,10 @@ export default function MarketingHomePage() {
           importing them, so nothing else has to change back. */}
       <DebriefStage />
       {/* <PerceptionGap /> <DebriefReplay /> <VectorSection /> */}
-      {/* NEXT FLIGHT -- the plan first, then the preparation that serves it */}
-      <NextFlight />
-      <PersonalizedTraining />
-      <Capabilities />
+      {/* NEXT FLIGHT -- the plan first, then the preparation that serves it.
+          Revert = restore the three lines below and drop this one. */}
+      <NextFlightStage />
+      {/* <NextFlight /> <PersonalizedTraining /> <Capabilities /> */}
       {/* PROGRESS */}
       <SkillProgress />
       <DebriefDoctrine />

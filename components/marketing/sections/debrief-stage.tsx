@@ -1,9 +1,9 @@
-import type { ReactNode } from "react";
 import { PlaneTakeoff } from "lucide-react";
 import Image from "next/image";
 import { AudioPrivacyNote } from "@/components/marketing/audio-privacy-note";
 import { DebriefRecapDemo } from "@/components/marketing/debrief-recap-demo";
-import { DebriefStageRail } from "@/components/marketing/debrief-stage-rail";
+import { StageModule } from "@/components/marketing/stage-module";
+import { StageRail } from "@/components/marketing/stage-rail";
 import { Reveal } from "@/components/marketing/reveal";
 import { VectorDemo } from "@/components/marketing/vector-demo";
 
@@ -79,14 +79,18 @@ export function DebriefStage() {
         </Reveal>
 
         <div className="lg:grid lg:grid-cols-[210px_1fr] lg:gap-x-20 xl:grid-cols-[230px_1fr]">
-          <DebriefStageRail modules={MODULES} />
+          <StageRail
+            stage="Debrief"
+            framing="What the lesson actually contained, in the order you find it out."
+            modules={MODULES}
+          />
 
           {/* No forced heights, no snapping, no transforms tied to scroll
               position. The modules are ordinary blocks in ordinary flow; the
               only thing that moves independently is the rail, and it moves by
               being sticky rather than by being animated. */}
           <div className="mt-14 flex flex-col lg:mt-0">
-            <Module
+            <StageModule
               id={MODULES[0].id}
               eyebrow="Two views of the same flight"
               headline="See where you and your instructor landed."
@@ -142,11 +146,11 @@ export function DebriefStage() {
                   </dl>
                 </div>
               </Reveal>
-            </Module>
+            </StageModule>
 
             {/* Tighter than the gap below, because this answers the question
                 module one just raised. */}
-            <Module
+            <StageModule
               id={MODULES[1].id}
               className="mt-20 sm:mt-24"
               eyebrow="Debrief replay"
@@ -159,9 +163,9 @@ export function DebriefStage() {
                   the module head already set. */}
               <DebriefRecapDemo showHeading={false} className="!mt-0" />
               <AudioPrivacyNote />
-            </Module>
+            </StageModule>
 
-            <Module
+            <StageModule
               id={MODULES[2].id}
               className="mt-24 sm:mt-32"
               eyebrow="Meet Vector"
@@ -206,52 +210,11 @@ export function DebriefStage() {
                   </p>
                 </Reveal>
               </div>
-            </Module>
+            </StageModule>
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-/**
- * A module head, left-aligned and numbered.
- *
- * Not SectionHead: that centers on a max-w-2xl measure, which is correct for a
- * standalone section and wrong here. Centered heads inside a stage recreate
- * exactly the "three separate sections" reading this is trying to replace, and
- * the rail already occupies the left, so a centered head would also sit off
- * the column's own axis.
- */
-function Module({
-  id,
-  eyebrow,
-  headline,
-  body,
-  children,
-  className,
-}: {
-  id: string;
-  eyebrow: string;
-  headline: ReactNode;
-  body: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <article id={id} className={`scroll-mt-28 ${className ?? ""}`}>
-      <Reveal>
-        <div className="flex items-center gap-4">
-          <span className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{eyebrow}</span>
-          <span className="h-px flex-1 bg-black/[0.09]" aria-hidden />
-        </div>
-        <h3 className="font-display mt-4 max-w-[19ch] text-balance text-3xl font-bold leading-[1.08] text-[#101727] sm:text-[2.25rem]">
-          {headline}
-        </h3>
-        <p className="mt-4 max-w-[62ch] text-pretty text-lg leading-relaxed text-[#414B57]">{body}</p>
-      </Reveal>
-      <div className="mt-10">{children}</div>
-    </article>
   );
 }
 

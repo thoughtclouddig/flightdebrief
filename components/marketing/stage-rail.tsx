@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * The sticky stage identity for the Debrief band, and the only client-side
- * piece of it.
+ * The sticky stage identity for a homepage stage band, and the only
+ * client-side piece of one.
  *
  * It reads the modules out of the DOM rather than receiving them as props so
  * the three modules stay server components -- they are photographs, text and
@@ -18,7 +18,15 @@ import { cn } from "@/lib/utils";
  * of a scroll -- the rail should feel like it is keeping up, not like it is
  * being animated.
  */
-export function DebriefStageRail({ modules }: { modules: readonly { id: string; label: string }[] }) {
+export function StageRail({
+  stage,
+  framing,
+  modules,
+}: {
+  stage: string;
+  framing: string;
+  modules: readonly { id: string; label: string }[];
+}) {
   const [active, setActive] = useState(0);
 
   useEffect(() => {
@@ -52,11 +60,9 @@ export function DebriefStageRail({ modules }: { modules: readonly { id: string; 
   }, [modules]);
 
   return (
-    <nav aria-label="Debrief stage" className="hidden lg:block lg:sticky lg:top-28 lg:self-start">
-      <p className="font-display text-[13px] font-bold uppercase tracking-[0.22em] text-brand">Debrief</p>
-      <p className="mt-4 text-pretty text-[15px] leading-relaxed text-[#414B57]">
-        What the lesson actually contained, in the order you find it out.
-      </p>
+    <nav aria-label={`${stage} stage`} className="hidden lg:block lg:sticky lg:top-28 lg:self-start">
+      <p className="font-display text-[13px] font-bold uppercase tracking-[0.22em] text-brand">{stage}</p>
+      <p className="mt-4 text-pretty text-[15px] leading-relaxed text-[#414B57]">{framing}</p>
 
       <ol className="mt-8 flex flex-col">
         {modules.map((m, i) => {
