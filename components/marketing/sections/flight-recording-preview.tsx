@@ -46,7 +46,7 @@ export function FlightRecordingPreview() {
           becoming a flight tracker; the flight is the input, and the next lesson is still the point.
         </p>
 
-        <p className="mt-6 border-t border-black/[0.08] pt-5 text-pretty text-sm leading-relaxed text-[#8c97a2]">
+        <p className="mt-6 border-t border-black/[0.08] pt-5 text-pretty text-sm leading-relaxed text-[#68717D]">
           Not available yet, and not required to use AfterFlight.
         </p>
       </Reveal>

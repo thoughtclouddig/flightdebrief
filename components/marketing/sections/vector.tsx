@@ -62,7 +62,7 @@ export function VectorSection() {
               Not generic questions about airplanes in general &mdash; the specific things your own flying keeps
               doing, and the ones your instructor has stopped having to mention.
             </p>
-            <p className="mt-7 text-xs font-bold uppercase tracking-[0.16em] text-[#8c97a2]">What it knows</p>
+            <p className="mt-7 text-xs font-bold uppercase tracking-[0.16em] text-[#68717D]">What it knows</p>
             <ul className="mt-3 grid grid-cols-1 gap-x-8 gap-y-3.5 sm:grid-cols-2 lg:grid-cols-1">
               {KNOWS.map((k) => (
                 <li key={k} className="flex items-start gap-3 text-pretty text-base text-[#101727]">

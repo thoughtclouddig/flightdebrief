@@ -26,7 +26,7 @@ export function DebriefSummaryMockupCard({ className, style }: { className?: str
         <p className="text-balance text-xs font-bold uppercase tracking-[0.14em] text-brand">Flight Debrief</p>
 
         <p className="text-balance font-display mt-2 text-[21px] font-bold tracking-tight text-[#101727]">KSBD &rarr; KFUL</p>
-        <p className="text-pretty mt-0.5 text-[13.5px] text-[#8c97a2]">May 12, 2026 &middot; 1.3 Hobbs</p>
+        <p className="text-pretty mt-0.5 text-[13.5px] text-[#68717D]">May 12, 2026 &middot; 1.3 Hobbs</p>
 
         <ul className="mt-5 flex flex-col gap-2.5">
           {DEBRIEF_ROWS.map((row) => (
@@ -65,7 +65,7 @@ export function FlightHistoryMockupCard({ className }: { className?: string }) {
             <li key={row.pair} className="flex items-center justify-between py-2.5">
               <div>
                 <p className="text-pretty text-[13.5px] font-semibold text-[#101727]">{row.pair}</p>
-                <p className="text-pretty text-[11.5px] text-[#8c97a2]">{row.date}</p>
+                <p className="text-pretty text-[11.5px] text-[#68717D]">{row.date}</p>
               </div>
               <span
                 className="font-display flex size-8 items-center justify-center rounded-full text-[13px] font-bold"

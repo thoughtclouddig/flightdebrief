@@ -189,7 +189,7 @@ export function ArticleBody({
               {/* eslint-disable-next-line @next/next/no-img-element -- served from /api/media */}
               <img src={section.image.url} alt="" loading="lazy" className="aspect-[16/9] w-full rounded-xl object-cover" />
               {section.image.caption ? (
-                <figcaption className="mt-2.5 text-[13.5px] leading-relaxed text-[#8c97a2]">
+                <figcaption className="mt-2.5 text-[13.5px] leading-relaxed text-[#68717D]">
                   {section.image.caption}
                 </figcaption>
               ) : null}

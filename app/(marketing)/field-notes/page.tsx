@@ -89,7 +89,7 @@ export default async function FieldNotesHubPage(props: PageProps<"/field-notes">
     <div className="bg-white">
       <header className="border-b border-slate-200 px-6 pb-10 pt-32 sm:pt-36">
         <div className="mx-auto max-w-6xl">
-          <nav aria-label="Breadcrumb" className="text-sm text-[#8c97a2]">
+          <nav aria-label="Breadcrumb" className="text-sm text-[#68717D]">
             <Link href="/" className="hover:text-[#101727]">
               Home
             </Link>
@@ -120,7 +120,7 @@ export default async function FieldNotesHubPage(props: PageProps<"/field-notes">
                 defaultValue={query}
                 placeholder="Search articles"
                 aria-label="Search articles"
-                className="h-12 flex-1 rounded-xl border border-slate-200 bg-white px-4 text-[15px] text-[#101727] placeholder:text-[#8c97a2] focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15"
+                className="h-12 flex-1 rounded-xl border border-slate-200 bg-white px-4 text-[15px] text-[#101727] placeholder:text-[#68717D] focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/15"
               />
               <button
                 type="submit"
@@ -192,7 +192,7 @@ export default async function FieldNotesHubPage(props: PageProps<"/field-notes">
                       ) : null}
                       {/* mt-auto pins the byline down so dates line up across a
                           row regardless of how long each dek runs. */}
-                      <p className="mt-auto pt-4 text-[13px] text-[#8c97a2]">
+                      <p className="mt-auto pt-4 text-[13px] text-[#68717D]">
                         {item.dateLabel ? `${item.dateLabel} · ` : ""}
                         {item.readMinutes} min read
                       </p>

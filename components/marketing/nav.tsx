@@ -215,7 +215,7 @@ export function MarketingNav() {
               <div className="absolute right-0 top-full z-50 mt-3 w-60 overflow-hidden rounded-lg border border-slate-200 bg-white py-2 shadow-lg">
                 {SECONDARY_GROUPS.map((group, i) => (
                   <div key={group.label} className={i > 0 ? "mt-1 border-t border-slate-100 pt-1" : undefined}>
-                    <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8c97a2]">
+                    <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#68717D]">
                       {group.label}
                     </p>
                     {group.links.map((link) => (
@@ -288,7 +288,7 @@ export function MarketingNav() {
 
               {SECONDARY_GROUPS.map((group) => (
                 <div key={group.label}>
-                  <p className="px-3 pb-1 pt-6 text-xs font-bold uppercase tracking-[0.14em] text-[#8c97a2]">
+                  <p className="px-3 pb-1 pt-6 text-xs font-bold uppercase tracking-[0.14em] text-[#68717D]">
                     {group.label}
                   </p>
                   {group.links.map((link) => (

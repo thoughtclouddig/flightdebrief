@@ -90,7 +90,7 @@ const LIGHT_SCOPE_STYLE = {
   "--danger-soft": "#f8dcd8",
   "--foreground": "#101727",
   "--foreground-soft": "#56636f",
-  "--foreground-faint": "#8c97a2",
+  "--foreground-faint": "#68717D",
   "--hairline": "#c7ccd1",
   "--surface": "#ffffff",
   "--surface-sunken": "#e9ebed",
@@ -106,7 +106,7 @@ const LIGHT_SCOPE_STYLE = {
   "--color-danger-soft": "#f8dcd8",
   "--color-foreground": "#101727",
   "--color-foreground-soft": "#56636f",
-  "--color-foreground-faint": "#8c97a2",
+  "--color-foreground-faint": "#68717D",
   "--color-hairline": "#c7ccd1",
   "--color-surface": "#ffffff",
   "--color-surface-sunken": "#e9ebed",
@@ -166,7 +166,12 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
                   students, CFIs and schools equal billing; the page is
                   student-first now and the footer should not revert to the
                   older product description. */}
-              <p className="mt-2 text-sm text-[#8c97a2]">
+              {/* Distinct by treatment, not by being fainter. As small gray
+                  text under a gray paragraph it read as a trailing afterthought
+                  -- and at #8c97a2 it was 2.9:1 on white, which fails contrast
+                  outright. A rule above it and ink weight make it a separate
+                  statement. */}
+              <p className="mt-5 border-t border-slate-200 pt-4 text-sm font-semibold text-[#101727]">
                 Built for student pilots. Better continuity for CFIs and flight schools.
               </p>
             </div>

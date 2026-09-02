@@ -72,7 +72,7 @@ export function SummaryRow({
         <Icon className="size-5" style={{ color: tone }} strokeWidth={2} />
       </span>
       <div className="min-w-0">
-        <p className="text-balance text-xs font-bold uppercase tracking-wide text-[#8c97a2]">{label}</p>
+        <p className="text-balance text-xs font-bold uppercase tracking-wide text-[#68717D]">{label}</p>
         <p className="truncate text-base font-semibold text-[#101727]">{sub}</p>
       </div>
     </div>
