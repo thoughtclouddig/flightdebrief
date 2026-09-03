@@ -61,19 +61,20 @@ export function Hero() {
               size before wrapping -- measured at 3.25rem (52px) it still
               holds one line with margin at 576px, and 8.5vw keeps the mobile
               floor a step above the previous headline's. */}
-          {/* lg+ is flat 2.8125rem (45px), pushed up from 40px because 40
-              still read weak -- twice. The binding case moved once the photo
-              narrowed further at lg: it is no longer 1024 (509px clear there,
-              49px max) but the XL HANDOFF ITSELF -- 1280px, where the photo
-              jumps from 48% back to 60% and clearance drops from 641px to
-              488px in one step. That gives a 47px ceiling, so 45px leaves
-              real margin (~30px) exactly at the one point margin can vanish,
-              and far more everywhere else. Flat, not vw-scaled, for the same
-              reason as before: the photo cap keeps clearance from shrinking
-              as the viewport grows, so nothing forces the size down again
-              past this point. */}
+          {/* lg+ is flat 2.875rem (46px). Pushed up from 45px by testing
+              directly against the live element at 1280px (the binding case --
+              see the photo's own comment), not by extending the width-per-px
+              model further: the model has been running a little conservative
+              against real glyph metrics each time, so this was found by
+              trying sizes against the actual render. 47px measured 7px clear
+              at 1280 -- real, but thin enough that a font substitution or a
+              browser's rounding could close it. 48px measured -4px, already
+              overlapping. 46px measured 17px clear, which is the number here.
+              Flat past lg, not vw-scaled: the photo cap keeps clearance from
+              shrinking as the viewport widens, so nothing forces this down
+              again past 1280. */}
           <h1
-            className="font-display mt-4 max-w-2xl text-[clamp(1.625rem,8.5vw,2.5rem)] lg:text-[2.8125rem] font-extrabold leading-[1.05] tracking-[-0.025em] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(1.625rem,8.5vw,2.5rem)] lg:text-[2.875rem] font-extrabold leading-[1.05] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
             <span className="block">Make every flight</span>
