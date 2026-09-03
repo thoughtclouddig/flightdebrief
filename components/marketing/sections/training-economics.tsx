@@ -39,11 +39,18 @@ export function TrainingEconomics() {
             calculator read as a slab bolted to it; the calculator is now the
             full measure and horizontal, which is what it wanted all along. */}
         <div>
-          <Reveal className="mx-auto max-w-2xl text-center">
+          <Reveal className="mx-auto max-w-3xl text-center">
             <p className="whitespace-nowrap text-xs font-bold uppercase tracking-[0.16em] text-brand">Every training hour counts</p>
-            <h2 className="font-display mt-3 text-balance text-3xl font-bold leading-[1.1] text-[#101727] sm:text-4xl">
-              Flight training is too expensive to keep{" "}
-              <span className="text-brand">relearning the same lesson.</span>
+            {/* Sized to match every other section head -- SectionHead resolves
+                to 44px here and this was sitting at 36, a step below the ones
+                either side of it. It could not simply be enlarged: at 44px the
+                old 68-character line ran to three, so the words came down
+                first. "keep relearning the same lesson" and "learn it twice"
+                say the same thing; the second is 17 characters shorter and
+                lands in two full lines. */}
+            <h2 className="font-display mt-3 text-balance text-4xl font-bold leading-[1.06] text-[#101727] sm:text-[clamp(2.5rem,3.4vw,2.75rem)]">
+              Flight training is too expensive to{" "}
+              <span className="text-brand">learn it twice.</span>
             </h2>
             <p className="mt-5 text-pretty text-lg text-[#414B57]">
               An hour of catching up is an hour of airplane you paid for twice.

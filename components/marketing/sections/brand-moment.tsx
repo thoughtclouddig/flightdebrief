@@ -9,15 +9,15 @@ import { Reveal } from "@/components/marketing/reveal";
  */
 const PROBLEMS = [
   {
-    title: "Hard to remember",
+    title: "You forget it",
     copy: "What mattered right after landing is gone by the next lesson.",
   },
   {
-    title: "Hard to practice",
+    title: "You can't practice it",
     copy: "\u201cWork on landings\u201d is not a plan. You leave not knowing what to do.",
   },
   {
-    title: "Easy to repeat",
+    title: "You repeat it",
     copy: "The same weak spot comes back for months and never gets practiced.",
   },
 ] as const;
@@ -123,12 +123,9 @@ export function BrandMoment() {
        */}
       <Reveal delay={450} className="relative mt-12 w-full max-w-3xl sm:mt-14 lg:max-w-[1040px]">
         <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-3">
-          {PROBLEMS.map((p, i) => (
+          {PROBLEMS.map((p) => (
             <div key={p.title} className="border-t border-[#101727]/12 pt-4">
-              <dt className="flex items-baseline gap-2">
-                <span className="font-display text-xs font-extrabold tabular-nums tracking-[0.1em] text-brand">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
+              <dt>
                 <span className="font-display text-sm font-bold uppercase tracking-wide text-[#101727]">
                   {p.title}
                 </span>
