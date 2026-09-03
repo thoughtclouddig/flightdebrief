@@ -61,20 +61,19 @@ export function Hero() {
               size before wrapping -- measured at 3.25rem (52px) it still
               holds one line with margin at 576px, and 8.5vw keeps the mobile
               floor a step above the previous headline's. */}
-          {/* lg+ is flat 2.5rem (40px), not vw-scaled, now that the photo
-              (see its own comment) cannot grow without bound.
-
-              With that cap, clearance no longer keeps shrinking as the
-              viewport widens -- re-measured: 437px at 1024 (the tightest
-              point now), 552px at 1279 just before xl narrows the photo back
-              to 60%, then 488-504px through the 1280-1536 range the photo
-              already shipped at, and it only grows from there once the 2xl
-              cap takes over. "Make every flight" needs 10.4px of clearance
-              per px of type, so the binding case is 1024's 437px -> 42px
-              max. 40px leaves a real margin there (~21px) and a much larger
-              one everywhere else, without needing to scale at all. */}
+          {/* lg+ is flat 2.8125rem (45px), pushed up from 40px because 40
+              still read weak -- twice. The binding case moved once the photo
+              narrowed further at lg: it is no longer 1024 (509px clear there,
+              49px max) but the XL HANDOFF ITSELF -- 1280px, where the photo
+              jumps from 48% back to 60% and clearance drops from 641px to
+              488px in one step. That gives a 47px ceiling, so 45px leaves
+              real margin (~30px) exactly at the one point margin can vanish,
+              and far more everywhere else. Flat, not vw-scaled, for the same
+              reason as before: the photo cap keeps clearance from shrinking
+              as the viewport grows, so nothing forces the size down again
+              past this point. */}
           <h1
-            className="font-display mt-4 max-w-2xl text-[clamp(1.625rem,8.5vw,2.5rem)] lg:text-[2.5rem] font-extrabold leading-[1.05] tracking-[-0.025em] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(1.625rem,8.5vw,2.5rem)] lg:text-[2.8125rem] font-extrabold leading-[1.05] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
             <span className="block">Make every flight</span>
@@ -127,12 +126,14 @@ export function Hero() {
           positioned against the section's full, uncapped width, so their
           clearance shrinks as the viewport grows past 1320 with no floor.
 
-          55% at lg (1024-1279) buys back the room the headline actually needs
-          at its tightest point. 60% from xl matches what shipped before.
+          48% at lg (1024-1279), narrower than the 55% first tried -- the
+          headline read too small at 40px and the room to grow further was
+          here, not at 60%+ where the ceiling was already generous. 60% from
+          xl matches what shipped before.
           900px flat from 2xl stops the photo growing at all past that point,
           which is what removes the ultra-wide case entirely -- clearance
           grows without bound above 2xl once the photo's own width is fixed. */}
-      <div className="relative mx-6 mt-12 aspect-[4/3] overflow-visible lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:mt-0 lg:w-[55%] xl:w-[60%] 2xl:w-[900px] lg:aspect-auto">
+      <div className="relative mx-6 mt-12 aspect-[4/3] overflow-visible lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:mt-0 lg:w-[48%] xl:w-[60%] 2xl:w-[900px] lg:aspect-auto">
         <div className="absolute inset-0 overflow-hidden rounded-3xl lg:rounded-none">
           <Image
             src="/images/marketing/hero-debrief-tablet.webp"
