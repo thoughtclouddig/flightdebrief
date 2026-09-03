@@ -1,23 +1,28 @@
-import { ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, ExternalLink } from "lucide-react";
 import {
+  AcsBadge,
   Evidence,
+  InfoTip,
   Panel,
   PanelEyebrow,
   PanelHeadline,
-  PanelMeta,
-  PrimaryButton,
+  PageTitle,
   Screen,
   Section,
+  SkillMeter,
+  StateLabel,
   VectorMark,
   stateTone,
 } from "@/components/prototype/ui";
-import { AcsBadge } from "@/components/acs-badge";
+import { acsAreaForSkill } from "@/lib/acs";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeSkillProgression } from "@/lib/skill-progress";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { suggestStudyReferences } from "@/lib/topics";
-import { cn } from "@/lib/utils";
+import { formatFlightContext } from "@/lib/utils";
 import type { SkillProgressionStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +33,6 @@ function toneForStatus(status: SkillProgressionStatus) {
   return "Improving" as const;
 }
 
-// Worst-first, for picking a fallback when there's no recurring theme.
 const STATUS_RANK: Record<SkillProgressionStatus, number> = {
   "Needs Coaching": 0,
   Introduced: 1,
@@ -37,26 +41,33 @@ const STATUS_RANK: Record<SkillProgressionStatus, number> = {
   Demonstrated: 4,
 };
 
+// Rank onto the same 1-4 scale SkillMeter expects everywhere else -- see
+// progress/[skill]/page.tsx's identical mapping. Not a new scoring system:
+// this is a display-only bucketing of the same computed status.
+const METER_SCORE: Record<SkillProgressionStatus, number> = {
+  Introduced: 1,
+  "Needs Coaching": 1,
+  Developing: 2,
+  Improving: 3,
+  Demonstrated: 4,
+};
+
 /**
- * Between-flights preparation -- the production destination behind the V2
- * nav's Train tab (app/prototype/vector/train/page.tsx is the design source).
+ * Train -- Phase 6 exact reproduction of app/prototype/vector/train/page.tsx's
+ * structure: PageTitle, a "Today Vector recommends" panel with Vector's
+ * identity and a real explanation of what it can do, then the open-skill
+ * list with the same meter+link treatment as Progress.
  *
- * Deliberately NOT a port of that page's "Today Vector recommends" Panel,
- * which offers Chair Flying or a "5-minute review" as its primary action.
- * Neither has real backing here: lib/prototype/chair-fly.ts's recommendedDrill
- * has exactly one authored scenario, keyed to the literal task label
- * "Crosswind Landings" against lib/prototype/vector-data.ts's fixture --
- * production's real task labels (e.g. "Traffic Pattern & Landings", set by
- * lib/demo/live-demo-seed.ts's TODAY_FLIGHT_TASKS) will not string-match it
- * even when a real contested objective exists, so wiring it would mean
- * matching against arbitrary demo text, not real evidence. The "5-minute
- * review" mode has the same problem one layer up: its content
- * (CONCEPTS/KNOWLEDGE_CHECK) is entirely authored prose with no production
- * equivalent library at all. Neither is faked here. What IS real and shown
- * instead: the recurring theme (or, absent one, the weakest open skill) from
- * computeNextLessonBrief/computeSkillProgression, its own captured evidence
- * sentence, and Recommended Study -- all read from seeded rows or existing
- * production calculations, nothing authored for this page.
+ * The prototype's panel offers Chair Flying or a "5-minute review" as its
+ * one primary action. Neither is wired: lib/prototype/chair-fly.ts has one
+ * authored scenario keyed to the literal string "Crosswind Landings" against
+ * its own fixture, which won't match production's real task labels even
+ * when a real contested objective exists; the "5-minute review" content
+ * (CONCEPTS/KNOWLEDGE_CHECK) is authored prose with no production library at
+ * all. Per "omit the action, don't redesign the page": the panel keeps its
+ * exact shape through the evidence quote, and what would have been the
+ * action row is the real Recommended Study + Vector guidance immediately
+ * below it, in the same position.
  */
 export default async function TrainPage() {
   const repo = getRepository();
@@ -70,6 +81,7 @@ export default async function TrainPage() {
   ]);
   const certificateType =
     memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
+  const cfi = resolveCfiFirstName(brief.lastInstructor);
 
   const progressions = computeSkillProgression(signals.filter((s) => !s.dismissed));
   const open = progressions.filter((p) => p.status !== "Demonstrated");
@@ -79,43 +91,83 @@ export default async function TrainPage() {
   const weakest = [...open].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status])[0] ?? null;
   const recommendedSkill = theme ? (progressions.find((p) => p.skill === theme.skill) ?? null) : weakest;
   const recommendedLabel = theme?.theme ?? recommendedSkill?.label ?? null;
+  const recommendedTone = recommendedSkill ? toneForStatus(recommendedSkill.status) : null;
+  const recommendedAcsArea = recommendedSkill ? acsAreaForSkill(recommendedSkill.skill, certificateType) : null;
 
   const studyReferences = recommendedLabel ? suggestStudyReferences([recommendedLabel]) : [];
 
   if (!recommendedLabel && studyReferences.length === 0 && !brief.suggestedQuestion) {
     return (
       <Screen>
-        <PanelMeta>Nothing to train on yet -- this fills in once your first debrief is finished.</PanelMeta>
+        <PageTitle>Train</PageTitle>
+        <p className="px-1.5 text-[15px] text-foreground-faint">
+          Nothing to train on yet -- this fills in once your first debrief is finished.
+        </p>
       </Screen>
     );
   }
 
   return (
     <Screen>
+      <PageTitle>Train</PageTitle>
+
       {recommendedLabel ? (
-        <Panel>
-          <PanelEyebrow>{theme ? "Worth extra focus" : "Still building"}</PanelEyebrow>
-          <PanelHeadline>{recommendedLabel}</PanelHeadline>
-          {theme ? (
-            <PanelMeta>
-              Come up in {theme.count} of your last {theme.consideredFlights} debriefs
-              {theme.instructorCount >= 2 ? ` -- across ${theme.instructorCount} instructors` : ""}.
-            </PanelMeta>
-          ) : recommendedSkill ? (
-            <PanelMeta>{recommendedSkill.history.length} {recommendedSkill.history.length === 1 ? "flight" : "flights"} tracked, still short of Meets Standard.</PanelMeta>
-          ) : null}
-          {latestLesson ? (
-            <div className="mt-4">
-              <Evidence
-                label={latestLesson.instructorName ?? "Your debrief"}
-                tone="instructor"
-                quoted
-                text={latestLesson.statement}
-                onPanel
-              />
+        <Section title="Today Vector recommends" flush>
+          <Panel>
+            <div className="flex items-start justify-between gap-2 border-b border-panel-hairline pb-5">
+              <VectorMark subtitle="Your AI flight trainer" onPanel />
+              <InfoTip label="What Vector can do here" onPanel>
+                <span className="flex flex-col gap-2.5">
+                  <span>
+                    <strong className="font-semibold text-foreground">Recommended study</strong> &mdash; real FAA-
+                    sourced references matched to what came up in your debriefs.
+                  </span>
+                  <span>
+                    <strong className="font-semibold text-foreground">A suggested question</strong> &mdash; one
+                    concrete thing to ask your instructor next, drawn from your own last debrief.
+                  </span>
+                </span>
+              </InfoTip>
             </div>
-          ) : null}
-        </Panel>
+
+            {brief.lastFlight ? (
+              <p className="mt-5 text-[15px] leading-relaxed text-panel-foreground-soft">
+                Starting where your last flight ended &mdash; {formatFlightContext(brief.lastFlight)}
+                {cfi ? ` with ${cfi}` : ""}.
+              </p>
+            ) : null}
+
+            <div className="mt-6">
+              <PanelEyebrow className={recommendedTone ? stateTone(recommendedTone, true).text : undefined}>
+                {theme ? "Worth extra focus" : "Still building"}
+              </PanelEyebrow>
+            </div>
+            <PanelHeadline>{recommendedLabel}</PanelHeadline>
+            {recommendedSkill && recommendedAcsArea ? (
+              <div className="mt-2">
+                <AcsBadge area={recommendedAcsArea.name} onPanel />
+              </div>
+            ) : null}
+
+            {theme && theme.instructorCount >= 2 ? (
+              <p className="mt-4 text-[15px] leading-relaxed text-panel-foreground-soft">
+                Come up in {theme.count} of your last {theme.consideredFlights} debriefs -- across{" "}
+                {theme.instructorCount} instructors.
+              </p>
+            ) : null}
+
+            {latestLesson ? (
+              <div className="mt-5">
+                <Evidence
+                  label={`${latestLesson.instructorName ?? "Your debrief"} · ${latestLesson.flightDate}`}
+                  tone="instructor"
+                  text={latestLesson.statement}
+                  onPanel
+                />
+              </div>
+            ) : null}
+          </Panel>
+        </Section>
       ) : null}
 
       {studyReferences.length > 0 ? (
@@ -153,27 +205,25 @@ export default async function TrainPage() {
       ) : null}
 
       {open.length > 0 ? (
-        <Section title="Still working on" flush>
-          <div className="overflow-hidden rounded-2xl border border-hairline bg-surface px-5">
-            {open.map((p) => {
-              const tone = stateTone(toneForStatus(p.status));
-              return (
-                <div key={p.skill} className="flex min-h-[56px] w-full items-center gap-3 border-b border-hairline py-3 last:border-b-0">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[17px] text-foreground">{p.label}</span>
-                      <AcsBadge skill={p.skill} certificateType={certificateType} />
-                    </div>
-                  </div>
-                  <span className={cn("shrink-0 text-[14px] font-medium", tone.text)}>{p.status}</span>
+        <Section title="Still working on">
+          <div className="flex flex-col">
+            {open.map((p) => (
+              <Link
+                key={p.skill}
+                href={`/progress/${p.skill}`}
+                className="flex min-h-[68px] items-center gap-4 border-b border-hairline py-4 last:border-b-0"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-[17px] font-medium leading-tight text-foreground">{p.label}</p>
+                  <StateLabel state={toneForStatus(p.status)} />
                 </div>
-              );
-            })}
+                <SkillMeter score={METER_SCORE[p.status]} max={4} state={toneForStatus(p.status)} />
+                <ChevronRight className="size-4 shrink-0 text-foreground-faint" aria-hidden />
+              </Link>
+            ))}
           </div>
         </Section>
       ) : null}
-
-      <PrimaryButton href="/progress">See full progress</PrimaryButton>
     </Screen>
   );
 }

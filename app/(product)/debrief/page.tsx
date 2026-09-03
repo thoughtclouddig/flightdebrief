@@ -40,8 +40,11 @@ export default async function DebriefHub() {
           <PanelEyebrow icon={<Mic className="size-3.5" aria-hidden />}>Just landed?</PanelEyebrow>
           <PanelHeadline>Capture it while it&rsquo;s fresh</PanelHeadline>
           <PanelMeta>{formatFlightContext(pendingFlight)}</PanelMeta>
+          <p className="mt-3 text-[15px] leading-relaxed text-panel-foreground-soft">
+            Hand your instructor the phone, or record the conversation together. About ninety seconds.
+          </p>
           <div className="mt-5">
-            <PanelButton href={`/flights/${pendingFlight.id}/debrief`}>Start debrief</PanelButton>
+            <PanelButton href={`/flights/${pendingFlight.id}/debrief`}>Start new debrief</PanelButton>
           </div>
         </Panel>
       ) : null}
