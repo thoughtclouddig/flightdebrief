@@ -23,6 +23,14 @@ export async function POST() {
   if (auth.response) return auth.response;
   const { viewer } = auth;
 
+  // Live-demo orgs (lib/demo/live-demo-seed.ts) must never hit this: it
+  // would create a real, permanent "individual" org for a visitor who isn't
+  // a real user, and that org has no demo_expires_at, so the expiry sweep
+  // never cleans it up. Same guard as billing/checkout and billing/portal.
+  if (viewer.organization.demoExpiresAt) {
+    return NextResponse.json({ error: "Not available in the live demo." }, { status: 403 });
+  }
+
   // Independent-CFI orgs too: a student who parts ways with a freelance CFI
   // has exactly the same need as one leaving a school, and nothing below is
   // school-specific. Excluding them meant the only exit door in the product
