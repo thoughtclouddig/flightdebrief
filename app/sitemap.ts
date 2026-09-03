@@ -5,6 +5,7 @@ import { appOrigin } from "@/lib/email";
 
 const STATIC_ROUTES = [
   "/",
+  "/how-it-works",
   "/instructors",
   "/schools",
   "/enterprise",
