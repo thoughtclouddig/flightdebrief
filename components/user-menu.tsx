@@ -61,17 +61,30 @@ export function UserMenu({
     }
   }
 
+  const initials = viewer.user.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("");
+
   return (
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={cn(
-          "flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-1.5 text-xs font-medium text-foreground",
-          compact && "px-2.5 py-1",
-        )}
+        aria-label={compact ? `Account -- ${viewer.user.name}` : undefined}
+        className={
+          compact
+            ? "ml-1 flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-[13.5px] font-semibold text-foreground-soft"
+            : "flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-1.5 text-xs font-medium text-foreground"
+        }
       >
-        <span className={cn("max-w-[9rem] truncate", compact && "max-w-[6rem]")}>{viewer.user.name}</span>
-        <ChevronDown className="size-3.5 shrink-0 text-foreground-faint" />
+        {compact ? (
+          initials
+        ) : (
+          <>
+            <span className="max-w-[9rem] truncate">{viewer.user.name}</span>
+            <ChevronDown className="size-3.5 shrink-0 text-foreground-faint" />
+          </>
+        )}
       </button>
 
       {open ? (

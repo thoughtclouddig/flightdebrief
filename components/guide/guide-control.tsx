@@ -71,8 +71,10 @@ export function GuideControl({ steps, variant }: { steps: GuideStep[]; variant: 
         onClick={() => setOpen(true)}
         aria-label={allDone ? "AfterFlight Guide" : `AfterFlight Guide -- ${completeCount} of ${total} steps complete`}
         className={cn(
-          "flex items-center gap-1.5 rounded-lg text-foreground-soft transition-colors hover:bg-surface-sunken hover:text-foreground",
-          compact ? "size-9 justify-center" : "px-2 py-1.5",
+          "flex items-center transition-colors",
+          compact
+            ? "size-11 justify-center rounded-full text-foreground-faint hover:text-foreground"
+            : "gap-1.5 rounded-lg px-2 py-1.5 text-foreground-soft hover:bg-surface-sunken hover:text-foreground",
         )}
       >
         <ProgressRing complete={completeCount} total={total} compact={compact} />

@@ -55,11 +55,13 @@ export function SupportLink({
       aria-label="Get help"
       title="Get help"
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-lg text-foreground-faint transition-colors hover:bg-surface-sunken hover:text-foreground",
-        compact ? "size-9" : "size-10",
+        "flex shrink-0 items-center justify-center transition-colors",
+        compact
+          ? "size-11 rounded-full text-foreground-faint hover:text-foreground"
+          : "size-10 rounded-lg text-foreground-faint hover:bg-surface-sunken hover:text-foreground",
       )}
     >
-      <LifeBuoy className={compact ? "size-4" : "size-[18px]"} />
+      <LifeBuoy className={compact ? "size-[22px]" : "size-[18px]"} />
     </a>
   );
 }
