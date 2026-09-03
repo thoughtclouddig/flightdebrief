@@ -168,10 +168,12 @@ export function Hero() {
             priority
             /* Crop from the left of the frame rather than the center, so the
                pair sits further right and the instructor's shoulder runs off
-               the edge instead of being fully contained. That also clears the
+               the edge instead of being fully contained. 36% rather than the
+               28% first tried -- that pushed them further than wanted; this
+               keeps the shoulder cropped without shoving the pair to the edge. That also clears the
                left of the picture, which is what lets the fade below be long
                and soft rather than short and abrupt. */
-            className="object-cover object-[32%_center] lg:object-[28%_center]"
+            className="object-cover object-[38%_center] lg:object-[36%_center]"
             sizes="(min-width: 1024px) 60vw, 100vw"
           />
           {/* The fade has to START opaque, not at 60%.
