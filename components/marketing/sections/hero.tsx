@@ -86,7 +86,7 @@ export function Hero() {
               renders a narrower synthetic instance and understates Archivo's
               real width by about a fifth. */}
           <h1
-            className="font-display mt-4 max-w-2xl text-[clamp(1.375rem,8.2vw,2.875rem)] font-extrabold leading-[1.02] tracking-[-0.025em] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(1.375rem,8.2vw,2.625rem)] font-extrabold leading-[1.02] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
             {/* Four lines on a phone, three from sm up, and that is what lets
@@ -102,14 +102,22 @@ export function Hero() {
                 8.2vw rather than a fixed step because the constraint scales
                 with the column: at a 320px viewport it gives 26.2px against a
                 272px column, which still fits with about 10px to spare. */}
-            <span className="block">Get to your</span>
-            <span className="block sm:inline">checkride</span>{" "}
-            <span className="block sm:inline">sooner &mdash;</span>
-            <span className="block text-brand">with confidence.</span>
+            {/* No stated breaks here, unlike the headline this replaces.
+                The hero text column is 576px -- the photograph takes 60% from
+                lg -- and "Repeat less. Finish sooner." alone measures 700px at
+                44px in the display face. There is no size above about 34px at
+                which both sentences hold their own line, so a stated break
+                would simply wrap inside itself and produce four lines. Natural
+                wrapping lands it in three.
+
+                The weight split does the work the line break would have: the
+                setup is medium, the payoff is extrabold and brand. */}
+            <span className="font-medium">Prepare better between flights.</span>{" "}
+            <span className="font-extrabold text-brand">Repeat less. Finish sooner.</span>
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#414B57]">
-            Your instructor&rsquo;s debrief becomes one page telling you what to work on before you fly again.
-            Built from what they actually said, not a syllabus.
+            Your instructor&rsquo;s debrief becomes a clear plan for what to review, practice, and focus on
+            before you fly again.
           </p>
 
           {/* Grid, not flex-wrap. Wrapping packed each row by content width, so
