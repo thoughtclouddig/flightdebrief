@@ -169,7 +169,21 @@ export function Hero() {
             className="object-cover"
             sizes="(min-width: 1024px) 60vw, 100vw"
           />
-          <div className="absolute inset-y-0 left-0 hidden w-1/2 bg-gradient-to-r from-white/60 via-white/35 to-transparent lg:block" />
+          {/* The fade has to START opaque, not at 60%.
+            
+              from-white/60 left 40% of the photograph showing at its own left
+              edge, which is exactly where the image meets the white page --
+              so the seam read as a visible border down the side. It starts at
+              full white now, for the first fifth of the overlay, which covers
+              the edge completely.
+
+              But the width had to come DOWN, not up. At w-2/3 the fade reached
+              346px into the photograph at 45% white and washed the student
+              out. A fade only has to hide a one-pixel seam, so it is 170px
+              here: about 34px of solid white over the edge, then clear well
+              before the subject. Wide and weak washes the picture; narrow and
+              opaque hides the edge and leaves it alone. */}
+          <div className="absolute inset-y-0 left-0 hidden w-[170px] bg-gradient-to-r from-white from-20% to-transparent lg:block xl:w-[200px]" />
         </div>
         <DebriefSummaryMockupCard className="absolute -bottom-10 right-4 hidden w-[340px] lg:block xl:right-8" />
       </div>
