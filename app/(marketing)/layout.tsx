@@ -182,7 +182,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
                   <ul className="mt-3 flex flex-col gap-2">
                     {column.links.map((link) => (
                       <li key={link.href}>
-                        <Link href={link.href} className="text-[#414B57] hover:text-[#101727]">
+                        <Link href={link.href} className="text-xs text-[#414B57] hover:text-[#101727]">
                           {link.label}
                         </Link>
                       </li>

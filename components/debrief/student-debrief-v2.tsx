@@ -1,5 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import {
+  BackLink,
   Card,
   Evidence,
   Panel,
@@ -57,6 +58,7 @@ export function StudentDebriefV2({
 
   return (
     <Screen>
+      <BackLink href="/debrief">Debriefs</BackLink>
       <div>
         <p className="text-[15px] text-foreground-faint">{`${dateLabel} · ${cfi}`}</p>
         <h1 className="text-[34px] font-semibold leading-[1.08] tracking-[-0.02em] text-foreground">

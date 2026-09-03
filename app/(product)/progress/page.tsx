@@ -1,4 +1,5 @@
-import { AlertCircle, Repeat, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import { AlertCircle, ChevronRight, Repeat, TrendingUp } from "lucide-react";
 import { AcsBadge } from "@/components/acs-badge";
 import { TrainingItemChecklist } from "@/components/training-item-checklist";
 import { PageTitle, Screen, Section, stateTone } from "@/components/prototype/ui";
@@ -6,7 +7,8 @@ import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeSkillProgression, type SkillProgression } from "@/lib/skill-progress";
-import { computeStudentFreeFlights } from "@/lib/entitlements";
+import { computeSchoolFreeDebriefs, computeStudentFreeFlights } from "@/lib/entitlements";
+import { hasActiveSubscription } from "@/lib/billing-gate";
 import { cn } from "@/lib/utils";
 import type { SkillProgressionStatus } from "@/lib/types";
 
@@ -34,12 +36,19 @@ export default async function ProgressPage() {
   const solo = viewer.organization.kind === "individual";
   const studentId = viewer.user.id;
 
-  const [flights, trainingItems, brief, memberships, signals] = await Promise.all([
+  const isSchoolOrg = viewer.organization.kind === "school";
+  const [flights, trainingItems, brief, memberships, signals, billingScopedFlights] = await Promise.all([
     repo.listFlights({ studentId }),
     repo.listTrainingItems(),
     computeNextLessonBrief(repo, studentId),
     repo.listMembershipsForUser(studentId),
     repo.listTrainingSignals({ studentId }),
+    // The real gate (lib/billing-gate.ts) caps a school on debriefs across
+    // the WHOLE org, not per student -- computing "free flights used" from
+    // just this student's own rows would undercount for any school with
+    // more than one student. Only fetched when it matters; an individual
+    // org's own flights already are its total.
+    isSchoolOrg ? repo.listFlights({ organizationId: viewer.organization.id }) : Promise.resolve(null),
   ]);
   const certificateType =
     memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
@@ -55,7 +64,13 @@ export default async function ProgressPage() {
   const beforeFlight = openItems.filter((t) => t.category === "before_next_flight");
   const debriefedCount = flights.filter((f) => f.debriefStatus === "complete").length;
   const skillProgressions = computeSkillProgression(signals.filter((s) => !s.dismissed));
-  const freeFlights = computeStudentFreeFlights(flights);
+  // Mirrors lib/billing-gate.ts's isBillingBlocked exactly: independent-CFI
+  // orgs and an active subscription are never capped, so the line is hidden
+  // rather than shown with a number that would never actually block anyone.
+  const freeUsage = isSchoolOrg
+    ? computeSchoolFreeDebriefs(billingScopedFlights ?? [])
+    : computeStudentFreeFlights(flights);
+  const showFreeUsage = viewer.organization.kind !== "independent_cfi" && !hasActiveSubscription(viewer.organization);
 
   return (
     <Screen>
@@ -63,9 +78,13 @@ export default async function ProgressPage() {
       <p className="-mt-4 px-1.5 text-[15px] leading-relaxed text-foreground-soft">
         Patterns across your training -- conservative on purpose. Nothing here is a trend until it&rsquo;s shown up more than once.
       </p>
-      <p className="-mt-2 px-1.5 text-[13px] font-semibold text-brand">
-        {freeFlights.exhausted ? "You've used your 3 free flights." : `${freeFlights.used} of ${freeFlights.cap} free flights used`}
-      </p>
+      {showFreeUsage ? (
+        <p className="-mt-2 px-1.5 text-[13px] font-semibold text-brand">
+          {freeUsage.exhausted
+            ? `You've used your ${freeUsage.cap} free ${isSchoolOrg ? "debriefs" : "flights"}.`
+            : `${freeUsage.used} of ${freeUsage.cap} free ${isSchoolOrg ? "debriefs" : "flights"} used`}
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl border border-hairline bg-surface p-5">
@@ -170,11 +189,6 @@ export default async function ProgressPage() {
 /** Display-only relabel for the one status that names a coach -- see SkillProgressList's identical rule. */
 const SOLO_STATUS_LABEL: Partial<Record<SkillProgressionStatus, string>> = { "Needs Coaching": "Needs Work" };
 
-// Not QuietRow: that component's chevron implies a destination, and there is
-// no per-skill detail route in production yet (the prototype's
-// app/prototype/vector/progress/[skill]/page.tsx has no production
-// equivalent -- see the Phase 3 report). A row that looks tappable and does
-// nothing is worse than a flat one.
 function SkillRow({
   progression,
   certificateType,
@@ -189,7 +203,10 @@ function SkillRow({
   const lastFlown = progression.history[progression.history.length - 1]!.flightDate;
 
   return (
-    <div className="flex min-h-[64px] w-full items-center gap-3 border-b border-hairline py-3 last:border-b-0">
+    <Link
+      href={`/progress/${progression.skill}`}
+      className="flex min-h-[64px] w-full items-center gap-3 border-b border-hairline py-3 last:border-b-0"
+    >
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[17px] text-foreground">{progression.label}</span>
@@ -201,6 +218,7 @@ function SkillRow({
         </p>
       </div>
       <span className={cn("shrink-0 text-[14px] font-medium", tone.text)}>{label}</span>
-    </div>
+      <ChevronRight className="size-4 shrink-0 text-foreground-faint" aria-hidden />
+    </Link>
   );
 }

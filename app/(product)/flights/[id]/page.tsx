@@ -10,7 +10,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
+import { computeSkillProgression } from "@/lib/skill-progress";
 import { formatDuration } from "@/lib/utils";
+import { StudentFlightDetail } from "./student-flight-detail";
 
 export default async function FlightDetailPage(props: PageProps<"/flights/[id]">) {
   const { id } = await props.params;
@@ -55,6 +57,30 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
   const student = isInstructorViewer ? await repo.getUser(flight.userId) : null;
   const flownWithAnotherInstructor =
     isInstructorViewer && Boolean(flight.instructor) && flight.instructor?.id !== viewer.user.id;
+
+  if (!isInstructorViewer) {
+    const [signals, memberships] = await Promise.all([
+      repo.listTrainingSignals({ studentId: flight.userId }),
+      repo.listMembershipsForUser(flight.userId),
+    ]);
+    const flightSkills = new Set(signals.filter((s) => s.flightId === flight.id).map((s) => s.skill));
+    const skillProgressions = computeSkillProgression(signals.filter((s) => !s.dismissed)).filter((p) =>
+      flightSkills.has(p.skill),
+    );
+    const certificateType =
+      memberships.find((m) => m.organizationId === flight.organizationId)?.certificateType ?? null;
+
+    return (
+      <StudentFlightDetail
+        flight={flight}
+        tasksPending={tasksPending}
+        hasPendingDebrief={hasPendingDebrief}
+        guidanceMode={guidanceMode}
+        skillProgressions={skillProgressions}
+        certificateType={certificateType}
+      />
+    );
+  }
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">

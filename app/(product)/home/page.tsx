@@ -1,9 +1,8 @@
-import Link from "next/link";
-import { BookOpen, ExternalLink } from "lucide-react";
+import { ArrowRight, Mic, Plane } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { LocalDateTime } from "@/components/local-date-time";
-import { buttonVariants } from "@/components/ui/button";
 import {
+  Evidence,
   Panel,
   PanelButton,
   PanelEyebrow,
@@ -13,58 +12,51 @@ import {
   QuietRow,
   Screen,
   Section,
+  SecondaryButton,
 } from "@/components/prototype/ui";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeDebriefProgress } from "@/lib/debrief-progress";
 import { computeDebriefStreak, computeTotalCaptured } from "@/lib/milestones";
-import { suggestStudyReferences } from "@/lib/topics";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { RadioPracticeCard } from "@/components/radio-practice-card";
 import { formatDurationShort, formatFlightContext } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Home -- Phase 4 rewrite. app/prototype/vector/page.tsx is the design
+ * source: a state-aware screen with one Panel answering "what should I do
+ * now", not a dashboard of equal cards.
+ *
+ * The prototype has three states (JustLanded/JustFlew/BetweenFlights).
+ * JustLanded is not ported -- it depends on ADS-B "did you fly today, here's
+ * what we detected" matching surfaced proactively on Home, which production
+ * has no route or job that does; the real ADS-B search that exists
+ * (NewFlightClient's "search" mode) is something the student opens
+ * themselves on /flights/new, not something Home can honestly claim to have
+ * already found. Two real states remain: a flight recorded but not yet
+ * debriefed (JustFlew), and everything else (BetweenFlights).
+ */
 export default async function StudentHomePage() {
   const repo = getRepository();
   const viewer = await getViewer();
-  /** No CFI on the account at all -- see lib/auth/store.ts createOrganization. */
   const solo = viewer.organization.kind === "individual";
   const studentId = viewer.user.id;
 
-  const [flights, trainingItems, brief, radioPractice, milestones] = await Promise.all([
+  const [flights, brief, radioPractice, milestones] = await Promise.all([
     repo.listFlights({ studentId }),
-    repo.listTrainingItems(),
     computeNextLessonBrief(repo, studentId),
     repo.listRadioPracticeAssignments(studentId),
     repo.listMilestones(studentId),
   ]);
   const pendingRadioPractice = radioPractice.filter((a) => a.status === "assigned");
-  // Completed calls stay reachable. Finishing every assignment used to empty
-  // the card back to "none assigned yet", which reads as though the work
-  // vanished -- and the calls a student got wrong are exactly the ones worth
-  // going back to.
-  const completedRadioPractice = radioPractice
-    .filter((a) => a.status === "completed")
-    .slice(0, 5);
-
+  const completedRadioPractice = radioPractice.filter((a) => a.status === "completed").slice(0, 5);
   const scenarioTitle = (scenarioId: string) =>
     RADIO_PRACTICE_SCENARIOS.find((s) => s.id === scenarioId)?.title ?? "Radio call";
 
-  const debriefedFlights = flights.filter((f) => f.debriefStatus === "complete");
-  const recentDebriefs = debriefedFlights.slice(0, 3);
-  const flightIds = new Set(flights.map((f) => f.id));
-  const openActionItems = trainingItems.filter(
-    (t) => flightIds.has(t.flightId) && !t.done && t.category !== "todo" && t.visibility === "shared",
-  );
-
-  // Rewards Phase 1: a compact, non-clickable summary -- there's no My
-  // Journey destination to link into yet (that's Phase 2). See
-  // lib/milestones.ts for what counts. Rendered as plain numerals, not the
-  // circular gauges the previous layout used -- MASTER.md's progress
-  // language (SS9/SS16) explicitly rejects a ring/gauge implying a
-  // readiness percentage that was never computed; these are counts.
   const totalCaptured = computeTotalCaptured(flights);
   const debriefStreak = computeDebriefStreak([...flights].sort((a, b) => b.flightDate.localeCompare(a.flightDate)));
   const rewardsStats =
@@ -76,19 +68,12 @@ export default async function StudentHomePage() {
         ]
       : null;
 
-  // The most recent flight that isn't debriefed yet, if any -- invisible to
-  // brief.lastFlight (pre-filtered to complete-only, lib/training-memory.ts)
-  // and the source of a real gap: neither dashboard showed a flight was
-  // sitting mid-debrief at all. See lib/debrief-progress.ts.
   const pendingFlight = [...flights]
     .filter((f) => f.debriefStatus !== "complete")
     .sort((a, b) => b.flightDate.localeCompare(a.flightDate))[0] ?? null;
   const pendingProgress = pendingFlight ? await computeDebriefProgress(repo, pendingFlight) : null;
-
-  // One Panel per screen (MASTER.md's "ONE PANEL" rule) -- picked by what's
-  // most actionable right now: an undebriefed flight outranks a scheduled
-  // one, which outranks just recapping the last completed flight.
-  const panelMode = pendingFlight && pendingProgress ? "pending" : brief.upcomingReservation ? "next" : brief.lastFlight ? "last" : "none";
+  const cfi = resolveCfiFirstName(brief.lastInstructor);
+  const debriefedCount = flights.filter((f) => f.debriefStatus === "complete").length;
 
   return (
     <Screen>
@@ -96,14 +81,11 @@ export default async function StudentHomePage() {
         Welcome back, <span className="font-medium text-foreground">{viewer.user.name.split(" ")[0]}</span>
       </p>
 
-      {/* 1. Next-flight focus -- what to work on before you fly again. */}
-      {panelMode === "pending" && pendingFlight && pendingProgress ? (
+      {pendingFlight && pendingProgress ? (
         <>
           {solo ? null : <AutoRefresh intervalMs={15000} />}
           <Panel>
-            <PanelEyebrow>
-              {solo ? "Ready to debrief" : pendingProgress.stage === "awaiting_student_assessment" ? "Needs your input" : "Debrief in progress"}
-            </PanelEyebrow>
+            <PanelEyebrow icon={<Plane className="size-3.5" aria-hidden />}>Flight complete</PanelEyebrow>
             <PanelHeadline>{formatFlightContext(pendingFlight)}</PanelHeadline>
             <PanelMeta>
               {solo
@@ -116,16 +98,20 @@ export default async function StudentHomePage() {
                       ? "Recorded -- your instructor still needs to finish reviewing it with you."
                       : "Both assessments are in -- your instructor is starting the debrief."}
             </PanelMeta>
-            <div className="mt-5">
+            <div className="mt-5 flex flex-col gap-2.5">
               <PanelButton href={`/flights/${pendingFlight.id}/debrief`}>
-                {solo ? "Start" : pendingProgress.stage === "awaiting_student_assessment" ? "Do it now" : "Open"}
+                <Mic className="size-[18px]" aria-hidden />
+                {solo ? "Start debrief" : pendingProgress.stage === "awaiting_student_assessment" ? "Do it now" : "Open"}
               </PanelButton>
+              <SecondaryButton href={`/flights/${pendingFlight.id}`} onPanel>
+                View flight
+              </SecondaryButton>
             </div>
           </Panel>
         </>
-      ) : panelMode === "next" && brief.upcomingReservation ? (
+      ) : brief.upcomingReservation ? (
         <Panel>
-          <PanelEyebrow>Next flight</PanelEyebrow>
+          <PanelEyebrow icon={<Plane className="size-3.5" aria-hidden />}>Next flight</PanelEyebrow>
           <PanelHeadline>
             <LocalDateTime
               iso={brief.upcomingReservation.scheduledStart}
@@ -133,28 +119,27 @@ export default async function StudentHomePage() {
             />
           </PanelHeadline>
           <PanelMeta>Instructor: {brief.upcomingReservationInstructor?.name ?? "TBD"}</PanelMeta>
-          {brief.keepWorkingOn.length > 0 ? (
-            <div className="mt-4">
+          {brief.focusAreas.length > 0 ? (
+            <div className="mt-6 border-t border-panel-hairline pt-5">
               <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-panel-foreground-soft">
-                Focus from last lesson
+                Focus on {brief.focusAreas.length === 1 ? "this" : `${brief.focusAreas.length} things`}
               </p>
-              <ul className="mt-1.5 flex flex-col gap-1">
-                {brief.keepWorkingOn.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[15px] text-panel-foreground">
-                    <span className="mt-2 size-1 shrink-0 rounded-full bg-brand" />
-                    {item}
+              <ol className="mt-3 flex flex-col gap-3">
+                {brief.focusAreas.map((f, i) => (
+                  <li key={f} className="flex items-start gap-3.5">
+                    <span className="mt-0.5 flex size-[22px] shrink-0 items-center justify-center rounded-full bg-panel-elevated text-[13px] font-semibold tabular-nums text-panel-foreground-soft">
+                      {i + 1}
+                    </span>
+                    <span className="text-[17px] leading-snug">{f}</span>
                   </li>
                 ))}
-              </ul>
+              </ol>
             </div>
           ) : null}
-          <div className="mt-5">
-            <PanelButton href="/next-lesson">View full brief</PanelButton>
-          </div>
         </Panel>
-      ) : panelMode === "last" && brief.lastFlight ? (
+      ) : brief.lastFlight ? (
         <Panel>
-          <PanelEyebrow>Latest flight</PanelEyebrow>
+          <PanelEyebrow icon={<Plane className="size-3.5" aria-hidden />}>Latest flight</PanelEyebrow>
           <PanelHeadline>
             {brief.lastFlight.departureAirport} → {brief.lastFlight.arrivalAirport}
           </PanelHeadline>
@@ -163,123 +148,72 @@ export default async function StudentHomePage() {
             {" · "}
             {brief.lastFlight.aircraft.tailNumber} · {formatDurationShort(brief.lastFlight.durationMinutes)}
           </PanelMeta>
-          <div className="mt-5">
-            <PanelButton href={`/flights/${brief.lastFlight.id}/debrief/results`}>View debrief</PanelButton>
-          </div>
         </Panel>
       ) : null}
 
-      {/* 2. What came out of the latest debrief. */}
-      {brief.lastFlight && brief.lastWentWell.length > 0 ? (
-        <Section title="From your latest debrief">
-          <ul className="flex flex-col gap-2">
-            {brief.lastWentWell.map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-[15px] leading-relaxed text-foreground-soft">
-                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-state-good" />
-                {item}
-              </li>
-            ))}
-          </ul>
+      {/* The instructor's own words, real and verbatim -- lib/training-memory.ts
+          never fabricates this field. Only shown outside the pending-debrief
+          state, where the Panel's own content already carries the moment. */}
+      {!pendingFlight && cfi && brief.lastInstructorNote ? (
+        <Section title={`${cfi}'s key reminder`}>
+          <Evidence label={cfi} tone="instructor" text={brief.lastInstructorNote.quote} />
         </Section>
       ) : null}
 
-      {/* 3. What needs work. */}
-      {brief.focusAreas.length > 0 ? (
-        <Section title="What needs work">
-          <div className="flex flex-wrap gap-1.5">
-            {brief.focusAreas.map((f, i) => {
-              const reference = suggestStudyReferences([f])[0] ?? null;
-              return reference ? (
-                <a
-                  key={i}
-                  href={reference.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-md bg-surface-sunken px-2.5 py-1 text-[13px] font-semibold text-foreground-soft transition-colors hover:text-brand"
-                >
-                  {f}
-                  <ExternalLink className="size-3 shrink-0" aria-hidden />
-                </a>
-              ) : (
-                <span key={i} className="rounded-md bg-surface-sunken px-2.5 py-1 text-[13px] font-semibold text-foreground-soft">
-                  {f}
-                </span>
-              );
-            })}
-          </div>
-        </Section>
-      ) : null}
-
-      {/* 4. Preparation between flights. */}
-      {brief.beforeFlightItems.length > 0 || pendingRadioPractice.length > 0 || completedRadioPractice.length > 0 ? (
-        <Section title="Between flights">
-          <div className="flex flex-col gap-4">
-            {brief.beforeFlightItems.length > 0 ? (
-              <ul className="flex flex-col gap-2">
-                {brief.beforeFlightItems.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[15px] leading-relaxed text-foreground-soft">
-                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-brand" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <RadioPracticeCard
-              assigned={pendingRadioPractice.map((a) => ({ id: a.id, title: scenarioTitle(a.scenarioId) }))}
-              practiced={completedRadioPractice.map((a) => ({
-                id: a.id,
-                title: scenarioTitle(a.scenarioId),
-                correct: a.correct ?? false,
-              }))}
-            />
-            <PrimaryButton href="/next-lesson">Open next-lesson brief</PrimaryButton>
-          </div>
-        </Section>
-      ) : null}
-
-      {/* 5. Progress. */}
-      <Section title="Progress" action={<Link href="/progress" className="text-[15px] font-medium text-brand hover:underline">See all →</Link>}>
-        <div className="flex flex-col gap-4">
-          <QuietRow href="/progress" label="Open action items" meta={openActionItems.length} />
-          {rewardsStats ? (
-            <div className="flex gap-6 border-t border-hairline pt-3">
-              {rewardsStats.map((stat) => (
-                <div key={stat.label} className="flex flex-col">
-                  <span className="text-[22px] font-semibold tabular-nums text-foreground">{stat.value}</span>
-                  <span className="text-[13px] text-foreground-faint">{stat.label}</span>
-                </div>
-              ))}
-            </div>
+      {!pendingFlight && brief.lastFlight ? (
+        <div className="flex flex-col gap-2.5">
+          <PrimaryButton href="/train">
+            Train with Vector
+            <ArrowRight className="size-[18px]" aria-hidden />
+          </PrimaryButton>
+          {cfi ? (
+            <p className="px-1 text-[13px] leading-relaxed text-foreground-faint">
+              Vector is your AI flight trainer. It knows what {cfi} flagged and helps you prepare before your next
+              flight.
+            </p>
           ) : null}
         </div>
-      </Section>
+      ) : null}
 
-      {recentDebriefs.length > 0 ? (
-        <Section title="Recent debriefs" flush>
-          <div className="overflow-hidden rounded-2xl border border-hairline bg-surface px-5">
-            {recentDebriefs.map((flight) => (
-              <QuietRow
-                key={flight.id}
-                href={`/flights/${flight.id}/debrief/results`}
-                label={`${flight.departureAirport} → ${flight.arrivalAirport}`}
-                meta={new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              />
+      <div className="flex flex-col">
+        {brief.lastFlight ? <QuietRow href="/next-lesson" label="Prepare for next flight" /> : null}
+        <QuietRow href="/dashboard" label="My flights" meta={flights.length} />
+        <QuietRow href="/debrief" label="Debriefs" meta={debriefedCount} />
+        <QuietRow href="/progress" label="See progress" />
+      </div>
+
+      {rewardsStats ? (
+        <Section title="At a glance">
+          <div className="flex gap-6">
+            {rewardsStats.map((stat) => (
+              <div key={stat.label} className="flex flex-col">
+                <span className="text-[22px] font-semibold tabular-nums text-foreground">{stat.value}</span>
+                <span className="text-[13px] text-foreground-faint">{stat.label}</span>
+              </div>
             ))}
           </div>
-          <Link href="/history" className="px-1.5 text-[15px] font-medium text-brand hover:underline">
-            View full training history →
-          </Link>
         </Section>
+      ) : null}
+
+      {pendingRadioPractice.length > 0 || completedRadioPractice.length > 0 ? (
+        <RadioPracticeCard
+          assigned={pendingRadioPractice.map((a) => ({ id: a.id, title: scenarioTitle(a.scenarioId) }))}
+          practiced={completedRadioPractice.map((a) => ({
+            id: a.id,
+            title: scenarioTitle(a.scenarioId),
+            correct: a.correct ?? false,
+          }))}
+        />
       ) : null}
 
       {!brief.lastFlight && !brief.upcomingReservation && !pendingFlight ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-hairline p-10 text-center text-foreground-soft">
-          <BookOpen className="size-8 text-foreground-faint" aria-hidden />
-          No flights yet. Add your first training flight to get started.
-          <Link href="/flights/new" className={buttonVariants({ size: "sm" })}>
-            Add a flight
-          </Link>
-        </div>
+        <Panel>
+          <PanelEyebrow>No flights yet</PanelEyebrow>
+          <PanelHeadline>Add your first training flight</PanelHeadline>
+          <div className="mt-5">
+            <PanelButton href="/flights/new">Add a flight</PanelButton>
+          </div>
+        </Panel>
       ) : null}
     </Screen>
   );
