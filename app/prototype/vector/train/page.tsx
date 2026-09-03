@@ -1,30 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
 import { VectorPanel } from "@/components/prototype/vector-panel";
 import { KnowledgeCheck } from "@/components/prototype/knowledge-check";
-import {
-  AcsBadge,
-  BackLink,
-  Card,
-  Evidence,
-  PageTitle,
-  Panel,
-  PanelButton,
-  PanelEyebrow,
-  PanelHeadline,
-  InfoTip,
-  SkillMeter,
-  Screen,
-  Section,
-  SecondaryButton,
-  StateLabel,
-  stateTone,
-  VectorMark,
-} from "@/components/prototype/ui";
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { BackLink, Card, Evidence, Screen, SecondaryButton } from "@/components/prototype/ui";
+import { StudentTrain, type StudentTrainAction, type StudentTrainRecommended, type StudentTrainSkillRow } from "@/components/prototype/student-train";
 import { CONCEPTS, INSTRUCTOR, LAST_FLIGHT, NEXT_LESSON, SKILL_SCORES, SUGGESTED } from "@/lib/prototype/vector-data";
 import { recommendedDrill } from "@/lib/prototype/chair-fly";
 
@@ -104,133 +84,82 @@ export default function TrainPage() {
     );
   }
 
+  const recommendedProps: StudentTrainRecommended = {
+    tone: recommended.state,
+    toneLabel: recommended.state,
+    skillLabel: recommended.skill,
+    acsArea: { name: recommended.acsArea },
+    contextLine: `Starting where your last flight ended — ${LAST_FLIGHT.lesson} with ${INSTRUCTOR.firstName}.`,
+    // Why THIS one. The two ratings side by side is the whole argument for
+    // spending four minutes on a skill she thinks is already fine, so it
+    // goes above the evidence rather than being left for her to infer from it.
+    comparisonLine: drill ? (
+      <>
+        You called this <span className="font-semibold text-panel-foreground">{drill.reason.studentLabel}</span>.{" "}
+        {drill.reason.instructorName} called it{" "}
+        <span className="font-semibold text-panel-foreground">{drill.reason.instructorLabel}</span>.
+      </>
+    ) : null,
+    evidence: { label: `${INSTRUCTOR.firstName} · ${LAST_FLIGHT.date}`, text: recommended.instructorEvidence },
+  };
+
+  // One recommendation with its reason, and the rest demoted. Four equal
+  // buttons is a tool tray, and a tool tray hands the decision back to a
+  // student who opened the app because she did not have one.
+  const primaryAction: StudentTrainAction = drill
+    ? {
+        label: "Start chair flying",
+        href: CHAIR_FLY_HREF,
+        caption: `About ${drill.estimatedMinutes} minutes · rehearse it before ${NEXT_LESSON.date}`,
+      }
+    : { label: "Start 5-minute review", onClick: () => setMode("review") };
+
+  const secondaryActions: StudentTrainAction[] = [
+    ...(drill ? [{ label: "Review", onClick: () => setMode("review") }] : []),
+    { label: "Quiz", onClick: () => setMode("quiz") },
+    { label: "Ask", onClick: () => setMode("ask") },
+  ];
+
+  const stillWorkingOn: StudentTrainSkillRow[] = open.map((s) => ({
+    key: s.slug,
+    label: s.skill,
+    state: s.state,
+    score: s.score,
+    max: s.max,
+    href: `/prototype/vector/progress/${s.slug}`,
+  }));
+
   return (
-    <Screen>
-      <PageTitle>Train</PageTitle>
-
-      <Section title={<>Today Vector recommends</>} flush>
-        <Panel>
-          {/* Vector is introduced INSIDE the recommendation it is making.
-              Standing alone above the card it had nothing to align to and
-              read as a page header; here it reads as the byline on a specific
-              piece of advice, which is what it actually is. */}
-          <div className="flex items-start justify-between gap-2 border-b border-panel-hairline pb-5">
-            <VectorMark subtitle="Your AI flight trainer" onPanel />
-            {/* "Chair-fly" is jargon and "5-minute review" is a promise, not
-                a description. Both need one tap of explanation available. */}
-            <InfoTip label="What Vector can do here" onPanel>
-              <span className="flex flex-col gap-2.5">
-                <span>
-                  <strong className="font-semibold text-foreground">5-minute review</strong> &mdash; a short
-                  explanation of this one skill in plain language, ending with a check that it stuck.
-                </span>
-                <span>
-                  <strong className="font-semibold text-foreground">Quiz</strong> &mdash; three questions drawn from
-                  your own flight, not a written-test bank.
-                </span>
-                <span>
-                  <strong className="font-semibold text-foreground">Chair-fly</strong> &mdash; fly the scenario in
-                  your head. Vector stops at each decision point and asks what you&rsquo;d do.
-                </span>
-                <span>
-                  <strong className="font-semibold text-foreground">Ask</strong> &mdash; anything about this flight,
-                  this skill, or what your instructor meant.
-                </span>
-              </span>
-            </InfoTip>
-          </div>
-
-          <p className="mt-5 text-[15px] leading-relaxed text-panel-foreground-soft">
-            Starting where your last flight ended &mdash; {LAST_FLIGHT.lesson} with {INSTRUCTOR.firstName}.
-          </p>
-
-          <div className="mt-6">
-            <PanelEyebrow className={stateTone(recommended.state, true).text}>{recommended.state}</PanelEyebrow>
-          </div>
-          <PanelHeadline>{recommended.skill}</PanelHeadline>
-          <div className="mt-2">
-            <AcsBadge area={recommended.acsArea} onPanel />
-          </div>
-
-          {/* Why THIS one. The two ratings side by side is the whole
-              argument for spending four minutes on a skill she thinks is
-              already fine, so it goes above the evidence rather than being
-              left for her to infer from it. */}
-          {drill ? (
-            <p className="mt-4 text-[15px] leading-relaxed text-panel-foreground-soft">
-              You called this <span className="font-semibold text-panel-foreground">{drill.reason.studentLabel}</span>.{" "}
-              {drill.reason.instructorName} called it{" "}
-              <span className="font-semibold text-panel-foreground">{drill.reason.instructorLabel}</span>.
-            </p>
-          ) : null}
-
-          {/* The reason, in the instructor's own words. A recommendation
-              without its evidence is just a suggestion. */}
-          <div className="mt-5">
-            <Evidence
-              label={`${INSTRUCTOR.firstName} · ${LAST_FLIGHT.date}`}
-              tone="instructor"
-              text={recommended.instructorEvidence}
-              onPanel
-            />
-          </div>
-
-          <div className="mt-6 flex flex-col gap-2.5">
-            {/* One recommendation with its reason, and the rest demoted. Four
-                equal buttons is a tool tray, and a tool tray hands the
-                decision back to a student who opened the app because she did
-                not have one. */}
-            {drill ? (
-              <>
-                <PanelButton href={CHAIR_FLY_HREF}>
-                  Start chair flying
-                  <ArrowRight className="size-[18px]" aria-hidden />
-                </PanelButton>
-                <p className="px-1 text-[14px] text-panel-foreground-soft">
-                  About {drill.estimatedMinutes} minutes · rehearse it before {NEXT_LESSON.date}
-                </p>
-              </>
-            ) : (
-              <PanelButton onClick={() => setMode("review")}>
-                Start 5-minute review
-                <ArrowRight className="size-[18px]" aria-hidden />
-              </PanelButton>
-            )}
-            <div className="mt-1.5 flex gap-2.5">
-              {drill ? (
-                <SecondaryButton onClick={() => setMode("review")} onPanel>
-                  Review
-                </SecondaryButton>
-              ) : null}
-              <SecondaryButton onClick={() => setMode("quiz")} onPanel>
-                Quiz
-              </SecondaryButton>
-              <SecondaryButton onClick={() => setMode("ask")} onPanel>
-                Ask
-              </SecondaryButton>
-            </div>
-          </div>
-        </Panel>
-      </Section>
-
-      <Section title={<>Still working on</>}>
-        <div className="flex flex-col">
-          {open.map((s) => (
-            <Link
-              key={s.slug}
-              href={`/prototype/vector/progress/${s.slug}`}
-              className="flex min-h-[68px] items-center gap-4 border-b border-hairline py-4 last:border-b-0"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="text-[17px] font-medium text-foreground">{s.skill}</p>
-                <StateLabel state={s.state} />
-              </div>
-              <SkillMeter score={s.score} max={s.max} state={s.state} />
-              <ChevronRight className="size-4 shrink-0 text-foreground-faint" aria-hidden />
-            </Link>
-          ))}
-        </div>
-      </Section>
-    </Screen>
+    <StudentTrain
+      recommended={recommendedProps}
+      // "Chair-fly" is jargon and "5-minute review" is a promise, not a
+      // description. Both need one tap of explanation available.
+      vectorInfo={{
+        tipLabel: "What Vector can do here",
+        tipContent: (
+          <span className="flex flex-col gap-2.5">
+            <span>
+              <strong className="font-semibold text-foreground">5-minute review</strong> &mdash; a short explanation
+              of this one skill in plain language, ending with a check that it stuck.
+            </span>
+            <span>
+              <strong className="font-semibold text-foreground">Quiz</strong> &mdash; three questions drawn from your
+              own flight, not a written-test bank.
+            </span>
+            <span>
+              <strong className="font-semibold text-foreground">Chair-fly</strong> &mdash; fly the scenario in your
+              head. Vector stops at each decision point and asks what you&rsquo;d do.
+            </span>
+            <span>
+              <strong className="font-semibold text-foreground">Ask</strong> &mdash; anything about this flight, this
+              skill, or what your instructor meant.
+            </span>
+          </span>
+        ),
+      }}
+      primaryAction={primaryAction}
+      secondaryActions={secondaryActions}
+      stillWorkingOn={stillWorkingOn}
+    />
   );
 }

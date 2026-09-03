@@ -19,6 +19,14 @@ export function formatDurationShort(minutes: number) {
   return `${h}:${m.toString().padStart(2, "0")}`;
 }
 
+/** A debrief recording's length, e.g. 72 -> "1:12". Seconds, not minutes -- do not hand this to formatDurationShort. */
+export function formatAudioDuration(seconds: number) {
+  const total = Math.max(0, Math.round(seconds));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 /** ISO "YYYY-MM-DD" -> "Aug 20" -- the T12:00:00 avoids UTC/local rollover shifting the day. */
 export function formatFlightDate(flightDate: string) {
   return new Date(flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });

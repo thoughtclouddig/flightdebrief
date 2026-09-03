@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -24,23 +25,50 @@ import { Avatar } from "@/components/prototype/avatar";
  * that is an action rather than a destination.
  *
  * Hidden inside the debrief capture flow, which is deliberately chrome-free.
+ *
+ * `homeHref` and `actions` are the only two seams: the real Student app needs
+ * real action components here (GuideControl, real SupportLink with prefilled
+ * account context, UserMenu's account-switching, and a real ThemeToggle --
+ * this file's own ThemeToggle persists to a different localStorage key than
+ * production's, so it can't be reused as-is without breaking real users'
+ * saved preference) that have no prototype equivalent at all. Everything
+ * else -- the row layout, the logo treatment, the spacing -- is the same
+ * component for both, not a re-derivation. Defaults reproduce the
+ * prototype's own original behavior exactly, so its existing call site in
+ * app/prototype/layout.tsx needs no change.
  */
-export function AppHeader() {
+export function AppHeader({
+  homeHref = "/prototype/vector",
+  actions,
+}: {
+  homeHref?: string;
+  actions?: ReactNode;
+}) {
   const pathname = usePathname();
   if (pathname.startsWith("/prototype/vector/debrief/new")) return null;
-
-  const onProfile = pathname.startsWith("/prototype/vector/profile");
 
   return (
     <div className="flex items-center gap-0.5 px-4 pb-1 pt-2">
       {/* The lockup already exists in two cuts -- dark ink for paper, white
           for a dark ground. Both render and CSS picks, so the header is
           correct before hydration and when the theme is still the OS's. */}
-      <Link href="/prototype/vector" aria-label="AfterFlight home" className="mr-auto flex shrink-0 items-center">
+      <Link href={homeHref} aria-label="AfterFlight home" className="mr-auto flex shrink-0 items-center">
         <Image src="/brand/afterflight-lockup-dark.svg" alt="AfterFlight" width={132} height={21} priority className="dark:hidden" />
         <Image src="/brand/afterflight-lockup-light.svg" alt="AfterFlight" width={132} height={21} priority className="hidden dark:block" />
       </Link>
 
+      {actions ?? <DefaultActions />}
+    </div>
+  );
+}
+
+/** The prototype's own actions -- Start Flight, theme, support, avatar. Unchanged. */
+function DefaultActions() {
+  const pathname = usePathname();
+  const onProfile = pathname.startsWith("/prototype/vector/profile");
+
+  return (
+    <>
       <Link
         href="/prototype/vector/fly"
         aria-label="Start flight"
@@ -63,6 +91,6 @@ export function AppHeader() {
       >
         <Avatar size={36} />
       </Link>
-    </div>
+    </>
   );
 }
