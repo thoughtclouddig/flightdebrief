@@ -9,7 +9,11 @@ import { TrackedLink } from "@/components/marketing/tracked-link";
 const PERSONAS = [
   {
     title: "I'm a Pilot",
-    copy: "Log a flight and debrief it yourself -- no CFI needed to try it.",
+    // Not "no CFI needed" -- that was true when this persona was solo/
+    // freeform. It now seeds a real two-instructor training history (see
+    // seedPilotDemo in lib/demo/live-demo-seed.ts), so the old claim would
+    // be directly contradicted by what the visitor actually lands on.
+    copy: "See a real training history -- debriefs, progress, and instructor feedback already there.",
     href: "/api/demo/start?persona=pilot",
     event: "live_demo_pilot" as const,
     src: "/images/marketing/pilot-lifestyle-smile.webp",

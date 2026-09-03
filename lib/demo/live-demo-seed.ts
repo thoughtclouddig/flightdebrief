@@ -11,8 +11,12 @@ import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { evaluateAndAwardMilestones } from "@/lib/milestones";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
-import { DEMO_HISTORY } from "@/lib/demo/video-demo-data";
-import { SOLO_DEMO_HISTORY } from "@/lib/demo/solo-demo-history";
+import {
+  DEMO_HISTORY,
+  DEMO_INSTRUCTOR_HANDOVER_INDEX,
+  DEMO_INSTRUCTOR_NAME,
+  DEMO_PRIOR_INSTRUCTOR_NAME,
+} from "@/lib/demo/video-demo-data";
 import { completeDemoFlights } from "@/lib/demo/real-flight-fixtures";
 import type { StructuredDebrief, TrackPosition } from "@/lib/types";
 
@@ -148,15 +152,13 @@ function withTimestamps(track: { lat: number; lon: number; altitudeFt?: number; 
  */
 async function seedHistoricalFlights(
   db: { query: (text: string, params?: unknown[]) => Promise<unknown> },
-  transcripts: string[],
+  entries: { transcript: string; instructorId: string | null; instructorName: string | null }[],
   opts: {
     studentId: string;
     organizationId: string;
     aircraftId: string;
     aircraftTail: string;
     aircraftType: string;
-    instructorId: string | null;
-    instructorName: string | null;
   },
 ): Promise<HistoricalFlightRecord[]> {
   const records: HistoricalFlightRecord[] = [];
@@ -166,10 +168,17 @@ async function seedHistoricalFlights(
 
   // Oldest-first so the narrative arc (transcripts are written as a
   // progression) lines up with real chronological order.
-  const realFlights = transcripts.map(() => nextRealFlight()).sort((a, b) => a.takeoffIso.localeCompare(b.takeoffIso));
+  const realFlights = entries.map(() => nextRealFlight()).sort((a, b) => a.takeoffIso.localeCompare(b.takeoffIso));
 
-  for (let i = 0; i < transcripts.length; i++) {
-    const transcript = transcripts[i];
+  // instructorId/instructorName travel WITH each transcript now, not as one
+  // opts value for the whole call. That is what lets a single call seed a
+  // history that crosses an instructor handover -- entries[i].instructorId
+  // can differ partway through -- while previousActionItems keeps threading
+  // continuously across that change, the same way video-demo-seed.ts's own
+  // single-loop implementation does. Calling this twice (once per
+  // instructor) would have reset that thread exactly at the handover.
+  for (let i = 0; i < entries.length; i++) {
+    const { transcript, instructorId, instructorName } = entries[i];
     const real = realFlights[i];
     const flightId = `flight-demo-${randomUUID()}`;
     const debriefId = `debrief-demo-${randomUUID()}`;
@@ -185,7 +194,7 @@ async function seedHistoricalFlights(
         arrivalAirport: real.arrivalAirport,
         flightDate,
         durationMinutes: real.durationMinutes,
-        instructorName: opts.instructorName,
+        instructorName,
       },
       previousActionItems,
     });
@@ -200,7 +209,7 @@ async function seedHistoricalFlights(
       real.arrivalAirport,
       flightDate,
       real.durationMinutes,
-      opts.instructorId,
+      instructorId,
       "complete",
       JSON.stringify(track),
       real.takeoffIso,
@@ -220,7 +229,7 @@ async function seedHistoricalFlights(
       debriefId,
       studentId: opts.studentId,
       organizationId: opts.organizationId,
-      instructorId: opts.instructorId,
+      instructorId,
       aircraftId: opts.aircraftId,
       flightDate,
       structured: result,
@@ -451,21 +460,170 @@ async function seedRadioPractice(organizationId: string, studentId: string, assi
   await getRepository().createRadioPracticeAssignment({ organizationId, studentId, assignedBy, scenarioId: scenario.id });
 }
 
+/**
+ * Every-flight task set for a seeded guided debrief, plus the three items
+ * lib/universal-tasks.ts appends to a real one. Duplicated here rather than
+ * imported, because the real route builds these from a live flight -- if
+ * that list changes, this one needs the same change to stay representative.
+ */
+const TODAY_FLIGHT_TASKS: { code: string; label: string; source: string }[] = [
+  { code: "LANDINGS", label: "Traffic Pattern & Landings", source: "instructor_selected" },
+  { code: "PREFLIGHT_INSPECTION", label: "Preflight & preparation", source: "syllabus" },
+  { code: "RADIO_COMMUNICATIONS", label: "Radio communication", source: "syllabus" },
+  { code: "SITUATIONAL_AWARENESS", label: "Situational awareness", source: "syllabus" },
+];
+
+/**
+ * [task code, student rating, instructor rating]. Deliberately not
+ * identical across the board: the student rates the landings harder on
+ * themselves than the instructor does (a disagreement worth talking
+ * through), both agree on preflight (a real point of agreement, not just
+ * gaps), and the instructor is the one who flags the radio work the
+ * student rated themselves independent on -- three different shapes of
+ * feedback, not one repeated pattern.
+ */
+const TODAY_FLIGHT_RATINGS: [string, string, string][] = [
+  ["LANDINGS", "LEARNING", "NEEDS_COACHING"],
+  ["PREFLIGHT_INSPECTION", "INDEPENDENT", "INDEPENDENT"],
+  ["RADIO_COMMUNICATIONS", "INDEPENDENT", "NEEDS_COACHING"],
+  ["SITUATIONAL_AWARENESS", "NEEDS_COACHING", "NEEDS_COACHING"],
+];
+
+const TODAY_FLIGHT_CARDS: { category: string; title: string; prompt: string; followUps: string[] }[] = [
+  {
+    category: "KEY_TASK",
+    title: "Approach Speed Control",
+    prompt: "Walk through the approach speed on today's landings -- on-speed by the time you turned final?",
+    followUps: ["Where in the pattern did you get configured -- downwind, base, or final?"],
+  },
+  {
+    category: "STRENGTHS",
+    title: "What Went Well",
+    prompt: "Airspeed control and checklist flow both looked sharp today -- what changed from last time?",
+    followUps: ["How did the radio calls go?"],
+  },
+  {
+    category: "IMPROVEMENT",
+    title: "Flare and Centerline",
+    prompt: "A couple of those landings ballooned a little in the flare -- what were you seeing out front when that happened?",
+    followUps: ["What's one adjustment to hold centerline better through rollout?"],
+  },
+];
+
+/**
+ * The guided-debrief structure (flight_tasks, both assessments, their
+ * ratings, and the pending debrief_cards) for one flight -- extracted from
+ * what used to be seedCfiSchoolDemo's own inline block, now shared with
+ * seedPilotDemo. Both personas get the identical rating pattern above: one
+ * real disagreement on the recurring landing/flare weakness, one real
+ * agreement on preflight, so the Compare screen has both a gap and a
+ * calibration to show, not only conflict.
+ *
+ * Does not touch the `flights` row itself -- the caller decides that
+ * flight's status, dates and track; this only adds the assessment layer
+ * on top of a flight_id that already exists.
+ */
+async function seedGuidedAssessedFlight(
+  client: { query: (text: string, params?: unknown[]) => Promise<unknown> },
+  opts: { flightId: string; studentId: string; instructorId: string },
+): Promise<void> {
+  const taskIds: string[] = [];
+  for (const [i, task] of TODAY_FLIGHT_TASKS.entries()) {
+    const id = `flight-task-demo-${randomUUID()}`;
+    taskIds.push(id);
+    await client.query(
+      `INSERT INTO flight_tasks (id, flight_id, task_code, label, source, sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6)`,
+      [id, opts.flightId, task.code, task.label, task.source, i],
+    );
+  }
+
+  const studentAssessmentId = `assessment-demo-${randomUUID()}`;
+  const instructorAssessmentId = `assessment-demo-${randomUUID()}`;
+  await client.query(
+    `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, status, submitted_at)
+     VALUES ($1,$2,'student',$3,'submitted',now())`,
+    [studentAssessmentId, opts.flightId, opts.studentId],
+  );
+  await client.query(
+    `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, status, submitted_at)
+     VALUES ($1,$2,'instructor',$3,'submitted',now())`,
+    [instructorAssessmentId, opts.flightId, opts.instructorId],
+  );
+
+  for (const [code, studentRating, instructorRating] of TODAY_FLIGHT_RATINGS) {
+    const taskId = taskIds[TODAY_FLIGHT_TASKS.findIndex((t) => t.code === code)];
+    await client.query(
+      `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
+       VALUES ($1,$2,$3,$4)`,
+      [`rating-demo-${randomUUID()}`, studentAssessmentId, taskId, studentRating],
+    );
+    await client.query(
+      `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
+       VALUES ($1,$2,$3,$4)`,
+      [`rating-demo-${randomUUID()}`, instructorAssessmentId, taskId, instructorRating],
+    );
+  }
+
+  const cardsInsert = buildInsertRows(
+    TODAY_FLIGHT_CARDS.map((card, index) => [
+      `card-demo-${randomUUID()}`,
+      opts.flightId,
+      "standard",
+      card.category,
+      card.title,
+      card.prompt,
+      card.followUps,
+      index,
+      "pending",
+    ]),
+  );
+  await client.query(
+    `INSERT INTO debrief_cards (
+       id, flight_id, source, category, title, primary_prompt, follow_up_prompts, sort_order, status
+     ) VALUES ${cardsInsert.placeholders}`,
+    cardsInsert.values,
+  );
+}
+
 export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
   const orgId = `org-demo-pilot-${randomUUID()}`;
   const userId = `user-demo-pilot-${randomUUID()}`;
+  const priorInstructorId = `user-demo-instructor-prior-${randomUUID()}`;
+  const currentInstructorId = `user-demo-instructor-${randomUUID()}`;
   const aircraftId = `aircraft-demo-${randomUUID()}`;
   const email = `${userId}@afterflight.demo`;
   const name = "Jordan Pilot";
   const aircraftType = "Cessna 172S";
+  // Reusing DEMO_HISTORY's own instructor names, not inventing new ones --
+  // the transcripts say "Sarah had me..." / "Marcus" by name in prose (see
+  // video-demo-data.ts), so the instructor identity here has to match that
+  // prose exactly or a debrief would quote a CFI who isn't in the org, which
+  // is the one failure mode SOLO_DEMO_HISTORY exists to avoid. Fresh random
+  // ids, though -- not DEMO_PRIOR_INSTRUCTOR_ID/DEMO_INSTRUCTOR_ID, which
+  // belong to the separate, fixed-id internal Video Demo Mode and must never
+  // collide with a per-visitor row.
+  const priorInstructorName = DEMO_PRIOR_INSTRUCTOR_NAME;
+  const currentInstructorName = DEMO_INSTRUCTOR_NAME;
+  const priorInstructorEmail = `${priorInstructorId}@afterflight.demo`;
+  const currentInstructorEmail = `${currentInstructorId}@afterflight.demo`;
 
   const client = await getDb().connect();
   try {
     await client.query("BEGIN");
 
+    // 'school', not 'individual' -- an individual org is a solo pilot with
+    // no CFI (see flights/new/page.tsx's allowInviteCfi), and the freeform
+    // guidance mode that kind defaults to explicitly skips flight_tasks,
+    // assessments and cards (see the resolver at
+    // app/(product)/flights/[id]/debrief/page.tsx). A student with a real,
+    // two-instructor continuity story needs 'guided' mode and an org kind
+    // that does not structurally forbid the instructor relationship this
+    // whole story depends on. 'school' is what video-demo-seed.ts already
+    // uses for the identical story, for the identical reason.
     await client.query(
       `INSERT INTO organizations (id, name, kind, default_guidance_mode, demo_expires_at)
-       VALUES ($1,$2,'individual','freeform',$3)`,
+       VALUES ($1,$2,'school','guided',$3)`,
       [orgId, `${name}'s Flights`, expiresAt.toISOString()],
     );
 
@@ -473,11 +631,51 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
       `INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ($1,$2,$3,$3,true)`,
       [userId, name, email],
     );
+    await client.query(
+      `INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ($1,$2,$3,$3,true)`,
+      [priorInstructorId, priorInstructorName, priorInstructorEmail],
+    );
+    await client.query(
+      `INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ($1,$2,$3,$3,true)`,
+      [currentInstructorId, currentInstructorName, currentInstructorEmail],
+    );
 
     await client.query(
       `INSERT INTO organization_members (id, organization_id, user_id, role, certificate_type)
        VALUES ($1,$2,$3,'student','PRIVATE')`,
       [`member-demo-${randomUUID()}`, orgId, userId],
+    );
+    const membersInsert = buildInsertRows([
+      [`member-demo-${randomUUID()}`, orgId, priorInstructorId, "instructor"],
+      [`member-demo-${randomUUID()}`, orgId, currentInstructorId, "instructor"],
+    ]);
+    await client.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role) VALUES ${membersInsert.placeholders}`,
+      membersInsert.values,
+    );
+    await client.query(`INSERT INTO instructors (id, name, organization_id) VALUES ($1,$2,$3)`, [
+      priorInstructorId,
+      priorInstructorName,
+      orgId,
+    ]);
+    await client.query(`INSERT INTO instructors (id, name, organization_id) VALUES ($1,$2,$3)`, [
+      currentInstructorId,
+      currentInstructorName,
+      orgId,
+    ]);
+
+    // Real at the data level, not just in transcript prose: the prior
+    // instructor's link is inactive (they have moved on), the current one is
+    // active and primary. This is what a handoff actually looks like in the
+    // schema -- see student_instructors.status/is_primary.
+    const linksInsert = buildInsertRows([
+      [`link-demo-${randomUUID()}`, userId, priorInstructorId, orgId, false, "inactive"],
+      [`link-demo-${randomUUID()}`, userId, currentInstructorId, orgId, true, "active"],
+    ]);
+    await client.query(
+      `INSERT INTO student_instructors (id, student_id, instructor_id, organization_id, is_primary, status)
+       VALUES ${linksInsert.placeholders}`,
+      linksInsert.values,
     );
 
     const tail = await insertDemoAircraft(client, {
@@ -490,40 +688,42 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
       organizationId: orgId,
     });
 
-    // SOLO_DEMO_HISTORY, not DEMO_HISTORY: the student set names an
-    // instructor inside the transcripts, and seeding it here gave a pilot
-    // with no CFI a debrief record quoting one. Same converging arc -- the
-    // recurring-themes card only surfaces a theme once the same skill is
-    // flagged in 2+ of the last 4 completed flights, so the history has to
-    // keep repeating one.
-    const historicalRecords = await seedHistoricalFlights(
-      client,
-      SOLO_DEMO_HISTORY.map((e) => e.transcript),
-      {
-        studentId: userId,
-        organizationId: orgId,
-        aircraftId,
-        aircraftTail: tail,
-        aircraftType,
-        instructorId: null,
-        instructorName: null,
-      },
-    );
+    // DEMO_HISTORY, not SOLO_DEMO_HISTORY -- the whole point of this seed is
+    // the two-instructor continuity story DEMO_HISTORY was built for (see
+    // its own doc comment: "a weakness that outlived a change of
+    // instructor... unreachable by construction" with a single CFI).
+    // instructorId/instructorName travel per-entry now (see
+    // seedHistoricalFlights), so one call seeds the whole arc -- entries
+    // before the handover index carry the prior instructor, the rest carry
+    // the current one, and previousActionItems threads continuously across
+    // that change exactly the way video-demo-seed.ts's own loop does.
+    const entries = DEMO_HISTORY.map((e, i) => ({
+      transcript: e.transcript,
+      instructorId: i < DEMO_INSTRUCTOR_HANDOVER_INDEX ? priorInstructorId : currentInstructorId,
+      instructorName: i < DEMO_INSTRUCTOR_HANDOVER_INDEX ? priorInstructorName : currentInstructorName,
+    }));
+    const historicalRecords = await seedHistoricalFlights(client, entries, {
+      studentId: userId,
+      organizationId: orgId,
+      aircraftId,
+      aircraftTail: tail,
+      aircraftType,
+    });
 
-    // Freeform mode needs nothing beyond a not-yet-debriefed flight -- no
-    // flight_tasks/assessments/cards, confirmed against the resolver at
-    // app/(product)/flights/[id]/debrief/page.tsx's freeform branch. Still
-    // gets a real route/duration/track (re-dated to today) so the flight
-    // detail page never shows the "no track data available" empty state --
-    // the whole demo should read as fully populated, not partially seeded.
+    // Guided mode, not freeform: a real "today" flight -- flight_tasks, both
+    // assessments, their ratings (one disagreement on the recurring
+    // landing/flare weakness, one agreement on preflight) and pending
+    // debrief_cards, via the same helper seedCfiSchoolDemo uses for its own
+    // primary student. Still not_started, same as that flight -- this is the
+    // structure a guided debrief walks through, not a pre-completed one.
     const todayReal = nextRealFlight();
     const todayFlightId = `flight-demo-${randomUUID()}`;
     const todayIso = new Date().toISOString();
     await client.query(
       `INSERT INTO flights (
          id, student_id, organization_id, aircraft_id, departure_airport, arrival_airport,
-         flight_date, duration_minutes, debrief_status, track
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'not_started',$9)`,
+         flight_date, duration_minutes, instructor_id, debrief_status, track
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'not_started',$10)`,
       [
         todayFlightId,
         userId,
@@ -533,14 +733,29 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
         todayReal.arrivalAirport,
         localIsoDate(),
         todayReal.durationMinutes,
+        currentInstructorId,
         JSON.stringify(withTimestamps(todayReal.track, todayIso, todayReal.durationMinutes)),
       ],
     );
+    await seedGuidedAssessedFlight(client, { flightId: todayFlightId, studentId: userId, instructorId: currentInstructorId });
 
     await client.query("COMMIT");
     await Promise.all([
       seedDerivedContent(historicalRecords),
-      seedRadioPractice(orgId, userId, null),
+      // Deterministic recurrence, reusing the exact mechanism
+      // seedCfiSchoolDemo's primary student already relies on -- see that
+      // function's doc comment on why the mock analyzer alone cannot be
+      // trusted to repeat the same skill word-for-word. Curated to the last
+      // flight under the prior instructor plus two under the current one
+      // (not a plain last-3, which here would land entirely after the
+      // handover and prove nothing about continuity) so the guarantee
+      // itself spans the instructor change, not just the natural narrative.
+      seedRecurringInsightSignal([
+        historicalRecords[DEMO_INSTRUCTOR_HANDOVER_INDEX - 1],
+        historicalRecords[DEMO_INSTRUCTOR_HANDOVER_INDEX],
+        historicalRecords[historicalRecords.length - 1],
+      ]),
+      seedRadioPractice(orgId, userId, currentInstructorId),
       warmDemoRecapAudio(historicalRecords),
     ]);
     return {
@@ -549,7 +764,7 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
       loginEmail: email,
       loginName: name,
       redirectPath: "/home",
-      hint: "This is your own account -- log a new flight under Flights and debrief it yourself, no CFI needed.",
+      hint: `${priorInstructorName.split(" ")[0]} flew your first few lessons; ${currentInstructorName.split(" ")[0]} has been your CFI since -- open Progress to see what carried forward.`,
     };
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
@@ -709,16 +924,18 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       // too little for a theme to emerge, which is correct -- that is exactly
       // what "limited feedback" means on the insights page.
       const wanted = Math.min(student.flights, DEMO_HISTORY.length);
-      const transcripts = DEMO_HISTORY.slice(-wanted).map((e) => e.transcript);
+      const entries = DEMO_HISTORY.slice(-wanted).map((e) => ({
+        transcript: e.transcript,
+        instructorId: instructorUserId,
+        instructorName,
+      }));
       historicalRecords.push(
-        ...(await seedHistoricalFlights(client, transcripts, {
+        ...(await seedHistoricalFlights(client, entries, {
           studentId: student.userId,
           organizationId: orgId,
           aircraftId,
           aircraftTail: tail,
           aircraftType,
-          instructorId: instructorUserId,
-          instructorName,
         })),
       );
     }
@@ -806,110 +1023,7 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       ],
     );
 
-    // The lesson's task, plus the three every-flight items the real task
-    // route appends (lib/universal-tasks.ts). Seeded here rather than going
-    // through that route, so they have to be repeated -- if that list
-    // changes, this one needs the same change.
-    const demoTasks: { code: string; label: string; source: string }[] = [
-      { code: "LANDINGS", label: "Traffic Pattern & Landings", source: "instructor_selected" },
-      { code: "PREFLIGHT_INSPECTION", label: "Preflight & preparation", source: "syllabus" },
-      { code: "RADIO_COMMUNICATIONS", label: "Radio communication", source: "syllabus" },
-      { code: "SITUATIONAL_AWARENESS", label: "Situational awareness", source: "syllabus" },
-    ];
-    const taskIds: string[] = [];
-    for (const [i, task] of demoTasks.entries()) {
-      const id = `flight-task-demo-${randomUUID()}`;
-      taskIds.push(id);
-      await client.query(
-        `INSERT INTO flight_tasks (id, flight_id, task_code, label, source, sort_order)
-         VALUES ($1,$2,$3,$4,$5,$6)`,
-        [id, todayFlightId, task.code, task.label, task.source, i],
-      );
-    }
-
-    const studentAssessmentId = `assessment-demo-${randomUUID()}`;
-    const instructorAssessmentId = `assessment-demo-${randomUUID()}`;
-    await client.query(
-      `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, status, submitted_at)
-       VALUES ($1,$2,'student',$3,'submitted',now())`,
-      [studentAssessmentId, todayFlightId, primaryStudentId],
-    );
-    await client.query(
-      `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, status, submitted_at)
-       VALUES ($1,$2,'instructor',$3,'submitted',now())`,
-      [instructorAssessmentId, todayFlightId, instructorUserId],
-    );
-
-    // The ratings themselves, which were missing entirely: the demo marked
-    // both assessments submitted and stored nothing under them, so the
-    // Compare screen rendered its header row over an empty table. The whole
-    // point of that screen is the disagreement, and there was none to show.
-    //
-    // Deliberately not identical. The student rates the landings harder on
-    // themselves than the CFI does, and the CFI is the one who flags the
-    // radio work -- which is exactly the "differences mean there's something
-    // worth talking through" the page promises, and it demonstrates the
-    // every-flight items earning their place at the same time.
-    const demoRatings: [string, string, string][] = [
-      // [task code, student rating, instructor rating]
-      ["LANDINGS", "LEARNING", "NEEDS_COACHING"],
-      ["PREFLIGHT_INSPECTION", "INDEPENDENT", "INDEPENDENT"],
-      ["RADIO_COMMUNICATIONS", "INDEPENDENT", "NEEDS_COACHING"],
-      ["SITUATIONAL_AWARENESS", "NEEDS_COACHING", "NEEDS_COACHING"],
-    ];
-    for (const [code, studentRating, instructorRating] of demoRatings) {
-      const taskId = taskIds[demoTasks.findIndex((t) => t.code === code)];
-      await client.query(
-        `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
-         VALUES ($1,$2,$3,$4)`,
-        [`rating-demo-${randomUUID()}`, studentAssessmentId, taskId, studentRating],
-      );
-      await client.query(
-        `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
-         VALUES ($1,$2,$3,$4)`,
-        [`rating-demo-${randomUUID()}`, instructorAssessmentId, taskId, instructorRating],
-      );
-    }
-
-    const cards: { category: string; title: string; prompt: string; followUps: string[] }[] = [
-      {
-        category: "KEY_TASK",
-        title: "Approach Speed Control",
-        prompt: "Walk through the approach speed on today's landings -- on-speed by the time you turned final?",
-        followUps: ["Where in the pattern did you get configured -- downwind, base, or final?"],
-      },
-      {
-        category: "STRENGTHS",
-        title: "What Went Well",
-        prompt: "Airspeed control and checklist flow both looked sharp today -- what changed from last time?",
-        followUps: ["How did the radio calls go?"],
-      },
-      {
-        category: "IMPROVEMENT",
-        title: "Flare and Centerline",
-        prompt: "A couple of those landings ballooned a little in the flare -- what were you seeing out front when that happened?",
-        followUps: ["What's one adjustment to hold centerline better through rollout?"],
-      },
-    ];
-    const cardsInsert = buildInsertRows(
-      cards.map((card, index) => [
-        `card-demo-${randomUUID()}`,
-        todayFlightId,
-        "standard",
-        card.category,
-        card.title,
-        card.prompt,
-        card.followUps,
-        index,
-        "pending",
-      ]),
-    );
-    await client.query(
-      `INSERT INTO debrief_cards (
-         id, flight_id, source, category, title, primary_prompt, follow_up_prompts, sort_order, status
-       ) VALUES ${cardsInsert.placeholders}`,
-      cardsInsert.values,
-    );
+    await seedGuidedAssessedFlight(client, { flightId: todayFlightId, studentId: primaryStudentId, instructorId: instructorUserId });
 
     await client.query("COMMIT");
     await Promise.all([
