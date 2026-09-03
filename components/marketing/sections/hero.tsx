@@ -48,82 +48,43 @@ export function Hero() {
           <p className="text-balance text-[12px] font-bold uppercase tracking-[0.06em] text-brand sm:text-[15px] sm:tracking-[0.16em]">
             Better training between flights
           </p>
-          {/* THREE lines now, and no line may ever hold a single word.
-              The orphan rule is the real constraint; "two lines" was a
-              property of the old, shorter copy rather than a design choice.
+          {/* Reverted to the original two-line promise on request. Comments
+              above described the "checkride sooner" and "Prepare better"
+              headlines this replaces; both are gone, so their measurements no
+              longer apply and are removed rather than left to mislead the
+              next edit.
 
-              Re-measured 2026-09-01 for "Get to your checkride sooner — with
-              confidence.", which is 46 characters against the old 35. At 60px
-              in the 576px column: "sooner — with confidence." is 956px, so a
-              two-line split caps the type at 36px -- a third smaller than the
-              54px it had. Splitting three ways makes "checkride sooner —" the
-              longest line at 718px. That allows 48px exactly -- 572px of a
-              576px column -- which is four pixels of margin and would wrap on
-              any rendering variance, stranding the dash. Ceiling is 2.875rem
-              (46px) for real headroom.
+              Sized fresh for this copy, not reused from history: the old
+              clamp ceilings (2.875rem / 3rem) were cut for longer lines
+              ("checkride sooner --", "between flights.") in the same 576px
+              column. "Make every flight" is shorter, so it tolerates more
+              size before wrapping -- measured at 3.25rem (52px) it still
+              holds one line with margin at 576px, and 8.5vw keeps the mobile
+              floor a step above the previous headline's. */}
+          {/* lg+ is flat 2.5rem (40px), not vw-scaled, now that the photo
+              (see its own comment) cannot grow without bound.
 
-              7vw, not 4.6vw. The first attempt tuned the vw term to reach the
-              desktop ceiling and starved the phone -- 4.6vw is 17px at 375,
-              so the clamp floor took over and the hero rendered smaller than
-              the body copy beneath it. The small end is the binding case:
-              "checkride sooner --" allows 22.7px in a 320px screen's column
-              and 27.3px at 375, and 7vw lands just under both.
-
-              The old note follows, because the method still applies.
-              That rule is what sets the type size, not taste. Measured in the
-              real Archivo face, the longest line -- "Make every flight" --
-              needs about 10.15px of column per px of type (609px at 60px), so
-              any size above column/10.15 wraps it and strands "flight" alone.
-              At 3.75rem in a 576px column that is exactly what happened.
-
-              The ends are cut so the longest line fits at every width the
-              checklist covers: 3.375rem needs 548px against the 576px desktop
-              column, and 1.625rem needs 264px against the 272px column of a
-              320px phone. 8vw rather than 5.6vw so the middle range reaches
-              full size quickly instead of sitting at the floor on a 375px
-              screen.
-
-              Any copy edit here needs re-measuring. A longer first line does
-              not merely look tighter -- it silently reintroduces the orphan.
-
-              Measure with font-stretch copied onto the probe span. Omitting it
-              renders a narrower synthetic instance and understates Archivo's
-              real width by about a fifth. */}
+              With that cap, clearance no longer keeps shrinking as the
+              viewport widens -- re-measured: 437px at 1024 (the tightest
+              point now), 552px at 1279 just before xl narrows the photo back
+              to 60%, then 488-504px through the 1280-1536 range the photo
+              already shipped at, and it only grows from there once the 2xl
+              cap takes over. "Make every flight" needs 10.4px of clearance
+              per px of type, so the binding case is 1024's 437px -> 42px
+              max. 40px leaves a real margin there (~21px) and a much larger
+              one everywhere else, without needing to scale at all. */}
           <h1
-            className="font-display mt-4 max-w-2xl text-[clamp(1.375rem,8.2vw,2.25rem)] lg:text-[clamp(1.75rem,3.9vw,3rem)] font-extrabold leading-[1.14] tracking-[-0.025em] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(1.625rem,8.5vw,2.5rem)] lg:text-[2.5rem] font-extrabold leading-[1.05] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
-            {/* Four lines on a phone, three from sm up, and that is what lets
-                the type grow.
-
-                The <br /> pair this replaces fixed "checkride sooner --" as a
-                single line at every width, and that line is the binding one:
-                it measures 310px at the old 26.25px against a 327px column, so
-                ANY size increase overflowed. Splitting it on the phone moves
-                the constraint to "with confidence." at 16 characters, which
-                leaves room to go from 26.25px to ~30.75px.
-
-                8.2vw rather than a fixed step because the constraint scales
-                with the column: at a 320px viewport it gives 26.2px against a
-                272px column, which still fits with about 10px to spare. */}
-            {/* No stated breaks here, unlike the headline this replaces.
-                The hero text column is 576px -- the photograph takes 60% from
-                lg -- and "Repeat less. Finish sooner." alone measures 700px at
-                44px in the display face. There is no size above about 34px at
-                which both sentences hold their own line, so a stated break
-                would simply wrap inside itself and produce four lines. Natural
-                wrapping lands it in three.
-
-                The weight split does the work the line break would have: the
-                setup is medium, the payoff is extrabold and brand. */}
-            <span className="block font-medium">Prepare better</span>
-            <span className="block font-medium">between flights.</span>
-            <span className="block font-extrabold text-brand">Repeat less.</span>
-            <span className="block font-extrabold text-brand">Finish sooner.</span>
+            <span className="block">Make every flight</span>
+            <span className="block">
+              build on <span className="text-brand">the last.</span>
+            </span>
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#414B57]">
-            Your instructor&rsquo;s debrief becomes a clear plan for what to review, practice, and focus on
-            before you fly again.
+            AfterFlight turns each lesson into a personalized plan for what to review, practice, and focus on
+            next &mdash; so you show up prepared, avoid relearning, and build proficiency faster.
           </p>
 
           {/* Grid, not flex-wrap. Wrapping packed each row by content width, so
@@ -159,38 +120,44 @@ export function Hero() {
       </div>
 
       {/* One responsive hero image serves both layouts, avoiding an eager hidden desktop duplicate on mobile. */}
-      <div className="relative mx-6 mt-12 aspect-[4/3] overflow-visible lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:mt-0 lg:w-[60%] lg:aspect-auto">
+      {/* Width is no longer a flat 60% from lg. That let the photo grow
+          without bound as the viewport widens, which is what forced the
+          headline's size down for every width, not just the tight one: text
+          sits inside the centered, 1320px-capped container, but the photo is
+          positioned against the section's full, uncapped width, so their
+          clearance shrinks as the viewport grows past 1320 with no floor.
+
+          55% at lg (1024-1279) buys back the room the headline actually needs
+          at its tightest point. 60% from xl matches what shipped before.
+          900px flat from 2xl stops the photo growing at all past that point,
+          which is what removes the ultra-wide case entirely -- clearance
+          grows without bound above 2xl once the photo's own width is fixed. */}
+      <div className="relative mx-6 mt-12 aspect-[4/3] overflow-visible lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:mt-0 lg:w-[55%] xl:w-[60%] 2xl:w-[900px] lg:aspect-auto">
         <div className="absolute inset-0 overflow-hidden rounded-3xl lg:rounded-none">
           <Image
             src="/images/marketing/hero-debrief-tablet.webp"
             alt="A student pilot and CFI reviewing a flight debrief together on a tablet beside the aircraft"
             fill
             priority
-            /* Crop from the left of the frame rather than the center, so the
-               pair sits further right and the instructor's shoulder runs off
-               the edge instead of being fully contained. 36% rather than the
-               28% first tried -- that pushed them further than wanted; this
-               keeps the shoulder cropped without shoving the pair to the edge. That also clears the
-               left of the picture, which is what lets the fade below be long
-               and soft rather than short and abrupt. */
-            className="object-cover object-[38%_center] lg:object-[36%_center]"
+            className="object-cover"
             sizes="(min-width: 1024px) 60vw, 100vw"
           />
-          {/* The fade has to START opaque, not at 60%.
-            
-              from-white/60 left 40% of the photograph showing at its own left
-              edge, which is exactly where the image meets the white page --
-              so the seam read as a visible border down the side. It starts at
-              full white now, for the first fifth of the overlay, which covers
-              the edge completely.
+          {/* The fade has to START opaque, not at 60% -- from-white/60 left
+              40% of the photograph showing at its own left edge, which is
+              exactly where the image meets the white page, and that read as
+              a visible border. Full white for the first stop covers it.
 
-              But the width had to come DOWN, not up. At w-2/3 the fade reached
-              346px into the photograph at 45% white and washed the student
-              out. A fade only has to hide a one-pixel seam, so it is 170px
-              here: about 34px of solid white over the edge, then clear well
-              before the subject. Wide and weak washes the picture; narrow and
-              opaque hides the edge and leaves it alone. */}
-          <div className="absolute inset-y-0 left-0 hidden w-[300px] bg-gradient-to-r from-white from-12% via-white/40 via-55% to-transparent lg:block xl:w-[360px]" />
+              170px (200 at xl) was a safe first cut after the crop reverted
+              to centered, but tighter than it needed to be: with the subject
+              centered rather than shifted left, there is real background --
+              sky, the plane's tail -- between the seam and the student, not
+              just a one-pixel edge to hide. Re-measured against that space:
+              his hairline sits roughly 270px into the photo, so 220px (260 at
+              xl) still clears him with margin while reaching further than the
+              minimum. A middle stop softens the curve instead of cutting
+              straight from solid to transparent -- the earlier hard-edge
+              complaint was this same 2-stop shape at a narrower width. */}
+          <div className="absolute inset-y-0 left-0 hidden w-[220px] bg-gradient-to-r from-white from-15% via-white/45 via-55% to-transparent lg:block xl:w-[260px]" />
         </div>
         <DebriefSummaryMockupCard className="absolute -bottom-10 right-4 hidden w-[340px] lg:block xl:right-8" />
       </div>
