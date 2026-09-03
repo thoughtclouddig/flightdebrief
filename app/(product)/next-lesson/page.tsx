@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { BookOpen, CalendarClock, CheckCircle2, ClipboardCheck, HelpCircle, PlaneTakeoff, Target } from "lucide-react";
+import { PlaneTakeoff } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListenButton } from "@/components/listen-button";
 import { StudyResourceLink } from "@/components/study-resource-link";
 import { TrainingItemChecklist } from "@/components/training-item-checklist";
+import { PageTitle, Screen, Section, SecondaryButton, VectorMark } from "@/components/prototype/ui";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
@@ -15,8 +15,11 @@ export const dynamic = "force-dynamic";
 
 /**
  * A 30-second pre-flight briefing, not a dashboard -- deliberately excludes
- * cross-flight history (recurring themes) which lives on /progress instead.
- * See lib/training-memory.ts's computeNextLessonBrief for where every field
+ * cross-flight history (recurring themes) which lives on /progress instead,
+ * and the instructor-continuity moment (see components/debrief/student-
+ * debrief-v2.tsx's recurring-theme Panel), which lives on the debrief a
+ * theme was actually found on rather than being repeated here. See
+ * lib/training-memory.ts's computeNextLessonBrief for where every field
  * here comes from; this page adds no new data beyond study-viewed state.
  */
 export default async function NextLessonPage() {
@@ -26,16 +29,16 @@ export default async function NextLessonPage() {
 
   if (!brief.lastFlight) {
     return (
-      <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center">
-        <PlaneTakeoff className="size-10 text-foreground-faint" />
-        <h1 className="text-2xl font-semibold text-foreground">Next Flight</h1>
-        <p className="text-foreground-soft">
-          Your Next Flight brief will appear after your first completed debrief.
-        </p>
-        <Link href="/dashboard" className={buttonVariants()}>
-          Go to flights
-        </Link>
-      </div>
+      <Screen>
+        <div className="flex flex-col items-center gap-4 py-16 text-center">
+          <PlaneTakeoff className="size-10 text-foreground-faint" aria-hidden />
+          <h1 className="text-[28px] font-semibold text-foreground">Next Flight</h1>
+          <p className="text-foreground-soft">Your Next Flight brief will appear after your first completed debrief.</p>
+          <Link href="/dashboard" className={buttonVariants()}>
+            Go to flights
+          </Link>
+        </div>
+      </Screen>
     );
   }
 
@@ -69,152 +72,112 @@ export default async function NextLessonPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <h1 className="text-3xl font-semibold text-foreground">Next Flight</h1>
-        <p className="text-sm text-foreground-soft">Based on your debrief with {cfi}</p>
-        {ttsEnabled ? <ListenButton baseSrc="/api/next-lesson/audio" label="Listen to your brief" /> : null}
-      </div>
+    <Screen>
+      <PageTitle kicker={`Based on your debrief with ${cfi}`}>Next Flight</PageTitle>
+      {ttsEnabled ? <ListenButton baseSrc="/api/next-lesson/audio" label="Listen to your brief" /> : null}
 
       {brief.upcomingReservation ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarClock className="size-4 text-brand" />
-              When
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-foreground">
-              <LocalDateTime
-                iso={brief.upcomingReservation.scheduledStart}
-                options={{ weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }}
-              />
-            </p>
-          </CardContent>
-        </Card>
+        <Section title="When">
+          <p className="text-[17px] text-foreground">
+            <LocalDateTime
+              iso={brief.upcomingReservation.scheduledStart}
+              options={{ weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }}
+            />
+          </p>
+        </Section>
       ) : null}
 
       {!hasAnyContent ? (
-        <Card>
-          <CardContent className="py-6 text-center text-sm text-foreground-soft">
-            {!hasInstructor
-              ? "Nothing to prepare yet -- this fills in once your last debrief is finished."
-              : `${cfi} hasn't set anything to focus on from your last debrief yet.`}
-          </CardContent>
-        </Card>
+        <p className="rounded-2xl border border-hairline bg-surface px-5 py-6 text-center text-[15px] text-foreground-soft">
+          {!hasInstructor
+            ? "Nothing to prepare yet -- this fills in once your last debrief is finished."
+            : `${cfi} hasn't set anything to focus on from your last debrief yet.`}
+        </p>
       ) : null}
 
       {brief.lastWentWell.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Last Time</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
+        <Section title="Last time">
+          <ul className="flex flex-col gap-2">
             {brief.lastWentWell.map((item, i) => (
-              <p key={i} className="flex items-start gap-2 text-foreground-soft">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-good" />
+              <li key={i} className="flex items-start gap-2 text-[15px] leading-relaxed text-foreground-soft">
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-state-good" />
                 {item}
-              </p>
+              </li>
             ))}
-          </CardContent>
-        </Card>
+          </ul>
+        </Section>
       ) : null}
 
       {focusToday.length > 0 ? (
-        <Card className="border-brand/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="size-4 text-brand" />
-              Focus Today
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
+        <Section title="Focus today">
+          <div className="flex flex-col gap-2">
             {focusToday.map((item, i) => (
-              <p key={i} className="font-display text-2xl font-bold text-foreground">
+              <p key={i} className="text-[22px] font-semibold leading-snug text-foreground">
                 {item}
               </p>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </Section>
       ) : null}
 
       {brief.keepWorkingOn.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="size-4 text-brand" />
-              {hasInstructor ? "Your Instructor Wanted You To Work On" : "What To Work On"}
-            </CardTitle>
-            <CardDescription>
-              {hasInstructor ? `From your debrief with ${cfi}` : "From your last debrief"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="flex flex-col gap-2">
-              {brief.keepWorkingOn.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-foreground-soft">
-                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-brand" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <Section title={hasInstructor ? `${cfi} wanted you to work on` : "What to work on"}>
+          <ul className="flex flex-col gap-2">
+            {brief.keepWorkingOn.map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-[15px] leading-relaxed text-foreground-soft">
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-brand" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </Section>
       ) : null}
 
       {brief.beforeFlightTrainingItems.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardCheck className="size-4 text-brand" />
-              Before today&rsquo;s flight
-            </CardTitle>
-            <CardDescription>Check off what you&rsquo;ve reviewed -- this is for you, nobody else sees it.</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <Section title="Before today's flight">
+          <div className="flex flex-col gap-3">
+            <p className="text-[14px] text-foreground-faint">Check off what you&rsquo;ve reviewed -- this is for you, nobody else sees it.</p>
             <TrainingItemChecklist items={brief.beforeFlightTrainingItems} />
-          </CardContent>
-        </Card>
+          </div>
+        </Section>
       ) : null}
 
       {studyReferences.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="size-4 text-brand" />
-              Recommended Study
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="flex flex-col gap-3">
-              {studyReferences.map((ref, i) => (
-                <li key={i} className="flex flex-col gap-0.5">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">{ref.topic}</span>
-                  {ref.url ? (
-                    <StudyResourceLink url={ref.url} label={ref.source} initiallyViewed={viewedUrls.has(ref.url)} />
-                  ) : (
-                    <span className="text-sm text-foreground-soft">{ref.source}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <Section title="Recommended study">
+          <ul className="flex flex-col gap-4">
+            {studyReferences.map((ref, i) => (
+              <li key={i} className="flex flex-col gap-0.5">
+                <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-foreground-faint">{ref.topic}</span>
+                {ref.url ? (
+                  <StudyResourceLink url={ref.url} label={ref.source} initiallyViewed={viewedUrls.has(ref.url)} />
+                ) : (
+                  <span className="text-[15px] text-foreground-soft">{ref.source}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Section>
       ) : null}
 
+      {/*
+       * "Vector guidance" from the Phase 3 brief, represented honestly: this
+       * is brief.suggestedQuestion -- a real, deterministic template over
+       * this debrief's own content (lib/training-memory.ts's
+       * buildSuggestedQuestion, never LLM-generated) -- with Vector's
+       * identity attached, not a live chat. A production Ask-Vector
+       * endpoint (lib/ai/vector.ts's askVector) exists but its only current
+       * route is deliberately unauthenticated and prototype-only (see
+       * app/api/prototype/vector/route.ts); wiring a new authenticated
+       * production endpoint is backend work beyond this reskin, not
+       * something to fake here.
+       */}
       {brief.suggestedQuestion ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <HelpCircle className="size-4 text-brand" />
-              Ask Your Instructor
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-foreground">&ldquo;{brief.suggestedQuestion}&rdquo;</p>
-          </CardContent>
-        </Card>
+        <Section title="Ask your instructor" flush>
+          <div className="rounded-2xl border border-hairline bg-surface px-5 py-4">
+            <VectorMark subtitle="Suggested by Vector" />
+            <p className="mt-3 text-[17px] text-foreground">&ldquo;{brief.suggestedQuestion}&rdquo;</p>
+          </div>
+        </Section>
       ) : null}
 
       {/* Deliberately secondary, not a primary CTA. This page is a pre-flight
@@ -223,11 +186,11 @@ export default async function NextLessonPage() {
           for whoever lands and comes back to this page, but styled so it
           doesn't read as "do this now." */}
       <div className="flex flex-col items-center gap-1.5 border-t border-hairline pt-5">
-        <p className="text-sm text-foreground-soft">Already flown it?</p>
-        <Link href="/flights/new" className={buttonVariants({ variant: "outline", className: "w-full" })}>
-          Log This Flight
-        </Link>
+        <p className="text-[15px] text-foreground-soft">Already flown it?</p>
+        <div className="mt-1 flex w-full">
+          <SecondaryButton href="/flights/new">Log this flight</SecondaryButton>
+        </div>
       </div>
-    </div>
+    </Screen>
   );
 }

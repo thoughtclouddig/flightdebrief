@@ -1,19 +1,19 @@
 import Link from "next/link";
-import {
-  BookOpen,
-  CalendarClock,
-  CheckSquare,
-  ClipboardList,
-  ExternalLink,
-  History,
-  PlaneTakeoff,
-  Sparkles,
-} from "lucide-react";
+import { BookOpen, ExternalLink } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { LocalDateTime } from "@/components/local-date-time";
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Panel,
+  PanelButton,
+  PanelEyebrow,
+  PanelHeadline,
+  PanelMeta,
+  PrimaryButton,
+  QuietRow,
+  Screen,
+  Section,
+} from "@/components/prototype/ui";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
@@ -25,17 +25,6 @@ import { RadioPracticeCard } from "@/components/radio-practice-card";
 import { formatDurationShort, formatFlightContext } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-function formatDateTime(iso: string) {
-  const d = new Date(iso);
-  const today = new Date();
-  const isToday = d.toDateString() === today.toDateString();
-  const dayLabel = isToday
-    ? "Today"
-    : d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-  const timeLabel = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  return `${dayLabel} · ${timeLabel}`;
-}
 
 export default async function StudentHomePage() {
   const repo = getRepository();
@@ -71,17 +60,19 @@ export default async function StudentHomePage() {
   );
 
   // Rewards Phase 1: a compact, non-clickable summary -- there's no My
-  // Journey destination to link into yet (that's Phase 2), and a dead-end
-  // link would be worse than no link. Deliberately understated relative to
-  // the hero cards above it -- see lib/milestones.ts for what counts.
+  // Journey destination to link into yet (that's Phase 2). See
+  // lib/milestones.ts for what counts. Rendered as plain numerals, not the
+  // circular gauges the previous layout used -- MASTER.md's progress
+  // language (SS9/SS16) explicitly rejects a ring/gauge implying a
+  // readiness percentage that was never computed; these are counts.
   const totalCaptured = computeTotalCaptured(flights);
   const debriefStreak = computeDebriefStreak([...flights].sort((a, b) => b.flightDate.localeCompare(a.flightDate)));
   const rewardsStats =
     totalCaptured > 0
       ? [
-          { value: totalCaptured, label: "Captured", color: "var(--brand)" },
-          { value: debriefStreak, label: "Streak", color: "var(--good)" },
-          { value: milestones.length, label: milestones.length === 1 ? "Badge" : "Badges", color: "var(--amber)" },
+          { value: totalCaptured, label: "Captured" },
+          { value: debriefStreak, label: "Streak" },
+          { value: milestones.length, label: milestones.length === 1 ? "Badge" : "Badges" },
         ]
       : null;
 
@@ -94,302 +85,202 @@ export default async function StudentHomePage() {
     .sort((a, b) => b.flightDate.localeCompare(a.flightDate))[0] ?? null;
   const pendingProgress = pendingFlight ? await computeDebriefProgress(repo, pendingFlight) : null;
 
+  // One Panel per screen (MASTER.md's "ONE PANEL" rule) -- picked by what's
+  // most actionable right now: an undebriefed flight outranks a scheduled
+  // one, which outranks just recapping the last completed flight.
+  const panelMode = pendingFlight && pendingProgress ? "pending" : brief.upcomingReservation ? "next" : brief.lastFlight ? "last" : "none";
+
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      <div>
-        <p className="text-sm text-foreground-soft">Welcome back,</p>
-        <h1 className="text-2xl font-semibold text-foreground">{viewer.user.name.split(" ")[0]}</h1>
-      </div>
+    <Screen>
+      <p className="text-[15px] text-foreground-faint">
+        Welcome back, <span className="font-medium text-foreground">{viewer.user.name.split(" ")[0]}</span>
+      </p>
 
-      {rewardsStats ? (
-        <Card>
-          <CardContent className="flex flex-col gap-3 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">
-              Your training at a glance
-            </p>
-            <div className="grid grid-cols-3 gap-1">
-              {rewardsStats.map((stat, i) => (
-                <div
-                  key={stat.label}
-                  className={
-                    i > 0
-                      ? "flex flex-col items-center gap-1.5 border-l border-hairline py-1"
-                      : "flex flex-col items-center gap-1.5 py-1"
-                  }
-                >
-                  <div className="relative size-16">
-                    <svg viewBox="0 0 64 64" className="-rotate-90">
-                      <circle cx="32" cy="32" r="26" fill="none" stroke="var(--hairline)" strokeWidth="6" />
-                      <circle
-                        cx="32"
-                        cy="32"
-                        r="26"
-                        fill="none"
-                        stroke={stat.color}
-                        strokeWidth="6"
-                        strokeLinecap="round"
-                        strokeDasharray="163"
-                        strokeDashoffset="40"
-                      />
-                    </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-lg font-semibold text-foreground">
-                      {stat.value}
-                    </span>
-                  </div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-sm text-foreground-soft">
-              Captured and Streak count your debriefed flights; Badges mark automatic milestones like your first 5 or 10 debriefs -- not training milestones like solo or checkride.
-            </p>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {brief.upcomingReservation ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarClock className="size-4 text-brand" />
-              Next Flight
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div>
-              <p className="font-medium text-foreground">
-                <LocalDateTime
-                  iso={brief.upcomingReservation.scheduledStart}
-                  options={{ weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }}
-                />
-              </p>
-              <p className="text-sm text-foreground-soft">
-                Instructor: {brief.upcomingReservationInstructor?.name ?? "TBD"}
-              </p>
-            </div>
-
-            {brief.keepWorkingOn.length > 0 ? (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Focus from last lesson</p>
-                <ul className="mt-1.5 flex flex-col gap-1">
-                  {brief.keepWorkingOn.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-foreground-soft">
-                      <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {brief.beforeFlightItems.length > 0 ? (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Before you fly</p>
-                <ul className="mt-1.5 flex flex-col gap-1">
-                  {brief.beforeFlightItems.map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-foreground-soft">
-                      <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            <Link href="/next-lesson" className={buttonVariants({ size: "sm" })}>
-              View full brief
-            </Link>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {pendingFlight && pendingProgress ? (
-        <Link href={`/flights/${pendingFlight.id}/debrief`} className="block">
-          {/* This is the only place on the page that goes stale while someone
-              else is expected to act (the instructor finishing up, mainly) --
-              a longer interval than the narrower single-purpose waiting
-              screens elsewhere, since this refreshes the whole dashboard. */}
-          {/* Nothing here goes stale for a solo pilot -- there's no second
-              person whose turn it might become -- so only poll when someone
-              else is actually expected to act. */}
+      {/* 1. Next-flight focus -- what to work on before you fly again. */}
+      {panelMode === "pending" && pendingFlight && pendingProgress ? (
+        <>
           {solo ? null : <AutoRefresh intervalMs={15000} />}
-          <Card className="transition-colors hover:bg-surface-sunken">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <PlaneTakeoff className="size-4 text-brand" />
-                {solo
-                  ? "Ready to Debrief"
+          <Panel>
+            <PanelEyebrow>
+              {solo ? "Ready to debrief" : pendingProgress.stage === "awaiting_student_assessment" ? "Needs your input" : "Debrief in progress"}
+            </PanelEyebrow>
+            <PanelHeadline>{formatFlightContext(pendingFlight)}</PanelHeadline>
+            <PanelMeta>
+              {solo
+                ? "Talk through this one whenever you're ready."
+                : pendingProgress.stage === "awaiting_tasks" || pendingProgress.stage === "awaiting_instructor_assessment"
+                  ? "Waiting on your instructor."
                   : pendingProgress.stage === "awaiting_student_assessment"
-                    ? "Needs Your Input"
-                    : "Debrief In Progress"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between gap-4">
-              <div>
-                <p className="font-medium text-foreground">{formatFlightContext(pendingFlight)}</p>
-                <p className="text-sm text-foreground-soft">
-                  {/* A solo pilot's org runs freeform, so none of the guided
-                      hand-off stages below ever apply -- they'd describe a
-                      queue of steps waiting on an instructor who doesn't
-                      exist. There is exactly one state: not recorded yet. */}
-                  {solo
-                    ? "Talk through this one whenever you're ready."
-                    : pendingProgress.stage === "awaiting_tasks" || pendingProgress.stage === "awaiting_instructor_assessment"
-                      ? "Waiting on your instructor."
-                      : pendingProgress.stage === "awaiting_student_assessment"
-                        ? "Your instructor submitted their assessment -- your turn."
-                        : pendingProgress.stage === "awaiting_finish"
-                          ? "Recorded -- your instructor still needs to finish reviewing it with you."
-                          : "Both assessments are in -- your instructor is starting the debrief."}
-                </p>
-              </div>
-              {solo ? (
-                <span className={buttonVariants({ size: "sm" })}>Start</span>
-              ) : pendingProgress.stage === "awaiting_student_assessment" ? (
-                <span className={buttonVariants({ size: "sm" })}>Do it now</span>
-              ) : null}
-            </CardContent>
-          </Card>
-        </Link>
-      ) : null}
-
-      {brief.lastFlight ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PlaneTakeoff className="size-4 text-brand" />
-              Latest Flight
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between gap-4">
-            <div>
-              <p className="font-medium text-foreground">
-                {brief.lastFlight.departureAirport} → {brief.lastFlight.arrivalAirport}
-              </p>
-              <p className="text-sm text-foreground-soft">
-                {new Date(brief.lastFlight.flightDate + "T12:00:00").toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}{" "}
-                · {brief.lastFlight.aircraft.tailNumber} · {formatDurationShort(brief.lastFlight.durationMinutes)}
-              </p>
+                    ? "Your instructor submitted their assessment -- your turn."
+                    : pendingProgress.stage === "awaiting_finish"
+                      ? "Recorded -- your instructor still needs to finish reviewing it with you."
+                      : "Both assessments are in -- your instructor is starting the debrief."}
+            </PanelMeta>
+            <div className="mt-5">
+              <PanelButton href={`/flights/${pendingFlight.id}/debrief`}>
+                {solo ? "Start" : pendingProgress.stage === "awaiting_student_assessment" ? "Do it now" : "Open"}
+              </PanelButton>
             </div>
-            <Link
-              href={`/flights/${brief.lastFlight.id}/debrief/results`}
-              className={buttonVariants({ size: "sm", variant: "outline" })}
-            >
-              View debrief
-            </Link>
-          </CardContent>
-        </Card>
+          </Panel>
+        </>
+      ) : panelMode === "next" && brief.upcomingReservation ? (
+        <Panel>
+          <PanelEyebrow>Next flight</PanelEyebrow>
+          <PanelHeadline>
+            <LocalDateTime
+              iso={brief.upcomingReservation.scheduledStart}
+              options={{ weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }}
+            />
+          </PanelHeadline>
+          <PanelMeta>Instructor: {brief.upcomingReservationInstructor?.name ?? "TBD"}</PanelMeta>
+          {brief.keepWorkingOn.length > 0 ? (
+            <div className="mt-4">
+              <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-panel-foreground-soft">
+                Focus from last lesson
+              </p>
+              <ul className="mt-1.5 flex flex-col gap-1">
+                {brief.keepWorkingOn.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 text-[15px] text-panel-foreground">
+                    <span className="mt-2 size-1 shrink-0 rounded-full bg-brand" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <div className="mt-5">
+            <PanelButton href="/next-lesson">View full brief</PanelButton>
+          </div>
+        </Panel>
+      ) : panelMode === "last" && brief.lastFlight ? (
+        <Panel>
+          <PanelEyebrow>Latest flight</PanelEyebrow>
+          <PanelHeadline>
+            {brief.lastFlight.departureAirport} → {brief.lastFlight.arrivalAirport}
+          </PanelHeadline>
+          <PanelMeta>
+            {new Date(brief.lastFlight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            {" · "}
+            {brief.lastFlight.aircraft.tailNumber} · {formatDurationShort(brief.lastFlight.durationMinutes)}
+          </PanelMeta>
+          <div className="mt-5">
+            <PanelButton href={`/flights/${brief.lastFlight.id}/debrief/results`}>View debrief</PanelButton>
+          </div>
+        </Panel>
       ) : null}
 
-      <Link href="/progress" className="block">
-        <Card className="transition-colors hover:bg-surface-sunken">
-          <CardContent className="flex flex-col gap-1 py-4">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
-              <ClipboardList className="size-3.5" />
-              Action items
-            </p>
-            <p className="text-2xl font-semibold text-foreground">{openActionItems.length}</p>
-            <p className="text-xs text-foreground-soft">open · view progress →</p>
-          </CardContent>
-        </Card>
-      </Link>
+      {/* 2. What came out of the latest debrief. */}
+      {brief.lastFlight && brief.lastWentWell.length > 0 ? (
+        <Section title="From your latest debrief">
+          <ul className="flex flex-col gap-2">
+            {brief.lastWentWell.map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-[15px] leading-relaxed text-foreground-soft">
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-state-good" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
 
+      {/* 3. What needs work. */}
       {brief.focusAreas.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckSquare className="size-4 text-brand" />
-              Current Training Focus
-              <span className="ml-auto flex items-center gap-1 text-xs font-normal text-foreground-faint">
-                <Sparkles className="size-3.5" />
-                {brief.focusAreas.length} for next lesson
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-1.5">
+        <Section title="What needs work">
+          <div className="flex flex-wrap gap-1.5">
             {brief.focusAreas.map((f, i) => {
               const reference = suggestStudyReferences([f])[0] ?? null;
-              if (!reference) {
-                return (
-                  <Badge key={i} variant="neutral">
-                    {f}
-                  </Badge>
-                );
-              }
-              return (
+              return reference ? (
                 <a
                   key={i}
                   href={reference.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-md bg-surface-sunken px-2.5 py-1 text-xs font-semibold text-foreground-soft transition-colors hover:text-brand"
+                  className="inline-flex items-center gap-1 rounded-md bg-surface-sunken px-2.5 py-1 text-[13px] font-semibold text-foreground-soft transition-colors hover:text-brand"
                 >
                   {f}
-                  <ExternalLink className="size-3 shrink-0" />
+                  <ExternalLink className="size-3 shrink-0" aria-hidden />
                 </a>
+              ) : (
+                <span key={i} className="rounded-md bg-surface-sunken px-2.5 py-1 text-[13px] font-semibold text-foreground-soft">
+                  {f}
+                </span>
               );
             })}
-          </CardContent>
-        </Card>
+          </div>
+        </Section>
       ) : null}
+
+      {/* 4. Preparation between flights. */}
+      {brief.beforeFlightItems.length > 0 || pendingRadioPractice.length > 0 || completedRadioPractice.length > 0 ? (
+        <Section title="Between flights">
+          <div className="flex flex-col gap-4">
+            {brief.beforeFlightItems.length > 0 ? (
+              <ul className="flex flex-col gap-2">
+                {brief.beforeFlightItems.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 text-[15px] leading-relaxed text-foreground-soft">
+                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-brand" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <RadioPracticeCard
+              assigned={pendingRadioPractice.map((a) => ({ id: a.id, title: scenarioTitle(a.scenarioId) }))}
+              practiced={completedRadioPractice.map((a) => ({
+                id: a.id,
+                title: scenarioTitle(a.scenarioId),
+                correct: a.correct ?? false,
+              }))}
+            />
+            <PrimaryButton href="/next-lesson">Open next-lesson brief</PrimaryButton>
+          </div>
+        </Section>
+      ) : null}
+
+      {/* 5. Progress. */}
+      <Section title="Progress" action={<Link href="/progress" className="text-[15px] font-medium text-brand hover:underline">See all →</Link>}>
+        <div className="flex flex-col gap-4">
+          <QuietRow href="/progress" label="Open action items" meta={openActionItems.length} />
+          {rewardsStats ? (
+            <div className="flex gap-6 border-t border-hairline pt-3">
+              {rewardsStats.map((stat) => (
+                <div key={stat.label} className="flex flex-col">
+                  <span className="text-[22px] font-semibold tabular-nums text-foreground">{stat.value}</span>
+                  <span className="text-[13px] text-foreground-faint">{stat.label}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </Section>
 
       {recentDebriefs.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <History className="size-4 text-brand" />
-              Recent Debriefs
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
+        <Section title="Recent debriefs" flush>
+          <div className="overflow-hidden rounded-2xl border border-hairline bg-surface px-5">
             {recentDebriefs.map((flight) => (
-              <Link
+              <QuietRow
                 key={flight.id}
                 href={`/flights/${flight.id}/debrief/results`}
-                className="flex items-center justify-between rounded-lg px-2 py-1.5 -mx-2 hover:bg-surface-sunken"
-              >
-                <div className="flex items-baseline gap-2.5">
-                  <span className="text-sm text-foreground-soft">
-                    {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </span>
-                  <span className="text-sm text-foreground-faint">
-                    {flight.departureAirport} → {flight.arrivalAirport}
-                  </span>
-                </div>
-                <span className="text-sm text-foreground-faint">{flight.aircraft.tailNumber}</span>
-              </Link>
+                label={`${flight.departureAirport} → ${flight.arrivalAirport}`}
+                meta={new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              />
             ))}
-            <Link href="/history" className="text-sm font-medium text-brand hover:underline">
-              View full training history →
-            </Link>
-          </CardContent>
-        </Card>
+          </div>
+          <Link href="/history" className="px-1.5 text-[15px] font-medium text-brand hover:underline">
+            View full training history →
+          </Link>
+        </Section>
       ) : null}
 
-      <RadioPracticeCard
-        assigned={pendingRadioPractice.map((a) => ({
-          id: a.id,
-          title: scenarioTitle(a.scenarioId),
-        }))}
-        practiced={completedRadioPractice.map((a) => ({
-          id: a.id,
-          title: scenarioTitle(a.scenarioId),
-          correct: a.correct ?? false,
-        }))}
-      />
-
       {!brief.lastFlight && !brief.upcomingReservation && !pendingFlight ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-hairline p-10 text-center text-foreground-soft">
-          <BookOpen className="size-8 text-foreground-faint" />
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-hairline p-10 text-center text-foreground-soft">
+          <BookOpen className="size-8 text-foreground-faint" aria-hidden />
           No flights yet. Add your first training flight to get started.
           <Link href="/flights/new" className={buttonVariants({ size: "sm" })}>
             Add a flight
           </Link>
         </div>
       ) : null}
-    </div>
+    </Screen>
   );
 }

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { DebriefResultSections } from "@/components/debrief/debrief-result-sections";
 import { DebriefReplay } from "@/components/debrief/debrief-replay";
+import { StudentDebriefV2 } from "@/components/debrief/student-debrief-v2";
 import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { buildPerceptionGapRow, type PerceptionGapRow } from "@/lib/perception-gap";
 import { getRepository } from "@/lib/data";
@@ -65,6 +66,28 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
   const displayTrack = simplifyTrackForDisplay(flight.track);
   const instructorFirstName = resolveCfiFirstName(flight.instructor);
 
+  // The student's own view of this route is the V2 design language --
+  // components/debrief/student-debrief-v2.tsx, built fresh from the exact
+  // same data computed above. The instructor/admin view below (Replay +
+  // full DebriefResultSections) is untouched: student-training-detail.tsx
+  // links a CFI/admin into this same route to review a student's flight,
+  // and Phase 3 is scoped to the Student demo only -- reskinning shared
+  // components here would change what a CFI sees too.
+  if (!isInstructorViewer) {
+    return (
+      <StudentDebriefV2
+        flight={flight}
+        result={result}
+        differenceRows={differenceRows}
+        recurringTheme={nextLessonBrief.recurringThemes[0] ?? null}
+        instructorFirstName={instructorFirstName}
+        certificateType={certificateType}
+        ttsEnabled={ttsEnabled}
+        flightId={flight.id}
+      />
+    );
+  }
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
       <div>
@@ -126,10 +149,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
           Named for where it goes, not "Back to": you can reach this page from
           Home, from a link, or straight from finishing a debrief, so claiming
           to return somewhere is usually wrong. */}
-      <Link
-        href={isInstructorViewer ? `/cfi/students/${flight.userId}/handoff` : "/next-lesson"}
-        className={buttonVariants({ size: "lg", className: "w-full" })}
-      >
+      <Link href={`/cfi/students/${flight.userId}/handoff`} className={buttonVariants({ size: "lg", className: "w-full" })}>
         Go to Next-Lesson Brief
       </Link>
     </div>

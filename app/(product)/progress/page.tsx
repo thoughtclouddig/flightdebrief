@@ -1,17 +1,31 @@
-import { AlertCircle, ClipboardList, Repeat, TrendingUp } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TabPanels } from "@/components/ui/tab-panels";
+import { AlertCircle, Repeat, TrendingUp } from "lucide-react";
 import { AcsBadge } from "@/components/acs-badge";
-import { SkillProgressList } from "@/components/skill-progress-list";
 import { TrainingItemChecklist } from "@/components/training-item-checklist";
+import { PageTitle, Screen, Section, stateTone } from "@/components/prototype/ui";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
-import { computeSkillProgression } from "@/lib/skill-progress";
+import { computeSkillProgression, type SkillProgression } from "@/lib/skill-progress";
 import { computeStudentFreeFlights } from "@/lib/entitlements";
+import { cn } from "@/lib/utils";
+import type { SkillProgressionStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Buckets the real 5-value derived status (lib/skill-progress.ts's
+ * deriveStatus) onto V2's 3-tone state scale for color only -- the status
+ * WORD shown to a student is always the real one ("Needs Coaching",
+ * "Demonstrated", ...), never relabeled into the 3-value set. This is
+ * presentation bucketing of an existing computed value, not a second
+ * scoring system: nothing here is persisted, and the underlying status is
+ * unchanged from what CFI/admin viewers see via SkillProgressList.
+ */
+function toneForStatus(status: SkillProgressionStatus) {
+  if (status === "Demonstrated") return "Meets Standard" as const;
+  if (status === "Needs Coaching") return "Needs Work" as const;
+  return "Improving" as const; // Introduced, Developing, Improving
+}
 
 export default async function ProgressPage() {
   const repo = getRepository();
@@ -43,77 +57,81 @@ export default async function ProgressPage() {
   const skillProgressions = computeSkillProgression(signals.filter((s) => !s.dismissed));
   const freeFlights = computeStudentFreeFlights(flights);
 
-  const actionItemsPanel =
-    keepWorkingOn.length > 0 || beforeFlight.length > 0 ? (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ClipboardList className="size-4 text-brand" />
-            Action Items
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {keepWorkingOn.length > 0 ? (
-            <div>
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-foreground-faint">
-                <AlertCircle className="size-3.5" />
-                Ongoing ({keepWorkingOn.length})
-              </p>
-              <p className="mt-1 text-sm text-foreground-soft">
-                {solo ? "Skills that came out of your own debriefs." : "Skills your instructor called out across debriefs."} These
-                clear on their own once a later flight shows you&rsquo;ve got it -- or check one off yourself if you feel
-                ready.
-              </p>
-              <div className="mt-2">
-                <TrainingItemChecklist items={keepWorkingOn} />
-              </div>
-            </div>
-          ) : null}
-          {beforeFlight.length > 0 ? (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">
-                Before your next flight ({beforeFlight.length})
-              </p>
-              <div className="mt-2">
-                <TrainingItemChecklist items={beforeFlight} />
-              </div>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
-    ) : (
-      <p className="py-8 text-center text-sm text-foreground-faint">Nothing open right now.</p>
-    );
+  return (
+    <Screen>
+      <PageTitle>{solo ? "Your proficiency" : "Your progress"}</PageTitle>
+      <p className="-mt-4 px-1.5 text-[15px] leading-relaxed text-foreground-soft">
+        Patterns across your training -- conservative on purpose. Nothing here is a trend until it&rsquo;s shown up more than once.
+      </p>
+      <p className="-mt-2 px-1.5 text-[13px] font-semibold text-brand">
+        {freeFlights.exhausted ? "You've used your 3 free flights." : `${freeFlights.used} of ${freeFlights.cap} free flights used`}
+      </p>
 
-  const themesPanel = (
-    <>
-      {brief.focusAreas.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Current focus</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-1.5">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl border border-hairline bg-surface p-5">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">Flights debriefed</p>
+          <p className="mt-1 text-[28px] font-semibold tabular-nums text-foreground">{debriefedCount}</p>
+        </div>
+        <div className="rounded-2xl border border-hairline bg-surface p-5">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">Open action items</p>
+          <p className="mt-1 text-[28px] font-semibold tabular-nums text-foreground">{openItems.length}</p>
+        </div>
+      </div>
+
+      <Section title="Action items">
+        {keepWorkingOn.length > 0 || beforeFlight.length > 0 ? (
+          <div className="flex flex-col gap-4">
+            {keepWorkingOn.length > 0 ? (
+              <div>
+                <p className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.06em] text-foreground-faint">
+                  <AlertCircle className="size-3.5" aria-hidden />
+                  Ongoing ({keepWorkingOn.length})
+                </p>
+                <p className="mt-1 text-[15px] text-foreground-soft">
+                  {solo ? "Skills that came out of your own debriefs." : "Skills your instructor called out across debriefs."} These
+                  clear on their own once a later flight shows you&rsquo;ve got it -- or check one off yourself if you feel ready.
+                </p>
+                <div className="mt-2">
+                  <TrainingItemChecklist items={keepWorkingOn} />
+                </div>
+              </div>
+            ) : null}
+            {beforeFlight.length > 0 ? (
+              <div>
+                <p className="text-[13px] font-semibold uppercase tracking-[0.06em] text-foreground-faint">
+                  Before your next flight ({beforeFlight.length})
+                </p>
+                <div className="mt-2">
+                  <TrainingItemChecklist items={beforeFlight} />
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className="py-6 text-center text-[15px] text-foreground-faint">Nothing open right now.</p>
+        )}
+      </Section>
+
+      <Section title="Themes">
+        {brief.focusAreas.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
             {brief.focusAreas.map((f, i) => (
-              <Badge key={i} variant="neutral">
+              <span key={i} className="rounded-md bg-surface-sunken px-2.5 py-1 text-[13px] font-semibold text-foreground-soft">
                 {f}
-              </Badge>
+              </span>
             ))}
-          </CardContent>
-        </Card>
-      ) : null}
+          </div>
+        ) : null}
 
-      {brief.recurringThemes.length > 0 ? (
-        <Card className="border-amber/40">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Repeat className="size-4 text-amber" />
-              Recurring Themes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
+        {brief.recurringThemes.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-3">
             {brief.recurringThemes.map((theme, i) => (
-              <div key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <p className="text-sm text-foreground-soft">
+              <div key={i} className="rounded-xl border border-state-attention/30 bg-surface-sunken px-4 py-3.5">
+                <p className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.06em] text-state-attention">
+                  <Repeat className="size-3.5" aria-hidden />
+                  Recurring
+                </p>
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] text-foreground-soft">
                   <span className="font-semibold text-foreground">{theme.theme}</span> has come up in {theme.count}{" "}
                   {theme.count === 1 ? "lesson" : "lessons"}
                   {/* The instructor count is the whole point when it's >1: a
@@ -121,70 +139,68 @@ export default async function ProgressPage() {
                       the skill, not about whoever was teaching. Stated as
                       persistence, never as anyone failing to fix it. */}
                   {theme.instructorCount >= 2 ? ` with ${theme.instructorCount} instructors` : ""}.
+                  <AcsBadge skill={theme.skill} certificateType={certificateType} />
                 </p>
-                <AcsBadge skill={theme.skill} certificateType={certificateType} />
               </div>
             ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="flex items-center gap-3 py-5 text-foreground-faint">
-            <TrendingUp className="size-5 shrink-0" />
-            <p className="text-sm">Not enough debriefs yet to spot a recurring theme -- keep flying.</p>
-          </CardContent>
-        </Card>
-      )}
-    </>
-  );
+          </div>
+        ) : (
+          <p className="mt-4 flex items-center gap-3 py-2 text-[15px] text-foreground-faint">
+            <TrendingUp className="size-5 shrink-0" aria-hidden />
+            Not enough debriefs yet to spot a recurring theme -- keep flying.
+          </p>
+        )}
+      </Section>
 
-  const skillsPanel = (
-    <Card>
-      <CardHeader>
-        <CardTitle>Training Progress</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <SkillProgressList progressions={skillProgressions} certificateType={certificateType} solo={solo} />
-      </CardContent>
-    </Card>
+      <Section title="Skills" flush>
+        {skillProgressions.length === 0 ? (
+          <p className="px-1.5 text-[15px] text-foreground-faint">Nothing tracked yet -- keep flying.</p>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-hairline bg-surface px-5">
+            {skillProgressions.map((p) => (
+              <SkillRow key={p.skill} progression={p} certificateType={certificateType} solo={solo} />
+            ))}
+          </div>
+        )}
+      </Section>
+    </Screen>
   );
+}
+
+/** Display-only relabel for the one status that names a coach -- see SkillProgressList's identical rule. */
+const SOLO_STATUS_LABEL: Partial<Record<SkillProgressionStatus, string>> = { "Needs Coaching": "Needs Work" };
+
+// Not QuietRow: that component's chevron implies a destination, and there is
+// no per-skill detail route in production yet (the prototype's
+// app/prototype/vector/progress/[skill]/page.tsx has no production
+// equivalent -- see the Phase 3 report). A row that looks tappable and does
+// nothing is worse than a flat one.
+function SkillRow({
+  progression,
+  certificateType,
+  solo,
+}: {
+  progression: SkillProgression;
+  certificateType: Parameters<typeof AcsBadge>[0]["certificateType"];
+  solo: boolean;
+}) {
+  const tone = stateTone(toneForStatus(progression.status));
+  const label = (solo ? SOLO_STATUS_LABEL[progression.status] : undefined) ?? progression.status;
+  const lastFlown = progression.history[progression.history.length - 1]!.flightDate;
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">{solo ? "Your proficiency" : "Your progress"}</h1>
-        <p className="mt-1 text-sm text-foreground-soft">
-          Patterns across your training -- conservative on purpose. Nothing here is a trend until it&rsquo;s shown up more than once.
-        </p>
-        <p className="mt-2 text-xs font-semibold text-brand">
-          {freeFlights.exhausted
-            ? "You've used your 3 free flights."
-            : `${freeFlights.used} of ${freeFlights.cap} free flights used`}
+    <div className="flex min-h-[64px] w-full items-center gap-3 border-b border-hairline py-3 last:border-b-0">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[17px] text-foreground">{progression.label}</span>
+          <AcsBadge skill={progression.skill} certificateType={certificateType} />
+        </div>
+        <p className="mt-0.5 text-[13px] text-foreground-faint">
+          {progression.history.length} {progression.history.length === 1 ? "flight" : "flights"} tracked · Last flown{" "}
+          {new Date(lastFlown + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
         </p>
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="flex flex-col gap-1 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Flights debriefed</p>
-            <p className="text-2xl font-semibold text-foreground">{debriefedCount}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-1 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">Open action items</p>
-            <p className="text-2xl font-semibold text-foreground">{openItems.length}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <TabPanels
-        tabs={[
-          { id: "action-items", label: "Action Items", content: actionItemsPanel },
-          { id: "themes", label: "Themes", content: themesPanel },
-          { id: "skills", label: "Skills", content: skillsPanel },
-        ]}
-      />
+      <span className={cn("shrink-0 text-[14px] font-medium", tone.text)}>{label}</span>
     </div>
   );
 }
