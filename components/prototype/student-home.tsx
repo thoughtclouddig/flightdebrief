@@ -34,7 +34,7 @@ export interface StudentHomeProps {
   /** Only meaningful alongside "nextFlight"/"lastFlight" -- absent for "empty". */
   keyReminder?: { instructorFirstName: string; quote: string } | null;
   trainCta?: { instructorFirstName: string | null; href: string } | null;
-  /** Prototype-only capability -- production never supplies this (no save endpoint for a live-recorded session), so it never renders there. */
+  /** Live flight recording -- a real, intended V2 capability (native iOS work will back it properly). No web save endpoint exists yet, so production currently points this at the prototype's own recorder UI (app/prototype/vector/fly) rather than a second implementation; that's a documented interim gap, not a reason to omit the button. Null hides it (e.g. no completed first flight yet to start a next one from). */
   startFlightHref?: string | null;
   addFlightHref?: string | null;
   bottomRows?: {
@@ -143,10 +143,12 @@ export function StudentHome({ firstName, panel, justFlewRows, keyReminder, train
                 </div>
               ) : null}
 
-              {/* startFlightHref is prototype-only -- a live-recording
-                  session with no save endpoint in production, so it's never
-                  supplied there and this collapses to the single real
-                  "Add a flight" button. */}
+              {/* Both real capabilities -- Start flight records live,
+                  Add a flight is the retrospective/manual path. Production
+                  points startFlightHref at the prototype's own recorder
+                  (no web save endpoint exists yet; see the prop's own doc
+                  comment), not at a placeholder. Collapses to the single
+                  "Add a flight" button only when startFlightHref is null. */}
               {startFlightHref && addFlightHref ? (
                 <div className="flex gap-2.5">
                   <SecondaryButton href={startFlightHref}>
