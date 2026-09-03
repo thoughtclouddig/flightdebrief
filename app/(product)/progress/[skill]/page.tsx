@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AcsBadge } from "@/components/acs-badge";
-import { BackLink, Evidence, PageTitle, Screen, Section, TrendStrip, stateTone } from "@/components/prototype/ui";
+import { BackLink, Evidence, PageTitle, Screen, Section, TrendStrip } from "@/components/prototype/ui";
+import { stateTone } from "@/lib/prototype/state-tone";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeSkillProgression } from "@/lib/skill-progress";

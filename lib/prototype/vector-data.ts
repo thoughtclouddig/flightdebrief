@@ -1,4 +1,5 @@
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
+import type { SkillState } from "@/lib/prototype/state-tone";
 
 /**
  * Seeded training history for the Vector prototype.
@@ -156,7 +157,7 @@ export const NEXT_LESSON = { date: "Thursday", time: "9:00 AM", instructor: INST
  * `studentTake` is her side where she said something about it;
  * `vectorRead` is clearly labeled as inference; `next` is what moves it.
  */
-export type SkillState = "Needs Work" | "Improving" | "Meets Standard";
+export type { SkillState };
 
 /**
  * FAA ACS Areas of Operation, used as a quiet structural layer.

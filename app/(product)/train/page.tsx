@@ -13,8 +13,8 @@ import {
   SkillMeter,
   StateLabel,
   VectorMark,
-  stateTone,
 } from "@/components/prototype/ui";
+import { stateTone } from "@/lib/prototype/state-tone";
 import { acsAreaForSkill } from "@/lib/acs";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";

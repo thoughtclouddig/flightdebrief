@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Info, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { SkillState } from "@/lib/prototype/vector-data";
+import { stateTone, type SkillState } from "@/lib/prototype/state-tone";
 
 /**
  * The prototype's shared design language. Implements
@@ -362,28 +362,13 @@ export function Evidence({
 
 /* ------------------------------------------------------------------- state */
 
-/**
- * State color lives here and nowhere else.
- *
- * Two variants per state, because contrast is a property of the pair and not
- * of the color: the bright greens/golds clear 4.5:1 on the navy panel and sit
- * around 2.2:1 on paper, and the deep versions do the exact reverse. Passing
- * `onPanel` is not a stylistic choice -- getting it wrong is an AA failure.
- */
-export function stateTone(state: SkillState, onPanel = false) {
-  if (onPanel) {
-    return state === "Meets Standard"
-      ? { text: "text-state-good-on-panel", fill: "bg-state-good-on-panel", track: "bg-panel-hairline" }
-      : state === "Improving"
-        ? { text: "text-state-improving-on-panel", fill: "bg-state-improving-on-panel", track: "bg-panel-hairline" }
-        : { text: "text-state-attention-on-panel", fill: "bg-state-attention-on-panel", track: "bg-panel-hairline" };
-  }
-  return state === "Meets Standard"
-    ? { text: "text-state-good", fill: "bg-state-good", track: "bg-hairline" }
-    : state === "Improving"
-      ? { text: "text-state-improving", fill: "bg-state-improving", track: "bg-hairline" }
-      : { text: "text-state-attention", fill: "bg-state-attention-fill", track: "bg-hairline" };
-}
+// stateTone/SkillState now live in lib/prototype/state-tone.ts (a plain
+// module, not "use client") and are imported above -- re-exported here so
+// every existing `import { stateTone } from "@/components/prototype/ui"`
+// keeps working unchanged. Server Components must import from
+// lib/prototype/state-tone directly instead of from this file; see that
+// module's own comment for why.
+export { stateTone };
 
 /**
  * Where a skill stands, as a filled meter rather than a fraction.
