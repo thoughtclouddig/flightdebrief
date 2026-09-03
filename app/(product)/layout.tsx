@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Nav } from "@/components/nav";
-import { StudentNavV2 } from "@/components/student-nav-v2";
+import { StudentBottomNav, StudentNavV2 } from "@/components/student-nav-v2";
 import { getRepository } from "@/lib/data";
 import { getViewer, listMembershipOptions } from "@/lib/viewer";
 import { isSuperadmin } from "@/lib/superadmin";
@@ -30,22 +30,28 @@ export default async function ProductLayout({ children }: { children: ReactNode 
     !process.env.REPLIT_DEPLOYMENT && !viewer.organization.demoExpiresAt && cookieStore.get(DEMO_MODE_COOKIE)?.value === "1";
   const demoHint = cookieStore.get(DEMO_HINT_COOKIE)?.value ?? null;
 
-  // Phase 4: students get the V2 shell (StudentNavV2 + the V2 pages' own
-  // Screen component, which already supplies its own px-4/pb gutters --
-  // stacking main's old max-w-6xl px-4 wrapper on top of that would double
-  // the horizontal padding every V2 page already renders). Instructor/admin
-  // get the exact unchanged path below; nothing in this branch touches
+  // Students get the V2 shell, nested exactly the way
+  // app/prototype/layout.tsx nests AppHeader/children/BottomNav: one
+  // max-w-lg column carrying the header AND the content (so the header
+  // never stretches wider than the content below it, which the previous
+  // sticky/max-w-6xl header did), with the bottom nav as a sibling outside
+  // it. The V2 pages' own Screen component already supplies px-4/pb
+  // gutters, so this wrapper adds none of its own. Instructor/admin get the
+  // exact unchanged path below; nothing in this branch touches
   // components/nav.tsx or its behavior for them.
   if (viewer.role === "student") {
     return (
-      <>
-        {viewer.organization.demoExpiresAt ? (
-          <LiveDemoBanner expiresAt={viewer.organization.demoExpiresAt} hint={demoHint} />
-        ) : null}
-        <StudentNavV2 viewer={viewer} memberships={memberships} guideSteps={guideSteps} />
-        <main className="mx-auto w-full max-w-lg flex-1 pb-24 pt-2">{children}</main>
+      <div className="min-h-dvh bg-surface-sunken">
+        <div className="mx-auto min-h-dvh max-w-lg bg-surface-sunken pb-24">
+          {viewer.organization.demoExpiresAt ? (
+            <LiveDemoBanner expiresAt={viewer.organization.demoExpiresAt} hint={demoHint} />
+          ) : null}
+          <StudentNavV2 viewer={viewer} memberships={memberships} guideSteps={guideSteps} />
+          {children}
+        </div>
+        <StudentBottomNav />
         {showDemoPanel ? <DemoControlPanel /> : null}
-      </>
+      </div>
     );
   }
 
