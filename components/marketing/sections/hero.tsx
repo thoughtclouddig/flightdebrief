@@ -21,7 +21,11 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden bg-white pt-24 sm:pt-28 lg:min-h-[680px] lg:pb-0">
       <div className="relative mx-auto max-w-[1320px] px-6">
-        <div className="relative z-10 max-w-xl lg:py-16">
+        {/* max-w-xl was 576px, which is what actually held the headline --
+            not the photograph. The photograph is absolutely positioned, so it
+            never constrained this column; it only decides how much clear space
+            there is to grow into. At lg:w-[52%] there is ~660px of it. */}
+        <div className="relative z-10 max-w-xl lg:max-w-[660px] lg:py-16">
           {/* One line, and sized by measurement rather than by eye. Uppercase
               at 0.16em tracking, this string renders 630px wide at 18px
               against a 576px column, so it wrapped. 15px puts it at ~525px --
@@ -86,7 +90,7 @@ export function Hero() {
               renders a narrower synthetic instance and understates Archivo's
               real width by about a fifth. */}
           <h1
-            className="font-display mt-4 max-w-2xl text-[clamp(1.375rem,8.2vw,2.625rem)] font-extrabold leading-[1.02] tracking-[-0.025em] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(1.375rem,8.2vw,2.25rem)] lg:text-[clamp(1.625rem,2.6vw,2.125rem)] font-extrabold leading-[1.02] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
             {/* Four lines on a phone, three from sm up, and that is what lets
@@ -112,8 +116,8 @@ export function Hero() {
 
                 The weight split does the work the line break would have: the
                 setup is medium, the payoff is extrabold and brand. */}
-            <span className="font-medium">Prepare better between flights.</span>{" "}
-            <span className="font-extrabold text-brand">Repeat less. Finish sooner.</span>
+            <span className="block font-medium">Prepare better between flights.</span>
+            <span className="block font-extrabold text-brand">Repeat less. Finish sooner.</span>
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-[#414B57]">
             Your instructor&rsquo;s debrief becomes a clear plan for what to review, practice, and focus on
@@ -153,7 +157,7 @@ export function Hero() {
       </div>
 
       {/* One responsive hero image serves both layouts, avoiding an eager hidden desktop duplicate on mobile. */}
-      <div className="relative mx-6 mt-12 aspect-[4/3] overflow-visible lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:mt-0 lg:w-[60%] lg:aspect-auto">
+      <div className="relative mx-6 mt-12 aspect-[4/3] overflow-visible lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:mt-0 lg:w-[52%] lg:aspect-auto">
         <div className="absolute inset-0 overflow-hidden rounded-3xl lg:rounded-none">
           <Image
             src="/images/marketing/hero-debrief-tablet.webp"
