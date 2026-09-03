@@ -1,12 +1,12 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
-import { AssessmentForm } from "@/components/debrief/assessment-form";
+import { StudentAssessmentForm } from "@/components/debrief/student-assessment-form";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { buttonVariants } from "@/components/ui/button";
+import { PageTitle, PrimaryButton, Screen } from "@/components/prototype/ui";
 import { formatFlightContext } from "@/lib/utils";
 
+/** Hard-gated to the flight's own student (line below) -- never reached by an instructor/admin, so this is a safe direct rewrite, not a role branch. */
 export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]/debrief/self-assessment">) {
   const { id } = await props.params;
   const authorized = await getAuthorizedFlight(id);
@@ -26,14 +26,14 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
   const instructorAssessment = await repo.getAssessment(id, "instructor");
   if (instructorAssessment?.status !== "submitted") {
     return (
-      <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
+      <Screen>
         <AutoRefresh />
-        <p className="text-sm font-medium uppercase tracking-wide text-brand">
-          {formatFlightContext(flight)}
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold text-foreground">Not quite yet</h1>
-        <p className="text-sm text-foreground-soft">Your instructor needs to submit their assessment first.</p>
-      </div>
+        <div className="text-center">
+          <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
+          <PageTitle>Not quite yet</PageTitle>
+          <p className="mt-2 text-[15px] text-foreground-soft">Your instructor needs to submit their assessment first.</p>
+        </div>
+      </Screen>
     );
   }
 
@@ -46,23 +46,23 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
     // manually reload.
     if (flight.debriefStatus === "complete") {
       return (
-        <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
-          <h1 className="text-2xl font-semibold text-foreground">Debrief complete</h1>
-          <p className="text-sm text-foreground-soft">Your instructor finished walking through it.</p>
-          <Link href={`/flights/${id}/debrief/results`} className={buttonVariants({ size: "lg", className: "mt-3" })}>
-            View Debrief
-          </Link>
-        </div>
+        <Screen>
+          <div className="text-center">
+            <PageTitle>Debrief complete</PageTitle>
+            <p className="mt-2 text-[15px] text-foreground-soft">Your instructor finished walking through it.</p>
+          </div>
+          <PrimaryButton href={`/flights/${id}/debrief/results`}>View Debrief</PrimaryButton>
+        </Screen>
       );
     }
     return (
-      <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
+      <Screen>
         <AutoRefresh />
-        <h1 className="text-2xl font-semibold text-foreground">Self-assessment submitted</h1>
-        <p className="text-sm text-foreground-soft">
-          You&rsquo;re all set -- your instructor is starting the debrief.
-        </p>
-      </div>
+        <div className="text-center">
+          <PageTitle>Self-assessment submitted</PageTitle>
+          <p className="mt-2 text-[15px] text-foreground-soft">You&rsquo;re all set -- your instructor is starting the debrief.</p>
+        </div>
+      </Screen>
     );
   }
 
@@ -70,17 +70,14 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
   const initialRatings = Object.fromEntries(ratings.map((r) => [r.flightTaskId, r.performanceLevel]));
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6">
-      <AssessmentForm
-        flightId={id}
-        flight={flight}
-        role="student"
-        tasks={tasks.map((t) => ({ id: t.id, label: t.label, taskCode: t.taskCode }))}
-        initialRatings={initialRatings}
-        redirectTo={`/flights/${id}/debrief/self-assessment`}
-        title="How do you think it went?"
-        helpText="Rate yourself honestly on each task -- your instructor already submitted theirs and won't see this until you submit."
-      />
-    </div>
+    <StudentAssessmentForm
+      flightId={id}
+      flight={flight}
+      tasks={tasks.map((t) => ({ id: t.id, label: t.label, taskCode: t.taskCode }))}
+      initialRatings={initialRatings}
+      redirectTo={`/flights/${id}/debrief/self-assessment`}
+      title="How do you think it went?"
+      helpText="Rate yourself honestly on each task -- your instructor already submitted theirs and won't see this until you submit."
+    />
   );
 }

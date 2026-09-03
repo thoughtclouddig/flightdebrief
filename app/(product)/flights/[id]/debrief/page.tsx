@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { DebriefRecorder } from "@/components/debrief-recorder";
 import { GuidedDebriefRecorder } from "@/components/debrief/guided-debrief-recorder";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { PageTitle, Screen } from "@/components/prototype/ui";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { formatFlightContext } from "@/lib/utils";
@@ -27,30 +28,47 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
   const repo = getRepository();
   const org = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
   const guidanceMode = org?.defaultGuidanceMode ?? "freeform";
+  const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
 
   if (guidanceMode === "freeform") {
+    // No role branch existed here before either -- freeform mode has always
+    // let whoever gets to this page first (student or CFI) press record, so
+    // DebriefRecorder itself is untouched and shared exactly as it was;
+    // only the wrapper around it differs by viewer.
+    if (isInstructorViewer) {
+      return (
+        <div className="mx-auto flex max-w-xl flex-col gap-6">
+          <div className="text-center">
+            <p className="text-sm font-medium uppercase tracking-wide text-brand">Voice Debrief</p>
+            <h1 className="mt-1 text-2xl font-semibold text-foreground">{formatFlightContext(flight)}</h1>
+          </div>
+          <DebriefRecorder flightId={flight.id} solo={org?.kind === "individual"} />
+        </div>
+      );
+    }
     return (
-      <div className="mx-auto flex max-w-xl flex-col gap-6">
+      <Screen>
         <div className="text-center">
-          <p className="text-sm font-medium uppercase tracking-wide text-brand">Voice Debrief</p>
-          <h1 className="mt-1 text-2xl font-semibold text-foreground">
-            {formatFlightContext(flight)}
-          </h1>
+          <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
+          <PageTitle>Debrief</PageTitle>
         </div>
         {/* "Solo" is org kind, not guidance mode: a school can run freeform
             debriefs and still have a CFI in the room. Only an individual org
             has genuinely nobody else. */}
         <DebriefRecorder flightId={flight.id} solo={org?.kind === "individual"} />
-      </div>
+      </Screen>
     );
   }
-
-  const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
 
   const tasks = await repo.listFlightTasks(id);
   if (tasks.length === 0) {
     if (isInstructorViewer) redirect(`/flights/${id}/debrief/tasks`);
-    return <WaitingMessage flight={flight} text="Your instructor needs to log what you worked on this flight before the debrief can start." />;
+    return (
+      <StudentWaitingMessage
+        flight={flight}
+        text="Your instructor needs to log what you worked on this flight before the debrief can start."
+      />
+    );
   }
 
   const [studentAssessment, instructorAssessment] = await Promise.all([
@@ -65,26 +83,25 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
     redirect(`/flights/${id}/debrief/instructor-assessment`);
   }
   if (!isInstructorViewer && instructorAssessment?.status !== "submitted") {
-    return <WaitingMessage flight={flight} text="Your instructor needs to submit their assessment first." />;
+    return <StudentWaitingMessage flight={flight} text="Your instructor needs to submit their assessment first." />;
   }
   if (!isInstructorViewer && studentAssessment?.status !== "submitted") {
     redirect(`/flights/${id}/debrief/self-assessment`);
   }
   if (studentAssessment?.status !== "submitted" || instructorAssessment?.status !== "submitted") {
+    if (!isInstructorViewer) {
+      return <StudentWaitingMessage flight={flight} text="Waiting on your instructor's assessment." />;
+    }
     // FlightWithRelations carries aircraft and instructor but not the student,
     // so the name is looked up here rather than widening that type for one
     // sentence on one screen.
-    const student = isInstructorViewer ? await repo.getUser(flight.userId) : null;
+    const student = await repo.getUser(flight.userId);
     const studentFirstName = student?.name?.split(" ")[0] ?? "your student";
     return (
       <WaitingMessage
         flight={flight}
-        heading={isInstructorViewer ? "Hand it over" : "Not quite yet"}
-        text={
-          isInstructorViewer
-            ? `Ask ${studentFirstName} to open AfterFlight and rate the flight. This page moves on by itself once they do.`
-            : "Waiting on your instructor's assessment."
-        }
+        heading="Hand it over"
+        text={`Ask ${studentFirstName} to open AfterFlight and rate the flight. This page moves on by itself once they do.`}
       />
     );
   }
@@ -100,7 +117,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
 
   const cards = await repo.listCards(id);
   if (!isInstructorViewer) {
-    return <WaitingMessage flight={flight} text="Both assessments are in -- your instructor is starting the debrief." />;
+    return <StudentWaitingMessage flight={flight} text="Both assessments are in -- your instructor is starting the debrief." />;
   }
 
   // Both assessments are in but the CFI hasn't come from the Compare screen
@@ -155,5 +172,19 @@ function WaitingMessage({
       <h1 className="mt-1 text-2xl font-semibold text-foreground">{heading}</h1>
       <p className="text-sm text-foreground-soft">{text}</p>
     </div>
+  );
+}
+
+/** Student-viewer equivalent of WaitingMessage, in V2 styling -- always "Not quite yet", since every student call site is a genuine block (the CFI is the one with something to do next). */
+function StudentWaitingMessage({ flight, text }: { flight: FlightWithRelations; text: string }) {
+  return (
+    <Screen>
+      <AutoRefresh />
+      <div className="text-center">
+        <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
+        <PageTitle>Not quite yet</PageTitle>
+        <p className="mt-2 text-[15px] text-foreground-soft">{text}</p>
+      </div>
+    </Screen>
   );
 }

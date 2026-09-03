@@ -1,6 +1,7 @@
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { NewFlightClient } from "./new-flight-client";
+import { StudentNewFlightClient } from "./student-new-flight-client";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,15 @@ export default async function NewFlightPage(props: PageProps<"/flights/new">) {
   }
 
   const initialStudentId = typeof searchParams.studentId === "string" ? searchParams.studentId : undefined;
+
+  if (!isCfiOrAdmin) {
+    return (
+      <StudentNewFlightClient
+        instructorNames={instructorNames}
+        allowInviteCfi={viewer.organization.kind === "individual"}
+      />
+    );
+  }
 
   return (
     <NewFlightClient
