@@ -13,6 +13,11 @@ const GROUPS = [
       { user: seed.USER_MARCUS, role: "Student" },
       { user: seed.USER_PRIYA, role: "Student" },
       { user: seed.USER_TOM, role: "Student" },
+      // The canonical /prototype/vector parity persona -- see lib/data/seed.ts's
+      // own comment on USER_MIA for what her seeded story reproduces.
+      { user: seed.USER_MIA, role: "Student" },
+      { user: seed.USER_JAKE, role: "CFI" },
+      { user: seed.USER_DANA, role: "CFI" },
       { user: seed.USER_JORDAN, role: "Admin" },
     ],
   },

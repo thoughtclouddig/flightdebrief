@@ -48,7 +48,7 @@ import type {
   User,
 } from "@/lib/types";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
-import { buildSeed, DEMO_USER_ID } from "./seed";
+import { buildSeed, DEMO_USER_ID, MIA_ASSESSMENT_RATINGS, MIA_ASSESSMENT_TASKS, USER_JAKE, USER_MIA } from "./seed";
 import type {
   CreateArticleIdeaInput,
   CreateArticleInput,
@@ -107,6 +107,10 @@ export class PostgresRepository implements Repository {
       // already-seeded and real user-created rows are untouched either way.
       if (rows[0].n === 0 || process.env.FORCE_RESEED) {
         await seedDomainTables(client);
+        // Must run after seedDomainTables: flight_tasks/debrief_assessments/
+        // debrief_assessment_ratings all foreign-key onto flight-mia-3, which
+        // seedDomainTables is what actually inserts.
+        await seedMiaGuidedAssessment(client);
         console.log("[Data] PostgresRepository seeded demo flight/training data");
       }
       await client.query("COMMIT");
@@ -1702,9 +1706,14 @@ async function seedDomainTables(client: PoolClient): Promise<void> {
   }
   for (const d of seed.debriefs) {
     await client.query(
-      `INSERT INTO debriefs (id, flight_id, transcript, audio_duration_seconds, structured_result, analyzed_with, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING`,
-      [d.id, d.flightId, d.transcript, d.audioDurationSeconds, JSON.stringify(d.structuredResult), d.analyzedWith, d.createdAt],
+      `INSERT INTO debriefs (
+         id, flight_id, transcript, audio_duration_seconds, structured_result, analyzed_with,
+         guidance_mode, recording_started_at, recording_ended_at, created_at
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (id) DO NOTHING`,
+      [
+        d.id, d.flightId, d.transcript, d.audioDurationSeconds, JSON.stringify(d.structuredResult), d.analyzedWith,
+        d.guidanceMode, d.recordingStartedAt, d.recordingEndedAt, d.createdAt,
+      ],
     );
   }
   for (const t of seed.trainingItems) {
@@ -1724,6 +1733,59 @@ async function seedDomainTables(client: PoolClient): Promise<void> {
         s.id, s.organizationId, s.studentId, s.instructorId, s.aircraftId, s.flightId, s.debriefId,
         s.flightDate, s.category, s.skill, s.status, s.source, s.statement, s.createdAt,
       ],
+    );
+  }
+}
+
+/**
+ * The one part of Mia's seed data seedDomainTables() structurally can't
+ * carry -- SeedBundle has no flight_tasks/debrief_assessments/
+ * debrief_assessment_ratings fields (see lib/data/seed.ts's own comment on
+ * flight-mia-3), because no other seeded persona needed real per-task
+ * ratings. Stable ids + ON CONFLICT (id) DO NOTHING, same idempotency
+ * contract as seedDomainTables, so this is safe to call every time the seed
+ * runs. Mirrors lib/demo/live-demo-seed.ts's seedGuidedAssessedFlight() --
+ * that one uses fresh random ids per ephemeral demo session; this one needs
+ * stable ids because Mia is a permanent dev/login persona, not a one-time
+ * session.
+ */
+async function seedMiaGuidedAssessment(client: PoolClient): Promise<void> {
+  const flightId = "flight-mia-3";
+  const taskIds = new Map<string, string>();
+  for (const [i, task] of MIA_ASSESSMENT_TASKS.entries()) {
+    const id = `flight-task-mia-${task.code.toLowerCase().replaceAll("_", "-")}`;
+    taskIds.set(task.code, id);
+    await client.query(
+      `INSERT INTO flight_tasks (id, flight_id, task_code, label, source, sort_order)
+       VALUES ($1,$2,$3,$4,'instructor_selected',$5) ON CONFLICT (id) DO NOTHING`,
+      [id, flightId, task.code, task.label, i],
+    );
+  }
+
+  const studentAssessmentId = "assessment-mia-student";
+  const instructorAssessmentId = "assessment-mia-instructor";
+  await client.query(
+    `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, status, submitted_at)
+     VALUES ($1,$2,'student',$3,'submitted',now()) ON CONFLICT (id) DO NOTHING`,
+    [studentAssessmentId, flightId, USER_MIA.id],
+  );
+  await client.query(
+    `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, status, submitted_at)
+     VALUES ($1,$2,'instructor',$3,'submitted',now()) ON CONFLICT (id) DO NOTHING`,
+    [instructorAssessmentId, flightId, USER_JAKE.id],
+  );
+
+  for (const rating of MIA_ASSESSMENT_RATINGS) {
+    const taskId = taskIds.get(rating.code)!;
+    await client.query(
+      `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
+       VALUES ($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING`,
+      [`rating-mia-student-${rating.code.toLowerCase()}`, studentAssessmentId, taskId, rating.student],
+    );
+    await client.query(
+      `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
+       VALUES ($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING`,
+      [`rating-mia-instructor-${rating.code.toLowerCase()}`, instructorAssessmentId, taskId, rating.instructor],
     );
   }
 }

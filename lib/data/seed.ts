@@ -2,6 +2,8 @@ import { generatePatternTrack } from "@/lib/geo";
 import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import { localIsoDate } from "@/lib/date";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
+import { computeAssessmentDifferences } from "@/lib/debrief-cards/differences";
+import type { PerformanceLevelCode } from "@/lib/performance-levels";
 import type {
   Aircraft,
   Debrief,
@@ -111,6 +113,17 @@ export const USER_MARCUS: User = { id: "user-marcus", name: "Marcus Webb", email
 export const USER_PRIYA: User = { id: "user-priya", name: "Priya Anand", email: "priya@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
 export const USER_TOM: User = { id: "user-tom", name: "Tom Reilly", email: "tom@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
 
+// Mia Chen: the canonical parity persona -- her story reproduces
+// lib/prototype/vector-data.ts's fixture narrative (Mia/Jake/Dana, the
+// crosswind + stabilized-approach arc) as real seeded rows, so
+// /prototype/vector and Mia's real /home render the same story from two
+// different data sources instead of two different stories that happen to
+// share a component. See buildSeed() below for the flights/debrief/
+// assessment data and app/dev/login/page.tsx for her login entry.
+export const USER_MIA: User = { id: "user-mia", name: "Mia Chen", email: "mia@example.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_JAKE: User = { id: "user-jake", name: "Jake Alvarez", email: "jake@falconaviation.example", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+export const USER_DANA: User = { id: "user-dana", name: "Dana Whitfield", email: "dana@falconaviation.example", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
+
 // Independent CFI persona (real, receivable email like Andy/Danny) with a
 // small roster of their own, entirely separate from Falcon Aviation.
 export const USER_KEVIN: User = { id: "user-kevin", name: "Kevin Ortiz", email: "andyrenk+indycfi@gmail.com", authUserId: null, avatarUrl: null, createdAt: new Date().toISOString() };
@@ -178,6 +191,19 @@ const TOM_AIRCRAFT: Aircraft = {
   make: "Diamond",
   model: "DA40 NG",
   homeAirport: "KFFZ",
+  organizationId: ORG_FALCON.id,
+  status: "active",
+  externalProvider: null,
+  externalId: null,
+};
+
+const MIA_AIRCRAFT: Aircraft = {
+  id: "aircraft-c172s-n4521p",
+  tailNumber: "N4521P",
+  type: "Cessna 172S",
+  make: "Cessna",
+  model: "172S",
+  homeAirport: "KSQL",
   organizationId: ORG_FALCON.id,
   status: "active",
   externalProvider: null,
@@ -268,6 +294,16 @@ const SEED_INSTRUCTOR_OMAR: Instructor = {
   name: "Omar",
 };
 
+const SEED_INSTRUCTOR_JAKE: Instructor = {
+  id: USER_JAKE.id,
+  name: "Jake",
+};
+
+const SEED_INSTRUCTOR_DANA: Instructor = {
+  id: USER_DANA.id,
+  name: "Dana",
+};
+
 const FLIGHT_A_TRANSCRIPT =
   "We worked the traffic pattern for most of the flight. Danny had me focus on crosswind corrections on final. The first two landings were a little squirrelly in the crosswind, but I got the feel for it by the fourth one. Radio calls were solid today. We also reviewed the pattern altitudes for the class Delta airspace.";
 
@@ -319,6 +355,45 @@ const LEAH_FLIGHT_TRANSCRIPT =
 const ZOE_FLIGHT_TRANSCRIPT =
   "Maneuvers flight -- steep turns, slow flight, and power-off stalls. Omar said my steep turns were solid on altitude but I rolled out a little late on both directions. Slow flight and stall recovery were clean. Omar wants me to work on anticipating the rollout point earlier next time.";
 
+// --- Mia Chen: the canonical parity persona -- Dana handed off to Jake, and
+// stabilized-approach speed is the weakness that survived the handover
+// (mirrors lib/prototype/vector-data.ts's RECURRING). Crosswind landings
+// carry both a wentWell and a needsWork sentence in the last two flights --
+// real, not yet consistent -- which is what makes the third flight's
+// student/instructor disagreement (below) a genuine reading of the same
+// flight rather than an invented conflict.
+const MIA_FLIGHT_1_TRANSCRIPT =
+  "Slow flight and landings today with Dana. Slow flight was solid, good coordination through the stalls. Landings were rough -- you were too fast on final a couple of times, carrying extra speed into short final. Dana had me get configured earlier next time instead of fixing speed right at the runway. Crosswind correction needs work -- you were behind the airplane and let it drift once you got into the flare. Radio calls were clear and confident all flight.";
+const MIA_FLIGHT_2_TRANSCRIPT =
+  "Pattern work and go-arounds with Jake today. You were fast on two of the landings again, still fixing speed late instead of configuring earlier. Jake wanted me to get stabilized well before the turn to final next time. Crosswind landings were better today -- centerline control improved. You still need to work on holding the crosswind correction through the flare. Short-field landings looked solid, nailed the aiming point on a couple of them. Radio calls stayed confident all flight.";
+/** The flight the guided assessment below is attached to -- see seedMiaGuidedAssessment() in postgres-repository.ts for the real per-task ratings this transcript's summary gets paired with. */
+const MIA_FLIGHT_3_TRANSCRIPT =
+  "Crosswind and short-field landings with Jake today. Centerline control was much better. Short-field landings were pretty solid -- you hit your aiming point on three of four. On the crosswind landings you still need to work on holding the correction once you get into the flare. You were also too fast on two of the landings. Jake wanted me to keep working crosswinds and get stabilized earlier so I'm not trying to fix the speed at the threshold. I felt the crosswinds were actually going pretty well and liked keeping the airplane on centerline. I know I was fast on one approach but thought the landings overall were pretty good. Radio calls were clear and confident again.";
+
+/**
+ * flight-mia-3's real objectives -- the same 3 tasks vector-data.ts's
+ * PERCEPTION_GAPS covers. Exported so postgres-repository.ts's
+ * seedMiaGuidedAssessment() can insert the matching flight_tasks/
+ * debrief_assessment_ratings rows without this list existing twice.
+ */
+export const MIA_ASSESSMENT_TASKS: { code: string; label: string }[] = [
+  { code: "CROSSWIND_LANDING", label: "Crosswind Landings" },
+  { code: "STABILIZED_APPROACH", label: "Stabilized Approach" },
+  { code: "SHORT_FIELD_LANDING", label: "Short-Field Landing" },
+];
+
+/**
+ * [task code, student rating, instructor rating]. Mirrors
+ * vector-data.ts's PERCEPTION_GAPS exactly: Crosswind Landings is a real
+ * disagreement (she rated herself Independent, Jake rated Needs Coaching --
+ * distance 2, "significant"), the other two are real agreements.
+ */
+export const MIA_ASSESSMENT_RATINGS: { code: string; student: PerformanceLevelCode; instructor: PerformanceLevelCode }[] = [
+  { code: "CROSSWIND_LANDING", student: "INDEPENDENT", instructor: "NEEDS_COACHING" },
+  { code: "STABILIZED_APPROACH", student: "NEEDS_COACHING", instructor: "NEEDS_COACHING" },
+  { code: "SHORT_FIELD_LANDING", student: "INDEPENDENT", instructor: "INDEPENDENT" },
+];
+
 // Three additional historical flights, further back than the preserved flight-1/2/3,
 // used only to give the school-level Training Insights admin section (recurring
 // deficiencies, carried-forward objectives) real non-empty data to demonstrate --
@@ -341,6 +416,14 @@ function isoDate(daysAgoFromToday: number) {
 
 function todayAt(hour: number, minute: number) {
   const d = new Date();
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+}
+
+/** Like todayAt, but N days out -- for a real upcoming reservation (Mia's "Thursday 9:00 AM") that stays in the future regardless of when the seed runs. */
+function daysFromNowAt(daysFromNow: number, hour: number, minute: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromNow);
   d.setHours(hour, minute, 0, 0);
   return d.toISOString();
 }
@@ -403,6 +486,25 @@ export function buildSeed(): SeedBundle {
     aircraftId: SARAH_AIRCRAFT.id,
     scheduledStart: todayAt(17, 30),
     scheduledEnd: todayAt(19, 0),
+    status: "scheduled",
+    externalProvider: null,
+    externalId: null,
+  };
+
+  // Mia's next lesson -- real, always a few days out, so /home's "Next
+  // flight" state (the default /prototype/vector view) has something real
+  // to show regardless of when this seed runs. Matches vector-data.ts's
+  // NEXT_LESSON.focus ("Crosswind landings") in spirit; the literal weekday
+  // won't say "Thursday" every time, which is an accepted, honest difference
+  // from the frozen prototype copy.
+  const reservationMia: Reservation = {
+    id: "reservation-mia-next",
+    organizationId: ORG_FALCON.id,
+    studentId: USER_MIA.id,
+    instructorId: USER_JAKE.id,
+    aircraftId: MIA_AIRCRAFT.id,
+    scheduledStart: daysFromNowAt(3, 9, 0),
+    scheduledEnd: daysFromNowAt(3, 10, 30),
     status: "scheduled",
     externalProvider: null,
     externalId: null,
@@ -565,6 +667,74 @@ export function buildSeed(): SeedBundle {
     "flight-tom-2", "debrief-tom-2", USER_TOM, TOM_AIRCRAFT, SEED_INSTRUCTOR,
     2, 98, 25, TOM_FLIGHT_2_TRANSCRIPT, 120, tom1.result.actionItems,
   );
+
+  // Mia Chen -- Dana, then Jake. Audio durations match
+  // lib/prototype/vector-data.ts's DEBRIEFS fixture (1:31, 0:58, 1:12)
+  // exactly; dates are real relative-to-today ones, not the frozen "Jul 18"/
+  // "Aug 12"/"Aug 29" fixture strings -- an accepted, honest difference.
+  const mia1 = studentDebrief(
+    "flight-mia-1", "debrief-mia-1", USER_MIA, MIA_AIRCRAFT, SEED_INSTRUCTOR_DANA,
+    18, 88, 40, MIA_FLIGHT_1_TRANSCRIPT, 91, [],
+  );
+  const mia2 = studentDebrief(
+    "flight-mia-2", "debrief-mia-2", USER_MIA, MIA_AIRCRAFT, SEED_INSTRUCTOR_JAKE,
+    10, 90, 41, MIA_FLIGHT_2_TRANSCRIPT, 58, mia1.result.actionItems,
+  );
+
+  // Mia's most recent flight -- guided mode, with a real per-task
+  // disagreement (Crosswind Landings: she rated herself Independent, Jake
+  // rated her Needs Coaching) and two real agreements (Stabilized Approach,
+  // Short-Field Landing), mirroring vector-data.ts's PERCEPTION_GAPS. The
+  // flight_tasks/debrief_assessments/debrief_assessment_ratings rows that
+  // back this live in postgres-repository.ts's seedMiaGuidedAssessment(),
+  // keyed off MIA_ASSESSMENT_TASKS/MIA_ASSESSMENT_RATINGS below -- this is
+  // the one place assessmentDifferences is computed with the real
+  // lib/debrief-cards/differences.ts function, not hand-typed, so it can
+  // never drift from what those rating rows would actually produce.
+  const mia3Date = isoDate(3);
+  const flightMia3: Flight = {
+    id: "flight-mia-3",
+    userId: USER_MIA.id,
+    organizationId: ORG_FALCON.id,
+    aircraftId: MIA_AIRCRAFT.id,
+    departureAirport: MIA_AIRCRAFT.homeAirport,
+    arrivalAirport: MIA_AIRCRAFT.homeAirport,
+    flightDate: mia3Date,
+    durationMinutes: 84,
+    instructorId: SEED_INSTRUCTOR_JAKE.id,
+    reservationId: null,
+    fr24FlightId: null,
+    externalProvider: null,
+    externalId: null,
+    debriefStatus: "complete",
+    track: generatePatternTrack(MIA_AIRCRAFT.homeAirport, { startTime: new Date(mia3Date), durationMinutes: 84, seed: 42 }),
+    createdAt: new Date(mia3Date).toISOString(),
+  };
+  const miaTaskLabels = new Map(MIA_ASSESSMENT_TASKS.map((t) => [t.code, t.label]));
+  const miaStudentRatings = new Map<string, PerformanceLevelCode>(
+    MIA_ASSESSMENT_RATINGS.map((r) => [r.code, r.student]),
+  );
+  const miaInstructorRatings = new Map<string, PerformanceLevelCode>(
+    MIA_ASSESSMENT_RATINGS.map((r) => [r.code, r.instructor]),
+  );
+  const mia3Result = analyzeMock({
+    transcript: MIA_FLIGHT_3_TRANSCRIPT,
+    flightMeta: flightMetaFor(MIA_AIRCRAFT, SEED_INSTRUCTOR_JAKE, flightMia3),
+    previousActionItems: mia2.result.actionItems,
+  });
+  mia3Result.assessmentDifferences = computeAssessmentDifferences(miaTaskLabels, miaStudentRatings, miaInstructorRatings);
+  const debriefMia3: Debrief = {
+    id: "debrief-mia-3",
+    flightId: flightMia3.id,
+    transcript: MIA_FLIGHT_3_TRANSCRIPT,
+    audioDurationSeconds: 72,
+    structuredResult: mia3Result,
+    analyzedWith: "mock",
+    guidanceMode: "guided",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
+    createdAt: flightMia3.createdAt,
+  };
 
   const emma1 = studentDebrief(
     "flight-emma-1", "debrief-emma-1", USER_EMMA, KEVIN_AIRCRAFT, SEED_INSTRUCTOR_KEVIN,
@@ -731,7 +901,7 @@ export function buildSeed(): SeedBundle {
   };
 
   const newStudentDebriefs = [
-    marcus1, marcus2, priya1, priya2, tom1, tom2,
+    marcus1, marcus2, priya1, priya2, tom1, tom2, mia1, mia2,
     emma1, alex1, alex2, carlos1, leah1, zoe1,
   ];
 
@@ -742,6 +912,7 @@ export function buildSeed(): SeedBundle {
     ...toTrainingItems(flightA.id, debriefA.id, debriefAResult, flightA.createdAt),
     ...toTrainingItems(flightB.id, debriefB.id, debriefBResult, flightB.createdAt),
     ...toTrainingItems(sarahFlight.id, debriefSarah.id, debriefSarahResult, sarahFlight.createdAt),
+    ...toTrainingItems(flightMia3.id, debriefMia3.id, mia3Result, flightMia3.createdAt),
     ...newStudentDebriefs.flatMap((d) => toTrainingItems(d.flight.id, d.debrief.id, d.result, d.flight.createdAt)),
   ];
 
@@ -752,6 +923,7 @@ export function buildSeed(): SeedBundle {
     ...toTrainingSignals(flightA, debriefA.id, debriefAResult),
     ...toTrainingSignals(flightB, debriefB.id, debriefBResult),
     ...toTrainingSignals(sarahFlight, debriefSarah.id, debriefSarahResult),
+    ...toTrainingSignals(flightMia3, debriefMia3.id, mia3Result),
     ...newStudentDebriefs.flatMap((d) => toTrainingSignals(d.flight, d.debrief.id, d.result)),
   ];
 
@@ -774,6 +946,9 @@ export function buildSeed(): SeedBundle {
     member("member-marcus", USER_MARCUS.id, "student"),
     member("member-priya", USER_PRIYA.id, "student"),
     member("member-tom", USER_TOM.id, "student"),
+    member("member-mia", USER_MIA.id, "student"),
+    member("member-jake", USER_JAKE.id, "instructor"),
+    member("member-dana", USER_DANA.id, "instructor"),
 
     // Independent CFI: Kevin gets both admin + instructor rows (see
     // lib/auth/store.ts's resolveSignupOnLogin -- this seed mirrors what a
@@ -802,6 +977,8 @@ export function buildSeed(): SeedBundle {
     link("link-marcus-maria", USER_MARCUS.id, USER_MARIA.id, true),
     link("link-priya-danny", USER_PRIYA.id, USER_DANNY.id, true),
     link("link-tom-danny", USER_TOM.id, USER_DANNY.id, true),
+    link("link-mia-dana", USER_MIA.id, USER_DANA.id, false),
+    link("link-mia-jake", USER_MIA.id, USER_JAKE.id, true),
     link("link-emma-kevin", USER_EMMA.id, USER_KEVIN.id, true, ORG_CFI_KEVIN.id),
     link("link-carlos-nina", USER_CARLOS.id, USER_NINA.id, true, ORG_MESA.id),
     link("link-leah-nina", USER_LEAH.id, USER_NINA.id, true, ORG_MESA.id),
@@ -812,28 +989,31 @@ export function buildSeed(): SeedBundle {
     organizations: [ORG_FALCON, ORG_CFI_KEVIN, ORG_INDIVIDUAL_ALEX, ORG_MESA, ORG_PRESCOTT],
     users: [
       USER_ANDY, USER_DANNY, USER_MARIA, USER_SARAH, USER_JORDAN, USER_MARCUS, USER_PRIYA, USER_TOM,
+      USER_MIA, USER_JAKE, USER_DANA,
       USER_KEVIN, USER_EMMA, USER_ALEX, USER_NINA, USER_CARLOS, USER_LEAH, USER_OMAR, USER_ZOE,
     ],
     organizationMembers,
     studentInstructors,
     aircraft: [
-      SEED_AIRCRAFT, SARAH_AIRCRAFT, MARCUS_AIRCRAFT, TOM_AIRCRAFT,
+      SEED_AIRCRAFT, SARAH_AIRCRAFT, MARCUS_AIRCRAFT, TOM_AIRCRAFT, MIA_AIRCRAFT,
       KEVIN_AIRCRAFT, ALEX_AIRCRAFT, MESA_AIRCRAFT, PRESCOTT_AIRCRAFT,
     ],
     instructors: [
       { instructor: SEED_INSTRUCTOR, organizationId: ORG_FALCON.id },
       { instructor: SEED_INSTRUCTOR_MARIA, organizationId: ORG_FALCON.id },
+      { instructor: SEED_INSTRUCTOR_JAKE, organizationId: ORG_FALCON.id },
+      { instructor: SEED_INSTRUCTOR_DANA, organizationId: ORG_FALCON.id },
       { instructor: SEED_INSTRUCTOR_KEVIN, organizationId: ORG_CFI_KEVIN.id },
       { instructor: SEED_INSTRUCTOR_NINA, organizationId: ORG_MESA.id },
       { instructor: SEED_INSTRUCTOR_OMAR, organizationId: ORG_PRESCOTT.id },
     ],
-    reservations: [reservationAndy, reservationSarah],
+    reservations: [reservationAndy, reservationSarah, reservationMia],
     flights: [
-      flightC, flightB, flightA, flightX3, flightX2, flightX1, sarahFlight,
+      flightC, flightB, flightA, flightX3, flightX2, flightX1, sarahFlight, flightMia3,
       ...newStudentDebriefs.map((d) => d.flight),
     ],
     debriefs: [
-      debriefA, debriefB, debriefX1, debriefX2, debriefX3, debriefSarah,
+      debriefA, debriefB, debriefX1, debriefX2, debriefX3, debriefSarah, debriefMia3,
       ...newStudentDebriefs.map((d) => d.debrief),
     ],
     trainingItems,
