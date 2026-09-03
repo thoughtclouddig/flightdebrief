@@ -362,13 +362,22 @@ const ZOE_FLIGHT_TRANSCRIPT =
 // real, not yet consistent -- which is what makes the third flight's
 // student/instructor disagreement (below) a genuine reading of the same
 // flight rather than an invented conflict.
+// Short-field landings deliberately appears in flights 1 and 2 but NOT 3:
+// deriveStatus() in lib/skill-progress.ts derives a skill's status from only
+// its single most recent signal, and "short-field landing" textually
+// contains "landing" (Stabilized Approach's own keyword in lib/topics.ts),
+// so any positive short-field mention on the LATEST flight would also read
+// as a positive Stabilized Approach signal that day -- overwriting the real
+// "still needs coaching" signal this story depends on. Traced and confirmed
+// via lib/taxonomy.ts's classifyTrainingSignals(); not fixable by rewording
+// alone without weakening the crosswind/stabilized-approach story instead.
 const MIA_FLIGHT_1_TRANSCRIPT =
-  "Landings today with Dana. Landings were rough -- you were carrying too much speed into short final a couple of times. Dana had me get configured earlier next time instead of fixing speed right at the runway. Crosswind correction needs work -- you were behind the airplane and let it drift once you got into the flare. Radio calls were clear and confident all flight.";
+  "Landings today with Dana. Landings were rough -- you were carrying too much speed into short final a couple of times. Dana had me get configured earlier next time instead of fixing speed right at the runway. Short-field landings looked good, nice and controlled. Crosswind correction needs work -- you were behind the airplane and let it drift once you got into the flare. Radio calls were clear and confident all flight.";
 const MIA_FLIGHT_2_TRANSCRIPT =
   "Pattern work with Jake today. You were carrying too much speed into two of the landings again, still fixing it late instead of configuring earlier. Jake wanted me to get stabilized well before the turn to final next time. Crosswind landings were better today -- centerline control improved. You still need to work on holding the crosswind correction through the flare. Short-field landings looked solid, nailed the aiming point on a couple of them. Radio calls stayed confident all flight.";
 /** The flight the guided assessment below is attached to -- see seedMiaGuidedAssessment() in postgres-repository.ts for the real per-task ratings this transcript's summary gets paired with. */
 const MIA_FLIGHT_3_TRANSCRIPT =
-  "Crosswind and short-field landings with Jake today. Centerline control was much better. Short-field landings were pretty solid -- you hit your aiming point on three of four. On the crosswind landings you still need to work on holding the correction once you get into the flare. You were also carrying too much speed into two of the landings. Jake wanted me to keep working crosswinds and get stabilized earlier so I'm not trying to fix the speed at the threshold. I thought the crosswinds were actually going pretty well and liked keeping the airplane on centerline. I know I was carrying extra speed on one approach but thought the landings overall were pretty good. Radio calls were clear and confident again.";
+  "Crosswind and short-field landings with Jake today. Centerline control was much better. On the crosswind landings you still need to work on holding the correction once you get into the flare. You were also carrying too much speed into two of the landings. Jake wanted me to keep working crosswinds and get stabilized earlier so I'm not trying to fix the speed at the threshold. I thought the crosswinds were actually going pretty well and liked keeping the airplane on centerline. Radio calls were clear and confident again.";
 
 /**
  * flight-mia-3's real objectives -- the same 3 tasks vector-data.ts's
@@ -376,10 +385,16 @@ const MIA_FLIGHT_3_TRANSCRIPT =
  * seedMiaGuidedAssessment() can insert the matching flight_tasks/
  * debrief_assessment_ratings rows without this list existing twice.
  */
+// Labels match lib/topics.ts's TOPIC_LIBRARY topic strings exactly (not just
+// approximately) -- that's the same catalog allTrainingSkills() exposes to a
+// real CFI's task picker, so this is how a real guided debrief would
+// actually label these, and it's what lets app/(product)/train/page.tsx
+// reverse-match a stored AssessmentDifference.taskLabel back to a skill code
+// for its ACS-area lookup.
 export const MIA_ASSESSMENT_TASKS: { code: string; label: string }[] = [
-  { code: "CROSSWIND_LANDING", label: "Crosswind Landings" },
-  { code: "STABILIZED_APPROACH", label: "Stabilized Approach" },
-  { code: "SHORT_FIELD_LANDING", label: "Short-Field Landing" },
+  { code: "CROSSWIND_LANDING", label: "Crosswind landings" },
+  { code: "STABILIZED_APPROACH", label: "Landings" },
+  { code: "SHORT_FIELD_LANDING", label: "Short-field landings" },
 ];
 
 /**

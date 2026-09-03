@@ -56,7 +56,7 @@ export default async function ProductLayout({ children }: { children: ReactNode 
           ) : null}
           <AppHeader
             homeHref={homeHref}
-            actions={<StudentHeaderActions viewer={viewer} memberships={memberships} guideSteps={guideSteps} />}
+            actions={<StudentHeaderActions viewer={viewer} memberships={memberships} />}
           />
           {children}
         </div>
