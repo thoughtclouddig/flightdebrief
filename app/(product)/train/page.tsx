@@ -8,7 +8,7 @@ import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { suggestStudyReferences } from "@/lib/topics";
-import { formatFlightContext } from "@/lib/utils";
+import { formatFlightContext, formatFlightDate } from "@/lib/utils";
 import type { SkillProgressionStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -89,7 +89,7 @@ export default async function TrainPage() {
             ? `Come up in ${theme.count} of your last ${theme.consideredFlights} debriefs -- across ${theme.instructorCount} instructors.`
             : null,
         evidence: latestLesson
-          ? { label: `${latestLesson.instructorName ?? "Your debrief"} · ${latestLesson.flightDate}`, text: latestLesson.statement }
+          ? { label: `${latestLesson.instructorName ?? "Your debrief"} · ${formatFlightDate(latestLesson.flightDate)}`, text: latestLesson.statement }
           : { label: "Your debrief", text: "" },
       }
     : null;
