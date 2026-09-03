@@ -166,7 +166,12 @@ export function Hero() {
             alt="A student pilot and CFI reviewing a flight debrief together on a tablet beside the aircraft"
             fill
             priority
-            className="object-cover"
+            /* Crop from the left of the frame rather than the center, so the
+               pair sits further right and the instructor's shoulder runs off
+               the edge instead of being fully contained. That also clears the
+               left of the picture, which is what lets the fade below be long
+               and soft rather than short and abrupt. */
+            className="object-cover object-[32%_center] lg:object-[28%_center]"
             sizes="(min-width: 1024px) 60vw, 100vw"
           />
           {/* The fade has to START opaque, not at 60%.
@@ -183,7 +188,7 @@ export function Hero() {
               here: about 34px of solid white over the edge, then clear well
               before the subject. Wide and weak washes the picture; narrow and
               opaque hides the edge and leaves it alone. */}
-          <div className="absolute inset-y-0 left-0 hidden w-[170px] bg-gradient-to-r from-white from-20% to-transparent lg:block xl:w-[200px]" />
+          <div className="absolute inset-y-0 left-0 hidden w-[300px] bg-gradient-to-r from-white from-12% via-white/40 via-55% to-transparent lg:block xl:w-[360px]" />
         </div>
         <DebriefSummaryMockupCard className="absolute -bottom-10 right-4 hidden w-[340px] lg:block xl:right-8" />
       </div>
