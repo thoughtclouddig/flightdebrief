@@ -90,7 +90,7 @@ export function Hero() {
               renders a narrower synthetic instance and understates Archivo's
               real width by about a fifth. */}
           <h1
-            className="font-display mt-4 max-w-2xl text-[clamp(1.375rem,8.2vw,2.25rem)] lg:text-[clamp(1.75rem,3.9vw,3rem)] font-extrabold leading-[1.02] tracking-[-0.025em] text-[#101727]"
+            className="font-display mt-4 max-w-2xl text-[clamp(1.375rem,8.2vw,2.25rem)] lg:text-[clamp(1.75rem,3.9vw,3rem)] font-extrabold leading-[1.14] tracking-[-0.025em] text-[#101727]"
             style={{ textTransform: "none" }}
           >
             {/* Four lines on a phone, three from sm up, and that is what lets

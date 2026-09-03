@@ -2,6 +2,7 @@ import type { ArticleBody } from "@/lib/content/article-body";
 import { randomUUID } from "node:crypto";
 import { CONSENT_POLICY_VERSION } from "@/lib/consent";
 import type { Pool, PoolClient } from "pg";
+import type { OrgQueryOptions } from "@/lib/data/types";
 import type {
   Aircraft,
   Airport,
@@ -1262,18 +1263,20 @@ export class PostgresRepository implements Repository {
     return mapOrganization(rows[0]);
   }
 
-  async listOrganizations(): Promise<Organization[]> {
+  async listOrganizations(options?: OrgQueryOptions): Promise<Organization[]> {
     const db = await this.db();
-    const { rows } = await db.query("SELECT * FROM organizations ORDER BY name");
+    const where = options?.includeDemo ? "" : "WHERE demo_expires_at IS NULL";
+    const { rows } = await db.query(`SELECT * FROM organizations ${where} ORDER BY name`);
     return rows.map(mapOrganization);
   }
 
-  async listOrganizationsForUser(userId: string): Promise<Organization[]> {
+  async listOrganizationsForUser(userId: string, options?: OrgQueryOptions): Promise<Organization[]> {
     const db = await this.db();
+    const demoFilter = options?.includeDemo ? "" : "AND o.demo_expires_at IS NULL";
     const { rows } = await db.query(
       `SELECT o.* FROM organizations o
        JOIN organization_members m ON m.organization_id = o.id
-       WHERE m.user_id = $1
+       WHERE m.user_id = $1 ${demoFilter}
        GROUP BY o.id
        ORDER BY o.name`,
       [userId],

@@ -7,6 +7,9 @@ export const dynamic = "force-dynamic";
 
 export default async function SuperAdminOverviewPage() {
   const repo = getRepository();
+  // Counts only, so this stays on the default: demo orgs excluded. Every
+  // figure below -- orgs by kind, orgs by plan -- is a business metric, and a
+  // per-visitor demo org is not a customer.
   const [organizations, users] = await Promise.all([repo.listOrganizations(), repo.listUsers()]);
 
   const byKind = new Map<OrganizationKind, number>();

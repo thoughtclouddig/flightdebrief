@@ -210,6 +210,11 @@ export interface CreateReferralEventInput {
  * against the Replit Postgres database (DATABASE_URL, schema in
  * db/schema.sql) -- call sites never talk to the database directly.
  */
+export interface OrgQueryOptions {
+  /** Include public live-demo orgs. Defaults to false -- see listOrganizations. */
+  includeDemo?: boolean;
+}
+
 export interface Repository {
   listAircraft(organizationId?: string): Promise<Aircraft[]>;
   listInstructors(): Promise<Instructor[]>;
@@ -389,8 +394,20 @@ export interface Repository {
       subscriptionQuantity?: number;
     },
   ): Promise<Organization>;
-  listOrganizations(): Promise<Organization[]>;
-  listOrganizationsForUser(userId: string): Promise<Organization[]>;
+  /**
+   * Demo orgs are EXCLUDED unless you ask for them.
+   *
+   * Public live demos provision a real org per visitor (see
+   * lib/demo/live-demo-seed.ts), marked by a non-null demo_expires_at. Those
+   * rows are indistinguishable from customers in any unfiltered query, so
+   * every count, KPI and revenue figure silently included them.
+   *
+   * The default is the safe one -- reporting is correct without anyone
+   * remembering this exists -- and a listing that genuinely wants to show
+   * demos has to say so, at the call site, where it is visible.
+   */
+  listOrganizations(options?: OrgQueryOptions): Promise<Organization[]>;
+  listOrganizationsForUser(userId: string, options?: OrgQueryOptions): Promise<Organization[]>;
   listMembers(organizationId: string, role?: OrgRole): Promise<OrganizationMember[]>;
   listMembershipsForUser(userId: string): Promise<OrganizationMember[]>;
   addMember(input: { organizationId: string; userId: string; role: OrgRole }): Promise<OrganizationMember>;
