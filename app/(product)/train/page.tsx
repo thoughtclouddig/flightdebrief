@@ -132,6 +132,20 @@ export default async function TrainPage() {
     ? { label: "Start chair flying", href: "/prototype/vector/train/chair-fly" }
     : undefined;
 
+  // Review/Quiz/Ask are client-state toggles inside the prototype's own
+  // /prototype/vector/train page, not separate routes -- there is no
+  // dedicated URL for e.g. "Quiz" alone. Pointing all three at that real,
+  // working page (same reuse-not-reinvent treatment as Start flight/Start
+  // chair flying) is honest: it lands on a real screen where those modes
+  // actually exist, not a dead link or a fabricated production endpoint.
+  const secondaryActions: StudentTrainAction[] | undefined = contested
+    ? [
+        { label: "Review", href: "/prototype/vector/train" },
+        { label: "Quiz", href: "/prototype/vector/train" },
+        { label: "Ask", href: "/prototype/vector/train" },
+      ]
+    : undefined;
+
   const stillWorkingOn: StudentTrainSkillRow[] = open.map((p) => ({
     key: p.skill,
     label: p.label,
@@ -162,6 +176,7 @@ export default async function TrainPage() {
         ),
       }}
       primaryAction={primaryAction}
+      secondaryActions={secondaryActions}
       stillWorkingOn={stillWorkingOn}
     />
   );
