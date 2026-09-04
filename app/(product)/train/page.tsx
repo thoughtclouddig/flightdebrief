@@ -114,9 +114,13 @@ export default async function TrainPage() {
         contextLine: brief.lastFlight
           ? `Starting where your last flight ended -- ${formatFlightContext(brief.lastFlight)}${cfi ? ` with ${cfi}` : ""}.`
           : "",
-        comparisonLine: contested
-          ? `You called this ${performanceLevelLabel(contested.studentLevel)}. ${cfi ?? "Your instructor"} called it ${performanceLevelLabel(contested.instructorLevel)}.`
-          : theme && theme.instructorCount >= 2
+        comparisonLine: contested ? (
+          <>
+            You called this <span className="font-semibold text-panel-foreground">{performanceLevelLabel(contested.studentLevel)}</span>.{" "}
+            {cfi ?? "Your instructor"} called it{" "}
+            <span className="font-semibold text-panel-foreground">{performanceLevelLabel(contested.instructorLevel)}</span>.
+          </>
+        ) : theme && theme.instructorCount >= 2
             ? `Come up in ${theme.count} of your last ${theme.consideredFlights} debriefs -- across ${theme.instructorCount} instructors.`
             : null,
         evidence:
