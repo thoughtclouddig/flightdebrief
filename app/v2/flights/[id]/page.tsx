@@ -18,19 +18,18 @@ export function generateStaticParams() {
   return FLIGHTS.map((f) => ({ id: f.id }));
 }
 
-/** Fixture adapter for components/student/flights/flight-detail.tsx. */
-export default async function FlightDetail({ params }: { params: Promise<{ id: string }> }) {
+/** Milestone 1B fixture-parity Flight Detail -- mechanically the same as app/prototype/vector/flights/[id]/page.tsx, hrefs repointed at /v2/**. */
+export default async function V2FlightDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const flight = flightById(id);
   if (!flight) notFound();
 
   const needsDebrief = flight.status === "NEEDS_DEBRIEF" || flight.status === "DEBRIEF_STARTED";
-  // Only the flight this prototype's debrief actually belongs to shows skills.
   const skills: FlightDetailSkillRow[] =
     flight.id === "aug-29"
       ? SKILL_SCORES.filter((s) => s.state !== "Meets Standard").map((s) => ({
           slug: s.slug,
-          href: `/prototype/vector/progress/${s.slug}`,
+          href: `/v2/progress/${s.slug}`,
           label: s.skill,
           score: s.score,
           max: s.max,
@@ -41,7 +40,7 @@ export default async function FlightDetail({ params }: { params: Promise<{ id: s
 
   return (
     <FlightDetailScreen
-      backHref="/prototype/vector/flights"
+      backHref="/v2/flights"
       dateLabel={flight.dateLabel}
       departureAirport={flight.departureAirport}
       arrivalAirport={flight.arrivalAirport}
@@ -55,10 +54,10 @@ export default async function FlightDetail({ params }: { params: Promise<{ id: s
       hasAdsbLookup={flight.fr24FlightId !== null}
       sourceLabel={sourceLabel(flight)}
       needsDebrief={needsDebrief}
-      debriefHref="/prototype/vector/debrief/new"
-      analysisHref={analysis ? `/prototype/vector/flights/${flight.id}/analysis` : null}
+      debriefHref="/v2/debrief/new"
+      analysisHref={analysis ? `/v2/flights/${flight.id}/analysis` : null}
       debriefStatusLabel={flight.debriefId ? statusLabel(flight.status) : null}
-      debriefDetailHref={flight.debriefId ? "/prototype/vector/debrief/latest" : null}
+      debriefDetailHref={flight.debriefId ? "/v2/debrief/latest" : null}
       skills={skills}
       acsArea={skills.length > 0 ? ACS_AREAS.landings : null}
       carryForward={
@@ -67,7 +66,7 @@ export default async function FlightDetail({ params }: { params: Promise<{ id: s
               items: STRUCTURED.nextFlightFocus,
               instructorFirstName: INSTRUCTOR.firstName,
               instructorQuote: STRUCTURED.instructorEmphasis[0]!.quote,
-              trainHref: "/prototype/vector/train",
+              trainHref: "/v2/train",
             }
           : null
       }

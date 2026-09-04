@@ -41,7 +41,15 @@ const STORAGE_KEY = "af-active-flight";
  * the student only finds out after the flight, when it cannot be redone. So
  * the limit is stated before the tap, and the manual paths stay one tap away.
  */
-export function FlightRecorder() {
+export function FlightRecorder({
+  addFlightHref = "/prototype/vector/flights/new",
+  debriefNewHref = "/prototype/vector/debrief/new",
+  flightsHref = "/prototype/vector/flights",
+}: {
+  addFlightHref?: string;
+  debriefNewHref?: string;
+  flightsHref?: string;
+} = {}) {
   const [stage, setStage] = useState<Stage>("setup");
   const [session, setSession] = useState<FlightRecordingSession | null>(null);
   const [solo, setSolo] = useState(false);
@@ -117,8 +125,8 @@ export function FlightRecorder() {
   // because a long hold short reads exactly like a landing.
   const landed = stage === "recording" && session != null && looksLanded(session) && !keepRecording;
 
-  if (stage === "setup") return <Setup solo={solo} setSolo={setSolo} onStart={begin} error={error} />;
-  if (stage === "complete" && session) return <Complete session={session} />;
+  if (stage === "setup") return <Setup solo={solo} setSolo={setSolo} onStart={begin} error={error} addFlightHref={addFlightHref} />;
+  if (stage === "complete" && session) return <Complete session={session} debriefNewHref={debriefNewHref} flightsHref={flightsHref} />;
   return (
     <Active
       session={session}
@@ -137,11 +145,13 @@ function Setup({
   setSolo,
   onStart,
   error,
+  addFlightHref,
 }: {
   solo: boolean;
   setSolo: (v: boolean) => void;
   onStart: () => void;
   error: string | null;
+  addFlightHref: string;
 }) {
   const a = FLIGHT_DEFAULTS.recentAircraft[0]!;
   return (
@@ -189,7 +199,7 @@ function Setup({
           <Plane className="size-[18px]" aria-hidden />
           Start flight
         </PrimaryButton>
-        <SecondaryButton href="/prototype/vector/flights/new">Add the flight afterwards instead</SecondaryButton>
+        <SecondaryButton href={addFlightHref}>Add the flight afterwards instead</SecondaryButton>
         {/* Permission is explained here, at the moment it is asked for. */}
         <p className="px-1 text-[13px] leading-relaxed text-foreground-faint">
           AfterFlight uses your location only while a flight is recording, to build your flight path and replay. It
@@ -273,7 +283,15 @@ function Active({
 
 /* ------------------------------------------------------------- complete */
 
-function Complete({ session }: { session: FlightRecordingSession }) {
+function Complete({
+  session,
+  debriefNewHref,
+  flightsHref,
+}: {
+  session: FlightRecordingSession;
+  debriefNewHref: string;
+  flightsHref: string;
+}) {
   const d = durations(session);
   const hours = ((d.trackedMs ?? 0) / 3_600_000).toFixed(1);
   return (
@@ -289,8 +307,8 @@ function Complete({ session }: { session: FlightRecordingSession }) {
       </Panel>
 
       <div className="flex flex-col gap-2.5">
-        <PrimaryButton href="/prototype/vector/debrief/new">Start debrief</PrimaryButton>
-        <SecondaryButton href="/prototype/vector/flights">View flight</SecondaryButton>
+        <PrimaryButton href={debriefNewHref}>Start debrief</PrimaryButton>
+        <SecondaryButton href={flightsHref}>View flight</SecondaryButton>
       </div>
     </>
   );
