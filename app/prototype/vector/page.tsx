@@ -67,7 +67,7 @@ export default async function PrototypeHome({ searchParams }: { searchParams: Pr
       panel={panel}
       keyReminder={{ instructorFirstName: INSTRUCTOR.firstName, quote: STRUCTURED.instructorEmphasis[0]!.quote }}
       trainCta={{ instructorFirstName: INSTRUCTOR.firstName, href: "/prototype/vector/train" }}
-      startFlightHref="/prototype/vector/fly"
+      startFlight={{ href: "/prototype/vector/fly" }}
       addFlightHref="/prototype/vector/flights/new"
       bottomRows={{
         myFlightsHref: "/prototype/vector/flights",

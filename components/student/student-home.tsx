@@ -34,8 +34,16 @@ export interface StudentHomeProps {
   /** Only meaningful alongside "nextFlight"/"lastFlight" -- absent for "empty". */
   keyReminder?: { instructorFirstName: string; quote: string } | null;
   trainCta?: { instructorFirstName: string | null; href: string } | null;
-  /** Live flight recording -- a real, intended V2 capability (native iOS work will back it properly). No web save endpoint exists yet, so production currently points this at the prototype's own recorder UI (app/prototype/vector/fly) rather than a second implementation; that's a documented interim gap, not a reason to omit the button. Null hides it (e.g. no completed first flight yet to start a next one from). */
-  startFlightHref?: string | null;
+  /**
+   * Live flight recording -- a real, intended V2 capability (native iOS work
+   * will back it properly). No web save endpoint exists yet, so production
+   * has nothing real to link to; `{ disabled: true }` shows the button as a
+   * visible, non-interactive known gap rather than either hiding it or
+   * linking into the prototype's own recorder (app/prototype/vector/fly,
+   * which has no production save path behind it). Null hides the row
+   * entirely (e.g. no completed first flight yet to start a next one from).
+   */
+  startFlight?: { href: string } | { disabled: true } | null;
   addFlightHref?: string | null;
   bottomRows?: {
     myFlightsHref: string;
@@ -45,7 +53,7 @@ export interface StudentHomeProps {
   };
 }
 
-export function StudentHome({ firstName, panel, justFlewRows, keyReminder, trainCta, startFlightHref, addFlightHref, bottomRows }: StudentHomeProps) {
+export function StudentHome({ firstName, panel, justFlewRows, keyReminder, trainCta, startFlight, addFlightHref, bottomRows }: StudentHomeProps) {
   return (
     <Screen>
       <PageTitle kicker="Welcome back">{firstName}</PageTitle>
@@ -145,13 +153,14 @@ export function StudentHome({ firstName, panel, justFlewRows, keyReminder, train
 
               {/* Both real capabilities -- Start flight records live,
                   Add a flight is the retrospective/manual path. Production
-                  points startFlightHref at the prototype's own recorder
-                  (no web save endpoint exists yet; see the prop's own doc
-                  comment), not at a placeholder. Collapses to the single
-                  "Add a flight" button only when startFlightHref is null. */}
-              {startFlightHref && addFlightHref ? (
+                  has no web save endpoint for live recording yet (see
+                  startFlight's own doc comment), so it renders disabled --
+                  a visible known gap, never a link into the prototype's own
+                  recorder. Collapses to the single "Add a flight" button
+                  only when startFlight is null. */}
+              {startFlight && addFlightHref ? (
                 <div className="flex gap-2.5">
-                  <SecondaryButton href={startFlightHref}>
+                  <SecondaryButton href={"href" in startFlight ? startFlight.href : undefined} disabled={"disabled" in startFlight}>
                     <Plane className="size-[18px]" aria-hidden />
                     Start flight
                   </SecondaryButton>

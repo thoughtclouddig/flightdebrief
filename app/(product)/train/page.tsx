@@ -129,16 +129,17 @@ export default async function TrainPage() {
       : undefined;
 
   // Review/Quiz/Ask are client-state toggles inside the prototype's own
-  // /prototype/vector/train page, not separate routes -- there is no
-  // dedicated URL for e.g. "Quiz" alone. Pointing all three at that real,
-  // working page (same reuse-not-reinvent treatment as Start flight/Start
-  // chair flying) is honest: it lands on a real screen where those modes
-  // actually exist, not a dead link or a fabricated production endpoint.
+  // /prototype/vector/train page (authored crosswind prose, a canned
+  // knowledge check, an unauthenticated chat endpoint) -- none of that has a
+  // real production version yet, and it's explicitly out of scope for this
+  // cutover (see the Review/Quiz/Ask capability-gap report). Shown disabled
+  // rather than either omitted or linked into the prototype: a known gap,
+  // visibly marked, never a silent cross-link into the fixture demo.
   const secondaryActions: StudentTrainAction[] | undefined = contested
     ? [
-        { label: "Review", href: "/prototype/vector/train" },
-        { label: "Quiz", href: "/prototype/vector/train" },
-        { label: "Ask", href: "/prototype/vector/train" },
+        { label: "Review", disabled: true },
+        { label: "Quiz", disabled: true },
+        { label: "Ask", disabled: true },
       ]
     : undefined;
 
