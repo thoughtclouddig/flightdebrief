@@ -71,7 +71,17 @@ export const ALLOWED_FILES = [
   "scripts/fix-source-spellings.mjs",
 ];
 
-const SKIP_DIRS = new Set(["node_modules", ".next", ".next-build", ".git", ".claude", "attached_assets", "dist"]);
+const SKIP_DIRS = new Set([
+  "node_modules",
+  ".next",
+  ".next-build",
+  ".git",
+  ".claude",
+  ".local",
+  ".agents",
+  "attached_assets",
+  "dist",
+]);
 const EXTS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".md", ".css", ".json"]);
 
 export function sourceFiles(root = ROOT) {
