@@ -1,4 +1,5 @@
 import { skillLabel } from "@/lib/topics";
+import type { SkillState } from "@/lib/student/state-tone";
 import type { SkillProgressionStatus, TrainingCategory, TrainingSignal, TrainingSkill } from "@/lib/types";
 
 export interface SkillProgressionHistoryEntry {
@@ -80,4 +81,23 @@ function deriveStatus(orderedSignals: TrainingSignal[]): SkillProgressionStatus 
     consecutiveImproving += 1;
   }
   return consecutiveImproving >= 3 ? "Demonstrated" : "Improving";
+}
+
+/** The V1 5-level lifecycle onto the app's 3-state color scale -- shared so Train's recommendation card and the Skill Detail meter never drift apart on what a status means. */
+export function toneForSkillStatus(status: SkillProgressionStatus): SkillState {
+  if (status === "Demonstrated") return "Meets Standard";
+  if (status === "Needs Coaching") return "Needs Work";
+  return "Improving";
+}
+
+/** Rank onto the 1-4 scale SkillMeter expects everywhere -- Needs Coaching and Introduced both read as the meter's lowest tick, since neither has shown the skill working yet. */
+export function meterScoreForSkillStatus(status: SkillProgressionStatus): number {
+  const scores: Record<SkillProgressionStatus, number> = {
+    Introduced: 1,
+    "Needs Coaching": 1,
+    Developing: 2,
+    Improving: 3,
+    Demonstrated: 4,
+  };
+  return scores[status];
 }

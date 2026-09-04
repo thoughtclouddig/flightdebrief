@@ -3,21 +3,17 @@ import { acsAreaForSkill } from "@/lib/acs";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
-import { computeSkillProgression, type SkillProgression } from "@/lib/skill-progress";
+import { computeSkillProgression, meterScoreForSkillStatus, toneForSkillStatus, type SkillProgression } from "@/lib/skill-progress";
+import { hasAuthoredScenario } from "@/lib/prototype/chair-fly";
+import { contestedObjective } from "@/lib/chair-fly";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { allTrainingSkills } from "@/lib/topics";
-import { performanceLevelLabelFor, performanceLevelRank } from "@/lib/performance-levels";
+import { performanceLevelLabelFor } from "@/lib/performance-levels";
 import { deriveLessonFocus } from "@/lib/lesson-focus";
 import { formatFlightDate } from "@/lib/utils";
-import type { AssessmentDifference, SkillProgressionStatus } from "@/lib/types";
+import type { SkillProgressionStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-function toneForStatus(status: SkillProgressionStatus) {
-  if (status === "Demonstrated") return "Meets Standard" as const;
-  if (status === "Needs Coaching") return "Needs Work" as const;
-  return "Improving" as const;
-}
 
 const STATUS_RANK: Record<SkillProgressionStatus, number> = {
   "Needs Coaching": 0,
@@ -26,38 +22,6 @@ const STATUS_RANK: Record<SkillProgressionStatus, number> = {
   Improving: 3,
   Demonstrated: 4,
 };
-
-// Rank onto the same 1-4 scale SkillMeter expects everywhere else -- see
-// progress/[skill]/page.tsx's identical mapping. Not a new scoring system:
-// this is a display-only bucketing of the same computed status.
-const METER_SCORE: Record<SkillProgressionStatus, number> = {
-  Introduced: 1,
-  "Needs Coaching": 1,
-  Developing: 2,
-  Improving: 3,
-  Demonstrated: 4,
-};
-
-/**
- * A real contested objective outranks the weakest open skill or recurring
- * theme -- the same priority rule as lib/prototype/chair-fly.ts's
- * contestedObjective(): the task the student rated HIGHER than the
- * instructor did, largest gap first, since that's the one nobody would
- * choose to rehearse on their own. Only ever non-empty for a guided-mode
- * debrief with real per-task ratings; a freeform debrief's
- * assessmentDifferences is always [].
- */
-function contestedObjective(differences: AssessmentDifference[]): AssessmentDifference | null {
-  const studentHigher = differences
-    .filter((d) => performanceLevelRank(d.studentLevel) > performanceLevelRank(d.instructorLevel))
-    .sort(
-      (a, b) =>
-        performanceLevelRank(b.studentLevel) - performanceLevelRank(b.instructorLevel) -
-        (performanceLevelRank(a.studentLevel) - performanceLevelRank(a.instructorLevel)),
-    );
-  if (studentHigher[0]) return studentHigher[0];
-  return differences.find((d) => d.instructorLevel !== "INDEPENDENT") ?? null;
-}
 
 /**
  * Thin data-fetching wrapper -- all the real panel/skill-list content lives
@@ -111,8 +75,8 @@ export default async function TrainPage() {
 
   const recommended: StudentTrainRecommended | null = recommendedLabel
     ? {
-        tone: recommendedSkill ? toneForStatus(recommendedSkill.status) : "Improving",
-        toneLabel: recommendedSkill ? toneForStatus(recommendedSkill.status) : contested ? "Improving" : "Still building",
+        tone: recommendedSkill ? toneForSkillStatus(recommendedSkill.status) : "Improving",
+        toneLabel: recommendedSkill ? toneForSkillStatus(recommendedSkill.status) : contested ? "Improving" : "Still building",
         skillLabel: recommendedLabel,
         acsArea: recommendedAcsArea ? { name: recommendedAcsArea.name } : null,
         // Real lesson focus (from the last flight's real flight_tasks) when
@@ -150,13 +114,19 @@ export default async function TrainPage() {
   const nextLessonDay = brief.upcomingReservation
     ? new Date(brief.upcomingReservation.scheduledStart).toLocaleDateString("en-US", { weekday: "long" })
     : null;
-  const primaryAction: StudentTrainAction | undefined = contested
-    ? {
-        label: "Start chair flying",
-        href: "/prototype/vector/train/chair-fly",
-        caption: nextLessonDay ? `About 4 minutes · rehearse it before ${nextLessonDay}` : "About 4 minutes",
-      }
-    : undefined;
+  // Chair Flying only has one authored scenario ("Crosswind Landings") --
+  // an objective with no entry there has no real drill, and offering the
+  // button anyway would be a dead end once tapped. See
+  // lib/prototype/chair-fly.ts's own doc comment: this is the correct
+  // failure, not a gap to paper over with generic content.
+  const primaryAction: StudentTrainAction | undefined =
+    contested && hasAuthoredScenario(contested.taskLabel)
+      ? {
+          label: "Start chair flying",
+          href: "/train/chair-fly",
+          caption: nextLessonDay ? `About 4 minutes · rehearse it before ${nextLessonDay}` : "About 4 minutes",
+        }
+      : undefined;
 
   // Review/Quiz/Ask are client-state toggles inside the prototype's own
   // /prototype/vector/train page, not separate routes -- there is no
@@ -175,8 +145,8 @@ export default async function TrainPage() {
   const stillWorkingOn: StudentTrainSkillRow[] = open.map((p) => ({
     key: p.skill,
     label: p.label,
-    state: toneForStatus(p.status),
-    score: METER_SCORE[p.status],
+    state: toneForSkillStatus(p.status),
+    score: meterScoreForSkillStatus(p.status),
     max: 4,
     href: `/progress/${p.skill}`,
   }));
