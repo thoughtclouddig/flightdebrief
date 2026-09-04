@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
   // levels deep (e.g. xxxx-00-xxxx.riker.replit.dev), so this needs "**"
   // (match one-or-more labels), not "*" -- the single-star version silently
   // blocked every dev asset request, leaving the page unhydrated/inert.
-  allowedDevOrigins: ["**.replit.dev", "**.repl.co"],
+  allowedDevOrigins: ["127.0.0.1", "localhost", "**.replit.dev", "**.repl.co"],
   // /resources moved to /field-notes. Permanent rather than temporary because
   // the move is final, and kept rather than dropped because a link that has
   // been crawled or shared outlives our decision to rename the section.
