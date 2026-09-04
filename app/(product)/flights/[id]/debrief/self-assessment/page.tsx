@@ -4,7 +4,7 @@ import { getRepository } from "@/lib/data";
 import { StudentAssessmentForm } from "@/components/debrief/student-assessment-form";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { PageTitle, PrimaryButton, Screen } from "@/components/prototype/ui";
-import { formatFlightContext } from "@/lib/utils";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 /** Hard-gated to the flight's own student (line below) -- never reached by an instructor/admin, so this is a safe direct rewrite, not a role branch. */
 export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]/debrief/self-assessment">) {
@@ -17,26 +17,12 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
   const repo = getRepository();
   const tasks = await repo.listFlightTasks(id);
   if (tasks.length === 0) notFound();
+  const cfi = resolveCfiFirstName(flight.instructor);
 
-  // CFI must submit their assessment first -- see the same check in
-  // app/api/flights/[id]/debrief/assessments/[role]/submit/route.ts, the
-  // real enforcement boundary. This is the page-level half of it, so a
-  // student hitting this URL directly (not via the resolver's redirect)
-  // sees a clear waiting state instead of a form they can't actually submit.
-  const instructorAssessment = await repo.getAssessment(id, "instructor");
-  if (instructorAssessment?.status !== "submitted") {
-    return (
-      <Screen>
-        <AutoRefresh />
-        <div className="text-center">
-          <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
-          <PageTitle>Not quite yet</PageTitle>
-          <p className="mt-2 text-[15px] text-foreground-soft">Your instructor needs to submit their assessment first.</p>
-        </div>
-      </Screen>
-    );
-  }
-
+  // Student goes first now -- no gate here. The instructor's page is the
+  // one that waits (see instructor-assessment/page.tsx); the real
+  // enforcement boundary is app/api/flights/[id]/debrief/assessments/
+  // [role]/submit/route.ts.
   const assessment = await repo.getAssessment(id, "student");
   if (assessment?.status === "submitted") {
     // AutoRefresh polls this same server component every few seconds, so once
@@ -59,8 +45,11 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
       <Screen>
         <AutoRefresh />
         <div className="text-center">
-          <PageTitle>Self-assessment submitted</PageTitle>
-          <p className="mt-2 text-[15px] text-foreground-soft">You&rsquo;re all set -- your instructor is starting the debrief.</p>
+          <PageTitle>Hand over the phone</PageTitle>
+          <p className="mt-2 text-[15px] text-foreground-soft">
+            {cfi ? `Give it to ${cfi} -- they'll rate it next.` : "Give it to your instructor -- they'll rate it next."}{" "}
+            Your answers stay hidden until you&rsquo;ve both finished.
+          </p>
         </div>
       </Screen>
     );
@@ -72,12 +61,12 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
   return (
     <StudentAssessmentForm
       flightId={id}
-      flight={flight}
       tasks={tasks.map((t) => ({ id: t.id, label: t.label, taskCode: t.taskCode }))}
       initialRatings={initialRatings}
       redirectTo={`/flights/${id}/debrief/self-assessment`}
-      title="How do you think it went?"
-      helpText="Rate yourself honestly on each task -- your instructor already submitted theirs and won't see this until you submit."
+      kicker="Your assessment"
+      title="How did this feel to you?"
+      helpText={`Your own read of the flight, before you see anything else. There is no wrong answer here -- it is what you thought.${cfi ? ` You'll rate each one first, then hand the phone to ${cfi}.` : ""}`}
     />
   );
 }

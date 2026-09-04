@@ -755,6 +755,32 @@ export function buildSeed(): SeedBundle {
     createdAt: flightMia3.createdAt,
   };
 
+  // Mia's current, not-yet-debriefed flight -- the Student V2 debrief-flow
+  // parity state. Real flight_tasks (same 3 objectives as flight-mia-3, see
+  // seedMiaGuidedAssessment() in postgres-repository.ts for how they're
+  // inserted -- flight_tasks isn't part of SeedBundle) but no
+  // debrief_assessments yet, so both the student's and instructor's real
+  // rating flow are actually exercisable end to end, not pre-completed.
+  const flightMia4Date = isoDate(0);
+  const flightMia4: Flight = {
+    id: "flight-mia-4",
+    userId: USER_MIA.id,
+    organizationId: ORG_FALCON.id,
+    aircraftId: MIA_AIRCRAFT.id,
+    departureAirport: MIA_AIRCRAFT.homeAirport,
+    arrivalAirport: MIA_AIRCRAFT.homeAirport,
+    flightDate: flightMia4Date,
+    durationMinutes: 84,
+    instructorId: SEED_INSTRUCTOR_JAKE.id,
+    reservationId: null,
+    fr24FlightId: null,
+    externalProvider: null,
+    externalId: null,
+    debriefStatus: "not_started",
+    track: generatePatternTrack(MIA_AIRCRAFT.homeAirport, { startTime: new Date(flightMia4Date), durationMinutes: 84, seed: 43 }),
+    createdAt: new Date(flightMia4Date).toISOString(),
+  };
+
   const emma1 = studentDebrief(
     "flight-emma-1", "debrief-emma-1", USER_EMMA, KEVIN_AIRCRAFT, SEED_INSTRUCTOR_KEVIN,
     5, 64, 30, EMMA_FLIGHT_TRANSCRIPT, 80, [],
@@ -1028,7 +1054,7 @@ export function buildSeed(): SeedBundle {
     ],
     reservations: [reservationAndy, reservationSarah, reservationMia],
     flights: [
-      flightC, flightB, flightA, flightX3, flightX2, flightX1, sarahFlight, flightMia3,
+      flightC, flightB, flightA, flightX3, flightX2, flightX1, sarahFlight, flightMia3, flightMia4,
       ...newStudentDebriefs.map((d) => d.flight),
     ],
     debriefs: [

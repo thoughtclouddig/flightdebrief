@@ -16,28 +16,27 @@ export default async function InstructorAssessmentPage(props: PageProps<"/flight
   const tasks = await repo.listFlightTasks(id);
   if (tasks.length === 0) notFound();
 
-  const assessment = await repo.getAssessment(id, "instructor");
-  if (assessment?.status === "submitted") {
-    // The student's assessment can land any time while this screen is open
-    // (AutoRefresh below just re-renders this same component) -- without
-    // this check the CFI would sit on "waiting on the student" forever even
-    // after they've submitted, since nothing else here re-evaluates it.
-    const studentAssessment = await repo.getAssessment(id, "student");
-    if (studentAssessment?.status === "submitted") {
-      redirect(`/flights/${id}/debrief`);
-    }
+  // Student goes first now -- see the same rule enforced server-side in the
+  // submit route (the real boundary) and in self-assessment/page.tsx, which
+  // has no gate of its own anymore. The CFI is the one who waits.
+  const studentAssessment = await repo.getAssessment(id, "student");
+  if (studentAssessment?.status !== "submitted") {
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
         <AutoRefresh />
-        <p className="text-sm font-medium uppercase tracking-wide text-brand">
-          {formatFlightContext(flight)}
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold text-foreground">Assessment submitted</h1>
-        <p className="text-sm text-foreground-soft">
-          Once the student&rsquo;s assessment is in too, you&rsquo;ll be able to compare notes before the debrief.
-        </p>
+        <p className="text-sm font-medium uppercase tracking-wide text-brand">{formatFlightContext(flight)}</p>
+        <h1 className="mt-1 text-2xl font-semibold text-foreground">Not quite yet</h1>
+        <p className="text-sm text-foreground-soft">The student rates it first -- this page moves on by itself once they submit.</p>
       </div>
     );
+  }
+
+  const assessment = await repo.getAssessment(id, "instructor");
+  // The student's assessment is guaranteed already submitted by this point
+  // (the gate above), so once the instructor's is in too, both are -- no
+  // second wait state needed here the way the pre-reversal version had.
+  if (assessment?.status === "submitted") {
+    redirect(`/flights/${id}/debrief`);
   }
 
   const ratings = assessment ? await repo.listAssessmentRatings(assessment.id) : [];

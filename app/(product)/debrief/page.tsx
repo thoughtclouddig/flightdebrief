@@ -12,11 +12,10 @@ export const dynamic = "force-dynamic";
  * components/prototype/student-debrief-hub.tsx, the same component
  * app/prototype/vector/debrief/page.tsx renders with fixture props.
  *
- * Real data only: the "just landed" panel links to the actual most-recent
- * undebriefed flight's real recording route (/flights/[id]/debrief --
- * unchanged, V1, see the Phase 4 report for why that flow's own internals
- * weren't rewritten this pass) rather than a fixture "/debrief/new"
- * destination that doesn't exist in production.
+ * The "Just landed?" panel is the primary action of this screen and always
+ * stays visible, even with no auto-selected pending flight -- it just leads
+ * somewhere that explains/selects/adds one (/debrief/new) instead of the
+ * direct flight route in that case. Real data only.
  */
 export default async function DebriefHub() {
   const repo = getRepository();
@@ -55,7 +54,7 @@ export default async function DebriefHub() {
 
   return (
     <StudentDebriefHub
-      justLandedHref={pendingFlight ? `/flights/${pendingFlight.id}/debrief` : null}
+      justLandedHref={pendingFlight ? `/flights/${pendingFlight.id}/debrief` : "/debrief/new"}
       latest={latest ?? null}
       history={history}
     />

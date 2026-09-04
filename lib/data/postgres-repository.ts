@@ -1745,8 +1745,16 @@ async function seedDomainTables(client: PoolClient): Promise<void> {
  * the flight's route. Real production objectives, no ratings (only
  * flight-mia-3 has the real guided assessment) -- just enough for the hub's
  * two "Earlier" rows to show a real lesson title instead of a route, the way
- * every row in the prototype's fixture does. Same idempotency contract as
- * seedMiaGuidedAssessment.
+ * every row in the prototype's fixture does.
+ *
+ * flight-mia-4 is Mia's current, not-yet-debriefed flight -- the same three
+ * objectives as flight-mia-3 (MIA_ASSESSMENT_TASKS), but deliberately no
+ * debrief_assessments/ratings here: the whole point of this flight is that
+ * her real student-first self-assessment -> handoff -> instructor-assessment
+ * flow is actually exercisable end to end, not pre-completed like
+ * flight-mia-3's.
+ *
+ * Same idempotency contract as seedMiaGuidedAssessment.
  */
 async function seedMiaHistoricalFlightTasks(client: PoolClient): Promise<void> {
   const flights: { flightId: string; tasks: { code: string; label: string }[] }[] = [
@@ -1758,6 +1766,7 @@ async function seedMiaHistoricalFlightTasks(client: PoolClient): Promise<void> {
         { code: "SHORT_FIELD_LANDING", label: "Short-field landings" },
       ],
     },
+    { flightId: "flight-mia-4", tasks: MIA_ASSESSMENT_TASKS },
   ];
   for (const { flightId, tasks } of flights) {
     for (const [i, task] of tasks.entries()) {

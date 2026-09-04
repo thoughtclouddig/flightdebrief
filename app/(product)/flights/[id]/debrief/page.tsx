@@ -76,22 +76,19 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
     repo.getAssessment(id, "instructor"),
   ]);
 
-  // CFI always goes first now (see the same rule enforced server-side in
-  // the submit route and self-assessment/page.tsx) -- the student branch
-  // only redirects to the form once the instructor's is actually in.
-  if (isInstructorViewer && instructorAssessment?.status !== "submitted") {
-    redirect(`/flights/${id}/debrief/instructor-assessment`);
-  }
-  if (!isInstructorViewer && instructorAssessment?.status !== "submitted") {
-    return <StudentWaitingMessage flight={flight} text="Your instructor needs to submit their assessment first." />;
-  }
+  // Student always goes first now (see the same rule enforced server-side
+  // in the submit route and instructor-assessment/page.tsx) -- the
+  // instructor branch only redirects to their form once the student's is
+  // actually in. The student and instructor share one phone right after the
+  // flight, so the student's own read has to happen before the instructor's
+  // judgment can reach them.
   if (!isInstructorViewer && studentAssessment?.status !== "submitted") {
-    redirect(`/flights/${id}/debrief/self-assessment`);
+    // Confirm the flight and objectives first -- self-assessment/page.tsx is
+    // still the real rating form and destination once they tap "Start
+    // debrief" there.
+    redirect(`/flights/${id}/debrief/confirm`);
   }
-  if (studentAssessment?.status !== "submitted" || instructorAssessment?.status !== "submitted") {
-    if (!isInstructorViewer) {
-      return <StudentWaitingMessage flight={flight} text="Waiting on your instructor's assessment." />;
-    }
+  if (isInstructorViewer && studentAssessment?.status !== "submitted") {
     // FlightWithRelations carries aircraft and instructor but not the student,
     // so the name is looked up here rather than widening that type for one
     // sentence on one screen.
@@ -101,9 +98,19 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
       <WaitingMessage
         flight={flight}
         heading="Hand it over"
-        text={`Ask ${studentFirstName} to open AfterFlight and rate the flight. This page moves on by itself once they do.`}
+        text={`Ask ${studentFirstName} to open AfterFlight and rate the flight first. This page moves on by itself once they do.`}
       />
     );
+  }
+  if (isInstructorViewer && instructorAssessment?.status !== "submitted") {
+    redirect(`/flights/${id}/debrief/instructor-assessment`);
+  }
+  // By this point a CFI viewer has both assessments resolved (checks above
+  // either returned or redirected them otherwise) -- this is only reachable,
+  // and only meaningful, for a student who has submitted but whose
+  // instructor hasn't yet.
+  if (!isInstructorViewer && instructorAssessment?.status !== "submitted") {
+    return <StudentWaitingMessage flight={flight} text="Hand the phone to your instructor -- they'll rate it next." />;
   }
 
   // A recording already happened and got analyzed, but the CFI hasn't hit

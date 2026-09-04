@@ -15,9 +15,13 @@ interface SubmitBody {
 const OTHER_ROLE: Record<AssessmentRole, AssessmentRole> = { student: "instructor", instructor: "student" };
 
 /**
- * Submits the caller's own independent assessment. The CFI must submit
- * first -- a student's submission is rejected until the instructor's is in
- * (see the check below). Card generation triggers once both are submitted.
+ * Submits the caller's own independent assessment. The student and
+ * instructor are together after the flight, sharing one phone -- the
+ * student rates first, then hands it to the instructor, so the student's
+ * own read is never influenced by the instructor's judgment. The instructor
+ * must submit second -- their submission is rejected until the student's is
+ * in (see the check below). Card generation triggers once both are
+ * submitted, regardless of which order they actually happened in.
  */
 export async function POST(
   request: Request,
@@ -37,16 +41,18 @@ export async function POST(
   if (roleCheck.response) return roleCheck.response;
   const role = roleCheck.role;
 
-  // CFI goes first, always -- the two-assessments-in-any-order design was
-  // the source of real confusion in practice (nobody knew whose turn it
-  // was). The real boundary is here, not the page-level gate or the
-  // resolver's redirect -- either of those alone can be bypassed by hitting
-  // the self-assessment URL directly.
-  if (role === "student") {
-    const instructorAssessment = await repo.getAssessment(id, "instructor");
-    if (instructorAssessment?.status !== "submitted") {
+  // Student goes first, always -- the two-assessments-in-any-order design
+  // was the source of real confusion in practice (nobody knew whose turn it
+  // was), and the student's own read has to come before the instructor's
+  // judgment can influence it, or the later perception-gap comparison isn't
+  // measuring independent perspectives. The real boundary is here, not the
+  // page-level gate or the resolver's redirect -- either of those alone can
+  // be bypassed by hitting the instructor-assessment URL directly.
+  if (role === "instructor") {
+    const studentAssessment = await repo.getAssessment(id, "student");
+    if (studentAssessment?.status !== "submitted") {
       return NextResponse.json(
-        { error: "Your instructor needs to submit their assessment first." },
+        { error: "The student needs to submit their assessment first." },
         { status: 400 },
       );
     }

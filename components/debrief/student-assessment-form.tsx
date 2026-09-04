@@ -5,11 +5,9 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { AssessmentProgress } from "@/components/debrief/assessment-progress";
 import { PerformanceLevelPicker } from "@/components/debrief/performance-level-picker";
-import { Card, PageTitle, PrimaryButton, Screen, SectionLabel } from "@/components/prototype/ui";
+import { BackLink, Card, PageTitle, PrimaryButton, Screen, SectionLabel } from "@/components/prototype/ui";
 import { partitionTasks } from "@/lib/universal-tasks";
-import { formatFlightContext } from "@/lib/utils";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
-import type { FlightWithRelations } from "@/lib/types";
 
 interface TaskInput {
   id: string;
@@ -30,22 +28,25 @@ interface TaskInput {
  * PerformanceLevelPicker and AssessmentProgress are reused unmodified --
  * both are small, real, already token-based, and shared with the CFI side;
  * only the surrounding chrome (Card/PageTitle) and the removed shadcn
- * dependency changed.
+ * dependency changed. No flight-identifying line here (route/tail/date) --
+ * that's the lesson-confirmation screen's job now, immediately before this
+ * one; repeating it here would be the same flight-metadata-where-training-
+ * context-belongs mistake already fixed on Train and the Debrief hub.
  */
 export function StudentAssessmentForm({
   flightId,
-  flight,
   tasks,
   initialRatings,
   redirectTo,
+  kicker,
   title,
   helpText,
 }: {
   flightId: string;
-  flight: FlightWithRelations;
   tasks: TaskInput[];
   initialRatings: Record<string, PerformanceLevelCode>;
   redirectTo: string;
+  kicker?: string;
   title: string;
   helpText: string;
 }) {
@@ -99,10 +100,8 @@ export function StudentAssessmentForm({
 
   return (
     <Screen>
-      <div>
-        <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
-        <PageTitle>{title}</PageTitle>
-      </div>
+      <BackLink href="/debrief">Debriefs</BackLink>
+      <PageTitle kicker={kicker}>{title}</PageTitle>
       <p className="-mt-4 px-1.5 text-[15px] leading-relaxed text-foreground-soft">{helpText}</p>
 
       <AssessmentProgress rated={ratedCount} total={tasks.length} />
