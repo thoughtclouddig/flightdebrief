@@ -20,6 +20,7 @@ import type { SkillState } from "@/lib/student/state-tone";
 
 export interface ProgressSkillRow {
   slug: string;
+  href: string;
   label: string;
   score: number;
   max: number;
@@ -30,8 +31,8 @@ export interface ProgressAcsRow {
   label: string;
   /** Published task code, when the row is a real ACS task. Null for production's skill-granularity rows -- see this file's doc comment. */
   code: string | null;
-  /** The contributing skills behind this row, each linkable via skillHref. Empty when the row already IS a single skill (production). */
-  skills: { slug: string; label: string }[];
+  /** The contributing skills behind this row, each a real link. Empty when the row already IS a single skill (production). */
+  skills: { href: string; label: string }[];
   state: SkillState | null;
   score: number | null;
   max: number;
@@ -71,13 +72,11 @@ export interface ProgressAcsData {
 export function StudentProgress({
   title = "Progress",
   skills,
-  skillHref,
   acs,
   extra,
 }: {
   title?: string;
   skills: ProgressSkillRow[];
-  skillHref: (slug: string) => string;
   acs: ProgressAcsData;
   /** Production-only content with no prototype equivalent (free-usage banner, action items, recurring themes) -- rendered above the tabs, same pattern as Debrief Detail's children slot. */
   extra?: ReactNode;
@@ -111,12 +110,12 @@ export function StudentProgress({
         <Section>
           <div className="flex flex-col">
             {skills.map((s) => (
-              <SkillRow key={s.slug} skill={s} href={skillHref(s.slug)} />
+              <SkillRow key={s.slug} skill={s} />
             ))}
           </div>
         </Section>
       ) : (
-        <AcsView acs={acs} skillHref={skillHref} />
+        <AcsView acs={acs} />
       )}
 
       <div>
@@ -142,10 +141,10 @@ export function StudentProgress({
   );
 }
 
-function SkillRow({ skill, href }: { skill: ProgressSkillRow; href: string }) {
+function SkillRow({ skill }: { skill: ProgressSkillRow }) {
   return (
     <Link
-      href={href}
+      href={skill.href}
       className="flex min-h-[68px] items-center gap-4 border-b border-hairline py-4 last:border-b-0"
     >
       <div className="min-w-0 flex-1">
@@ -158,7 +157,7 @@ function SkillRow({ skill, href }: { skill: ProgressSkillRow; href: string }) {
   );
 }
 
-function AcsView({ acs, skillHref }: { acs: ProgressAcsData; skillHref: (slug: string) => string }) {
+function AcsView({ acs }: { acs: ProgressAcsData }) {
   return (
     <>
       <Panel>
@@ -180,7 +179,7 @@ function AcsView({ acs, skillHref }: { acs: ProgressAcsData; skillHref: (slug: s
         <Section key={group.area} title={<>{group.area}</>}>
           <div className="flex flex-col">
             {group.rows.map((row) => (
-              <AcsRow key={row.code ?? row.label} row={row} skillHref={skillHref} />
+              <AcsRow key={row.code ?? row.label} row={row} />
             ))}
           </div>
         </Section>
@@ -189,7 +188,7 @@ function AcsView({ acs, skillHref }: { acs: ProgressAcsData; skillHref: (slug: s
   );
 }
 
-function AcsRow({ row, skillHref }: { row: ProgressAcsRow; skillHref: (slug: string) => string }) {
+function AcsRow({ row }: { row: ProgressAcsRow }) {
   return (
     <div className="flex flex-col gap-1.5 border-b border-hairline py-4 last:border-b-0">
       <div className="flex items-start gap-4">
@@ -211,10 +210,10 @@ function AcsRow({ row, skillHref }: { row: ProgressAcsRow; skillHref: (slug: str
         <p className="text-[14px] leading-relaxed text-foreground-soft">
           From{" "}
           {row.skills.map((s, i) => (
-            <span key={s.slug}>
+            <span key={s.href}>
               {i > 0 ? <span className="px-1 text-foreground-faint">·</span> : null}
               <Link
-                href={skillHref(s.slug)}
+                href={s.href}
                 className="font-medium text-foreground underline decoration-hairline underline-offset-4"
               >
                 {s.label}
