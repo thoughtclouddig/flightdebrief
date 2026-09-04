@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { askVector, evaluateChairFly } from "@/lib/ai/vector";
 import { KNOWLEDGE_CHECK } from "@/lib/prototype-fixtures/vector-data";
 import { CHAIR_FLY } from "@/lib/prototype/chair-fly";
+import { isProduction } from "@/lib/env";
 
 /**
  * The prototype's single endpoint. Three intents rather than three routes,
@@ -9,10 +10,19 @@ import { CHAIR_FLY } from "@/lib/prototype/chair-fly";
  * and splitting it would imply an architecture the prototype hasn't earned.
  *
  * Deliberately unauthenticated and read-only: it touches no database, reads
- * only the seeded module, and writes nothing. That is what makes it safe to
- * ship alongside production.
+ * only the seeded module, and writes nothing.
+ *
+ * Not, however, free: the "ask" intent calls a real Anthropic API on every
+ * request. Platform Hardening P0-5 blocks it in production -- unauthenticated
+ * + real API cost + not in proxy.ts's matcher at all was an open spend/abuse
+ * surface, not something "safe to ship alongside production" as this file
+ * used to claim. Still available in dev/staging for prototype work.
  */
 export async function POST(request: Request) {
+  if (isProduction()) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+
   let body: {
     intent?: "ask" | "grade" | "chair_fly";
     question?: string;
