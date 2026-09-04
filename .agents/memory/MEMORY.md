@@ -3,3 +3,4 @@
 - [Next.js build output isolation](next-build-output-isolation.md) — production builds must not share `.next` with the live dev workflow.
 - [Browser network regressions](browser-network-regressions.md) — test lazy dynamic-import requests against production builds; Turbopack dev loading can create false positives.
 - [Turbopack after Git merges](turbopack-after-git-merges.md) — restart the dev workflow after large merges; live tree replacement can panic HMR even when the code is healthy.
+- [Replit iframe script hydration](replit-iframe-script-hydration.md) — avoid app-owned head scripts that collide with Replit preview injection; guard storage inside embedded previews.

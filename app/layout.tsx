@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
 import Script from "next/script";
+import { ThemeInitializer } from "@/components/theme-initializer";
 import "./globals.css";
 
 // Microsoft Clarity (session recording/heatmaps) -- loaded site-wide, not
@@ -13,16 +14,6 @@ const CLARITY_SCRIPT = `
     t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
     y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
 })(window, document, "clarity", "script", "y7f62u4xjr");
-`;
-
-const THEME_INIT_SCRIPT = `
-try {
-  var stored = localStorage.getItem("afterflight-theme");
-  var theme = stored === "light" || stored === "dark"
-    ? stored
-    : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  document.documentElement.setAttribute("data-theme", theme);
-} catch (e) {}
 `;
 
 // One variable family for both display and body copy -- "Archivo Expanded"
@@ -55,15 +46,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${archivo.variable} min-h-dvh antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <Script id="theme-init" strategy="beforeInteractive">
-          {THEME_INIT_SCRIPT}
-        </Script>
+      <body className="min-h-dvh flex flex-col">
+        <ThemeInitializer />
+        {children}
         <Script id="ms-clarity" strategy="afterInteractive">
           {CLARITY_SCRIPT}
         </Script>
-      </head>
-      <body className="min-h-dvh flex flex-col">{children}</body>
+      </body>
     </html>
   );
 }
