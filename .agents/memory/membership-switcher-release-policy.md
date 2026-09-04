@@ -3,8 +3,8 @@ name: Membership switcher release policy
 description: Product decision about where organization and role switching may be exposed.
 ---
 
-**Rule:** Keep the organization/role membership switcher development-only. Do not expose or enable it in published builds unless the user explicitly decides to ship a real multi-school or dual-role experience.
+**Rule:** The organization/role membership switcher is enabled in production. `lib/auth/membership-switcher.ts`'s `isMembershipSwitcherEnabled()` returns `true` unconditionally.
 
-**Why:** The user considers the current switcher a testing tool, not a public product feature, and wants to validate it in development before deciding whether real end users need it.
+**Why:** Development-only quietly broke every real multi-membership case the product supports -- `getViewer()` falls back to the first active membership, so a student invited to a new school landed back in the old org, a CFI teaching at two schools could never reach the second, and a freelance CFI (admin + instructor in one org) could reach only one of their two roles. Superseded by commit `1df6969` ("Let students leave an independent CFI, and turn the membership switcher on", 2026-08-28), which judged it safe to expose because `POST /api/auth/switch-membership` re-reads the caller's own memberships server-side and refuses anything that isn't theirs and active -- the only client input is an id checked against their own list.
 
-**How to apply:** New navigation, auth, membership, or signup work must preserve the production UI and API guard. Test role switching through the development environment only.
+**How to apply:** New navigation, auth, membership, or signup work should treat the switcher as a real production feature, not a dev-only test aid. Do not reintroduce a `NODE_ENV`/environment gate on it without a new explicit product decision superseding `1df6969`.

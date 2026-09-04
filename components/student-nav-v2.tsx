@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Plane } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
@@ -20,6 +19,17 @@ import type { MembershipOption, Viewer } from "@/lib/viewer";
  * point -- there is no fifth slot in the prototype's header to map it onto.
  * It's still rendered on the CFI/admin desktop Nav (see
  * app/(product)/layout.tsx), which this component doesn't touch.
+ *
+ * Start Flight is disabled here (Platform Hardening P0-3): it's live
+ * in-flight recording (components/prototype/flight-recorder.tsx), which has
+ * no production API that accepts a completed session -- see the doc comment
+ * on app/(product)/flights/new/student-new-flight-client.tsx. Linking it to
+ * /prototype/vector/fly put real students on unreleased fixture product;
+ * pointing it at /flights/new instead would silently swap live recording for
+ * a different feature (retrospective search/manual entry). Disabled is the
+ * honest state until a production recording endpoint exists -- same
+ * span/aria-disabled/opacity-40 treatment this exact icon used in Milestone
+ * 1A before /v2/fly existed (see git history of app/v2/_components/header-actions.tsx).
  */
 export function StudentHeaderActions({
   viewer,
@@ -30,13 +40,13 @@ export function StudentHeaderActions({
 }) {
   return (
     <>
-      <Link
-        href="/prototype/vector/fly"
+      <span
         aria-label="Start flight"
-        className="flex size-11 items-center justify-center rounded-full text-foreground-faint transition-colors hover:text-foreground"
+        aria-disabled="true"
+        className="flex size-11 cursor-not-allowed items-center justify-center rounded-full text-foreground-faint opacity-40"
       >
         <Plane className="size-[23px]" strokeWidth={2.2} aria-hidden />
-      </Link>
+      </span>
       <div className="flex size-11 items-center justify-center">
         <ThemeToggle compact />
       </div>

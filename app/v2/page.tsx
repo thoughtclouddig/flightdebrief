@@ -8,14 +8,11 @@ import { FLIGHT_DEFAULTS } from "@/lib/prototype-fixtures/flights";
 export const metadata: Metadata = { title: "Home — AfterFlight", robots: { index: false, follow: false } };
 
 /**
- * Milestone 1A fixture-parity Home -- mechanically the same as
- * app/prototype/vector/page.tsx (same fixtures, same StudentHome component,
- * same state branching), with internal hrefs repointed at /v2/**. Anything
- * that would point at /v2/fly, /v2/flights/**, /v2/debrief/new,
- * /v2/debrief/latest, or /v2/profile/** -- all Flights/Fly/Profile/full
- * Debrief-lifecycle extraction, explicitly out of Milestone 1A -- renders
- * disabled instead, per the milestone's route-isolation rule. Only Train,
- * Progress, and the Debrief hub are real destinations here.
+ * Milestone 1B fixture-parity Home -- mechanically the same as
+ * app/prototype/vector/page.tsx, hrefs repointed at /v2/**. Every destination
+ * this screen offers now exists under /v2 (Flights, Debrief lifecycle/Detail,
+ * Fly), so nothing here is disabled anymore -- see Milestone 1A's version of
+ * this file for the interim state.
  */
 export default async function V2Home({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
   const { state } = await searchParams;
@@ -28,9 +25,7 @@ export default async function V2Home({ searchParams }: { searchParams: Promise<{
       bodyText: "Capture what mattered while it's fresh.",
       primaryLabel: "Start debrief",
       primaryHref: "/v2/debrief/new",
-      primaryDisabled: true,
       secondaryHref: "/v2/flights/aug-29",
-      secondaryDisabled: true,
       showAutoRefresh: false,
     };
     return (
@@ -39,7 +34,6 @@ export default async function V2Home({ searchParams }: { searchParams: Promise<{
         panel={panel}
         justFlewRows={{
           myFlightsHref: "/v2/flights",
-          myFlightsDisabled: true,
           myFlightsCount: 5,
           pastDebriefsHref: "/v2/debrief",
           pastDebriefsCount: 3,
@@ -60,14 +54,12 @@ export default async function V2Home({ searchParams }: { searchParams: Promise<{
       panel={panel}
       keyReminder={{ instructorFirstName: INSTRUCTOR.firstName, quote: STRUCTURED.instructorEmphasis[0]!.quote }}
       trainCta={{ instructorFirstName: INSTRUCTOR.firstName, href: "/v2/train" }}
-      startFlight={{ disabled: true }}
+      startFlight={{ href: "/v2/fly" }}
       addFlightHref="/v2/flights/new"
-      addFlightDisabled
       bottomRows={{
         myFlightsHref: "/v2/flights",
-        myFlightsDisabled: true,
         myFlightsCount: 5,
-        lastDebrief: { href: "/v2/debrief/latest", dateLabel: "Aug 29", disabled: true },
+        lastDebrief: { href: "/v2/debrief/latest", dateLabel: "Aug 29" },
         progressHref: "/v2/progress",
       }}
     />
@@ -90,7 +82,7 @@ function JustLanded() {
           your other aircraft flew today. You pick which one was yours.
         </p>
         <div className="mt-6">
-          <PanelButton href="/v2/flights/new" disabled>
+          <PanelButton href="/v2/flights/new">
             <Plus className="size-[18px]" aria-hidden />
             Add flight
           </PanelButton>
@@ -98,7 +90,7 @@ function JustLanded() {
       </Panel>
 
       <div className="flex flex-col">
-        <QuietRow href="/v2/flights" label="My flights" meta="5" disabled />
+        <QuietRow href="/v2/flights" label="My flights" meta="5" />
         <QuietRow href="/v2/progress" label="See progress" meta="4 skills" />
       </div>
     </Screen>

@@ -12,8 +12,8 @@ export function generateStaticParams() {
   return FLIGHTS.filter((f) => analysisFor(f.id)).map((f) => ({ id: f.id }));
 }
 
-/** Fixture adapter for components/student/flights/compare-attempts.tsx -- the ground-track SVG geometry is pure math over fixture telemetry, computed here and passed down as ready paths. */
-export default async function ComparePage({ params }: { params: Promise<{ id: string }> }) {
+/** Milestone 1B fixture-parity Compare Attempts -- mechanically the same as app/prototype/vector/flights/[id]/compare/page.tsx, hrefs repointed at /v2/**. */
+export default async function V2ComparePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const flight = flightById(id);
   const analysis = analysisFor(id);
@@ -61,7 +61,7 @@ export default async function ComparePage({ params }: { params: Promise<{ id: st
 
   return (
     <CompareAttemptsScreen
-      backHref={`/prototype/vector/flights/${id}/analysis`}
+      backHref={`/v2/flights/${id}/analysis`}
       kicker={`${flight.dateLabel} · ${flight.lesson}`}
       aLabel={a.label}
       bLabel={b.label}
@@ -70,9 +70,9 @@ export default async function ComparePage({ params }: { params: Promise<{ id: st
       rows={rows}
       instructorEvidence={momentB?.instructorEvidence ?? null}
       vectorText={`Based on the available flight data, ${b.label.toLowerCase()} appears to have settled earlier and needed fewer corrections near the runway. That lines up with what ${flight.instructor?.split(" ")[0] ?? "your instructor"} said about it.`}
-      trainHref="/prototype/vector/train"
-      replayHrefA={`/prototype/vector/flights/${id}/replay?t=${Math.round(a.startT)}`}
-      replayHrefB={`/prototype/vector/flights/${id}/replay?t=${Math.round(b.startT)}`}
+      trainHref="/v2/train"
+      replayHrefA={`/v2/flights/${id}/replay?t=${Math.round(a.startT)}`}
+      replayHrefB={`/v2/flights/${id}/replay?t=${Math.round(b.startT)}`}
       acsArea={ACS_AREAS.landings}
       acsCode="PA.IV.B"
     />

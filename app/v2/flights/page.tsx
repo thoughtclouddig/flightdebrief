@@ -4,11 +4,11 @@ import { FLIGHTS, TRACKED_HOURS_DISCLAIMER, formatHours, statusLabel, trackedHou
 
 export const metadata: Metadata = { title: "My flights — AfterFlight", robots: { index: false, follow: false } };
 
-/** Fixture adapter for components/student/flights/flights-list.tsx. */
-export default function MyFlightsPage() {
+/** Milestone 1B fixture-parity Flights list -- mechanically the same as app/prototype/vector/flights/page.tsx, hrefs repointed at /v2/**. */
+export default function V2MyFlights() {
   const flights: FlightListRow[] = FLIGHTS.map((f) => ({
     id: f.id,
-    href: `/prototype/vector/flights/${f.id}`,
+    href: `/v2/flights/${f.id}`,
     lesson: f.lesson,
     dateLabel: f.dateLabel,
     departureAirport: f.departureAirport,
@@ -24,8 +24,8 @@ export default function MyFlightsPage() {
 
   return (
     <FlightsList
-      backHref="/prototype/vector/profile"
-      addFlightHref="/prototype/vector/flights/new"
+      backHref="/v2/profile"
+      addFlightHref="/v2/flights/new"
       trackedHoursLabel={trackedHours()}
       trackedHoursDisclaimer={TRACKED_HOURS_DISCLAIMER}
       flights={flights}

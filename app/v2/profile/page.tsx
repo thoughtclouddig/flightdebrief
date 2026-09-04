@@ -5,20 +5,20 @@ import { INSTRUCTOR, STUDENT } from "@/lib/prototype-fixtures/vector-data";
 
 export const metadata: Metadata = { title: "Profile — AfterFlight", robots: { index: false, follow: false } };
 
-/** Fixture adapter for components/student/profile/profile-screen.tsx. */
-export default function ProfilePage() {
+/** Milestone 1B fixture-parity Profile -- mechanically the same as app/prototype/vector/profile/page.tsx, hrefs repointed at /v2/**. */
+export default function V2ProfilePage() {
   return (
     <ProfileScreen
       certificate={STUDENT.certificate}
       fullName={STUDENT.fullName}
-      flightsHref="/prototype/vector/flights"
+      flightsHref="/v2/flights"
       flightsCount={FLIGHTS.length}
-      debriefsHref="/prototype/vector/debrief"
+      debriefsHref="/v2/debrief"
       debriefsCount="3"
-      instructorHref="/prototype/vector/profile"
+      instructorHref="/v2/profile"
       instructorName={INSTRUCTOR.fullName}
-      guideHref="/prototype/vector/profile/guide"
-      supportHref="/prototype/vector/profile/support"
+      guideHref="/v2/profile/guide"
+      supportHref="/v2/profile/support"
       dataHandlingHref="/data-handling"
     />
   );

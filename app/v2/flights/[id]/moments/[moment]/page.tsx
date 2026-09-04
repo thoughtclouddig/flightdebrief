@@ -10,8 +10,8 @@ export function generateStaticParams() {
   return FLIGHTS.flatMap((f) => (analysisFor(f.id)?.moments ?? []).map((m) => ({ id: f.id, moment: m.id })));
 }
 
-/** Fixture adapter for components/student/flights/moment-detail.tsx. */
-export default async function MomentDetail({ params }: { params: Promise<{ id: string; moment: string }> }) {
+/** Milestone 1B fixture-parity Moment Detail -- mechanically the same as app/prototype/vector/flights/[id]/moments/[moment]/page.tsx, hrefs repointed at /v2/**. */
+export default async function V2MomentDetail({ params }: { params: Promise<{ id: string; moment: string }> }) {
   const { id, moment: momentId } = await params;
   const flight = flightById(id);
   const analysis = analysisFor(id);
@@ -25,7 +25,7 @@ export default async function MomentDetail({ params }: { params: Promise<{ id: s
 
   return (
     <MomentDetailScreen
-      backHref={`/prototype/vector/flights/${id}/analysis`}
+      backHref={`/v2/flights/${id}/analysis`}
       kicker={`${flight.dateLabel} · ${segment.label}`}
       title={moment.title}
       telemetry={analysis.telemetry}
@@ -35,10 +35,10 @@ export default async function MomentDetail({ params }: { params: Promise<{ id: s
       vectorInference={moment.vectorInference}
       acsArea={moment.acsArea}
       acsCode={moment.acsTask}
-      replayHref={`/prototype/vector/flights/${id}/replay?t=${Math.round(segment.startT)}`}
-      compareHref={other ? `/prototype/vector/flights/${id}/compare` : null}
+      replayHref={`/v2/flights/${id}/replay?t=${Math.round(segment.startT)}`}
+      compareHref={other ? `/v2/flights/${id}/compare` : null}
       compareLabel={other?.title ?? null}
-      trainHref="/prototype/vector/train"
+      trainHref="/v2/train"
     />
   );
 }

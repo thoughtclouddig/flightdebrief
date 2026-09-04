@@ -6,11 +6,25 @@
 // transcript/content edit in lib/data/seed.ts never overwrites an
 // already-seeded row with the same id -- only a fresh insert picks it up.
 // Not part of the app; run manually, then FORCE_RESEED=1 npm run dev.
+//
+// Usage:
+//   node scripts/reset-mia.mjs
+//   node scripts/reset-mia.mjs --confirm-production   # required in prod
 import pg from "pg";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   console.error("[reset-mia] DATABASE_URL is not set.");
+  process.exit(1);
+}
+
+const confirmProduction = process.argv.includes("--confirm-production");
+const looksLikeProduction = Boolean(process.env.REPLIT_DEPLOYMENT);
+if (looksLikeProduction && !confirmProduction) {
+  console.error(
+    "[reset-mia] Refusing to run against a production deployment.\n" +
+      "Re-run with --confirm-production if you really want to delete user-mia from production.",
+  );
   process.exit(1);
 }
 

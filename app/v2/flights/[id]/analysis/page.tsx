@@ -11,8 +11,8 @@ export function generateStaticParams() {
   return FLIGHTS.filter((f) => f.track).map((f) => ({ id: f.id }));
 }
 
-/** Fixture adapter for components/student/flights/flight-analysis.tsx. */
-export default async function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
+/** Milestone 1B fixture-parity Flight Analysis -- mechanically the same as app/prototype/vector/flights/[id]/analysis/page.tsx, hrefs repointed at /v2/**. */
+export default async function V2AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const flight = flightById(id);
   const analysis = analysisFor(id);
@@ -21,7 +21,7 @@ export default async function AnalysisPage({ params }: { params: Promise<{ id: s
   const approaches = analysis.segments.filter((s) => s.type === "APPROACH");
   const moments: FlightAnalysisMomentRow[] = analysis.moments.map((m) => ({
     id: m.id,
-    href: `/prototype/vector/flights/${id}/moments/${m.id}`,
+    href: `/v2/flights/${id}/moments/${m.id}`,
     title: m.title,
     type: m.type,
     tone: momentTone(m.type),
@@ -32,13 +32,13 @@ export default async function AnalysisPage({ params }: { params: Promise<{ id: s
 
   return (
     <FlightAnalysisScreen
-      backHref={`/prototype/vector/flights/${id}`}
+      backHref={`/v2/flights/${id}`}
       kicker={`${flight.dateLabel} · ${flight.departureAirport} → ${flight.arrivalAirport}`}
       metaLine={`${flight.aircraftType} · ${flight.tailNumber} · ${flight.instructor ?? "Solo"} · ${formatHours(flight.durationMinutes)} hr tracked`}
       track={flight.track}
       hasAdsbLookup={flight.fr24FlightId !== null}
-      replayHref={`/prototype/vector/flights/${id}/replay`}
-      compareHref={approaches.length > 1 ? `/prototype/vector/flights/${id}/compare` : null}
+      replayHref={`/v2/flights/${id}/replay`}
+      compareHref={approaches.length > 1 ? `/v2/flights/${id}/compare` : null}
       segments={analysis.segments.map((s) => ({ id: s.id, label: s.label, elapsedLabel: formatElapsed(s.startT) }))}
       approachCount={approaches.length}
       moments={moments}

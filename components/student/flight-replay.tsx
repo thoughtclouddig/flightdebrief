@@ -40,11 +40,15 @@ export function FlightReplay({
    * it again is the same as not having the button.
    */
   startT = 0,
+  trainHref = "/prototype/vector/train",
+  compareHref = "/prototype/vector/flights/aug-29/compare",
 }: {
   telemetry: FlightTelemetry;
   segments: FlightSegment[];
   moments: FlightMoment[];
   startT?: number;
+  trainHref?: string;
+  compareHref?: string;
 }) {
   const [t, setT] = useState(Math.min(startT, telemetry.durationMs));
   const [playing, setPlaying] = useState(false);
@@ -180,7 +184,7 @@ export function FlightReplay({
       </div>
 
       {/* Everything below is a function of t. */}
-      <ContextCard point={point} telemetry={telemetry} segment={segment} moment={moment} />
+      <ContextCard point={point} telemetry={telemetry} segment={segment} moment={moment} trainHref={trainHref} compareHref={compareHref} />
     </div>
   );
 }
@@ -267,11 +271,15 @@ function ContextCard({
   telemetry,
   segment,
   moment,
+  trainHref,
+  compareHref,
 }: {
   point: ReturnType<typeof pointAt>;
   telemetry: FlightTelemetry;
   segment: FlightSegment | null;
   moment: FlightMoment | null;
+  trainHref: string;
+  compareHref: string;
 }) {
   const caps = telemetry.capabilities;
   return (
@@ -336,8 +344,8 @@ function ContextCard({
           {moment.acsArea ? <AcsBadge area={moment.acsArea} code={moment.acsTask ?? undefined} /> : null}
 
           <div className="flex flex-col gap-2.5">
-            <PrimaryButton href="/prototype/vector/train">Train this with Vector</PrimaryButton>
-            <SecondaryButton href="/prototype/vector/flights/aug-29/compare">Compare attempts</SecondaryButton>
+            <PrimaryButton href={trainHref}>Train this with Vector</PrimaryButton>
+            <SecondaryButton href={compareHref}>Compare attempts</SecondaryButton>
           </div>
         </>
       ) : (
