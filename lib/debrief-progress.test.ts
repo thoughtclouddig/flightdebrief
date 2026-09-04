@@ -109,25 +109,25 @@ describe("computeDebriefProgress", () => {
     expect(result).toEqual({ stage: "awaiting_tasks", waitingOn: "instructor" });
   });
 
-  it("is awaiting_instructor_assessment once tasks exist but the instructor hasn't submitted", async () => {
+  it("is awaiting_student_assessment when tasks exist but the student hasn't submitted -- student always goes first", async () => {
     const repo = fakeRepo({
       organization: org(),
       tasks: [{ id: "t1", flightId: "flight-1", taskCode: "SHORT_FIELD_LANDING", label: "Short field landing", source: "instructor_selected", sortOrder: 0, createdAt: "2026-08-20T20:00:00.000Z" }],
-      instructorAssessment: null,
-    });
-    const result = await computeDebriefProgress(repo, flight());
-    expect(result).toEqual({ stage: "awaiting_instructor_assessment", waitingOn: "instructor" });
-  });
-
-  it("is awaiting_student_assessment only after the instructor's assessment is submitted -- CFI always goes first", async () => {
-    const repo = fakeRepo({
-      organization: org(),
-      tasks: [{ id: "t1", flightId: "flight-1", taskCode: "SHORT_FIELD_LANDING", label: "Short field landing", source: "instructor_selected", sortOrder: 0, createdAt: "2026-08-20T20:00:00.000Z" }],
-      instructorAssessment: assessment({ role: "instructor", status: "submitted" }),
       studentAssessment: null,
     });
     const result = await computeDebriefProgress(repo, flight());
     expect(result).toEqual({ stage: "awaiting_student_assessment", waitingOn: "student" });
+  });
+
+  it("is awaiting_instructor_assessment only after the student's assessment is submitted", async () => {
+    const repo = fakeRepo({
+      organization: org(),
+      tasks: [{ id: "t1", flightId: "flight-1", taskCode: "SHORT_FIELD_LANDING", label: "Short field landing", source: "instructor_selected", sortOrder: 0, createdAt: "2026-08-20T20:00:00.000Z" }],
+      studentAssessment: assessment({ id: "assessment-2", role: "student", assessorUserId: "student-1", status: "submitted" }),
+      instructorAssessment: null,
+    });
+    const result = await computeDebriefProgress(repo, flight());
+    expect(result).toEqual({ stage: "awaiting_instructor_assessment", waitingOn: "instructor" });
   });
 
   it("is ready_to_debrief once both assessments are submitted", async () => {
@@ -151,9 +151,20 @@ describe("computeDebriefProgress", () => {
     const repo = fakeRepo({
       organization: org(),
       tasks: [{ id: "t1", flightId: "flight-1", taskCode: "SHORT_FIELD_LANDING", label: "Short field landing", source: "instructor_selected", sortOrder: 0, createdAt: "2026-08-20T20:00:00.000Z" }],
+      studentAssessment: assessment({ id: "assessment-2", role: "student", assessorUserId: "student-1", status: "submitted" }),
       instructorAssessment: assessment({ role: "instructor", status: "in_progress", submittedAt: null }),
     });
     const result = await computeDebriefProgress(repo, flight());
     expect(result).toEqual({ stage: "awaiting_instructor_assessment", waitingOn: "instructor" });
+  });
+
+  it("does not let a student assessment still in_progress count as submitted", async () => {
+    const repo = fakeRepo({
+      organization: org(),
+      tasks: [{ id: "t1", flightId: "flight-1", taskCode: "SHORT_FIELD_LANDING", label: "Short field landing", source: "instructor_selected", sortOrder: 0, createdAt: "2026-08-20T20:00:00.000Z" }],
+      studentAssessment: assessment({ id: "assessment-2", role: "student", assessorUserId: "student-1", status: "in_progress", submittedAt: null }),
+    });
+    const result = await computeDebriefProgress(repo, flight());
+    expect(result).toEqual({ stage: "awaiting_student_assessment", waitingOn: "student" });
   });
 });

@@ -44,7 +44,7 @@ export default async function StudentHomePage() {
         : pendingProgress.stage === "awaiting_tasks" || pendingProgress.stage === "awaiting_instructor_assessment"
           ? "Waiting on your instructor."
           : pendingProgress.stage === "awaiting_student_assessment"
-            ? "Your instructor submitted their assessment -- your turn."
+            ? "Your turn to rate it."
             : pendingProgress.stage === "awaiting_finish"
               ? "Recorded -- your instructor still needs to finish reviewing it with you."
               : "Both assessments are in -- your instructor is starting the debrief.",

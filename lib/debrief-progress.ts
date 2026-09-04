@@ -20,10 +20,10 @@ export interface DebriefProgress {
  * page.tsx already walks to decide which screen *the current viewer* sees,
  * extracted so it can be computed for *other* students' flights too (the
  * student dashboard's "needs your input" card, the CFI's "Students Needing
- * Attention" list) without duplicating that branching logic. CFI always
- * goes first (see the same rule enforced in the assessments submit route
- * and self-assessment/page.tsx), so a flight is never "awaiting_student"
- * until the instructor's assessment is actually in.
+ * Attention" list) without duplicating that branching logic. Student always
+ * goes first now (see the same rule enforced in the assessments submit
+ * route and instructor-assessment/page.tsx), so a flight is never
+ * "awaiting_instructor" until the student's own assessment is actually in.
  */
 export async function computeDebriefProgress(
   repo: Repository,
@@ -58,14 +58,14 @@ export async function computeDebriefProgress(
     return { stage: "awaiting_tasks", waitingOn: "instructor" };
   }
 
-  const instructorAssessment = await repo.getAssessment(flight.id, "instructor");
-  if (instructorAssessment?.status !== "submitted") {
-    return { stage: "awaiting_instructor_assessment", waitingOn: "instructor" };
-  }
-
   const studentAssessment = await repo.getAssessment(flight.id, "student");
   if (studentAssessment?.status !== "submitted") {
     return { stage: "awaiting_student_assessment", waitingOn: "student" };
+  }
+
+  const instructorAssessment = await repo.getAssessment(flight.id, "instructor");
+  if (instructorAssessment?.status !== "submitted") {
+    return { stage: "awaiting_instructor_assessment", waitingOn: "instructor" };
   }
 
   return { stage: "ready_to_debrief", waitingOn: "instructor" };
