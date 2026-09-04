@@ -10,9 +10,9 @@ import {
   Screen,
   Section,
   SecondaryButton,
-} from "@/components/prototype/ui";
-import { MomentTrack } from "@/components/prototype/moment-track";
-import { FLIGHTS, flightById } from "@/lib/prototype/flights";
+} from "@/components/student/ui";
+import { MomentTrack } from "@/components/student/moment-track";
+import { FLIGHTS, flightById } from "@/lib/prototype-fixtures/flights";
 import { analysisFor } from "@/lib/prototype/moments";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };

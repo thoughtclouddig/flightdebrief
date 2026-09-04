@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { StudentDebriefHub, type StudentDebriefRow } from "@/components/prototype/student-debrief-hub";
-import { DEBRIEFS } from "@/lib/prototype/vector-data";
+import { StudentDebriefHub, type StudentDebriefRow } from "@/components/student/debrief/student-debrief-hub";
+import { DEBRIEFS } from "@/lib/prototype-fixtures/vector-data";
 
 export const metadata: Metadata = { title: "Debriefs — AfterFlight", robots: { index: false, follow: false } };
 

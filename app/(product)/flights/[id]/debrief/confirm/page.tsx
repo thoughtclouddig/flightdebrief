@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
-import { BackLink, Card, PageTitle, PrimaryButton, Screen, Section } from "@/components/prototype/ui";
+import { BackLink, Card, PageTitle, PrimaryButton, Screen, Section } from "@/components/student/ui";
 import { deriveLessonFocus } from "@/lib/lesson-focus";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightDate } from "@/lib/utils";

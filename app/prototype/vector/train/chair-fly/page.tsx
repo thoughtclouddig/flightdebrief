@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BackLink, Screen } from "@/components/prototype/ui";
-import { ChairFlySession } from "@/components/prototype/chair-fly-session";
+import { BackLink, Screen } from "@/components/student/ui";
+import { ChairFlySession } from "@/components/student/chair-fly-session";
 import { recommendedDrill } from "@/lib/prototype/chair-fly";
 
 export const metadata: Metadata = { title: "Chair fly — AfterFlight", robots: { index: false, follow: false } };

@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStored } from "@/lib/prototype/use-stored";
-import { STUDENT } from "@/lib/prototype/vector-data";
+import { STUDENT } from "@/lib/prototype-fixtures/vector-data";
 
 const KEY = "af-prototype-avatar";
 

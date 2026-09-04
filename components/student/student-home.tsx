@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowRight, Mic, Plane, PlaneLanding, PlaneTakeoff, Plus } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { Evidence, Panel, PanelButton, PanelEyebrow, PanelHeadline, PanelMeta, PageTitle, PrimaryButton, QuietRow, Screen, Section, SecondaryButton } from "@/components/prototype/ui";
+import { Evidence, Panel, PanelButton, PanelEyebrow, PanelHeadline, PanelMeta, PageTitle, PrimaryButton, QuietRow, Screen, Section, SecondaryButton } from "@/components/student/ui";
 
 /**
  * Home's real content, shared between app/prototype/vector/page.tsx (fixture

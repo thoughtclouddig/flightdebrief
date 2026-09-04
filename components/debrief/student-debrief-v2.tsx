@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { BackLink, AcsBadge, Evidence, PageTitle, PrimaryButton, Screen, Section } from "@/components/prototype/ui";
+import { BackLink, AcsBadge, Evidence, PageTitle, PrimaryButton, Screen, Section } from "@/components/student/ui";
 import { ListenAgainRow } from "@/components/debrief/listen-again-row";
 import { deriveLessonFocus } from "@/lib/lesson-focus";
 import { matchSkills } from "@/lib/topics";

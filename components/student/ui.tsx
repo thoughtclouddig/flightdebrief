@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Info, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { stateTone, type SkillState } from "@/lib/prototype/state-tone";
+import { stateTone, type SkillState } from "@/lib/student/state-tone";
 
 /**
  * The prototype's shared design language. Implements
@@ -364,7 +364,7 @@ export function Evidence({
 
 // stateTone/SkillState now live in lib/prototype/state-tone.ts (a plain
 // module, not "use client") and are imported above -- re-exported here so
-// every existing `import { stateTone } from "@/components/prototype/ui"`
+// every existing `import { stateTone } from "@/components/student/ui"`
 // keeps working unchanged. Server Components must import from
 // lib/prototype/state-tone directly instead of from this file; see that
 // module's own comment for why.

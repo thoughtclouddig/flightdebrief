@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BackLink, PageTitle, Screen } from "@/components/prototype/ui";
-import { FlightReplay } from "@/components/prototype/flight-replay";
-import { FLIGHTS, flightById, formatHours } from "@/lib/prototype/flights";
+import { BackLink, PageTitle, Screen } from "@/components/student/ui";
+import { FlightReplay } from "@/components/student/flight-replay";
+import { FLIGHTS, flightById, formatHours } from "@/lib/prototype-fixtures/flights";
 import { analysisFor } from "@/lib/prototype/moments";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };

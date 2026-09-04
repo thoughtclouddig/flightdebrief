@@ -1,12 +1,12 @@
-import { ACS_AREAS } from "@/lib/prototype/vector-data";
-import { flightById } from "@/lib/prototype/flights";
+import { ACS_AREAS } from "@/lib/prototype-fixtures/vector-data";
+import { flightById } from "@/lib/prototype-fixtures/flights";
 import {
   normalizeTrack,
   segmentFlight,
   type FlightMoment,
   type FlightSegment,
   type FlightTelemetry,
-} from "@/lib/prototype/telemetry";
+} from "@/lib/student/telemetry";
 
 /**
  * Flight analysis for one flight: telemetry, segments, and the moments where

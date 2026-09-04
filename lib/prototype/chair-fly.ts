@@ -1,4 +1,5 @@
-import { agreement, levelLabel, skillForObjective } from "@/lib/prototype/assessment";
+import { agreement, levelLabel } from "@/lib/student/assessment";
+import { skillForObjective } from "@/lib/prototype/assessment";
 import {
   CONCEPTS,
   INSTRUCTOR,
@@ -7,7 +8,7 @@ import {
   PERCEPTION_GAPS,
   STRUCTURED,
   type GapRow,
-} from "@/lib/prototype/vector-data";
+} from "@/lib/prototype-fixtures/vector-data";
 
 /**
  * Chair Flying.

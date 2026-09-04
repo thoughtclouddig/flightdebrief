@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
-import { BackLink, PageTitle, QuietRow, Screen } from "@/components/prototype/ui";
+import { BackLink, PageTitle, QuietRow, Screen } from "@/components/student/ui";
 import { formatFlightDate } from "@/lib/utils";
 
 /**

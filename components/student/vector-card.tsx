@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Evidence, VectorMark } from "@/components/prototype/ui";
+import { Evidence, VectorMark } from "@/components/student/ui";
 import type { EvidenceSource, VectorCard } from "@/lib/ai/vector-schema";
 
 /**

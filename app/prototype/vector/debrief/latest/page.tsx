@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Check, ChevronDown, ChevronRight, Play } from "lucide-react";
-import { VectorPanel } from "@/components/prototype/vector-panel";
+import { VectorPanel } from "@/components/student/vector-panel";
 import {
   AcsBadge,
   BackLink,
@@ -13,9 +13,9 @@ import {
   PrimaryButton,
   Screen,
   Section,
-} from "@/components/prototype/ui";
-import { ObjectiveComparison } from "@/components/prototype/assessment-comparison";
-import { agreementSummary } from "@/lib/prototype/assessment";
+} from "@/components/student/ui";
+import { ObjectiveComparison } from "@/components/student/debrief/assessment-comparison";
+import { agreementSummary } from "@/lib/student/assessment";
 import { cn } from "@/lib/utils";
 import {
   ACS_AREAS,
@@ -26,9 +26,9 @@ import {
   STRUCTURED,
   STUDENT_REFLECTION,
   SUGGESTED,
-} from "@/lib/prototype/vector-data";
+} from "@/lib/prototype-fixtures/vector-data";
 import { analysisFor } from "@/lib/prototype/moments";
-import { momentTone } from "@/lib/prototype/telemetry";
+import { momentTone } from "@/lib/student/telemetry";
 
 /**
  * One debrief, answering: what happened last flight?

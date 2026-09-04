@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { BookOpen, Mail, MessageSquare } from "lucide-react";
-import { BackLink, Card, PageTitle, QuietRow, Screen, Section } from "@/components/prototype/ui";
+import { BackLink, Card, PageTitle, QuietRow, Screen, Section } from "@/components/student/ui";
 
 export const metadata: Metadata = { title: "Support — AfterFlight", robots: { index: false, follow: false } };
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Mic } from "lucide-react";
-import { Panel, PanelButton, PanelEyebrow, PanelHeadline, PageTitle, QuietRow, Screen, Section } from "@/components/prototype/ui";
+import { Panel, PanelButton, PanelEyebrow, PanelHeadline, PageTitle, QuietRow, Screen, Section } from "@/components/student/ui";
 
 /**
  * The Debrief hub's real content, shared between

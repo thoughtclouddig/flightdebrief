@@ -1,4 +1,4 @@
-import { StudentTrain, type StudentTrainAction, type StudentTrainRecommended, type StudentTrainSkillRow } from "@/components/prototype/student-train";
+import { StudentTrain, type StudentTrainAction, type StudentTrainRecommended, type StudentTrainSkillRow } from "@/components/student/student-train";
 import { acsAreaForSkill } from "@/lib/acs";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
@@ -61,7 +61,7 @@ function contestedObjective(differences: AssessmentDifference[]): AssessmentDiff
 
 /**
  * Thin data-fetching wrapper -- all the real panel/skill-list content lives
- * in components/prototype/student-train.tsx, the same component
+ * in components/student/student-train.tsx, the same component
  * app/prototype/vector/train/page.tsx renders (its "menu" state) with
  * fixture props.
  *

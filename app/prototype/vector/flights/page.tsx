@@ -8,7 +8,7 @@ import {
   PrimaryButton,
   Screen,
   Section,
-} from "@/components/prototype/ui";
+} from "@/components/student/ui";
 import { cn } from "@/lib/utils";
 import {
   FLIGHTS,
@@ -17,7 +17,7 @@ import {
   statusLabel,
   trackedHours,
   type Flight,
-} from "@/lib/prototype/flights";
+} from "@/lib/prototype-fixtures/flights";
 
 export const metadata: Metadata = { title: "My flights — AfterFlight", robots: { index: false, follow: false } };
 

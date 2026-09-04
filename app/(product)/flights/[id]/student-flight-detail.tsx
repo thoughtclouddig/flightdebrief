@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ChevronRight, Mic } from "lucide-react";
 import { FlightMap } from "@/components/flight-map";
 import { ResumeDebriefButton } from "@/components/resume-debrief-button";
-import { PageTitle, PrimaryButton, Screen, Section, StateLabel } from "@/components/prototype/ui";
+import { PageTitle, PrimaryButton, Screen, Section, StateLabel } from "@/components/student/ui";
 import { AcsBadge } from "@/components/acs-badge";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import { formatDurationShort } from "@/lib/utils";

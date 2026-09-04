@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
-import { BackLink, PageTitle, PrimaryButton, Screen } from "@/components/prototype/ui";
-import { ObjectiveComparison } from "@/components/prototype/assessment-comparison";
+import { BackLink, PageTitle, PrimaryButton, Screen } from "@/components/student/ui";
+import { ObjectiveComparison } from "@/components/student/debrief/assessment-comparison";
 import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { alignmentSummary, buildPerceptionGapRow, type PerceptionGapRow } from "@/lib/perception-gap";
 import { deriveLessonFocus } from "@/lib/lesson-focus";

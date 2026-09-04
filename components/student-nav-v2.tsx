@@ -8,7 +8,7 @@ import { SupportLink } from "@/components/support-link";
 import type { MembershipOption, Viewer } from "@/lib/viewer";
 
 /**
- * The real action row for components/prototype/app-header.tsx's `actions`
+ * The real action row for components/student/app-header.tsx's `actions`
  * slot. AppHeader and BottomNav are now literally shared with the prototype
  * (see their own files) -- this row matches the prototype's own DefaultActions
  * slot-for-slot (Start flight, theme, support, account), not a different

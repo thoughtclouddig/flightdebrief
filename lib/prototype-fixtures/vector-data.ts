@@ -1,5 +1,5 @@
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
-import type { SkillState } from "@/lib/prototype/state-tone";
+import type { SkillState } from "@/lib/student/state-tone";
 
 /**
  * Seeded training history for the Vector prototype.

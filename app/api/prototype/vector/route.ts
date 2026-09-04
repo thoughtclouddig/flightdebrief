@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { askVector, evaluateChairFly } from "@/lib/ai/vector";
-import { KNOWLEDGE_CHECK } from "@/lib/prototype/vector-data";
+import { KNOWLEDGE_CHECK } from "@/lib/prototype-fixtures/vector-data";
 import { CHAIR_FLY } from "@/lib/prototype/chair-fly";
 
 /**

@@ -1,6 +1,6 @@
 import { ChevronRight, Map, Plus } from "lucide-react";
 import Link from "next/link";
-import { PageTitle, PrimaryButton, Screen, Section } from "@/components/prototype/ui";
+import { PageTitle, PrimaryButton, Screen, Section } from "@/components/student/ui";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { cn, formatDurationShort } from "@/lib/utils";

@@ -18,8 +18,8 @@ import {
   SkillMeter,
   StateLabel,
   VectorMark,
-} from "@/components/prototype/ui";
-import { stateTone, type SkillState } from "@/lib/prototype/state-tone";
+} from "@/components/student/ui";
+import { stateTone, type SkillState } from "@/lib/student/state-tone";
 
 /**
  * Train's "what should I practice right now" content, shared between

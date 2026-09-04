@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { BookOpen, LifeBuoy, LogOut, ShieldCheck } from "lucide-react";
 import { Avatar } from "@/components/prototype/avatar";
-import { FLIGHTS } from "@/lib/prototype/flights";
-import { QuietRow, Screen, Section } from "@/components/prototype/ui";
-import { INSTRUCTOR, STUDENT } from "@/lib/prototype/vector-data";
+import { FLIGHTS } from "@/lib/prototype-fixtures/flights";
+import { QuietRow, Screen, Section } from "@/components/student/ui";
+import { INSTRUCTOR, STUDENT } from "@/lib/prototype-fixtures/vector-data";
 
 export const metadata: Metadata = { title: "Profile — AfterFlight", robots: { index: false, follow: false } };
 

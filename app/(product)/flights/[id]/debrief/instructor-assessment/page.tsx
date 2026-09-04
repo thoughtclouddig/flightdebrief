@@ -3,7 +3,7 @@ import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { StudentAssessmentForm } from "@/components/debrief/student-assessment-form";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { PageTitle, Screen } from "@/components/prototype/ui";
+import { PageTitle, Screen } from "@/components/student/ui";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 /**

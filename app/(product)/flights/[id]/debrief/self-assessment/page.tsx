@@ -4,7 +4,7 @@ import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { StudentAssessmentForm } from "@/components/debrief/student-assessment-form";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { PageTitle, Panel, PanelEyebrow, PanelHeadline, PrimaryButton, Screen } from "@/components/prototype/ui";
+import { PageTitle, Panel, PanelEyebrow, PanelHeadline, PrimaryButton, Screen } from "@/components/student/ui";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 /** Hard-gated to the flight's own student (line below) -- never reached by an instructor/admin, so this is a safe direct rewrite, not a role branch. */

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Plus, Radar } from "lucide-react";
-import { PageTitle, Panel, PanelButton, PanelEyebrow, PanelHeadline, QuietRow, Screen } from "@/components/prototype/ui";
-import { StudentHome, type StudentHomePanel } from "@/components/prototype/student-home";
-import { INSTRUCTOR, NEXT_LESSON, PENDING_FLIGHT, STRUCTURED, STUDENT } from "@/lib/prototype/vector-data";
-import { FLIGHT_DEFAULTS } from "@/lib/prototype/flights";
+import { PageTitle, Panel, PanelButton, PanelEyebrow, PanelHeadline, QuietRow, Screen } from "@/components/student/ui";
+import { StudentHome, type StudentHomePanel } from "@/components/student/student-home";
+import { INSTRUCTOR, NEXT_LESSON, PENDING_FLIGHT, STRUCTURED, STUDENT } from "@/lib/prototype-fixtures/vector-data";
+import { FLIGHT_DEFAULTS } from "@/lib/prototype-fixtures/flights";
 
 export const metadata: Metadata = { title: "Home — AfterFlight", robots: { index: false, follow: false } };
 

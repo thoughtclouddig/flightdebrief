@@ -15,7 +15,7 @@ import {
   SecondaryButton,
   SkillMeter,
   StateLabel,
-} from "@/components/prototype/ui";
+} from "@/components/student/ui";
 import {
   FLIGHTS,
   TRACKED_HOURS_DISCLAIMER,
@@ -23,8 +23,8 @@ import {
   formatHours,
   sourceLabel,
   statusLabel,
-} from "@/lib/prototype/flights";
-import { ACS_AREAS, INSTRUCTOR, SKILL_SCORES, STRUCTURED } from "@/lib/prototype/vector-data";
+} from "@/lib/prototype-fixtures/flights";
+import { ACS_AREAS, INSTRUCTOR, SKILL_SCORES, STRUCTURED } from "@/lib/prototype-fixtures/vector-data";
 import { analysisFor } from "@/lib/prototype/moments";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };

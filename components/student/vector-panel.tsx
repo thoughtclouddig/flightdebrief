@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CornerDownLeft, Loader2, Sparkles } from "lucide-react";
-import { VectorCardView } from "@/components/prototype/vector-card";
+import { VectorCardView } from "@/components/student/vector-card";
 import type { VectorCard } from "@/lib/ai/vector-schema";
 
 /**

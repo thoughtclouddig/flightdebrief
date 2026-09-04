@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Loader2, Pause, Play } from "lucide-react";
-import { Card } from "@/components/prototype/ui";
+import { Card } from "@/components/student/ui";
 import { readStoredVoice } from "@/lib/tts-voices";
 import { formatAudioDuration } from "@/lib/utils";
 

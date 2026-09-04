@@ -1,4 +1,4 @@
-import { StudentHome, type StudentHomePanel } from "@/components/prototype/student-home";
+import { StudentHome, type StudentHomePanel } from "@/components/student/student-home";
 import { LocalDateTime } from "@/components/local-date-time";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Thin data-fetching wrapper -- all the real content lives in
- * components/prototype/student-home.tsx, the same component
+ * components/student/student-home.tsx, the same component
  * app/prototype/vector/page.tsx renders with fixture props. This file's
  * only job is turning real repository data into that component's prop
  * shape.

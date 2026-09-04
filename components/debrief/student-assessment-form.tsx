@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { AssessmentProgress } from "@/components/debrief/assessment-progress";
 import { PerformanceLevelPicker } from "@/components/debrief/performance-level-picker";
-import { BackLink, Card, PageTitle, PrimaryButton, Screen, SectionLabel } from "@/components/prototype/ui";
+import { BackLink, Card, PageTitle, PrimaryButton, Screen, SectionLabel } from "@/components/student/ui";
 import { partitionTasks } from "@/lib/universal-tasks";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
 

@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { DebriefRecorder } from "@/components/debrief-recorder";
 import { GuidedDebriefRecorder } from "@/components/debrief/guided-debrief-recorder";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { PageTitle, Screen } from "@/components/prototype/ui";
+import { PageTitle, Screen } from "@/components/student/ui";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { formatFlightContext } from "@/lib/utils";

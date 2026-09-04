@@ -17,8 +17,8 @@ import {
   Section,
   SecondaryButton,
   stateTone,
-} from "@/components/prototype/ui";
-import { ObjectiveComparison } from "@/components/prototype/assessment-comparison";
+} from "@/components/student/ui";
+import { ObjectiveComparison } from "@/components/student/debrief/assessment-comparison";
 import { cn } from "@/lib/utils";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
 import {
@@ -27,9 +27,9 @@ import {
   levelLabel,
   levelState,
   type Rater,
-} from "@/lib/prototype/assessment";
-import { ACS_AREAS, INSTRUCTOR, PENDING_FLIGHT, PERCEPTION_GAPS, STRUCTURED } from "@/lib/prototype/vector-data";
-import { flightById, formatHours } from "@/lib/prototype/flights";
+} from "@/lib/student/assessment";
+import { ACS_AREAS, INSTRUCTOR, PENDING_FLIGHT, PERCEPTION_GAPS, STRUCTURED } from "@/lib/prototype-fixtures/vector-data";
+import { flightById, formatHours } from "@/lib/prototype-fixtures/flights";
 
 const FLIGHT = flightById("aug-29")!;
 
