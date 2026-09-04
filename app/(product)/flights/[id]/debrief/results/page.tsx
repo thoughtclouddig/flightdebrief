@@ -35,10 +35,11 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
     void repo.markGuideStepViewed(viewer.user.id, "replay").catch(() => {});
   }
 
-  const [allStudentSignals, memberships, nextLessonBrief] = await Promise.all([
+  const [allStudentSignals, memberships, nextLessonBrief, tasks] = await Promise.all([
     repo.listTrainingSignals({ studentId: flight.userId }),
     repo.listMembershipsForUser(flight.userId),
     computeNextLessonBrief(repo, flight.userId),
+    repo.listFlightTasks(id),
   ]);
   const certificateType =
     memberships.find((m) => m.organizationId === flight.organizationId)?.certificateType ?? null;
@@ -78,12 +79,12 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
       <StudentDebriefV2
         flight={flight}
         result={result}
-        differenceRows={differenceRows}
-        recurringTheme={nextLessonBrief.recurringThemes[0] ?? null}
+        tasks={tasks}
         instructorFirstName={instructorFirstName}
         certificateType={certificateType}
         ttsEnabled={ttsEnabled}
         flightId={flight.id}
+        audioDurationSeconds={debrief.audioDurationSeconds}
       />
     );
   }

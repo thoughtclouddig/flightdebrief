@@ -66,6 +66,7 @@ function assessment(overrides: Partial<DebriefAssessment> = {}): DebriefAssessme
     flightId: "flight-1",
     role: "instructor",
     assessorUserId: "instructor-1",
+    attribution: "account_verified",
     status: "submitted",
     submittedAt: "2026-08-20T21:00:00.000Z",
     overallReflection: null,

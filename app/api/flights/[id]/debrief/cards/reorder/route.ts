@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
+import { assertCanActAsInstructor } from "@/lib/auth/assessment-access";
 import { getRepository } from "@/lib/data";
 
 interface ReorderBody {
   orderedCardIds: string[];
 }
 
-/** Back/reprioritize during the Guided Debrief -- persists the CFI's current card order. */
+/** Back/reprioritize during the Guided Debrief -- persists whoever is running it (a verified CFI, or the student's own session on a guest-handoff flight) current card order. */
 export async function POST(request: Request, { params }: RouteContext<"/api/flights/[id]/debrief/cards/reorder">) {
-  const auth = await authorize(["instructor", "admin"]);
+  const auth = await authorize();
   if (auth.response) return auth.response;
 
   const { id } = await params;
@@ -17,6 +18,8 @@ export async function POST(request: Request, { params }: RouteContext<"/api/flig
   if (!flight || !canAccessRecord(auth.viewer, { studentId: flight.userId, organizationId: flight.organizationId })) {
     return recordNotFound();
   }
+  const canAct = await assertCanActAsInstructor(repo, auth.viewer, flight);
+  if (canAct.response) return canAct.response;
 
   const body = (await request.json()) as ReorderBody;
   const cards = await repo.listCards(id);

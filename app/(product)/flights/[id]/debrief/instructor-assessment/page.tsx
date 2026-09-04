@@ -1,33 +1,44 @@
 import { notFound, redirect } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
-import { AssessmentForm } from "@/components/debrief/assessment-form";
+import { StudentAssessmentForm } from "@/components/debrief/student-assessment-form";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { formatFlightContext } from "@/lib/utils";
+import { PageTitle, Screen } from "@/components/prototype/ui";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
+/**
+ * Reached two ways -- a verified CFI/admin account on their own device, or
+ * (the common case) the flight's own student continuing on the same phone
+ * after the handoff at self-assessment/page.tsx's "Start instructor
+ * assessment" CTA. Both land on the identical V2 rating form; see
+ * lib/auth/assessment-access.ts for how each is authorized and attributed.
+ * Student goes first either way -- enforced here for a direct visit, and
+ * for real by the submit route.
+ */
 export default async function InstructorAssessmentPage(props: PageProps<"/flights/[id]/debrief/instructor-assessment">) {
   const { id } = await props.params;
   const authorized = await getAuthorizedFlight(id);
   if (!authorized) notFound();
   const { viewer, flight } = authorized;
-  if (viewer.role !== "instructor" && viewer.role !== "admin") notFound();
+  const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
+  if (!isInstructorViewer && viewer.user.id !== flight.userId) notFound();
 
   const repo = getRepository();
   const tasks = await repo.listFlightTasks(id);
   if (tasks.length === 0) notFound();
 
-  // Student goes first now -- see the same rule enforced server-side in the
-  // submit route (the real boundary) and in self-assessment/page.tsx, which
-  // has no gate of its own anymore. The CFI is the one who waits.
   const studentAssessment = await repo.getAssessment(id, "student");
   if (studentAssessment?.status !== "submitted") {
     return (
-      <div className="mx-auto flex max-w-xl flex-col gap-2 text-center">
+      <Screen>
         <AutoRefresh />
-        <p className="text-sm font-medium uppercase tracking-wide text-brand">{formatFlightContext(flight)}</p>
-        <h1 className="mt-1 text-2xl font-semibold text-foreground">Not quite yet</h1>
-        <p className="text-sm text-foreground-soft">The student rates it first -- this page moves on by itself once they submit.</p>
-      </div>
+        <div className="text-center">
+          <PageTitle>Not quite yet</PageTitle>
+          <p className="mt-2 text-[15px] text-foreground-soft">
+            The student rates it first -- this page moves on by itself once they submit.
+          </p>
+        </div>
+      </Screen>
     );
   }
 
@@ -39,21 +50,20 @@ export default async function InstructorAssessmentPage(props: PageProps<"/flight
     redirect(`/flights/${id}/debrief`);
   }
 
+  const cfi = resolveCfiFirstName(flight.instructor);
   const ratings = assessment ? await repo.listAssessmentRatings(assessment.id) : [];
   const initialRatings = Object.fromEntries(ratings.map((r) => [r.flightTaskId, r.performanceLevel]));
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6">
-      <AssessmentForm
-        flightId={id}
-        flight={flight}
-        role="instructor"
-        tasks={tasks.map((t) => ({ id: t.id, label: t.label, taskCode: t.taskCode }))}
-        initialRatings={initialRatings}
-        redirectTo={`/flights/${id}/debrief/instructor-assessment`}
-        title="How did the student do?"
-        helpText="Rate independently -- you won't see the student's self-assessment until you submit yours."
-      />
-    </div>
+    <StudentAssessmentForm
+      flightId={id}
+      role="instructor"
+      tasks={tasks.map((t) => ({ id: t.id, label: t.label, taskCode: t.taskCode }))}
+      initialRatings={initialRatings}
+      redirectTo={`/flights/${id}/debrief/instructor-assessment`}
+      kicker={cfi ? `${cfi}'s assessment` : "Instructor's assessment"}
+      title="How did the student do?"
+      helpText="Rate independently -- you won't see the student's self-assessment until you submit yours."
+    />
   );
 }

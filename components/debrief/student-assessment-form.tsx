@@ -16,14 +16,18 @@ interface TaskInput {
 }
 
 /**
- * Student fork of components/debrief/assessment-form.tsx -- that component
- * is shared with the CFI's instructor-assessment page (role="instructor"),
- * so it's left completely untouched; this preserves its exact rate()/
- * submit() logic and the same two API routes
- * (/assessments/[role]/ratings, /assessments/[role]/submit), always called
- * with role="student" here since self-assessment/page.tsx is already
- * hard-gated to the flight's own student (viewer.user.id !== flight.userId
- * -> notFound()).
+ * V2 assessment form, shared by both independent raters: the student
+ * (role="student", self-assessment/page.tsx) and, for the same-phone
+ * guest-instructor handoff, whoever is now holding the phone
+ * (role="instructor", instructor-assessment/page.tsx). Same rate()/submit()
+ * logic and the same two API routes (/assessments/[role]/ratings,
+ * /assessments/[role]/submit) either way -- only the role param, and
+ * therefore the label vocabulary PerformanceLevelPicker renders, differ. A
+ * real verified-CFI-account submission reuses this exact component too
+ * (see instructor-assessment/page.tsx) -- there is one V2 rating
+ * experience, not two, regardless of which authorization path let the
+ * viewer in. Both page-level call sites are already hard-gated to the
+ * right viewer before rendering this.
  *
  * PerformanceLevelPicker and AssessmentProgress are reused unmodified --
  * both are small, real, already token-based, and shared with the CFI side;
@@ -35,6 +39,7 @@ interface TaskInput {
  */
 export function StudentAssessmentForm({
   flightId,
+  role,
   tasks,
   initialRatings,
   redirectTo,
@@ -43,6 +48,7 @@ export function StudentAssessmentForm({
   helpText,
 }: {
   flightId: string;
+  role: "student" | "instructor";
   tasks: TaskInput[];
   initialRatings: Record<string, PerformanceLevelCode>;
   redirectTo: string;
@@ -66,7 +72,7 @@ export function StudentAssessmentForm({
     setSaving(taskId);
     setError(null);
     try {
-      const res = await fetch(`/api/flights/${flightId}/debrief/assessments/student/ratings`, {
+      const res = await fetch(`/api/flights/${flightId}/debrief/assessments/${role}/ratings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ flightTaskId: taskId, level }),
@@ -84,7 +90,7 @@ export function StudentAssessmentForm({
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/flights/${flightId}/debrief/assessments/student/submit`, {
+      const res = await fetch(`/api/flights/${flightId}/debrief/assessments/${role}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ overallReflection: reflection || null }),
@@ -110,7 +116,7 @@ export function StudentAssessmentForm({
         {lesson.map((task) => (
           <Card key={task.id} className="flex flex-col gap-3.5">
             <p className="text-[17px] font-semibold text-foreground">{task.label}</p>
-            <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} role="student" />
+            <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} role={role} />
           </Card>
         ))}
       </div>
@@ -124,7 +130,7 @@ export function StudentAssessmentForm({
           {universal.map((task) => (
             <Card key={task.id} className="flex flex-col gap-3.5">
               <p className="text-[17px] font-semibold text-foreground">{task.label}</p>
-              <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} role="student" />
+              <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} role={role} />
             </Card>
           ))}
         </div>

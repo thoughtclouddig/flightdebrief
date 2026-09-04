@@ -105,43 +105,51 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
   if (isInstructorViewer && instructorAssessment?.status !== "submitted") {
     redirect(`/flights/${id}/debrief/instructor-assessment`);
   }
-  // By this point a CFI viewer has both assessments resolved (checks above
-  // either returned or redirected them otherwise) -- this is only reachable,
-  // and only meaningful, for a student who has submitted but whose
-  // instructor hasn't yet.
+  // Guest-handoff flights never have an isInstructorViewer -- the same
+  // student session continues on the same phone. self-assessment/page.tsx's
+  // "hand the phone over" screen is the real destination and CTA; landing
+  // there (rather than a dead-end message here) also covers a real CFI
+  // account still mid-rating on their own separate device.
   if (!isInstructorViewer && instructorAssessment?.status !== "submitted") {
-    return <StudentWaitingMessage flight={flight} text="Hand the phone to your instructor -- they'll rate it next." />;
+    redirect(`/flights/${id}/debrief/self-assessment`);
   }
 
-  // A recording already happened and got analyzed, but the CFI hasn't hit
-  // Finish on /review yet -- send both roles there instead of back into the
-  // compare/waiting/recorder branches below, so refreshing or reopening this
-  // URL mid-review is safely resumable like every other step in this flow.
+  // From here on, both assessments are in. Whoever is holding this device
+  // now continues into compare/recording -- either a verified CFI/admin
+  // account, or (the guest-handoff case) the flight's own student session,
+  // recognizable because their instructor assessment is attributed
+  // "guest_handoff" rather than to a separate verified account. No one else
+  // reaches this point at all (canAccessRecord already filtered the viewer).
+  const canContinueDebrief = isInstructorViewer || (instructorAssessment?.attribution === "guest_handoff" && viewer.user.id === flight.userId);
+
+  // A recording already happened and got analyzed, but the debrief hasn't
+  // been finished on /review yet -- send both roles there instead of back
+  // into the compare/waiting/recorder branches below, so refreshing or
+  // reopening this URL mid-review is safely resumable like every other step
+  // in this flow.
   const existingDebrief = await repo.getDebriefByFlight(id);
   if (existingDebrief) {
     redirect(`/flights/${id}/debrief/review`);
   }
 
   const cards = await repo.listCards(id);
-  if (!isInstructorViewer) {
+  if (!canContinueDebrief) {
     return <StudentWaitingMessage flight={flight} text="Both assessments are in -- your instructor is starting the debrief." />;
   }
 
-  // Both assessments are in but the CFI hasn't come from the Compare screen
-  // yet -- send them there first (its "Start the debrief" button links back
-  // here with ?started=1 to skip this redirect on the way back).
+  // Both assessments are in but nobody's come from the Reveal screen yet --
+  // send them there first (its "Talk it through" button links back here
+  // with ?started=1 to skip this redirect on the way back).
   const searchParams = await props.searchParams;
   if (searchParams.started !== "1") {
     redirect(`/flights/${id}/debrief/compare`);
   }
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6">
+    <Screen>
       <div className="text-center">
-        <p className="text-sm font-medium uppercase tracking-wide text-brand">Guided Debrief</p>
-        <h1 className="mt-1 text-2xl font-semibold text-foreground">
-          {formatFlightContext(flight)}
-        </h1>
+        <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
+        <PageTitle>Record the debrief</PageTitle>
       </div>
       <GuidedDebriefRecorder
         flightId={flight.id}
@@ -149,7 +157,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
         guidanceMode={guidanceMode}
         taskLabels={tasks.map((t) => t.label)}
       />
-    </div>
+    </Screen>
   );
 }
 

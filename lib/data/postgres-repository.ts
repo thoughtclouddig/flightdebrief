@@ -13,6 +13,7 @@ import type {
   ArticleIdea,
   ArticleIdeaStatus,
   ArticleStatus,
+  AssessmentAttribution,
   AssessmentRole,
   CardDefinition,
   ConsentRecord,
@@ -981,7 +982,12 @@ export class PostgresRepository implements Repository {
 
   // --- Structured, CFI-led debrief: independent assessments ---
 
-  async getOrCreateAssessment(flightId: string, role: AssessmentRole, assessorUserId: string): Promise<DebriefAssessment> {
+  async getOrCreateAssessment(
+    flightId: string,
+    role: AssessmentRole,
+    assessorUserId: string,
+    attribution: AssessmentAttribution = "account_verified",
+  ): Promise<DebriefAssessment> {
     const db = await this.db();
     const existing = await db.query("SELECT * FROM debrief_assessments WHERE flight_id = $1 AND role = $2", [
       flightId,
@@ -989,11 +995,11 @@ export class PostgresRepository implements Repository {
     ]);
     if (existing.rows[0]) return mapDebriefAssessment(existing.rows[0]);
     const { rows } = await db.query(
-      `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO debrief_assessments (id, flight_id, role, assessor_user_id, attribution)
+       VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (flight_id, role) DO NOTHING
        RETURNING *`,
-      [randomUUID(), flightId, role, assessorUserId],
+      [randomUUID(), flightId, role, assessorUserId, attribution],
     );
     if (rows[0]) return mapDebriefAssessment(rows[0]);
     // Lost the race to a concurrent create -- fetch what's there now.
@@ -2052,6 +2058,7 @@ function mapDebriefAssessment(row: Row): DebriefAssessment {
     flightId: row.flight_id as string,
     role: row.role as DebriefAssessment["role"],
     assessorUserId: row.assessor_user_id as string,
+    attribution: row.attribution as DebriefAssessment["attribution"],
     status: row.status as DebriefAssessment["status"],
     submittedAt: row.submitted_at ? iso(row.submitted_at) : null,
     overallReflection: (row.overall_reflection as string | null) ?? null,

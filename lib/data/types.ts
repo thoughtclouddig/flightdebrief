@@ -9,6 +9,7 @@ import type {
   ArticleIdea,
   ArticleIdeaStatus,
   ArticleStatus,
+  AssessmentAttribution,
   AssessmentRole,
   CardDefinition,
   ConsentRecord,
@@ -338,7 +339,12 @@ export interface Repository {
   deleteRadioPracticeAssignment(id: string): Promise<void>;
 
   // --- Structured, CFI-led debrief: independent assessments ---
-  getOrCreateAssessment(flightId: string, role: AssessmentRole, assessorUserId: string): Promise<DebriefAssessment>;
+  getOrCreateAssessment(
+    flightId: string,
+    role: AssessmentRole,
+    assessorUserId: string,
+    attribution?: AssessmentAttribution,
+  ): Promise<DebriefAssessment>;
   getAssessment(flightId: string, role: AssessmentRole): Promise<DebriefAssessment | null>;
   upsertAssessmentRating(
     assessmentId: string,

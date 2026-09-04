@@ -28,12 +28,19 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
   const { structuredResult: result } = debrief;
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
   const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
+  // Guest-handoff flights have no separate verified CFI session -- the same
+  // student who did the handoff is the only one who can ever finish this
+  // debrief. See app/api/flights/[id]/debrief/finish/route.ts, the real
+  // enforcement boundary for the action this unlocks.
+  const instructorAssessment = await repo.getAssessment(id, "instructor");
+  const canActAsInstructor =
+    isInstructorViewer || (instructorAssessment?.attribution === "guest_handoff" && viewer.user.id === flight.userId);
 
   const [allStudentSignals, memberships, aircraft, flightTrainingItems] = await Promise.all([
     repo.listTrainingSignals({ studentId: flight.userId }),
     repo.listMembershipsForUser(flight.userId),
     isInstructorViewer ? repo.listAircraft(viewer.organization.id) : Promise.resolve([]),
-    isInstructorViewer ? repo.listTrainingItems({ flightId: flight.id }) : Promise.resolve([]),
+    canActAsInstructor ? repo.listTrainingItems({ flightId: flight.id }) : Promise.resolve([]),
   ]);
   const certificateType =
     memberships.find((m) => m.organizationId === flight.organizationId)?.certificateType ?? null;
@@ -61,13 +68,13 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
         <p className="text-sm font-medium uppercase tracking-wide text-brand">Review Together</p>
         <h1 className="mt-1 text-2xl font-semibold text-foreground">{formatFlightContext(flight)}</h1>
         <p className="mt-1 text-sm text-foreground-soft">
-          {isInstructorViewer
+          {canActAsInstructor
             ? "Walk through this with the student, then finish the debrief when you're both ready."
             : "Your instructor is walking through this with you before it's finalized."}
         </p>
       </div>
 
-      {isInstructorViewer ? (
+      {canActAsInstructor ? (
         <DebriefWrapUp
           flightId={flight.id}
           studentId={flight.userId}
@@ -87,10 +94,10 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
         flightId={flight.id}
         flightSkillProgressions={flightSkillProgressions}
         certificateType={certificateType}
-        canDismiss={isInstructorViewer}
+        canDismiss={canActAsInstructor}
         instructorFirstName={resolveCfiFirstName(flight.instructor)}
         editableTrainingItems={
-          isInstructorViewer
+          canActAsInstructor
             ? {
                 keepWorkingOn: flightTrainingItems.filter((t) => t.category === "keep_working_on"),
                 beforeNextFlight: flightTrainingItems.filter((t) => t.category === "before_next_flight"),

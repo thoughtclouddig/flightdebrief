@@ -25,7 +25,8 @@ export async function POST(
     return recordNotFound();
   }
 
-  const roleCheck = assertAssessmentRole(auth.viewer, flight, roleParam);
+  const studentAssessment = await repo.getAssessment(id, "student");
+  const roleCheck = assertAssessmentRole(auth.viewer, flight, roleParam, studentAssessment?.status === "submitted");
   if (roleCheck.response) return roleCheck.response;
 
   const body = (await request.json()) as RateBody;
@@ -33,7 +34,7 @@ export async function POST(
     return NextResponse.json({ error: "Missing flightTaskId or level" }, { status: 400 });
   }
 
-  const assessment = await repo.getOrCreateAssessment(id, roleCheck.role, auth.viewer.user.id);
+  const assessment = await repo.getOrCreateAssessment(id, roleCheck.role, auth.viewer.user.id, roleCheck.attribution);
   if (assessment.status === "submitted") {
     return NextResponse.json({ error: "Assessment already submitted" }, { status: 409 });
   }

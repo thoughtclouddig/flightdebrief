@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { StudentAssessmentForm } from "@/components/debrief/student-assessment-form";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { PageTitle, PrimaryButton, Screen } from "@/components/prototype/ui";
+import { PageTitle, Panel, PanelEyebrow, PanelHeadline, PrimaryButton, Screen } from "@/components/prototype/ui";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 /** Hard-gated to the flight's own student (line below) -- never reached by an instructor/admin, so this is a safe direct rewrite, not a role branch. */
@@ -41,16 +42,20 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
         </Screen>
       );
     }
+    const student = await repo.getUser(flight.userId);
+    const studentFirstName = student?.name?.split(" ")[0] ?? "Your";
     return (
       <Screen>
         <AutoRefresh />
-        <div className="text-center">
-          <PageTitle>Hand over the phone</PageTitle>
-          <p className="mt-2 text-[15px] text-foreground-soft">
-            {cfi ? `Give it to ${cfi} -- they'll rate it next.` : "Give it to your instructor -- they'll rate it next."}{" "}
-            Your answers stay hidden until you&rsquo;ve both finished.
+        <Panel className="flex flex-col gap-4 py-10 text-center">
+          <PanelEyebrow icon={<ArrowRight className="size-3.5" aria-hidden />}>Your part is done</PanelEyebrow>
+          <PanelHeadline>{cfi ? `Hand the phone to ${cfi}` : "Hand the phone to your instructor"}</PanelHeadline>
+          <p className="text-[15px] leading-relaxed text-panel-foreground-soft">
+            {cfi ? `${cfi}, this` : "This"} part is for you. {studentFirstName}&rsquo;s answers are hidden until you
+            finish yours.
           </p>
-        </div>
+        </Panel>
+        <PrimaryButton href={`/flights/${id}/debrief/instructor-assessment`}>Start instructor assessment</PrimaryButton>
       </Screen>
     );
   }
@@ -61,6 +66,7 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
   return (
     <StudentAssessmentForm
       flightId={id}
+      role="student"
       tasks={tasks.map((t) => ({ id: t.id, label: t.label, taskCode: t.taskCode }))}
       initialRatings={initialRatings}
       redirectTo={`/flights/${id}/debrief/self-assessment`}

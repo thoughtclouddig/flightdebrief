@@ -334,6 +334,18 @@ CREATE TABLE IF NOT EXISTS debrief_assessments (
 );
 CREATE INDEX IF NOT EXISTS debrief_assessments_flight_idx ON debrief_assessments (flight_id);
 
+-- A CFI does not need an AfterFlight account to take part in the student-
+-- owned, same-phone debrief handoff (see lib/auth/assessment-access.ts).
+-- 'guest_handoff' means assessor_user_id is the STUDENT's own authenticated
+-- session that entered the rating on the instructor's behalf -- it is never
+-- the instructor's own verified identity, and must never be displayed as
+-- though it were. The instructor's real name/identity for display always
+-- comes from flights.instructor_id, not from this row. 'account_verified'
+-- (the default, and the only value a 'student' role row ever takes) means
+-- assessor_user_id genuinely is whoever this judgment belongs to.
+ALTER TABLE debrief_assessments ADD COLUMN IF NOT EXISTS attribution text NOT NULL DEFAULT 'account_verified'
+  CHECK (attribution IN ('account_verified', 'guest_handoff'));
+
 -- Performance level is one of lib/performance-levels.ts's stable
 -- PerformanceLevelCode values (LEARNING/NEEDS_COACHING/INDEPENDENT) --
 -- the FAA FITS-equivalent mapping and any future display-label change live

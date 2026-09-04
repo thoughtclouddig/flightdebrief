@@ -37,29 +37,30 @@ export async function POST(
     return recordNotFound();
   }
 
-  const roleCheck = assertAssessmentRole(auth.viewer, flight, roleParam);
-  if (roleCheck.response) return roleCheck.response;
-  const role = roleCheck.role;
-
   // Student goes first, always -- the two-assessments-in-any-order design
   // was the source of real confusion in practice (nobody knew whose turn it
   // was), and the student's own read has to come before the instructor's
   // judgment can influence it, or the later perception-gap comparison isn't
   // measuring independent perspectives. The real boundary is here, not the
   // page-level gate or the resolver's redirect -- either of those alone can
-  // be bypassed by hitting the instructor-assessment URL directly.
-  if (role === "instructor") {
-    const studentAssessment = await repo.getAssessment(id, "student");
-    if (studentAssessment?.status !== "submitted") {
-      return NextResponse.json(
-        { error: "The student needs to submit their assessment first." },
-        { status: 400 },
-      );
-    }
+  // be bypassed by hitting the instructor-assessment URL directly. This same
+  // "student already submitted" fact is also what authorizes a same-phone
+  // guest-instructor submission below (see assertAssessmentRole) -- it is
+  // not a separate check for that path.
+  const studentAssessment = await repo.getAssessment(id, "student");
+  const roleCheck = assertAssessmentRole(auth.viewer, flight, roleParam, studentAssessment?.status === "submitted");
+  if (roleCheck.response) return roleCheck.response;
+  const role = roleCheck.role;
+
+  if (role === "instructor" && studentAssessment?.status !== "submitted") {
+    return NextResponse.json(
+      { error: "The student needs to submit their assessment first." },
+      { status: 400 },
+    );
   }
 
   const body = (await request.json().catch(() => ({}))) as SubmitBody;
-  const assessment = await repo.getOrCreateAssessment(id, role, auth.viewer.user.id);
+  const assessment = await repo.getOrCreateAssessment(id, role, auth.viewer.user.id, roleCheck.attribution);
   await repo.submitAssessment(assessment.id, body.overallReflection ?? null);
 
   const otherAssessment = await repo.getAssessment(id, OTHER_ROLE[role]);

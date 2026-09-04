@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
+import { assertCanActAsInstructor } from "@/lib/auth/assessment-access";
 import { getRepository } from "@/lib/data";
 import type { DebriefCardStatus } from "@/lib/types";
 
@@ -20,7 +21,7 @@ export async function PATCH(
   request: Request,
   { params }: RouteContext<"/api/flights/[id]/debrief/cards/[cardId]">,
 ) {
-  const auth = await authorize(["instructor", "admin"]);
+  const auth = await authorize();
   if (auth.response) return auth.response;
 
   const { id, cardId } = await params;
@@ -29,6 +30,8 @@ export async function PATCH(
   if (!flight || !canAccessRecord(auth.viewer, { studentId: flight.userId, organizationId: flight.organizationId })) {
     return recordNotFound();
   }
+  const canAct = await assertCanActAsInstructor(repo, auth.viewer, flight);
+  if (canAct.response) return canAct.response;
 
   const cards = await repo.listCards(id);
   if (!cards.some((c) => c.id === cardId)) return recordNotFound();

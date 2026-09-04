@@ -527,6 +527,17 @@ export interface RadioPracticeAssignment {
 
 export type AssessmentRole = "student" | "instructor";
 export type AssessmentStatus = "in_progress" | "submitted";
+/**
+ * A CFI does not need an AfterFlight account to take part in the student-
+ * owned, same-phone debrief handoff. "guest_handoff" means this row's
+ * assessorUserId is the STUDENT's own authenticated session, entered on the
+ * instructor's behalf -- never the instructor's own verified identity, and
+ * must never be displayed as though it were (their real name comes from
+ * Flight.instructor, always). "account_verified" means assessorUserId
+ * genuinely is whoever this judgment belongs to; the only value a "student"
+ * role row ever takes.
+ */
+export type AssessmentAttribution = "account_verified" | "guest_handoff";
 
 /** One row per (flight, role) -- UNIQUE at the DB level, so "CFI can't see student's ratings until their own is submitted" is a plain query condition. */
 export interface DebriefAssessment {
@@ -534,6 +545,7 @@ export interface DebriefAssessment {
   flightId: string;
   role: AssessmentRole;
   assessorUserId: string;
+  attribution: AssessmentAttribution;
   status: AssessmentStatus;
   submittedAt: string | null;
   overallReflection: string | null;
