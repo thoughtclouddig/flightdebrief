@@ -12,20 +12,20 @@ import { cn } from "@/lib/utils";
  * than anywhere a student would look, because the real app derives the state
  * from whether the last flight has a debrief attached.
  */
-export function DemoStateSwitch() {
+export function DemoStateSwitch({ homeHref = "/prototype/vector" }: { homeHref?: string }) {
   const pathname = usePathname();
   const params = useSearchParams();
-  if (pathname !== "/prototype/vector") return null;
+  if (pathname !== homeHref) return null;
   const state = params.get("state");
   return (
     <div className="flex items-center gap-1 rounded-full bg-surface-sunken p-0.5">
-      <Opt href="/prototype/vector?state=landed" active={state === "landed"}>
+      <Opt href={`${homeHref}?state=landed`} active={state === "landed"}>
         Flew, not logged
       </Opt>
-      <Opt href="/prototype/vector?state=flown" active={state === "flown"}>
+      <Opt href={`${homeHref}?state=flown`} active={state === "flown"}>
         Flight logged
       </Opt>
-      <Opt href="/prototype/vector" active={!state}>
+      <Opt href={homeHref} active={!state}>
         Between flights
       </Opt>
     </div>

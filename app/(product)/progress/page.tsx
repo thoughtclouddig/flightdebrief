@@ -67,6 +67,7 @@ export default async function ProgressPage() {
 
   const skills: ProgressSkillRow[] = progressions.map((p) => ({
     slug: p.skill,
+    href: `/progress/${p.skill}`,
     label: p.label,
     score: meterScoreForSkillStatus(p.status),
     max: 4,
@@ -123,7 +124,6 @@ export default async function ProgressPage() {
     <StudentProgress
       title={solo ? "Your proficiency" : "Your progress"}
       skills={skills}
-      skillHref={(slug) => `/progress/${slug}`}
       acs={acs}
       extra={
         <>

@@ -220,8 +220,26 @@ export function PrimaryButton({ children, onClick, href }: { children: ReactNode
  * two saturated blocks in the same 200px; the light fill reads as the obvious
  * target without adding a second accent.
  */
-export function PanelButton({ children, onClick, href }: { children: ReactNode; onClick?: () => void; href?: string }) {
-  const cls = cn(PRIMARY, "bg-panel-foreground text-panel");
+export function PanelButton({
+  children,
+  onClick,
+  href,
+  disabled = false,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  href?: string;
+  /** Known gap, not a dead end -- renders as a visibly non-interactive marker instead of a link. */
+  disabled?: boolean;
+}) {
+  const cls = cn(PRIMARY, "bg-panel-foreground text-panel", disabled && "cursor-not-allowed opacity-40");
+  if (disabled) {
+    return (
+      <span className={cls} aria-disabled="true">
+        {children}
+      </span>
+    );
+  }
   return href ? (
     <Link href={href} className={cls}>
       {children}
@@ -279,7 +297,20 @@ export function SecondaryButton({
 }
 
 /** Navigation, not action. A hairline-separated row with a chevron. */
-export function QuietRow({ href, label, meta, onClick }: { href?: string; label: ReactNode; meta?: ReactNode; onClick?: () => void }) {
+export function QuietRow({
+  href,
+  label,
+  meta,
+  onClick,
+  disabled = false,
+}: {
+  href?: string;
+  label: ReactNode;
+  meta?: ReactNode;
+  onClick?: () => void;
+  /** Known gap, not a dead end -- renders as a visibly non-interactive marker instead of a link. */
+  disabled?: boolean;
+}) {
   const inner = (
     <>
       <span className="min-w-0 flex-1 text-[17px] text-foreground">{label}</span>
@@ -287,8 +318,17 @@ export function QuietRow({ href, label, meta, onClick }: { href?: string; label:
       <ChevronRight className="size-4 shrink-0 text-foreground-faint" aria-hidden />
     </>
   );
-  const cls =
-    "flex min-h-[56px] w-full cursor-pointer items-center gap-3 border-b border-hairline text-left last:border-b-0";
+  const cls = cn(
+    "flex min-h-[56px] w-full items-center gap-3 border-b border-hairline text-left last:border-b-0",
+    disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer",
+  );
+  if (disabled) {
+    return (
+      <span className={cls} aria-disabled="true">
+        {inner}
+      </span>
+    );
+  }
   return href ? (
     <Link href={href} className={cls}>
       {inner}

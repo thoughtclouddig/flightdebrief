@@ -6,11 +6,11 @@ import {
 import { INSTRUCTOR, SKILL_SCORES } from "@/lib/prototype-fixtures/vector-data";
 import { acsReadiness } from "@/lib/prototype/acs";
 
-/** Fixture data adapter for components/student/student-progress.tsx -- see that file's doc comment for the shared hierarchy and the real Skills/ACS granularity split. */
-export default function ProgressPage() {
+/** Milestone 1A fixture-parity Progress -- mechanically the same as app/prototype/vector/progress/page.tsx, hrefs repointed at /v2/**. */
+export default function V2Progress() {
   const skills: ProgressSkillRow[] = SKILL_SCORES.map((s) => ({
     slug: s.slug,
-    href: `/prototype/vector/progress/${s.slug}`,
+    href: `/v2/progress/${s.slug}`,
     label: s.skill,
     score: s.score,
     max: s.max,
@@ -45,7 +45,7 @@ export default function ProgressPage() {
       rows: group.tasks.map((t) => ({
         label: t.task.name,
         code: t.task.code,
-        skills: t.skills.map((s) => ({ href: `/prototype/vector/progress/${s.slug}`, label: s.skill })),
+        skills: t.skills.map((s) => ({ href: `/v2/progress/${s.slug}`, label: s.skill })),
         state: t.state,
         score: t.score,
         max: t.max,
