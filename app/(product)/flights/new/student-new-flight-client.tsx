@@ -7,6 +7,7 @@ import { Card, PageTitle, PrimaryButton, Screen, SecondaryButton, Segmented } fr
 import { formatDurationShort } from "@/lib/utils";
 import { localIsoDate } from "@/lib/date";
 import type { FlightCandidate } from "@/lib/flight-data";
+import { trackEvent } from "@/lib/marketing/analytics";
 
 type Mode = "search" | "manual";
 
@@ -325,6 +326,11 @@ function ConfirmCandidateForm({
         setError(data.error ?? "Failed to add this flight. Please try again.");
         return;
       }
+      trackEvent("flight_created", {
+        creation_method: "adsb",
+        has_instructor: Boolean(instructorName),
+        duration_minutes: candidate.durationMinutes ?? 60,
+      });
       onCreated(data.flight.id);
     } catch {
       setError("Failed to add this flight -- check your connection and try again.");
@@ -399,6 +405,11 @@ function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: stri
         setSaving(false);
         return;
       }
+      trackEvent("flight_created", {
+        creation_method: "manual",
+        has_instructor: Boolean(form.instructorName),
+        duration_minutes: form.durationMinutes,
+      });
       router.push(`/flights/${data.flight.id}`);
     } catch {
       setError("Failed to add this flight -- check your connection and try again.");

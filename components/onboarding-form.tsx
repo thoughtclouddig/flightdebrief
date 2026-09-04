@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { trackEvent } from "@/lib/marketing/analytics";
 
 export function OnboardingForm({ initialName }: { initialName: string }) {
   const [name, setName] = useState(initialName);
@@ -27,6 +28,7 @@ export function OnboardingForm({ initialName }: { initialName: string }) {
         setError(data.error ?? "Something went wrong. Please try again.");
         return;
       }
+      trackEvent("onboarding_completed", { name_provided: true });
       window.location.href = "/app";
     } catch {
       setError("Something went wrong — check your connection and try again.");

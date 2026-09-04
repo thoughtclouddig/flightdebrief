@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RecordingConsent } from "@/components/debrief/recording-consent";
 import { Waveform } from "@/components/waveform";
 import { useTranscription } from "@/lib/transcription";
+import { trackEvent } from "@/lib/marketing/analytics";
 import { cn } from "@/lib/utils";
 
 export function DebriefRecorder({ flightId, solo = false }: { flightId: string; solo?: boolean }) {
@@ -22,6 +23,10 @@ export function DebriefRecorder({ flightId, solo = false }: { flightId: string; 
   async function handleStart() {
     setPhase("recording");
     await transcription.start();
+    trackEvent("debrief_started", {
+      is_solo: solo,
+      transcription_mode: transcription.mode,
+    });
   }
 
   async function handleFinish() {
@@ -42,6 +47,12 @@ export function DebriefRecorder({ flightId, solo = false }: { flightId: string; 
         const body = await res.json().catch(() => null);
         throw new Error(body?.message || "Something went wrong analyzing your debrief. Please try again.");
       }
+      trackEvent("debrief_completed", {
+        is_solo: solo,
+        transcription_mode: transcription.mode,
+        duration_seconds: durationSeconds,
+        transcript_length: transcript.length,
+      });
       router.push(`/flights/${flightId}/debrief/results`);
     } catch (err) {
       setSubmitError(err instanceof Error && err.message ? err.message : "Something went wrong analyzing your debrief. Please try again.");

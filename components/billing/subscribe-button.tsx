@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
+import { trackEvent } from "@/lib/marketing/analytics";
 
 export function SubscribeButton({
   billingPeriod,
@@ -27,6 +28,10 @@ export function SubscribeButton({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.url) throw new Error(data?.error || "Couldn't start checkout.");
+      trackEvent("checkout_started", {
+        billing_period: billingPeriod,
+        quantity: quantity ?? 1,
+      });
       window.location.href = data.url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't start checkout.");
