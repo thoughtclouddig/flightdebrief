@@ -111,6 +111,7 @@ export class PostgresRepository implements Repository {
         // debrief_assessment_ratings all foreign-key onto flight-mia-3, which
         // seedDomainTables is what actually inserts.
         await seedMiaGuidedAssessment(client);
+        await seedMiaHistoricalFlightTasks(client);
         console.log("[Data] PostgresRepository seeded demo flight/training data");
       }
       await client.query("COMMIT");
@@ -1734,6 +1735,39 @@ async function seedDomainTables(client: PoolClient): Promise<void> {
         s.flightDate, s.category, s.skill, s.status, s.source, s.statement, s.createdAt,
       ],
     );
+  }
+}
+
+/**
+ * flight-mia-1 and flight-mia-2 are freeform debriefs (see lib/data/seed.ts)
+ * -- no flight_tasks, so the Debrief hub's real lesson-title derivation
+ * (deriveLessonFocus()) has nothing to work with for them and falls back to
+ * the flight's route. Real production objectives, no ratings (only
+ * flight-mia-3 has the real guided assessment) -- just enough for the hub's
+ * two "Earlier" rows to show a real lesson title instead of a route, the way
+ * every row in the prototype's fixture does. Same idempotency contract as
+ * seedMiaGuidedAssessment.
+ */
+async function seedMiaHistoricalFlightTasks(client: PoolClient): Promise<void> {
+  const flights: { flightId: string; tasks: { code: string; label: string }[] }[] = [
+    { flightId: "flight-mia-1", tasks: [{ code: "SHORT_FIELD_LANDING", label: "Short-field landings" }] },
+    {
+      flightId: "flight-mia-2",
+      tasks: [
+        { code: "CROSSWIND_LANDING", label: "Crosswind landings" },
+        { code: "SHORT_FIELD_LANDING", label: "Short-field landings" },
+      ],
+    },
+  ];
+  for (const { flightId, tasks } of flights) {
+    for (const [i, task] of tasks.entries()) {
+      const id = `flight-task-${flightId}-${task.code.toLowerCase().replaceAll("_", "-")}`;
+      await client.query(
+        `INSERT INTO flight_tasks (id, flight_id, task_code, label, source, sort_order)
+         VALUES ($1,$2,$3,$4,'instructor_selected',$5) ON CONFLICT (id) DO NOTHING`,
+        [id, flightId, task.code, task.label, i],
+      );
+    }
   }
 }
 

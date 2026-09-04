@@ -2,6 +2,7 @@ import { StudentDebriefHub, type StudentDebriefRow } from "@/components/prototyp
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
+import { deriveLessonFocus } from "@/lib/lesson-focus";
 import { formatAudioDuration, formatFlightDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -32,11 +33,18 @@ export default async function DebriefHub() {
 
   const rows = await Promise.all(
     debriefed.map(async (flight): Promise<StudentDebriefRow> => {
-      const debrief = await repo.getDebriefByFlight(flight.id);
+      const [debrief, tasks] = await Promise.all([repo.getDebriefByFlight(flight.id), repo.listFlightTasks(flight.id)]);
+      // Same rule as Train: this row is naming what was trained, not
+      // identifying the airplane. Real flight_tasks (guided-mode debriefs)
+      // give a real lesson title; a freeform debrief has none, and the
+      // route is the fallback there -- a row can't be blank the way a
+      // sentence can gracefully drop a clause, so this is a labeled
+      // fallback, not a silent substitution.
+      const lessonFocus = deriveLessonFocus(tasks);
       return {
         id: flight.id,
         href: `/flights/${flight.id}/debrief/results`,
-        label: `${flight.departureAirport} → ${flight.arrivalAirport}`,
+        label: lessonFocus ?? `${flight.departureAirport} → ${flight.arrivalAirport}`,
         dateLabel: formatFlightDate(flight.flightDate),
         instructorLabel: resolveCfiFirstName(flight.instructor),
         durationLabel: debrief ? formatAudioDuration(debrief.audioDurationSeconds) : null,
