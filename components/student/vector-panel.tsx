@@ -21,10 +21,12 @@ export function VectorPanel({
   context,
   suggestions,
   onAction,
+  chairFlyHref = "/prototype/vector/train/chair-fly",
 }: {
   context: string;
   suggestions: string[];
   onAction?: (target: string | null) => void;
+  chairFlyHref?: string;
 }) {
   const router = useRouter();
   const [card, setCard] = useState<VectorCard | null>(null);
@@ -59,7 +61,7 @@ export function VectorPanel({
               both offer it, and only one of them was passing an onAction. */}
           <VectorCardView
             card={card}
-            onAction={(t) => (t === "chair-fly" ? router.push("/prototype/vector/train/chair-fly") : onAction?.(t))}
+            onAction={(t) => (t === "chair-fly" ? router.push(chairFlyHref) : onAction?.(t))}
           />
           <button
             onClick={() => setCard(null)}

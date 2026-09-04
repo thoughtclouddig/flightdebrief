@@ -40,12 +40,15 @@ import { Avatar } from "@/components/prototype/avatar";
 export function AppHeader({
   homeHref = "/prototype/vector",
   actions,
+  hiddenOnPathPrefix = "/prototype/vector/debrief/new",
 }: {
   homeHref?: string;
   actions?: ReactNode;
+  /** Debrief capture is deliberately chrome-free -- route-base-aware so a namespace beside the prototype (e.g. /v2/debrief/new) gets the same treatment without hardcoding its path here. */
+  hiddenOnPathPrefix?: string;
 }) {
   const pathname = usePathname();
-  if (pathname.startsWith("/prototype/vector/debrief/new")) return null;
+  if (pathname.startsWith(hiddenOnPathPrefix)) return null;
 
   return (
     <div className="flex items-center gap-0.5 px-4 pb-1 pt-2">

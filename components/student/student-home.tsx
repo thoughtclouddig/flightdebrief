@@ -19,7 +19,10 @@ export type StudentHomePanel =
       bodyText: string;
       primaryLabel: string;
       primaryHref: string;
+      /** True when primaryHref points somewhere real but out of scope for the caller -- see startFlight's own doc comment for the general pattern. */
+      primaryDisabled?: boolean;
       secondaryHref: string;
+      secondaryDisabled?: boolean;
       showAutoRefresh: boolean;
     }
   | { kind: "nextFlight"; dateTimeLabel: ReactNode; instructorName: string; focusItems: string[] }
@@ -30,7 +33,13 @@ export interface StudentHomeProps {
   firstName: string;
   panel: StudentHomePanel;
   /** Only meaningful alongside a "justFlew" panel. */
-  justFlewRows?: { myFlightsHref: string; myFlightsCount: number; pastDebriefsHref: string; pastDebriefsCount: number };
+  justFlewRows?: {
+    myFlightsHref: string;
+    myFlightsDisabled?: boolean;
+    myFlightsCount: number;
+    pastDebriefsHref: string;
+    pastDebriefsCount: number;
+  };
   /** Only meaningful alongside "nextFlight"/"lastFlight" -- absent for "empty". */
   keyReminder?: { instructorFirstName: string; quote: string } | null;
   trainCta?: { instructorFirstName: string | null; href: string } | null;
@@ -45,15 +54,28 @@ export interface StudentHomeProps {
    */
   startFlight?: { href: string } | { disabled: true } | null;
   addFlightHref?: string | null;
+  /** See startFlight's doc comment -- same "known gap, shown not hidden" meaning, for the Add-a-flight button specifically. */
+  addFlightDisabled?: boolean;
   bottomRows?: {
     myFlightsHref: string;
+    myFlightsDisabled?: boolean;
     myFlightsCount: number;
-    lastDebrief: { href: string; dateLabel: string } | null;
+    lastDebrief: { href: string; dateLabel: string; disabled?: boolean } | null;
     progressHref: string;
   };
 }
 
-export function StudentHome({ firstName, panel, justFlewRows, keyReminder, trainCta, startFlight, addFlightHref, bottomRows }: StudentHomeProps) {
+export function StudentHome({
+  firstName,
+  panel,
+  justFlewRows,
+  keyReminder,
+  trainCta,
+  startFlight,
+  addFlightHref,
+  addFlightDisabled,
+  bottomRows,
+}: StudentHomeProps) {
   return (
     <Screen>
       <PageTitle kicker="Welcome back">{firstName}</PageTitle>
@@ -66,11 +88,11 @@ export function StudentHome({ firstName, panel, justFlewRows, keyReminder, train
             <PanelHeadline>{panel.flightContext}</PanelHeadline>
             <PanelMeta>{panel.bodyText}</PanelMeta>
             <div className="mt-4 flex flex-col gap-2.5">
-              <PanelButton href={panel.primaryHref}>
+              <PanelButton href={panel.primaryHref} disabled={panel.primaryDisabled}>
                 <Mic className="size-[18px]" aria-hidden />
                 {panel.primaryLabel}
               </PanelButton>
-              <SecondaryButton href={panel.secondaryHref} onPanel>
+              <SecondaryButton href={panel.secondaryHref} onPanel disabled={panel.secondaryDisabled}>
                 View flight
               </SecondaryButton>
             </div>
@@ -78,7 +100,7 @@ export function StudentHome({ firstName, panel, justFlewRows, keyReminder, train
 
           {justFlewRows ? (
             <div className="flex flex-col">
-              <QuietRow href={justFlewRows.myFlightsHref} label="My flights" meta={justFlewRows.myFlightsCount} />
+              <QuietRow href={justFlewRows.myFlightsHref} label="My flights" meta={justFlewRows.myFlightsCount} disabled={justFlewRows.myFlightsDisabled} />
               <QuietRow href={justFlewRows.pastDebriefsHref} label="Past debriefs" meta={justFlewRows.pastDebriefsCount} />
             </div>
           ) : null}
@@ -164,13 +186,13 @@ export function StudentHome({ firstName, panel, justFlewRows, keyReminder, train
                     <Plane className="size-[18px]" aria-hidden />
                     Start flight
                   </SecondaryButton>
-                  <SecondaryButton href={addFlightHref}>
+                  <SecondaryButton href={addFlightHref} disabled={addFlightDisabled}>
                     <Plus className="size-[18px]" aria-hidden />
                     Add a flight
                   </SecondaryButton>
                 </div>
               ) : addFlightHref ? (
-                <SecondaryButton href={addFlightHref}>
+                <SecondaryButton href={addFlightHref} disabled={addFlightDisabled}>
                   <Plus className="size-[18px]" aria-hidden />
                   Add a flight
                 </SecondaryButton>
@@ -178,9 +200,9 @@ export function StudentHome({ firstName, panel, justFlewRows, keyReminder, train
 
               {bottomRows ? (
                 <div className="flex flex-col">
-                  <QuietRow href={bottomRows.myFlightsHref} label="My flights" meta={bottomRows.myFlightsCount} />
+                  <QuietRow href={bottomRows.myFlightsHref} label="My flights" meta={bottomRows.myFlightsCount} disabled={bottomRows.myFlightsDisabled} />
                   {bottomRows.lastDebrief ? (
-                    <QuietRow href={bottomRows.lastDebrief.href} label="Review last debrief" meta={bottomRows.lastDebrief.dateLabel} />
+                    <QuietRow href={bottomRows.lastDebrief.href} label="Review last debrief" meta={bottomRows.lastDebrief.dateLabel} disabled={bottomRows.lastDebrief.disabled} />
                   ) : null}
                   <QuietRow href={bottomRows.progressHref} label="See progress" />
                 </div>

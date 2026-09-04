@@ -17,17 +17,21 @@ export interface StudentDebriefRow {
   instructorLabel: string | null;
   /** The recording's length, e.g. "1:12". Null when a debrief has no recorded duration to show. */
   durationLabel: string | null;
+  /** True when href points somewhere real but out of scope for the caller (e.g. a temporary namespace's fixture-parity milestone) -- renders visibly, disabled, rather than a live link into a route that doesn't exist yet for that caller. */
+  disabled?: boolean;
 }
 
 export interface StudentDebriefHubProps {
   /** Href for the "Just landed?" panel's Start-new-debrief button. Null hides the panel -- there is nothing to capture. */
   justLandedHref: string | null;
+  /** See StudentDebriefRow.disabled -- same meaning, for the panel's own button. */
+  justLandedDisabled?: boolean;
   latest: StudentDebriefRow | null;
   history: StudentDebriefRow[];
   emptyMessage?: string;
 }
 
-export function StudentDebriefHub({ justLandedHref, latest, history, emptyMessage }: StudentDebriefHubProps) {
+export function StudentDebriefHub({ justLandedHref, justLandedDisabled, latest, history, emptyMessage }: StudentDebriefHubProps) {
   return (
     <Screen>
       <PageTitle>Debriefs</PageTitle>
@@ -40,7 +44,7 @@ export function StudentDebriefHub({ justLandedHref, latest, history, emptyMessag
             Hand your instructor the phone, or record the conversation together. About ninety seconds.
           </p>
           <div className="mt-5">
-            <PanelButton href={justLandedHref}>Start new debrief</PanelButton>
+            <PanelButton href={justLandedHref} disabled={justLandedDisabled}>Start new debrief</PanelButton>
           </div>
         </Panel>
       ) : null}
@@ -48,7 +52,7 @@ export function StudentDebriefHub({ justLandedHref, latest, history, emptyMessag
       {latest ? (
         <Section title="Latest">
           <div className="flex flex-col">
-            <QuietRow href={latest.href} label={<RowLabel row={latest} />} meta={latest.durationLabel} />
+            <QuietRow href={latest.href} label={<RowLabel row={latest} />} meta={latest.durationLabel} disabled={latest.disabled} />
           </div>
         </Section>
       ) : null}
@@ -57,7 +61,7 @@ export function StudentDebriefHub({ justLandedHref, latest, history, emptyMessag
         <Section title="Earlier">
           <div className="flex flex-col">
             {history.map((d) => (
-              <QuietRow key={d.id} href={d.href} label={<RowLabel row={d} />} meta={d.durationLabel} />
+              <QuietRow key={d.id} href={d.href} label={<RowLabel row={d} />} meta={d.durationLabel} disabled={d.disabled} />
             ))}
           </div>
         </Section>

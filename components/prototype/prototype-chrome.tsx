@@ -17,7 +17,7 @@ import { useStored } from "@/lib/prototype/use-stored";
  * The choice persists, so a reviewer who hides it once is not fighting it on
  * every navigation.
  */
-export function PrototypeChrome() {
+export function PrototypeChrome({ homeHref = "/prototype/vector" }: { homeHref?: string }) {
   const [stored, setStored] = useStored("af-prototype-chrome");
   const hidden = stored === "hidden";
 
@@ -45,7 +45,7 @@ export function PrototypeChrome() {
       <p className="text-[11px] text-foreground-faint">Seeded data</p>
       <span className="flex-1" />
       <Suspense fallback={null}>
-        <DemoStateSwitch />
+        <DemoStateSwitch homeHref={homeHref} />
       </Suspense>
       <button
         onClick={() => set(true)}
