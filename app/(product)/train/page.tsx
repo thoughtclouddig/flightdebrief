@@ -7,7 +7,7 @@ import { computeSkillProgression, type SkillProgression } from "@/lib/skill-prog
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { allTrainingSkills } from "@/lib/topics";
 import { performanceLevelLabelFor, performanceLevelRank } from "@/lib/performance-levels";
-import { formatFlightContext, formatFlightDate } from "@/lib/utils";
+import { formatFlightDate } from "@/lib/utils";
 import type { AssessmentDifference, SkillProgressionStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +36,39 @@ const METER_SCORE: Record<SkillProgressionStatus, number> = {
   Improving: 3,
   Demonstrated: 4,
 };
+
+function titleCase(s: string) {
+  return s.trim().replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Turns a flight's real objectives into the natural phrase a lesson title
+ * would use -- "Crosswind + Short-Field Landings," not a literal
+ * "Crosswind landings + Landings + Short-field landings" concatenation of
+ * every flight_tasks.label. Tasks sharing a trailing "landing[s]" word (the
+ * common case in this taxonomy -- Crosswind/Short-Field/Soft-Field Landing)
+ * combine into one shared-suffix phrase; a bare "Landings" task (Stabilized
+ * Approach's own catalog label, see lib/topics.ts) has no maneuver-specific
+ * prefix and contributes nothing rather than an empty segment. Anything else
+ * joins as its own segment. Only meaningful for a guided-mode debrief --
+ * freeform debriefs have no flight_tasks at all, so this returns null and
+ * the caller degrades the sentence rather than reaching for flight metadata.
+ */
+function deriveLessonFocus(tasks: { label: string; sortOrder: number }[]): string | null {
+  const ordered = [...tasks].sort((a, b) => a.sortOrder - b.sortOrder);
+  const landingPrefixes: string[] = [];
+  const otherSegments: string[] = [];
+  for (const t of ordered) {
+    const match = t.label.trim().match(/^(.*?)\s*landings?$/i);
+    const prefix = match?.[1]?.trim();
+    if (prefix) landingPrefixes.push(titleCase(prefix));
+    else if (!match) otherSegments.push(titleCase(t.label));
+  }
+  const segments = [landingPrefixes.length > 0 ? `${landingPrefixes.join(" + ")} Landings` : null, ...otherSegments].filter(
+    (s): s is string => Boolean(s),
+  );
+  return segments.length > 0 ? segments.join(" + ") : null;
+}
 
 /**
  * A real contested objective outranks the weakest open skill or recurring
@@ -85,8 +118,11 @@ export default async function TrainPage() {
     memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
   const cfi = resolveCfiFirstName(brief.lastInstructor);
 
-  const lastDebrief = brief.lastFlight ? await repo.getDebriefByFlight(brief.lastFlight.id) : null;
+  const [lastDebrief, lastFlightTasks] = brief.lastFlight
+    ? await Promise.all([repo.getDebriefByFlight(brief.lastFlight.id), repo.listFlightTasks(brief.lastFlight.id)])
+    : [null, []];
   const contested = contestedObjective(lastDebrief?.structuredResult.assessmentDifferences ?? []);
+  const lessonFocus = deriveLessonFocus(lastFlightTasks);
 
   const progressions = computeSkillProgression(signals.filter((s) => !s.dismissed));
   const open = progressions.filter((p) => p.status !== "Demonstrated");
@@ -111,9 +147,20 @@ export default async function TrainPage() {
         toneLabel: recommendedSkill ? toneForStatus(recommendedSkill.status) : contested ? "Improving" : "Still building",
         skillLabel: recommendedLabel,
         acsArea: recommendedAcsArea ? { name: recommendedAcsArea.name } : null,
-        contextLine: brief.lastFlight
-          ? `Starting where your last flight ended -- ${formatFlightContext(brief.lastFlight)}${cfi ? ` with ${cfi}` : ""}.`
-          : "",
+        // Real lesson focus (from the last flight's real flight_tasks) when
+        // one exists -- guided-mode debriefs only. Flight metadata
+        // (tail/route/date/duration) never appears here even as a fallback:
+        // Vector is speaking about what was trained, not where the airplane
+        // went, and a freeform debrief with no flight_tasks genuinely has no
+        // lesson title to offer, so the sentence degrades instead of reaching
+        // for something else to fill the gap.
+        contextLine: !brief.lastFlight
+          ? ""
+          : lessonFocus
+            ? `Starting where your last flight ended — ${lessonFocus}${cfi ? ` with ${cfi}` : ""}.`
+            : cfi
+              ? `Starting where your last flight ended, with ${cfi}.`
+              : "Starting where your last flight ended.",
         comparisonLine: contested ? (
           <>
             You called this <span className="font-semibold text-panel-foreground">{performanceLevelLabelFor(contested.studentLevel, "student")}</span>.{" "}
