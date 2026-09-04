@@ -454,10 +454,13 @@ export function AcsBadge({ area, code, onPanel = false }: { area: string; code?:
 export function TrendStrip({ points }: { points: { label: string; score: number; max: number; state: SkillState }[] }) {
   return (
     <div className="flex items-end gap-2.5">
-      {points.map((p) => {
+      {points.map((p, i) => {
         const tone = stateTone(p.state);
         return (
-          <div key={p.label} className="flex flex-1 flex-col items-center gap-2">
+          // Index, not label -- two real signals for the same skill can
+          // land on the same date (production data), and the label alone
+          // isn't a stable identity for those rows.
+          <div key={i} className="flex flex-1 flex-col items-center gap-2">
             <div className="flex h-16 w-full flex-col justify-end gap-1" role="img" aria-label={`${p.label}: ${p.state}, ${p.score} of ${p.max}`}>
               {Array.from({ length: p.max }, (_, i) => {
                 const filled = p.max - i <= p.score;

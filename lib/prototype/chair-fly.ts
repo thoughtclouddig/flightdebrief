@@ -357,9 +357,24 @@ const SCENARIOS: Record<string, { scenario: string; steps: ChairFlyStep[] }> = {
 
 /* ---------------------------------------------------------------- builder */
 
+/**
+ * Case-insensitive on purpose: production's real taskLabel strings come from
+ * free-text/AI-derived debrief data (e.g. "Crosswind landings"), not the
+ * prototype's own literal fixture casing ("Crosswind Landings") -- the same
+ * normalization Train's own contested-skill lookup already applies (see
+ * app/(product)/train/page.tsx's allTrainingSkills().find(...)). An exact
+ * match here would silently hide a real, authored scenario over a casing
+ * difference alone.
+ */
+function findScenario(task: string): { scenario: string; steps: ChairFlyStep[] } | undefined {
+  const lower = task.toLowerCase();
+  const key = Object.keys(SCENARIOS).find((k) => k.toLowerCase() === lower);
+  return key ? SCENARIOS[key] : undefined;
+}
+
 /** Whether an objective has an authored scenario at all -- production checks this before ever offering "Start chair flying," since an objective with no entry here has no drill, by design (see the SCENARIOS doc comment). */
 export function hasAuthoredScenario(task: string): boolean {
-  return task in SCENARIOS;
+  return findScenario(task) !== undefined;
 }
 
 /**
@@ -381,7 +396,7 @@ export function recommendedDrill(params?: {
 }): ChairFlyDrill | null {
   const gap = params?.gap ?? contestedObjective();
   if (!gap) return null;
-  const authored = SCENARIOS[gap.task];
+  const authored = findScenario(gap.task);
   if (!authored) return null;
 
   const skill = skillForObjective(gap.task);
