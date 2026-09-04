@@ -128,8 +128,15 @@ export default async function TrainPage() {
       }
     : null;
 
+  const nextLessonDay = brief.upcomingReservation
+    ? new Date(brief.upcomingReservation.scheduledStart).toLocaleDateString("en-US", { weekday: "long" })
+    : null;
   const primaryAction: StudentTrainAction | undefined = contested
-    ? { label: "Start chair flying", href: "/prototype/vector/train/chair-fly" }
+    ? {
+        label: "Start chair flying",
+        href: "/prototype/vector/train/chair-fly",
+        caption: nextLessonDay ? `About 4 minutes · rehearse it before ${nextLessonDay}` : "About 4 minutes",
+      }
     : undefined;
 
   // Review/Quiz/Ask are client-state toggles inside the prototype's own
