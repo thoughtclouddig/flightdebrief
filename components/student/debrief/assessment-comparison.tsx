@@ -4,10 +4,10 @@
 // be in the client graph to call it. Without the directive it worked on
 // /debrief/latest -- a client page pulls it in -- and threw "Attempted to call
 // stateTone() from the server" on every server-rendered skill-detail route.
-import { Card, SkillMeter, stateTone } from "@/components/prototype/ui";
+import { Card, SkillMeter, stateTone } from "@/components/student/ui";
 import { cn } from "@/lib/utils";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
-import { ASSESSMENT_LEVELS, agreement, levelLabel, levelScore, levelState, type Rater } from "@/lib/prototype/assessment";
+import { ASSESSMENT_LEVELS, agreement, levelLabel, levelScore, levelState, type Rater } from "@/lib/student/assessment";
 
 /**
  * One lesson objective, rated by both people, shown side by side.
@@ -20,7 +20,7 @@ import { ASSESSMENT_LEVELS, agreement, levelLabel, levelScore, levelState, type 
  *
  * Both ratings render on the same meter and the same color scale, so the
  * distance between them is legible without reading the labels. The labels
- * differ by rater on purpose (see lib/prototype/assessment.ts): the student is
+ * differ by rater on purpose (see lib/student/assessment.ts): the student is
  * reporting an experience, the instructor is judging against a standard.
  */
 export function ObjectiveComparison({

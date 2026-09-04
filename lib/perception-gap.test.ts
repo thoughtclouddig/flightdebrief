@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPerceptionGapRow, gapDirection, alignmentSummary } from "./perception-gap";
+import { buildPerceptionGapRow, gapDirection } from "./perception-gap";
 
 const base = { taskLabel: "Crosswind Landings", status: "significant" as const };
 
@@ -57,22 +57,5 @@ describe("buildPerceptionGapRow", () => {
     // A student who is harder on themselves than their CFI should not be
     // told they were wrong -- they should be told they're closer than they think.
     expect(encouraging.interpretation).toContain("closer than you think");
-  });
-});
-
-describe("alignmentSummary", () => {
-  it("leads with agreement, never a failure count", () => {
-    const rows = [
-      buildPerceptionGapRow({ taskLabel: "A", studentLevel: "INDEPENDENT", instructorLevel: "INDEPENDENT", status: "none" }),
-      buildPerceptionGapRow({ taskLabel: "B", studentLevel: "INDEPENDENT", instructorLevel: "LEARNING", status: "significant" }),
-    ];
-    expect(alignmentSummary(rows)).toContain("1 of 2 the same way");
-  });
-
-  it("says so plainly when they agreed on everything", () => {
-    const rows = [
-      buildPerceptionGapRow({ taskLabel: "A", studentLevel: "INDEPENDENT", instructorLevel: "INDEPENDENT", status: "none" }),
-    ];
-    expect(alignmentSummary(rows)).toContain("the same way, all the way through");
   });
 });

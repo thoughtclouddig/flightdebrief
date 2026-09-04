@@ -1,9 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
-import { StudentAssessmentForm } from "@/components/debrief/student-assessment-form";
+import { AssessmentScreen } from "@/components/student/debrief/assessment-screen";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { PageTitle, Screen } from "@/components/prototype/ui";
+import { PageTitle, Screen } from "@/components/student/ui";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 /**
@@ -55,7 +55,7 @@ export default async function InstructorAssessmentPage(props: PageProps<"/flight
   const initialRatings = Object.fromEntries(ratings.map((r) => [r.flightTaskId, r.performanceLevel]));
 
   return (
-    <StudentAssessmentForm
+    <AssessmentScreen
       flightId={id}
       role="instructor"
       tasks={tasks.map((t) => ({ id: t.id, label: t.label, taskCode: t.taskCode }))}

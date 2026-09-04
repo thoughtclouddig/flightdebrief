@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
-import { BottomNav } from "@/components/prototype/bottom-nav";
-import { AppHeader } from "@/components/prototype/app-header";
+import { BottomNav } from "@/components/student/bottom-nav";
+import { AppHeader } from "@/components/student/app-header";
 import { PrototypeChrome } from "@/components/prototype/prototype-chrome";
 
 /**

@@ -109,14 +109,4 @@ export function buildPerceptionGapRow(input: {
   };
 }
 
-/** Headline for the whole comparison -- agreement first, never a failure count. */
-export function alignmentSummary(rows: PerceptionGapRow[]): string {
-  const total = rows.length;
-  if (total === 0) return "";
-  const aligned = rows.filter((r) => r.status === "none").length;
-  if (aligned === total) return "You and your instructor saw this flight the same way, all the way through.";
-  const differing = total - aligned;
-  return `You and your instructor saw ${aligned} of ${total} the same way. ${differing === 1 ? "One" : differing} came out differently -- that's the useful part.`;
-}
-
 export { performanceLevelLabel };

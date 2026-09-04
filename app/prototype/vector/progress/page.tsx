@@ -15,8 +15,8 @@ import {
   Segmented,
   SkillMeter,
   StateLabel,
-} from "@/components/prototype/ui";
-import { INSTRUCTOR, SKILL_SCORES, type SkillScore } from "@/lib/prototype/vector-data";
+} from "@/components/student/ui";
+import { INSTRUCTOR, SKILL_SCORES, type SkillScore } from "@/lib/prototype-fixtures/vector-data";
 import { acsReadiness, type TaskProgress } from "@/lib/prototype/acs";
 
 /**

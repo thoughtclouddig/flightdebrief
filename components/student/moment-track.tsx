@@ -1,4 +1,4 @@
-import type { FlightSegment, FlightTelemetry } from "@/lib/prototype/telemetry";
+import type { FlightSegment, FlightTelemetry } from "@/lib/student/telemetry";
 
 /**
  * A still of one segment against the rest of the flight.

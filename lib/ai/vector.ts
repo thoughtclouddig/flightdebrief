@@ -14,7 +14,7 @@ import {
   STUDENT,
   SKILL_SCORES,
   STUDENT_REFLECTION,
-} from "@/lib/prototype/vector-data";
+} from "@/lib/prototype-fixtures/vector-data";
 import type { ChairFlyStep } from "@/lib/prototype/chair-fly";
 
 /**

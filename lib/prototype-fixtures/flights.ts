@@ -1,6 +1,6 @@
 import { generatePatternTrack } from "@/lib/geo";
 import type { TrackPosition } from "@/lib/types";
-import { INSTRUCTOR, PRIOR_INSTRUCTOR, STUDENT } from "@/lib/prototype/vector-data";
+import { INSTRUCTOR, PRIOR_INSTRUCTOR, STUDENT } from "@/lib/prototype-fixtures/vector-data";
 
 /**
  * Flight as a first-class object in the prototype.

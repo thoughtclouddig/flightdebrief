@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { contestedObjective, recommendedDrill } from "@/lib/prototype/chair-fly";
-import { PERCEPTION_GAPS, type GapRow } from "@/lib/prototype/vector-data";
-import { agreement } from "@/lib/prototype/assessment";
+import { PERCEPTION_GAPS, type GapRow } from "@/lib/prototype-fixtures/vector-data";
+import { agreement } from "@/lib/student/assessment";
 
 /**
  * Guard tests for Chair Flying.

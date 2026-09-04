@@ -13,10 +13,10 @@ import {
   SkillMeter,
   StateLabel,
   TrendStrip,
-} from "@/components/prototype/ui";
-import { ObjectiveComparison } from "@/components/prototype/assessment-comparison";
+} from "@/components/student/ui";
+import { ObjectiveComparison } from "@/components/student/debrief/assessment-comparison";
 import { objectiveForSkill } from "@/lib/prototype/assessment";
-import { INSTRUCTOR, SKILL_SCORES, skillBySlug } from "@/lib/prototype/vector-data";
+import { INSTRUCTOR, SKILL_SCORES, skillBySlug } from "@/lib/prototype-fixtures/vector-data";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 

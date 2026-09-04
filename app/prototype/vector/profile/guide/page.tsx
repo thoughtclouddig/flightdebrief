@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ClipboardList, Mic, PlaneTakeoff, Sparkles } from "lucide-react";
-import { AcsBadge, BackLink, Card, PageTitle, Screen, Section, SkillMeter } from "@/components/prototype/ui";
-import { ACS_AREAS } from "@/lib/prototype/vector-data";
+import { AcsBadge, BackLink, Card, PageTitle, Screen, Section, SkillMeter } from "@/components/student/ui";
+import { ACS_AREAS } from "@/lib/prototype-fixtures/vector-data";
 
 export const metadata: Metadata = { title: "How AfterFlight works — AfterFlight", robots: { index: false, follow: false } };
 

@@ -3,7 +3,7 @@ import { AvatarUpload } from "@/components/avatar-upload";
 import { ChangeEmailForm } from "@/components/change-email-form";
 import { LeaveOrganizationButton } from "@/components/leave-organization-button";
 import { VoicePreferencePicker } from "@/components/voice-preference-picker";
-import { QuietRow, Screen, Section } from "@/components/prototype/ui";
+import { QuietRow, Screen, Section } from "@/components/student/ui";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 

@@ -3,9 +3,9 @@ export type SkillState = "Needs Work" | "Improving" | "Meets Standard";
 /**
  * State color lives here and nowhere else.
  *
- * Moved out of components/prototype/ui.tsx (a "use client" file) because a
+ * Moved out of components/student/ui.tsx (a "use client" file) because a
  * plain data-mapping function has no reason to force every caller into the
- * client graph. components/prototype/assessment-comparison.tsx already
+ * client graph. components/student/debrief/assessment-comparison.tsx already
  * carries a comment explaining exactly this trap: calling a function
  * imported from a "use client" file inside a Server Component throws
  * "Attempted to call stateTone() from the server" at request time, not at

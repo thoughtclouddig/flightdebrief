@@ -5,7 +5,7 @@ import { CheckCircle2, Loader2, ClipboardCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { KNOWLEDGE_CHECK, CONCEPTS } from "@/lib/prototype/vector-data";
+import { KNOWLEDGE_CHECK, CONCEPTS } from "@/lib/prototype-fixtures/vector-data";
 
 interface Result {
   correct: boolean;

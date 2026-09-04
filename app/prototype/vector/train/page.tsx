@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { VectorPanel } from "@/components/prototype/vector-panel";
+import { VectorPanel } from "@/components/student/vector-panel";
 import { KnowledgeCheck } from "@/components/prototype/knowledge-check";
-import { BackLink, Card, Evidence, Screen, SecondaryButton } from "@/components/prototype/ui";
-import { StudentTrain, type StudentTrainAction, type StudentTrainRecommended, type StudentTrainSkillRow } from "@/components/prototype/student-train";
-import { CONCEPTS, INSTRUCTOR, LAST_FLIGHT, NEXT_LESSON, SKILL_SCORES, SUGGESTED } from "@/lib/prototype/vector-data";
+import { BackLink, Card, Evidence, Screen, SecondaryButton } from "@/components/student/ui";
+import { StudentTrain, type StudentTrainAction, type StudentTrainRecommended, type StudentTrainSkillRow } from "@/components/student/student-train";
+import { CONCEPTS, INSTRUCTOR, LAST_FLIGHT, NEXT_LESSON, SKILL_SCORES, SUGGESTED } from "@/lib/prototype-fixtures/vector-data";
 import { recommendedDrill } from "@/lib/prototype/chair-fly";
 
 const CHAIR_FLY_HREF = "/prototype/vector/train/chair-fly";

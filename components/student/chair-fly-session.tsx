@@ -15,7 +15,7 @@ import {
   PrimaryButton,
   Section,
   VectorMark,
-} from "@/components/prototype/ui";
+} from "@/components/student/ui";
 import type { ChairFlyDrill, ChairFlyOption } from "@/lib/prototype/chair-fly";
 
 /**

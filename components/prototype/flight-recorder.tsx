@@ -11,9 +11,9 @@ import {
   PrimaryButton,
   Section,
   SecondaryButton,
-} from "@/components/prototype/ui";
+} from "@/components/student/ui";
 import { cn } from "@/lib/utils";
-import { FLIGHT_DEFAULTS } from "@/lib/prototype/flights";
+import { FLIGHT_DEFAULTS } from "@/lib/prototype-fixtures/flights";
 import {
   addFix,
   durations,

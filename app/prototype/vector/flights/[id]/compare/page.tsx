@@ -10,11 +10,11 @@ import {
   Screen,
   Section,
   SecondaryButton,
-} from "@/components/prototype/ui";
-import { FLIGHTS, flightById } from "@/lib/prototype/flights";
+} from "@/components/student/ui";
+import { FLIGHTS, flightById } from "@/lib/prototype-fixtures/flights";
 import { analysisFor } from "@/lib/prototype/moments";
-import { compareSegments } from "@/lib/prototype/telemetry";
-import { ACS_AREAS } from "@/lib/prototype/vector-data";
+import { compareSegments } from "@/lib/student/telemetry";
+import { ACS_AREAS } from "@/lib/prototype-fixtures/vector-data";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 

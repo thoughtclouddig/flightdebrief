@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { ListenButton } from "@/components/listen-button";
 import { StudyResourceLink } from "@/components/study-resource-link";
 import { TrainingItemChecklist } from "@/components/training-item-checklist";
-import { PageTitle, Screen, Section, SecondaryButton, VectorMark } from "@/components/prototype/ui";
+import { PageTitle, Screen, Section, SecondaryButton, VectorMark } from "@/components/student/ui";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";

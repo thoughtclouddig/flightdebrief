@@ -3,7 +3,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus, Search, UserPlus } from "lucide-react";
-import { Card, PageTitle, PrimaryButton, Screen, SecondaryButton, Segmented } from "@/components/prototype/ui";
+import { Card, PageTitle, PrimaryButton, Screen, SecondaryButton, Segmented } from "@/components/student/ui";
 import { formatDurationShort } from "@/lib/utils";
 import { localIsoDate } from "@/lib/date";
 import type { FlightCandidate } from "@/lib/flight-data";

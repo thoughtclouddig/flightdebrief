@@ -131,7 +131,7 @@ describe("computeDebriefProgress", () => {
     expect(result).toEqual({ stage: "awaiting_instructor_assessment", waitingOn: "instructor" });
   });
 
-  it("is ready_to_debrief once both assessments are submitted", async () => {
+  it("is ready_to_debrief once both assessments are submitted, carrying the instructor's attribution", async () => {
     const repo = fakeRepo({
       organization: org(),
       tasks: [{ id: "t1", flightId: "flight-1", taskCode: "SHORT_FIELD_LANDING", label: "Short field landing", source: "instructor_selected", sortOrder: 0, createdAt: "2026-08-20T20:00:00.000Z" }],
@@ -139,7 +139,18 @@ describe("computeDebriefProgress", () => {
       studentAssessment: assessment({ id: "assessment-2", role: "student", assessorUserId: "student-1", status: "submitted" }),
     });
     const result = await computeDebriefProgress(repo, flight());
-    expect(result).toEqual({ stage: "ready_to_debrief", waitingOn: "instructor" });
+    expect(result).toEqual({ stage: "ready_to_debrief", waitingOn: "instructor", instructorAttribution: "account_verified" });
+  });
+
+  it("carries guest_handoff attribution too -- Home uses this to tell a guest-handoff student they can still continue themselves", async () => {
+    const repo = fakeRepo({
+      organization: org(),
+      tasks: [{ id: "t1", flightId: "flight-1", taskCode: "SHORT_FIELD_LANDING", label: "Short field landing", source: "instructor_selected", sortOrder: 0, createdAt: "2026-08-20T20:00:00.000Z" }],
+      instructorAssessment: assessment({ role: "instructor", status: "submitted", attribution: "guest_handoff" }),
+      studentAssessment: assessment({ id: "assessment-2", role: "student", assessorUserId: "student-1", status: "submitted" }),
+    });
+    const result = await computeDebriefProgress(repo, flight());
+    expect(result).toEqual({ stage: "ready_to_debrief", waitingOn: "instructor", instructorAttribution: "guest_handoff" });
   });
 
   it("is awaiting_finish once a Debrief row exists, even if assessments would otherwise look incomplete", async () => {

@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
-import { StudentAssessmentForm } from "@/components/debrief/student-assessment-form";
+import { AssessmentScreen } from "@/components/student/debrief/assessment-screen";
+import { HandoffScreen } from "@/components/student/debrief/handoff-screen";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { PageTitle, Panel, PanelEyebrow, PanelHeadline, PrimaryButton, Screen } from "@/components/prototype/ui";
+import { PageTitle, PrimaryButton, Screen } from "@/components/student/ui";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 /** Hard-gated to the flight's own student (line below) -- never reached by an instructor/admin, so this is a safe direct rewrite, not a role branch. */
@@ -47,15 +47,12 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
     return (
       <Screen>
         <AutoRefresh />
-        <Panel className="flex flex-col gap-4 py-10 text-center">
-          <PanelEyebrow icon={<ArrowRight className="size-3.5" aria-hidden />}>Your part is done</PanelEyebrow>
-          <PanelHeadline>{cfi ? `Hand the phone to ${cfi}` : "Hand the phone to your instructor"}</PanelHeadline>
-          <p className="text-[15px] leading-relaxed text-panel-foreground-soft">
-            {cfi ? `${cfi}, this` : "This"} part is for you. {studentFirstName}&rsquo;s answers are hidden until you
-            finish yours.
-          </p>
-        </Panel>
-        <PrimaryButton href={`/flights/${id}/debrief/instructor-assessment`}>Start instructor assessment</PrimaryButton>
+        <HandoffScreen
+          headline={cfi ? `Hand the phone to ${cfi}` : "Hand the phone to your instructor"}
+          body={`${cfi ? `${cfi}, this` : "This"} part is for you. ${studentFirstName}'s answers are hidden until you finish yours.`}
+          actionLabel="Start instructor assessment"
+          actionHref={`/flights/${id}/debrief/instructor-assessment`}
+        />
       </Screen>
     );
   }
@@ -64,7 +61,7 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
   const initialRatings = Object.fromEntries(ratings.map((r) => [r.flightTaskId, r.performanceLevel]));
 
   return (
-    <StudentAssessmentForm
+    <AssessmentScreen
       flightId={id}
       role="student"
       tasks={tasks.map((t) => ({ id: t.id, label: t.label, taskCode: t.taskCode }))}

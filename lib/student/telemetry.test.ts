@@ -4,7 +4,7 @@ import {
   compareSegments,
   normalizeTrack,
   segmentFlight,
-} from "@/lib/prototype/telemetry";
+} from "@/lib/student/telemetry";
 import { analysisFor } from "@/lib/prototype/moments";
 
 describe("telemetry capabilities", () => {

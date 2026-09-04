@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { BackLink, Screen } from "@/components/prototype/ui";
+import { BackLink, Screen } from "@/components/student/ui";
 import { FlightRecorder } from "@/components/prototype/flight-recorder";
 
 export const metadata: Metadata = { title: "Start flight — AfterFlight", robots: { index: false, follow: false } };

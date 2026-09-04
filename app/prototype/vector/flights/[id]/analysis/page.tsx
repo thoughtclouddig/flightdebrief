@@ -12,11 +12,11 @@ import {
   Screen,
   Section,
   SecondaryButton,
-} from "@/components/prototype/ui";
+} from "@/components/student/ui";
 import { cn } from "@/lib/utils";
-import { FLIGHTS, flightById, formatHours } from "@/lib/prototype/flights";
+import { FLIGHTS, flightById, formatHours } from "@/lib/prototype-fixtures/flights";
 import { analysisFor } from "@/lib/prototype/moments";
-import { momentTone, formatElapsed } from "@/lib/prototype/telemetry";
+import { momentTone, formatElapsed } from "@/lib/student/telemetry";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 

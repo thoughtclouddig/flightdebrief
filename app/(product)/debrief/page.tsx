@@ -1,4 +1,4 @@
-import { StudentDebriefHub, type StudentDebriefRow } from "@/components/prototype/student-debrief-hub";
+import { StudentDebriefHub, type StudentDebriefRow } from "@/components/student/debrief/student-debrief-hub";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Thin data-fetching wrapper -- all the real content lives in
- * components/prototype/student-debrief-hub.tsx, the same component
+ * components/student/debrief/student-debrief-hub.tsx, the same component
  * app/prototype/vector/debrief/page.tsx renders with fixture props.
  *
  * The "Just landed?" panel is the primary action of this screen and always

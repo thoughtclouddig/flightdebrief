@@ -1,4 +1,4 @@
-import { ACS_AREAS, SKILL_SCORES, type AcsArea, type SkillScore, type SkillState } from "@/lib/prototype/vector-data";
+import { ACS_AREAS, SKILL_SCORES, type AcsArea, type SkillScore, type SkillState } from "@/lib/prototype-fixtures/vector-data";
 
 /**
  * The FAA ACS, as a structure rather than a relabeled skill list.

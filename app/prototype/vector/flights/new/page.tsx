@@ -14,14 +14,14 @@ import {
   Screen,
   Section,
   SecondaryButton,
-} from "@/components/prototype/ui";
+} from "@/components/student/ui";
 import { cn } from "@/lib/utils";
 import {
   FLIGHT_DEFAULTS,
   candidatesForTail,
   formatHours,
   type FlightCandidate,
-} from "@/lib/prototype/flights";
+} from "@/lib/prototype-fixtures/flights";
 
 type Stage = "tail" | "pick" | "manual" | "who" | "saved";
 

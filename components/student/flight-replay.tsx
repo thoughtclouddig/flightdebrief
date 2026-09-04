@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AcsBadge, Evidence, PrimaryButton, SecondaryButton, SectionLabel } from "@/components/prototype/ui";
+import { AcsBadge, Evidence, PrimaryButton, SecondaryButton, SectionLabel } from "@/components/student/ui";
 import {
   formatElapsed,
   momentTone,
@@ -11,7 +11,7 @@ import {
   type FlightMoment,
   type FlightSegment,
   type FlightTelemetry,
-} from "@/lib/prototype/telemetry";
+} from "@/lib/student/telemetry";
 import { momentForSegment, segmentAt } from "@/lib/prototype/moments";
 
 /**

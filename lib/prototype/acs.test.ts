@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ACS_STRUCTURE, acsReadiness, taskForSkill, taskProgress } from "@/lib/prototype/acs";
-import { SKILL_SCORES } from "@/lib/prototype/vector-data";
+import { SKILL_SCORES } from "@/lib/prototype-fixtures/vector-data";
 
 /**
  * The ACS view is a second ORGANIZATION of the same evidence, never a second

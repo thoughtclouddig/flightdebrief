@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowRight, Check, Mic, Square } from "lucide-react";
+import { Check, Mic, Square } from "lucide-react";
 import {
   AcsBadge,
   BackLink,
@@ -16,20 +15,16 @@ import {
   Screen,
   Section,
   SecondaryButton,
-  stateTone,
-} from "@/components/prototype/ui";
-import { ObjectiveComparison } from "@/components/prototype/assessment-comparison";
+} from "@/components/student/ui";
+import { ObjectivesScreen } from "@/components/student/debrief/objectives-screen";
+import { HandoffScreen } from "@/components/student/debrief/handoff-screen";
+import { RevealScreen } from "@/components/student/debrief/reveal-screen";
+import { PerformanceLevelPicker } from "@/components/student/debrief/performance-level-picker";
 import { cn } from "@/lib/utils";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
-import {
-  ASSESSMENT_LEVELS,
-  agreementSummary,
-  levelLabel,
-  levelState,
-  type Rater,
-} from "@/lib/prototype/assessment";
-import { ACS_AREAS, INSTRUCTOR, PENDING_FLIGHT, PERCEPTION_GAPS, STRUCTURED } from "@/lib/prototype/vector-data";
-import { flightById, formatHours } from "@/lib/prototype/flights";
+import type { Rater } from "@/lib/student/assessment";
+import { ACS_AREAS, INSTRUCTOR, PENDING_FLIGHT, PERCEPTION_GAPS, STRUCTURED } from "@/lib/prototype-fixtures/vector-data";
+import { flightById, formatHours } from "@/lib/prototype-fixtures/flights";
 
 const FLIGHT = flightById("aug-29")!;
 
@@ -108,41 +103,18 @@ export default function NewDebriefPage() {
 
 function Objectives({ onStart }: { onStart: () => void }) {
   return (
-    <>
-      <PageTitle kicker="Today's lesson">{PENDING_FLIGHT.lesson}</PageTitle>
-
-      <Card className="flex items-center gap-3">
-        <span className="min-w-0 flex-1">
-          <span className="block text-[17px] font-medium text-foreground">
-            {FLIGHT.departureAirport} &rarr; {FLIGHT.arrivalAirport} · {formatHours(FLIGHT.durationMinutes)} hr
-          </span>
-          <span className="mt-0.5 block text-[15px] text-foreground-faint">
-            {PENDING_FLIGHT.date} · {FLIGHT.aircraftType} · {FLIGHT.tailNumber}
-          </span>
-        </span>
-        <Link href="/prototype/vector/flights/new" className="shrink-0 text-[15px] font-medium text-brand">
-          Change
-        </Link>
-      </Card>
-
-      <Section title={<>Today&rsquo;s objectives</>}>
-        <ul className="flex flex-col gap-3">
-          {OBJECTIVES.map((o, i) => (
-            <li key={o} className="flex items-baseline gap-3 text-[17px] leading-snug text-foreground">
-              <span className="text-[13px] font-semibold tabular-nums text-foreground-faint">{i + 1}</span>
-              {o}
-            </li>
-          ))}
-        </ul>
-      </Section>
-
-      <p className="text-[15px] leading-relaxed text-foreground-soft">
-        You&rsquo;ll rate each one first, then hand the phone to {INSTRUCTOR.firstName}. Your answers stay hidden
-        until you&rsquo;ve both finished.
-      </p>
-
-      <PrimaryButton onClick={onStart}>Start debrief</PrimaryButton>
-    </>
+    <ObjectivesScreen
+      lessonTitle={PENDING_FLIGHT.lesson}
+      route={`${FLIGHT.departureAirport} → ${FLIGHT.arrivalAirport}`}
+      durationLabel={`${formatHours(FLIGHT.durationMinutes)} hr`}
+      dateLabel={PENDING_FLIGHT.date}
+      aircraftType={FLIGHT.aircraftType}
+      tailNumber={FLIGHT.tailNumber}
+      objectives={OBJECTIVES}
+      instructorFirstName={INSTRUCTOR.firstName}
+      changeHref="/prototype/vector/flights/new"
+      onStart={onStart}
+    />
   );
 }
 
@@ -179,7 +151,7 @@ function Assess({
         {OBJECTIVES.map((task) => (
           <Card key={task} className="flex flex-col gap-4">
             <p className="text-[17px] font-medium leading-snug text-foreground">{task}</p>
-            <LevelPicker rater={rater} value={ratings[task] ?? null} onChange={(level) => onRate(task, level)} />
+            <PerformanceLevelPicker rater={rater} value={ratings[task] ?? null} onChange={(level) => onRate(task, level)} />
           </Card>
         ))}
       </div>
@@ -191,63 +163,16 @@ function Assess({
   );
 }
 
-/**
- * Three levels, shown as three equal choices rather than a 1-2-3 scale.
- *
- * Numbers would invite arithmetic across objectives, and an average of these
- * is precisely the aggregate readiness verdict this product does not make.
- */
-function LevelPicker({
-  rater,
-  value,
-  onChange,
-}: {
-  rater: Rater;
-  value: PerformanceLevelCode | null;
-  onChange: (level: PerformanceLevelCode) => void;
-}) {
-  return (
-    <div className="flex gap-2" role="group">
-      {ASSESSMENT_LEVELS.map((code) => {
-        const selected = value === code;
-        const tone = stateTone(levelState(code));
-        return (
-          <button
-            key={code}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onChange(code)}
-            className={cn(
-              "min-h-[44px] flex-1 cursor-pointer rounded-xl border px-2 py-2.5 text-[15px] font-medium transition-colors",
-              selected
-                ? `${tone.fill} border-transparent text-white`
-                : "border-hairline bg-transparent text-foreground-soft hover:bg-surface-sunken",
-            )}
-          >
-            {levelLabel(code, rater)}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 /* --------------------------------------------------------- 3. handoff */
 
 function Handoff({ onContinue }: { onContinue: () => void }) {
   return (
-    <>
-      <Panel className="flex flex-col gap-4 py-10 text-center">
-        <PanelEyebrow icon={<ArrowRight className="size-3.5" aria-hidden />}>Your part is done</PanelEyebrow>
-        <PanelHeadline>Hand the device to {INSTRUCTOR.firstName}</PanelHeadline>
-        <p className="text-[15px] leading-relaxed text-panel-foreground-soft">
-          {INSTRUCTOR.firstName} will rate the same objectives. Your answers stay hidden until they finish, so their
-          read of the flight stays their own.
-        </p>
-      </Panel>
-
-      <PrimaryButton onClick={onContinue}>I&rsquo;m {INSTRUCTOR.firstName} &mdash; continue</PrimaryButton>
-    </>
+    <HandoffScreen
+      headline={`Hand the device to ${INSTRUCTOR.firstName}`}
+      body={`${INSTRUCTOR.firstName} will rate the same objectives. Your answers stay hidden until they finish, so their read of the flight stays their own.`}
+      actionLabel={`I'm ${INSTRUCTOR.firstName} — continue`}
+      onAction={onContinue}
+    />
   );
 }
 
@@ -269,25 +194,12 @@ function Reveal({
   })).filter((r) => r.student && r.instructor);
 
   return (
-    <>
-      <PageTitle kicker={`${PENDING_FLIGHT.lesson} · ${PENDING_FLIGHT.date}`}>How you both saw it</PageTitle>
-
-      <p className="-mt-4 text-[17px] leading-relaxed text-foreground-soft">{agreementSummary(rows)}</p>
-
-      <div className="flex flex-col gap-3">
-        {rows.map((r) => (
-          <ObjectiveComparison
-            key={r.task}
-            task={r.task}
-            student={r.student}
-            instructor={r.instructor}
-            instructorName={INSTRUCTOR.firstName}
-          />
-        ))}
-      </div>
-
-      <PrimaryButton onClick={onNext}>Talk it through</PrimaryButton>
-    </>
+    <RevealScreen
+      kicker={`${PENDING_FLIGHT.lesson} · ${PENDING_FLIGHT.date}`}
+      rows={rows}
+      instructorFirstName={INSTRUCTOR.firstName}
+      onAction={onNext}
+    />
   );
 }
 

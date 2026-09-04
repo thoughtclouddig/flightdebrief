@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
-import { BackLink, PageTitle, QuietRow, Screen } from "@/components/prototype/ui";
+import { BackLink, PageTitle, QuietRow, Screen } from "@/components/student/ui";
 import { formatFlightDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
