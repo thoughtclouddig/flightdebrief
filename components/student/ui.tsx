@@ -239,14 +239,18 @@ export function SecondaryButton({
   onClick,
   href,
   onPanel = false,
+  disabled = false,
 }: {
   children: ReactNode;
   onClick?: () => void;
   href?: string;
   onPanel?: boolean;
+  /** Renders as a non-interactive, visibly muted marker instead of a link/button -- an explicit known-state gap, never a silent link elsewhere. */
+  disabled?: boolean;
 }) {
   const cls = cn(
-    "flex min-h-[44px] flex-1 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-3 text-[15px] font-medium transition-colors duration-200",
+    "flex min-h-[44px] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-3 text-[15px] font-medium transition-colors duration-200",
+    disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer",
     onPanel
       // Filled, not outlined. A hairline border against navy is barely a
       // shade off the panel itself, so the buttons dissolved into the
@@ -256,6 +260,13 @@ export function SecondaryButton({
       ? "border-panel-hairline bg-panel-elevated text-panel-foreground hover:border-panel-foreground-soft hover:bg-panel-elevated/70"
       : "border-hairline text-foreground hover:border-foreground-faint/40",
   );
+  if (disabled) {
+    return (
+      <span className={cls} aria-disabled="true">
+        {children}
+      </span>
+    );
+  }
   return href ? (
     <Link href={href} className={cls}>
       {children}

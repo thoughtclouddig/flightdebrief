@@ -1,33 +1,23 @@
 import { notFound } from "next/navigation";
-import { AcsBadge } from "@/components/acs-badge";
-import { BackLink, Evidence, PageTitle, Screen, Section, TrendStrip } from "@/components/student/ui";
-import { stateTone } from "@/lib/student/state-tone";
+import { SkillDetailScreen } from "@/components/student/progress/skill-detail";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
-import { computeSkillProgression } from "@/lib/skill-progress";
-import { cn } from "@/lib/utils";
-import type { SkillProgressionStatus, TrainingSkill } from "@/lib/types";
+import { computeSkillProgression, meterScoreForSkillStatus, toneForSkillStatus } from "@/lib/skill-progress";
+import { computeNextLessonBrief } from "@/lib/training-memory";
+import { acsAreaForSkill } from "@/lib/acs";
+import { formatFlightDate } from "@/lib/utils";
+import type { TrainingSkill } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-function toneForStatus(status: SkillProgressionStatus) {
-  if (status === "Demonstrated") return "Meets Standard" as const;
-  if (status === "Needs Coaching") return "Needs Work" as const;
-  return "Improving" as const;
-}
-
 /**
- * Per-skill drill-down -- app/prototype/vector/progress/[skill]/page.tsx is
- * the design source, and it turned out to be truthfully buildable: every
- * field it needs (a dated trend, a real quoted statement per data point,
- * ACS attribution) already exists on production's TrainingSignal rows
- * (lib/types.ts) and computeSkillProgression's history (lib/skill-progress.ts) --
- * nothing here is fixture-backed. The one prototype feature NOT ported is
- * objectiveForSkill's perception-gap cross-reference
- * (lib/prototype/assessment.ts): production computes a perception gap per
- * FLIGHT (lib/perception-gap.ts, on the debrief itself), not aggregated per
- * skill across flights, so there's no real per-skill "how you both saw it"
- * to show here without inventing an aggregation that doesn't exist yet.
+ * Production data adapter for components/student/progress/skill-detail.tsx
+ * -- every field it needs (a score, a dated trend, a real quoted statement,
+ * ACS attribution, a real cross-instructor recurring count) already exists
+ * on TrainingSignal rows and computeNextLessonBrief's recurringThemes;
+ * nothing here is fixture-backed. "Vector's read" and "How you both saw it"
+ * are passed null -- see the shared component's own doc comment for why
+ * those two are real capability gaps, not omissions of convenience.
  */
 export default async function SkillDetailPage({ params }: { params: Promise<{ skill: string }> }) {
   const { skill: skillParam } = await params;
@@ -35,9 +25,10 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sk
   const viewer = await getViewer();
   const studentId = viewer.user.id;
 
-  const [signals, memberships] = await Promise.all([
+  const [signals, memberships, brief] = await Promise.all([
     repo.listTrainingSignals({ studentId }),
     repo.listMembershipsForUser(studentId),
+    computeNextLessonBrief(repo, studentId),
   ]);
   const certificateType =
     memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
@@ -49,44 +40,41 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sk
   const skillSignals = signals
     .filter((s) => s.skill === progression.skill && !s.dismissed)
     .sort((a, b) => a.flightDate.localeCompare(b.flightDate));
+  const latestSignal = skillSignals[skillSignals.length - 1]!;
+  const latestInstructor = latestSignal.instructorId ? await repo.getInstructor(latestSignal.instructorId) : null;
 
   const trendPoints = skillSignals.slice(-6).map((s) => ({
-    label: new Date(s.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    label: formatFlightDate(s.flightDate),
     score: 1,
     max: 1,
     state: s.status === "NEEDS_COACHING" ? ("Needs Work" as const) : ("Improving" as const),
   }));
 
-  const tone = stateTone(toneForStatus(progression.status));
+  const acsArea = acsAreaForSkill(progression.skill, certificateType);
+  const recurringTheme = brief.recurringThemes.find((t) => t.skill === progression.skill) ?? null;
 
   return (
-    <Screen>
-      <BackLink href="/progress">Progress</BackLink>
-      <PageTitle>{progression.label}</PageTitle>
-      <div className="-mt-4 flex items-center gap-2 px-1.5">
-        <span className={cn("text-[15px] font-medium", tone.text)}>{progression.status}</span>
-        <AcsBadge skill={progression.skill} certificateType={certificateType} />
-      </div>
-
-      {trendPoints.length > 1 ? (
-        <Section title="Trend">
-          <TrendStrip points={trendPoints} />
-        </Section>
-      ) : null}
-
-      <Section title="What was said, flight by flight" flush>
-        <div className="flex flex-col gap-4">
-          {[...skillSignals].reverse().map((s) => (
-            <Evidence
-              key={s.id}
-              label={new Date(s.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-              tone="neutral"
-              quoted
-              text={s.statement}
-            />
-          ))}
-        </div>
-      </Section>
-    </Screen>
+    <SkillDetailScreen
+      backHref="/progress"
+      label={progression.label}
+      score={meterScoreForSkillStatus(progression.status)}
+      max={4}
+      state={toneForSkillStatus(progression.status)}
+      infoTipText={
+        <>
+          Four levels, from &ldquo;needs work&rdquo; to &ldquo;meets standard&rdquo;, for this one skill. It comes
+          from what your instructor said about it &mdash; the sentence is right below. There&rsquo;s no overall
+          score, and no readiness percentage: whether you&rsquo;re ready to solo is your instructor&rsquo;s call.
+        </>
+      }
+      acsArea={acsArea?.name ?? null}
+      comparison={null}
+      latestEvidence={{ label: latestInstructor?.name ?? "Your instructor", text: latestSignal.statement }}
+      recurring={recurringTheme && recurringTheme.instructorCount >= 2 ? { lessons: recurringTheme.count, instructors: recurringTheme.instructorCount } : null}
+      trendPoints={trendPoints}
+      vectorRead={null}
+      trainHref="/train"
+      lessonHistoryHref="/debrief"
+    />
   );
 }

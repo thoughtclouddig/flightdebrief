@@ -357,19 +357,36 @@ const SCENARIOS: Record<string, { scenario: string; steps: ChairFlyStep[] }> = {
 
 /* ---------------------------------------------------------------- builder */
 
+/** Whether an objective has an authored scenario at all -- production checks this before ever offering "Start chair flying," since an objective with no entry here has no drill, by design (see the SCENARIOS doc comment). */
+export function hasAuthoredScenario(task: string): boolean {
+  return task in SCENARIOS;
+}
+
 /**
  * The drill Vector recommends after the last flight, or null when there
  * isn't one. Null is a real answer: Train falls back to its other
  * recommendations rather than inventing a scenario.
+ *
+ * Defaults to the fixture demo's own contested objective and identity when
+ * called with no arguments (the prototype's call site). Production passes
+ * its own real contested objective, instructor, and next-lesson context --
+ * the SIX AUTHORED BEATS (scene/prompt/options/coaching) never change
+ * either way, only the framing around them does.
  */
-export function recommendedDrill(): ChairFlyDrill | null {
-  const gap = contestedObjective();
+export function recommendedDrill(params?: {
+  gap: GapRow;
+  instructorFirstName: string;
+  lastFlightDateLabel: string;
+  nextLesson: { when: string; lesson: string; focus: string };
+}): ChairFlyDrill | null {
+  const gap = params?.gap ?? contestedObjective();
   if (!gap) return null;
   const authored = SCENARIOS[gap.task];
   if (!authored) return null;
 
   const skill = skillForObjective(gap.task);
   const concept = skill ? CONCEPTS["crosswind-correction-through-touchdown"] : null;
+  const instructorFirstName = params?.instructorFirstName ?? INSTRUCTOR.firstName;
 
   return {
     objective: gap.task,
@@ -379,10 +396,10 @@ export function recommendedDrill(): ChairFlyDrill | null {
     reason: {
       studentLabel: levelLabel(gap.studentLevel, "student"),
       instructorLabel: levelLabel(gap.instructorLevel, "instructor"),
-      instructorName: INSTRUCTOR.firstName,
-      date: LAST_FLIGHT.date,
+      instructorName: instructorFirstName,
+      date: params?.lastFlightDateLabel ?? LAST_FLIGHT.date,
       evidence: skill?.instructorEvidence ?? gap.instructorView,
-      line: `${INSTRUCTOR.firstName} noticed you were relaxing the crosswind correction during rollout. Rehearse the sequence before your next flight.`,
+      line: `${instructorFirstName} noticed you were relaxing the crosswind correction during rollout. Rehearse the sequence before your next flight.`,
     },
     steps: authored.steps,
     // The carry-forward is the concept's own next-time list, so what the
@@ -393,7 +410,7 @@ export function recommendedDrill(): ChairFlyDrill | null {
     // Derived from the beats rather than written down, so content and claim
     // cannot drift apart.
     estimatedMinutes: Math.max(3, Math.round(authored.steps.length * 0.7)),
-    nextFlight: {
+    nextFlight: params?.nextLesson ?? {
       when: NEXT_LESSON.date,
       lesson: NEXT_LESSON.focus,
       focus: STRUCTURED.nextFlightFocus[0]!,

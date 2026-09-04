@@ -98,10 +98,11 @@ export default async function StudentHomePage() {
       }
       keyReminder={panel.kind !== "empty" && cfi && brief.lastInstructorNote ? { instructorFirstName: cfi, quote: brief.lastInstructorNote.quote } : null}
       trainCta={panel.kind !== "empty" && brief.lastFlight ? { instructorFirstName: cfi, href: "/train" } : null}
-      // Live-recording persistence is native-iOS work, not yet built for web
-      // -- reusing the prototype's own recorder UI in the meantime rather
-      // than hiding the capability or inventing a second implementation.
-      startFlightHref={panel.kind !== "empty" && brief.lastFlight ? "/prototype/vector/fly" : null}
+      // Live-recording persistence is native-iOS work, not yet built for
+      // web -- no real production destination exists, so this renders as a
+      // visible disabled marker rather than linking into the prototype's
+      // own recorder UI (see StudentHome's startFlight doc comment).
+      startFlight={panel.kind !== "empty" && brief.lastFlight ? { disabled: true } : null}
       addFlightHref={panel.kind !== "empty" && brief.lastFlight ? "/flights/new" : null}
       bottomRows={
         panel.kind !== "empty" && brief.lastFlight

@@ -34,6 +34,10 @@ import { stateTone, type SkillState } from "@/lib/student/state-tone";
  * endpoint; Review is the same authored-prose problem as Quiz), so there is
  * nothing for a production caller to genuinely share for that part. This
  * component is only ever the "menu" state.
+ *
+ * Production still shows the Review/Quiz/Ask row (see StudentTrainAction's
+ * `disabled`) as a visibly non-interactive marker rather than omitting it or
+ * linking into the prototype -- a known gap stays visible as a known gap.
  */
 export interface StudentTrainRecommended {
   tone: SkillState;
@@ -52,6 +56,8 @@ export interface StudentTrainAction {
   href?: string;
   onClick?: () => void;
   caption?: ReactNode;
+  /** Known gap, not a dead end -- renders as a visibly non-interactive marker instead of a link. Never pair with href/onClick. */
+  disabled?: boolean;
 }
 
 export interface StudentTrainSkillRow {
@@ -144,7 +150,7 @@ export function StudentTrain({ recommended, emptyMessage, vectorInfo, primaryAct
               {secondaryActions && secondaryActions.length > 0 ? (
                 <div className="mt-1.5 flex gap-2.5">
                   {secondaryActions.map((a) => (
-                    <SecondaryButton key={a.label} href={a.href} onClick={a.onClick} onPanel>
+                    <SecondaryButton key={a.label} href={a.href} onClick={a.onClick} onPanel disabled={a.disabled}>
                       {a.label}
                     </SecondaryButton>
                   ))}

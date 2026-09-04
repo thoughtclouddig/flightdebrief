@@ -34,7 +34,7 @@ import type { ChairFlyDrill, ChairFlyOption } from "@/lib/prototype/chair-fly";
  * situation. The product has exactly one performance model and Chair Flying
  * only reads it.
  */
-export function ChairFlySession({ drill }: { drill: ChairFlyDrill }) {
+export function ChairFlySession({ drill, homeHref = "/prototype/vector" }: { drill: ChairFlyDrill; homeHref?: string }) {
   const [stage, setStage] = useState<"intro" | "running" | "complete">("intro");
   const [index, setIndex] = useState(0);
   const [chosen, setChosen] = useState<ChairFlyOption | null>(null);
@@ -134,7 +134,7 @@ export function ChairFlySession({ drill }: { drill: ChairFlyDrill }) {
           </div>
         </Section>
 
-        <PrimaryButton href="/prototype/vector">
+        <PrimaryButton href={homeHref}>
           See my next flight
           <ArrowRight className="size-[18px]" aria-hidden />
         </PrimaryButton>
