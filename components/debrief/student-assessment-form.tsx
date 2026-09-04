@@ -111,7 +111,7 @@ export function StudentAssessmentForm({
         {lesson.map((task) => (
           <Card key={task.id} className="flex flex-col gap-3.5">
             <p className="text-[17px] font-semibold text-foreground">{task.label}</p>
-            <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} />
+            <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} role="student" />
           </Card>
         ))}
       </div>
@@ -125,7 +125,7 @@ export function StudentAssessmentForm({
           {universal.map((task) => (
             <Card key={task.id} className="flex flex-col gap-3.5">
               <p className="text-[17px] font-semibold text-foreground">{task.label}</p>
-              <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} />
+              <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} role="student" />
             </Card>
           ))}
         </div>

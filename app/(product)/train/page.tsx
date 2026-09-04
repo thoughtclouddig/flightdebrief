@@ -6,7 +6,7 @@ import { computeNextLessonBrief } from "@/lib/training-memory";
 import { computeSkillProgression, type SkillProgression } from "@/lib/skill-progress";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { allTrainingSkills } from "@/lib/topics";
-import { performanceLevelLabel, performanceLevelRank } from "@/lib/performance-levels";
+import { performanceLevelLabelFor, performanceLevelRank } from "@/lib/performance-levels";
 import { formatFlightContext, formatFlightDate } from "@/lib/utils";
 import type { AssessmentDifference, SkillProgressionStatus } from "@/lib/types";
 
@@ -116,9 +116,9 @@ export default async function TrainPage() {
           : "",
         comparisonLine: contested ? (
           <>
-            You called this <span className="font-semibold text-panel-foreground">{performanceLevelLabel(contested.studentLevel)}</span>.{" "}
+            You called this <span className="font-semibold text-panel-foreground">{performanceLevelLabelFor(contested.studentLevel, "student")}</span>.{" "}
             {cfi ?? "Your instructor"} called it{" "}
-            <span className="font-semibold text-panel-foreground">{performanceLevelLabel(contested.instructorLevel)}</span>.
+            <span className="font-semibold text-panel-foreground">{performanceLevelLabelFor(contested.instructorLevel, "instructor")}</span>.
           </>
         ) : theme && theme.instructorCount >= 2
             ? `Come up in ${theme.count} of your last ${theme.consideredFlights} debriefs -- across ${theme.instructorCount} instructors.`

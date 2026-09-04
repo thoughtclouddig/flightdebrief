@@ -110,6 +110,7 @@ export function AssessmentForm({
             value={ratings[task.id] ?? null}
             onChange={(level) => rate(task.id, level)}
             disabled={saving === task.id}
+            role={role}
           />
         ))}
       </div>
@@ -129,6 +130,7 @@ export function AssessmentForm({
               value={ratings[task.id] ?? null}
               onChange={(level) => rate(task.id, level)}
               disabled={saving === task.id}
+              role={role}
             />
           ))}
         </div>

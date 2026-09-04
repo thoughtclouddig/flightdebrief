@@ -18,6 +18,31 @@ export function performanceLevelLabel(code: PerformanceLevelCode): string {
   return PERFORMANCE_LEVELS.find((l) => l.code === code)?.label ?? code;
 }
 
+/**
+ * Role-specific presentation labels -- same three underlying codes, two
+ * different questions. A student rating their own flight is answering "how
+ * did this feel to me?", not judging themselves against the training
+ * standard, so INDEPENDENT reads as "Felt Solid" rather than "Meets
+ * Standard" -- that's the instructor's call to make, not something to ask a
+ * student who may not yet know the standard. Presentation only: the stored
+ * code and PERFORMANCE_LEVELS' ordering/rank are unaffected.
+ */
+const STUDENT_LEVEL_LABELS: Record<PerformanceLevelCode, string> = {
+  LEARNING: "Needs Work",
+  NEEDS_COACHING: "Improving",
+  INDEPENDENT: "Felt Solid",
+};
+
+const INSTRUCTOR_LEVEL_LABELS: Record<PerformanceLevelCode, string> = {
+  LEARNING: "Needs Work",
+  NEEDS_COACHING: "Improving",
+  INDEPENDENT: "Meets Standard",
+};
+
+export function performanceLevelLabelFor(code: PerformanceLevelCode, rater: "student" | "instructor"): string {
+  return rater === "student" ? STUDENT_LEVEL_LABELS[code] : INSTRUCTOR_LEVEL_LABELS[code];
+}
+
 /** Ordinal rank for computing discrepancy distance between two ratings. */
 export function performanceLevelRank(code: PerformanceLevelCode): number {
   return PERFORMANCE_LEVELS.findIndex((l) => l.code === code);

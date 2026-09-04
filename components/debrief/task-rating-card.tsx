@@ -9,17 +9,19 @@ export function TaskRatingCard({
   value,
   onChange,
   disabled,
+  role,
 }: {
   label: string;
   value: PerformanceLevelCode | null;
   onChange: (level: PerformanceLevelCode) => void;
   disabled?: boolean;
+  role: "student" | "instructor";
 }) {
   return (
     <Card>
       <CardContent className="flex flex-col gap-3.5 py-1">
         <p className="text-base font-semibold text-foreground">{label}</p>
-        <PerformanceLevelPicker value={value} onChange={onChange} disabled={disabled} />
+        <PerformanceLevelPicker value={value} onChange={onChange} disabled={disabled} role={role} />
       </CardContent>
     </Card>
   );
