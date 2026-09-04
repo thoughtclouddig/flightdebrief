@@ -1,39 +1,29 @@
-import { performanceLevelRank, type PerformanceLevelCode } from "@/lib/performance-levels";
+import {
+  PERFORMANCE_LEVELS,
+  performanceLevelLabelFor,
+  performanceLevelRank,
+  type PerformanceLevelCode,
+} from "@/lib/performance-levels";
 import type { SkillState } from "@/lib/student/state-tone";
 
 /**
  * The objective-level assessment vocabulary for the guided debrief.
  *
- * Deliberately NOT a new scoring system. The codes, their order and their
- * rank function are the shared FITS-derived model in lib/performance-levels.ts
- * -- only the wording differs, which that file explicitly anticipates by
- * persisting the code and never the label.
- *
- * Two label sets over one scale, because the two people rating are answering
- * different questions. A student cannot honestly report "Meets Standard"
- * about a standard nobody has shown them; "Felt Solid" is a claim about their
- * own experience, which is the only thing they are actually qualified to
- * report. The instructor IS judging against the ACS, so their top level keeps
- * the formal wording. Same code underneath, so the comparison stays valid.
+ * Deliberately NOT a new scoring system, and deliberately not a second copy
+ * of one: the codes, their order, their rank, and the role-specific labels
+ * ("Felt Solid" vs "Meets Standard" over the same INDEPENDENT code) are all
+ * lib/performance-levels.ts's -- the same module components/debrief/
+ * performance-level-picker.tsx (the real rating control) already uses. This
+ * file used to maintain its own copy of that label map; two copies of the
+ * same student/instructor wording is exactly the drift this file exists to
+ * avoid now.
  */
-export const ASSESSMENT_LEVELS: PerformanceLevelCode[] = ["LEARNING", "NEEDS_COACHING", "INDEPENDENT"];
-
-const STUDENT_LABELS: Record<PerformanceLevelCode, string> = {
-  LEARNING: "Needs Work",
-  NEEDS_COACHING: "Improving",
-  INDEPENDENT: "Felt Solid",
-};
-
-const INSTRUCTOR_LABELS: Record<PerformanceLevelCode, string> = {
-  LEARNING: "Needs Work",
-  NEEDS_COACHING: "Improving",
-  INDEPENDENT: "Meets Standard",
-};
+export const ASSESSMENT_LEVELS: PerformanceLevelCode[] = PERFORMANCE_LEVELS.map((l) => l.code);
 
 export type Rater = "student" | "instructor";
 
 export function levelLabel(code: PerformanceLevelCode, rater: Rater): string {
-  return rater === "student" ? STUDENT_LABELS[code] : INSTRUCTOR_LABELS[code];
+  return performanceLevelLabelFor(code, rater);
 }
 
 /**

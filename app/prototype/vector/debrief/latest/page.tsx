@@ -1,19 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { Check, ChevronDown, ChevronRight, Play } from "lucide-react";
+import { ChevronDown, Play } from "lucide-react";
 import { VectorPanel } from "@/components/student/vector-panel";
-import {
-  AcsBadge,
-  BackLink,
-  Card,
-  Evidence,
-  PageTitle,
-  PrimaryButton,
-  Screen,
-  Section,
-} from "@/components/student/ui";
+import { Card, Evidence, PrimaryButton, Section } from "@/components/student/ui";
+import { DebriefDetail } from "@/components/student/debrief/debrief-detail";
 import { ObjectiveComparison } from "@/components/student/debrief/assessment-comparison";
 import { agreementSummary } from "@/lib/student/assessment";
 import { cn } from "@/lib/utils";
@@ -28,117 +19,43 @@ import {
   SUGGESTED,
 } from "@/lib/prototype-fixtures/vector-data";
 import { analysisFor } from "@/lib/prototype/moments";
-import { momentTone } from "@/lib/student/telemetry";
-
-/**
- * One debrief, answering: what happened last flight?
- *
- * Copy is aggressively shortened -- the seeded strings are full sentences
- * because the analyzer produces sentences, but a list on a phone wants
- * phrases. Long form is one tap away in the transcript, which stays closed.
- */
-const WENT_WELL = ["Better centerline control", "Strong short-field technique"];
-const WORK_ON = ["Crosswind correction through touchdown", "Stabilized approach speed"];
 
 /** Derived from the same analysis the Flight Analysis screen renders. */
 const MOMENTS = analysisFor("aug-29")?.moments ?? [];
 
-export default function DebriefDetail() {
+export default function DebriefLatestPage() {
   const [showTranscript, setShowTranscript] = useState(false);
   const [asking, setAsking] = useState(false);
 
   return (
-    <Screen>
-      <BackLink href="/prototype/vector/debrief">Debriefs</BackLink>
-      <PageTitle kicker={`${LAST_FLIGHT.date} · ${INSTRUCTOR.firstName}`}>Crosswind + Short Field</PageTitle>
-
-      <Card onClick={() => {}} className="flex items-center gap-4 py-4">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand">
-          <Play className="size-4 fill-on-brand text-on-brand" aria-hidden />
-        </span>
-        <span className="flex-1">
-          <span className="block text-[17px] font-medium text-foreground">Listen again</span>
-          <span className="block text-[13px] text-foreground-faint">Your debrief, 1:12</span>
-        </span>
-      </Card>
-
-      <Section title={<>Went well</>}>
-        <ul className="flex flex-col gap-3">
-          {WENT_WELL.map((w) => (
-            <li key={w} className="flex items-start gap-3 text-[17px] leading-snug text-foreground">
-              <Check className="mt-1 size-4 shrink-0 text-state-good" aria-hidden />
-              {w}
-            </li>
-          ))}
-        </ul>
-      </Section>
-
-      <Section title={<>Work on</>}>
-        <ul className="flex flex-col gap-3">
-          {WORK_ON.map((w) => (
-            <li key={w} className="flex items-start gap-3 text-[17px] leading-snug text-foreground">
-              <span className="mt-2 size-1.5 shrink-0 rounded-full bg-state-attention" aria-hidden />
-              {w}
-            </li>
-          ))}
-        </ul>
-        {/* ACS as a structural footnote: one line saying this is a recognized
-            Area of Operation, then out of the way. */}
-        <AcsBadge area={ACS_AREAS.landings} />
-      </Section>
-
-      <Section title={<>{INSTRUCTOR.firstName} wants next</>}>
-        <div className="flex flex-col gap-5">
-          {STRUCTURED.instructorEmphasis.map((e) => (
-            <Evidence key={e.quote} label={INSTRUCTOR.firstName} tone="instructor" text={e.quote} />
-          ))}
-        </div>
-      </Section>
-
-      {/*
-       * Flight Moments in the normal debrief, so a student never has to open
-       * Flight Analysis to discover that telemetry context exists. Compact on
-       * purpose -- this is a pointer into the deeper surface, not the surface
-       * itself, and the debrief must not become an engineering dashboard.
-       */}
-      {MOMENTS.length > 0 ? (
-        <Section title={<>Flight moments</>} flush>
-          <div className="flex flex-col gap-3">
-            {MOMENTS.map((m) => (
-              <Link
-                key={m.id}
-                href={`/prototype/vector/flights/aug-29/moments/${m.id}`}
-                className="flex items-start gap-3 rounded-2xl border border-hairline bg-surface p-5"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2.5">
-                    <span className="text-[17px] font-semibold text-foreground">{m.title}</span>
-                    <span
-                      className={cn(
-                        "text-[14px] font-medium",
-                        momentTone(m.type) === "attention"
-                          ? "text-state-attention"
-                          : momentTone(m.type) === "good"
-                            ? "text-state-good"
-                            : "text-foreground-faint",
-                      )}
-                    >
-                      {m.type === "NEEDS_ATTENTION" ? "Needs attention" : m.type === "BEST_ATTEMPT" ? "Best attempt" : "Improved"}
-                    </span>
-                  </span>
-                  {m.flightData[0] ? (
-                    <span className="mt-2 block text-[15px] leading-relaxed text-foreground-soft">
-                      <span className="font-medium text-foreground">Flight data:</span> {m.flightData[0].value}
-                    </span>
-                  ) : null}
-                </span>
-                <ChevronRight className="mt-1 size-4 shrink-0 text-foreground-faint" aria-hidden />
-              </Link>
-            ))}
-          </div>
-        </Section>
-      ) : null}
-
+    <DebriefDetail
+      backHref="/prototype/vector/debrief"
+      kicker={`${LAST_FLIGHT.date} · ${INSTRUCTOR.firstName}`}
+      lessonTitle="Crosswind + Short Field"
+      listenAgain={
+        <Card onClick={() => {}} className="flex items-center gap-4 py-4">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand">
+            <Play className="size-4 fill-on-brand text-on-brand" aria-hidden />
+          </span>
+          <span className="flex-1">
+            <span className="block text-[17px] font-medium text-foreground">Listen again</span>
+            <span className="block text-[13px] text-foreground-faint">Your debrief, 1:12</span>
+          </span>
+        </Card>
+      }
+      wentWell={STRUCTURED.wentWell}
+      workOn={STRUCTURED.needsWork}
+      acsArea={ACS_AREAS.landings}
+      instructorFirstName={INSTRUCTOR.firstName}
+      instructorGuidance={STRUCTURED.instructorEmphasis.map((e) => ({ instructorName: INSTRUCTOR.firstName, quote: e.quote }))}
+      moments={MOMENTS.map((m) => ({
+        id: m.id,
+        href: `/prototype/vector/flights/aug-29/moments/${m.id}`,
+        title: m.title,
+        type: m.type,
+        flightDataLabel: m.flightData[0]?.value ?? null,
+      }))}
+    >
       {/*
         * Every objective, both ratings, agreements included.
         *
@@ -151,29 +68,24 @@ export default function DebriefDetail() {
         *
         * The per-objective views below are summaries, not transcript, so
         * neither voice is quoted -- see the note in vector-data.ts. The
-        * verbatim recordings live behind View transcript.
+        * verbatim recordings live behind View transcript. This section (and
+        * Ask Vector, and the transcript toggle below) is deliberately not
+        * part of the shared canonical hierarchy -- it already has its own
+        * full moment at the reveal/compare screen, and Vector has no
+        * production backend yet. Prototype-only content, layered around the
+        * shared component rather than inside it.
         */}
       <Section title={<>How you both saw it</>} flush>
         <p className="mb-4 text-[15px] leading-relaxed text-foreground-soft">
-          {agreementSummary(
-            PERCEPTION_GAPS.map((g) => ({ student: g.studentLevel, instructor: g.instructorLevel })),
-          )}
+          {agreementSummary(PERCEPTION_GAPS.map((g) => ({ student: g.studentLevel, instructor: g.instructorLevel })))}
         </p>
         <div className="flex flex-col gap-3">
           {PERCEPTION_GAPS.map((g) => (
-            <ObjectiveComparison
-              key={g.task}
-              task={g.task}
-              student={g.studentLevel}
-              instructor={g.instructorLevel}
-              instructorName={INSTRUCTOR.firstName}
-            >
+            <ObjectiveComparison key={g.task} task={g.task} student={g.studentLevel} instructor={g.instructorLevel} instructorName={INSTRUCTOR.firstName}>
               <Evidence label="You" tone="student" quoted={false} text={g.studentView} />
               <Evidence label={INSTRUCTOR.firstName} tone="instructor" quoted={false} text={g.instructorView} />
               {g.takeaway ? (
-                <p className="rounded-xl bg-surface-sunken px-4 py-3.5 text-[15px] leading-relaxed text-foreground-soft">
-                  {g.takeaway}
-                </p>
+                <p className="rounded-xl bg-surface-sunken px-4 py-3.5 text-[15px] leading-relaxed text-foreground-soft">{g.takeaway}</p>
               ) : null}
             </ObjectiveComparison>
           ))}
@@ -181,10 +93,7 @@ export default function DebriefDetail() {
       </Section>
 
       {asking ? (
-        <VectorPanel
-          context={`${LAST_FLIGHT.lesson} · ${INSTRUCTOR.firstName} · ${LAST_FLIGHT.date}`}
-          suggestions={SUGGESTED.afterDebrief}
-        />
+        <VectorPanel context={`${LAST_FLIGHT.lesson} · ${INSTRUCTOR.firstName} · ${LAST_FLIGHT.date}`} suggestions={SUGGESTED.afterDebrief} />
       ) : (
         <PrimaryButton onClick={() => setAsking(true)}>Ask Vector about this</PrimaryButton>
       )}
@@ -205,6 +114,6 @@ export default function DebriefDetail() {
           </div>
         ) : null}
       </div>
-    </Screen>
+    </DebriefDetail>
   );
 }

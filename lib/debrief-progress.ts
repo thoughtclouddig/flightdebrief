@@ -1,5 +1,5 @@
 import type { Repository } from "@/lib/data/types";
-import type { FlightWithRelations } from "@/lib/types";
+import type { AssessmentAttribution, FlightWithRelations } from "@/lib/types";
 
 export type DebriefStage =
   | "awaiting_tasks"
@@ -13,6 +13,17 @@ export interface DebriefProgress {
   stage: DebriefStage;
   /** Who needs to act next -- null once nothing further is needed from either party. */
   waitingOn: "instructor" | "student" | null;
+  /**
+   * Only meaningful at "ready_to_debrief": whether the instructor's
+   * assessment (once it exists) was a same-phone guest handoff rather than
+   * a verified CFI account. A guest-handoff student who reaches this stage
+   * still has something to do themselves (continue into recording, on the
+   * same session) -- a verified-CFI student genuinely doesn't, since a
+   * separate account has to pick up from here. Undefined everywhere else,
+   * and whenever the instructor assessment doesn't exist yet -- attribution
+   * isn't decided until whoever rates it actually starts.
+   */
+  instructorAttribution?: AssessmentAttribution;
 }
 
 /**
@@ -68,7 +79,7 @@ export async function computeDebriefProgress(
     return { stage: "awaiting_instructor_assessment", waitingOn: "instructor" };
   }
 
-  return { stage: "ready_to_debrief", waitingOn: "instructor" };
+  return { stage: "ready_to_debrief", waitingOn: "instructor", instructorAttribution: instructorAssessment.attribution };
 }
 
 /** Short, human-readable label for DebriefProgress.stage -- shared so every screen phrases it the same way. */

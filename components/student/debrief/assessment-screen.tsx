@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { AssessmentProgress } from "@/components/debrief/assessment-progress";
-import { PerformanceLevelPicker } from "@/components/debrief/performance-level-picker";
+import { AssessmentProgress } from "@/components/student/debrief/assessment-progress";
+import { PerformanceLevelPicker } from "@/components/student/debrief/performance-level-picker";
 import { BackLink, Card, PageTitle, PrimaryButton, Screen, SectionLabel } from "@/components/student/ui";
 import { partitionTasks } from "@/lib/universal-tasks";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
@@ -16,8 +16,8 @@ interface TaskInput {
 }
 
 /**
- * V2 assessment form, shared by both independent raters: the student
- * (role="student", self-assessment/page.tsx) and, for the same-phone
+ * The canonical V2 assessment screen, shared by both independent raters: the
+ * student (role="student", self-assessment/page.tsx) and, for the same-phone
  * guest-instructor handoff, whoever is now holding the phone
  * (role="instructor", instructor-assessment/page.tsx). Same rate()/submit()
  * logic and the same two API routes (/assessments/[role]/ratings,
@@ -29,15 +29,15 @@ interface TaskInput {
  * viewer in. Both page-level call sites are already hard-gated to the
  * right viewer before rendering this.
  *
- * PerformanceLevelPicker and AssessmentProgress are reused unmodified --
- * both are small, real, already token-based, and shared with the CFI side;
- * only the surrounding chrome (Card/PageTitle) and the removed shadcn
- * dependency changed. No flight-identifying line here (route/tail/date) --
- * that's the lesson-confirmation screen's job now, immediately before this
- * one; repeating it here would be the same flight-metadata-where-training-
- * context-belongs mistake already fixed on Train and the Debrief hub.
+ * app/prototype/vector/debrief/new's own Assess() is the presentation
+ * counterpart for the fixture demo -- genuinely different orchestration (no
+ * API calls, no universal/lesson split, no reflection field, ratings never
+ * persist), so it stays a separate, simpler implementation rather than
+ * being forced through this one. Both it and this screen render objective
+ * ratings through the same shared PerformanceLevelPicker, which is the part
+ * that actually used to be duplicated.
  */
-export function StudentAssessmentForm({
+export function AssessmentScreen({
   flightId,
   role,
   tasks,
@@ -116,7 +116,7 @@ export function StudentAssessmentForm({
         {lesson.map((task) => (
           <Card key={task.id} className="flex flex-col gap-3.5">
             <p className="text-[17px] font-semibold text-foreground">{task.label}</p>
-            <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} role={role} />
+            <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} rater={role} />
           </Card>
         ))}
       </div>
@@ -130,7 +130,7 @@ export function StudentAssessmentForm({
           {universal.map((task) => (
             <Card key={task.id} className="flex flex-col gap-3.5">
               <p className="text-[17px] font-semibold text-foreground">{task.label}</p>
-              <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} role={role} />
+              <PerformanceLevelPicker value={ratings[task.id] ?? null} onChange={(level) => rate(task.id, level)} disabled={saving === task.id} rater={role} />
             </Card>
           ))}
         </div>

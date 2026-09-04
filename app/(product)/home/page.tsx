@@ -41,14 +41,26 @@ export default async function StudentHomePage() {
       flightContext: formatFlightContext(pendingFlight),
       bodyText: solo
         ? "Capture what mattered while it's fresh."
-        : pendingProgress.stage === "awaiting_tasks" || pendingProgress.stage === "awaiting_instructor_assessment"
+        : pendingProgress.stage === "awaiting_tasks"
           ? "Waiting on your instructor."
-          : pendingProgress.stage === "awaiting_student_assessment"
-            ? "Your turn to rate it."
-            : pendingProgress.stage === "awaiting_finish"
-              ? "Recorded -- your instructor still needs to finish reviewing it with you."
-              : "Both assessments are in -- your instructor is starting the debrief.",
-      primaryLabel: solo ? "Start debrief" : pendingProgress.stage === "awaiting_student_assessment" ? "Do it now" : "Open",
+          : pendingProgress.stage === "awaiting_instructor_assessment"
+            ? "Hand the phone to your instructor."
+            : pendingProgress.stage === "awaiting_student_assessment"
+              ? "Your turn to rate it."
+              : pendingProgress.stage === "awaiting_finish"
+                ? "Recorded -- your instructor still needs to finish reviewing it with you."
+                : pendingProgress.instructorAttribution === "guest_handoff"
+                  ? "Continue where you left off."
+                  : "Both assessments are in -- your instructor is starting the debrief.",
+      primaryLabel: solo
+        ? "Start debrief"
+        : pendingProgress.stage === "awaiting_student_assessment"
+          ? "Do it now"
+          : pendingProgress.stage === "awaiting_instructor_assessment"
+            ? "Hand off"
+            : pendingProgress.stage === "ready_to_debrief" && pendingProgress.instructorAttribution === "guest_handoff"
+              ? "Continue"
+              : "Open",
       primaryHref: `/flights/${pendingFlight.id}/debrief`,
       secondaryHref: `/flights/${pendingFlight.id}`,
       showAutoRefresh: !solo,
