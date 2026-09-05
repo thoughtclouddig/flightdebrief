@@ -1,4 +1,6 @@
 import { StudentTrain, type StudentTrainAction, type StudentTrainRecommended, type StudentTrainSkillRow } from "@/components/student/student-train";
+import { Section } from "@/components/student/ui";
+import { TrainingItemChecklist } from "@/components/training-item-checklist";
 import { acsAreaForSkill } from "@/lib/acs";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
@@ -41,11 +43,21 @@ export default async function TrainPage() {
   const viewer = await getViewer();
   const studentId = viewer.user.id;
 
-  const [brief, signals, memberships] = await Promise.all([
+  const [brief, signals, memberships, trainingItems] = await Promise.all([
     computeNextLessonBrief(repo, studentId),
     repo.listTrainingSignals({ studentId }),
     repo.listMembershipsForUser(studentId),
+    repo.listTrainingItems({ studentId }),
   ]);
+  // "Ongoing" used to have its own section on Progress, sitting above the
+  // approved Skills/ACS view -- moved here instead of deleted. These are
+  // real CFI-authored checklist items (lib/types.ts's TrainingItem), never
+  // coded to a TrainingSkill, so they render as plain description rows via
+  // the existing real TrainingItemChecklist, not folded into stillWorkingOn's
+  // skill-meter rows below.
+  const ongoingItems = trainingItems.filter(
+    (t) => t.category === "keep_working_on" && !t.done && t.visibility === "shared",
+  );
   const certificateType =
     memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
   const cfi = resolveCfiFirstName(brief.lastInstructor);
@@ -174,6 +186,13 @@ export default async function TrainPage() {
       }}
       primaryAction={primaryAction}
       secondaryActions={secondaryActions}
+      afterHeader={
+        ongoingItems.length > 0 ? (
+          <Section title="Ongoing">
+            <TrainingItemChecklist items={ongoingItems} />
+          </Section>
+        ) : undefined
+      }
       stillWorkingOn={stillWorkingOn}
     />
   );

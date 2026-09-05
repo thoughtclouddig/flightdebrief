@@ -59,8 +59,8 @@ export async function buildProductionProfileProps(
     debriefsCount: String(debriefedCount),
     instructorHref: "/profile",
     instructorName: instructors.length > 0 ? instructors.map((i) => i!.name).join(", ") : "None yet",
-    guideHref: "/how-it-works",
-    supportHref: "mailto:support@getafterflight.com",
+    guideHref: "/profile/guide",
+    supportHref: "/profile/support",
     dataHandlingHref: "/data-handling",
     signOutHref: "/api/auth/logout",
   };

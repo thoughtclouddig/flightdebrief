@@ -2,11 +2,14 @@ import { AvatarUpload } from "@/components/avatar-upload";
 import { ChangeEmailForm } from "@/components/change-email-form";
 import { LeaveOrganizationButton } from "@/components/leave-organization-button";
 import { VoicePreferencePicker } from "@/components/voice-preference-picker";
+import Link from "next/link";
 import { ProfileScreen } from "@/components/student/profile/profile-screen";
 import { Section } from "@/components/student/ui";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { buildProductionProfileProps } from "@/lib/student/profile-production-adapter";
+import { computeSchoolFreeDebriefs, computeStudentFreeFlights } from "@/lib/entitlements";
+import { hasActiveSubscription } from "@/lib/billing-gate";
 
 export const dynamic = "force-dynamic";
 
@@ -24,14 +27,18 @@ const NOTICE_MESSAGES: Record<string, string> = {
  * components/nav.tsx's accountHrefForRole sends them to /cfi/profile and
  * /admin/settings respectively -- so this is a direct in-place rewrite.
  *
- * Voice preference and leave-organization are real, working capabilities
- * ProfileScreen has no field for at all (unlike instructorHref, this isn't a
- * missing destination -- there's no row in its fixed three-row Training
- * section for either). Rather than perform surgery on the shared component's
- * layout for two secondary, non-account-identity actions, they're kept
- * working in a separate "Account" section below it, using the same shared
- * Section primitive ProfileScreen itself renders with -- see this file's own
- * module doc in the pre-rewire version of this file for the full reasoning.
+ * Voice preference, leave-organization, and the free-usage/entitlement
+ * notice are real, working capabilities ProfileScreen has no field for at
+ * all (unlike instructorHref, these aren't missing destinations -- there's
+ * no row in its fixed three-row Training section for any of them). Rather
+ * than perform surgery on the shared component's layout for account-status
+ * content, they're kept working in a separate "Account" section below it,
+ * using the same shared Section primitive ProfileScreen itself renders
+ * with. The free-usage notice used to live on Progress, sitting above the
+ * approved Skills/ACS view -- moved here since account/billing status
+ * belongs with the rest of account status, not inside the training-progress
+ * screen; it links to /billing, the real full billing page, rather than
+ * duplicating that page's own subscribe flow here.
  */
 export default async function ProfilePage(props: PageProps<"/profile">) {
   const searchParams = await props.searchParams;
@@ -45,7 +52,17 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
   const canLeaveOrg = viewer.organization.kind !== "individual" && !viewer.organization.demoExpiresAt;
 
-  const productionProps = await buildProductionProfileProps(repo, viewer);
+  const isSchoolOrg = viewer.organization.kind === "school";
+  const [productionProps, billingScopedFlights] = await Promise.all([
+    buildProductionProfileProps(repo, viewer),
+    isSchoolOrg
+      ? repo.listFlights({ organizationId: viewer.organization.id })
+      : repo.listFlights({ studentId: viewer.user.id }),
+  ]);
+  const freeUsage = isSchoolOrg
+    ? computeSchoolFreeDebriefs(billingScopedFlights)
+    : computeStudentFreeFlights(billingScopedFlights);
+  const showFreeUsage = viewer.organization.kind !== "independent_cfi" && !hasActiveSubscription(viewer.organization);
 
   return (
     <>
@@ -69,7 +86,7 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
         emailAction={<ChangeEmailForm />}
       />
 
-      {canLeaveOrg || ttsEnabled ? (
+      {canLeaveOrg || ttsEnabled || showFreeUsage ? (
         <div className="flex flex-col gap-7 bg-surface-sunken px-4 pb-10">
           <Section title="Account">
             <div className="flex flex-col gap-4">
@@ -77,6 +94,16 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
                 <span className="text-[17px] text-foreground">Organization</span>
                 <span className="shrink-0 text-[15px] text-foreground-faint">{viewer.organization.name}</span>
               </div>
+              {showFreeUsage ? (
+                <Link href="/billing" className="flex min-h-[24px] items-center justify-between gap-3">
+                  <span className="text-[17px] text-foreground">Billing</span>
+                  <span className="shrink-0 text-[15px] text-foreground-faint">
+                    {freeUsage.exhausted
+                      ? `Used all ${freeUsage.cap} free ${isSchoolOrg ? "debriefs" : "flights"}`
+                      : `${freeUsage.used} of ${freeUsage.cap} free ${isSchoolOrg ? "debriefs" : "flights"} used`}
+                  </span>
+                </Link>
+              ) : null}
               {ttsEnabled ? (
                 <div>
                   <p className="mb-2 text-[13px] font-medium uppercase tracking-wide text-foreground-faint">

@@ -89,6 +89,12 @@ export const config = {
     "/profile/:path*",
     "/progress/:path*",
     "/flights/:path*",
+    "/train",
+    "/train/:path*",
+    "/debrief",
+    "/debrief/:path*",
+    "/billing",
+    "/practice/:path*",
     "/cfi/:path*",
     "/admin/:path*",
     // Both entries: ":path*" does not match the bare parent, so listing only

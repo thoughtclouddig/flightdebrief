@@ -1,8 +1,9 @@
 import { redirect, notFound } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 import { DebriefRecorder } from "@/components/debrief-recorder";
 import { GuidedDebriefRecorder } from "@/components/debrief/guided-debrief-recorder";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { PageTitle, Screen } from "@/components/student/ui";
+import { BackLink, Panel, PanelEyebrow, PanelHeadline, PanelMeta, PageTitle, QuietRow, Screen, Section } from "@/components/student/ui";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { formatFlightContext } from "@/lib/utils";
@@ -190,16 +191,48 @@ function WaitingMessage({
   );
 }
 
-/** Student-viewer equivalent of WaitingMessage, in V2 styling -- always "Not quite yet", since every student call site is a genuine block (the CFI is the one with something to do next). */
+/**
+ * Student-viewer equivalent of WaitingMessage, in full V2 styling.
+ *
+ * This state has no fixture-reference counterpart (see this file's own
+ * investigation history): the approved V2 guided-debrief demo
+ * (components/student/debrief/guided-debrief-demo.tsx) simulates the whole
+ * flow -- both roles -- in one client-side session, so it never had to model
+ * a second real account independently continuing later. There was nothing to
+ * restore parity with; this is a first-class design for a real requirement
+ * the reference never needed.
+ *
+ * AutoRefresh already covers "how does the student find out" -- no new
+ * polling added here, just clearer copy about what it does (see that
+ * component's own doc comment on the visibilitychange/focus behavior mobile
+ * backgrounding otherwise defeats). No spinner: there's nothing to animate,
+ * only something to wait for.
+ */
 function StudentWaitingMessage({ flight, text }: { flight: FlightWithRelations; text: string }) {
   return (
     <Screen>
       <AutoRefresh />
-      <div className="text-center">
+      <BackLink href={`/flights/${flight.id}`}>Flight detail</BackLink>
+
+      <div>
         <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
         <PageTitle>Not quite yet</PageTitle>
-        <p className="mt-2 text-[15px] text-foreground-soft">{text}</p>
       </div>
+
+      <Panel>
+        <PanelEyebrow icon={<CheckCircle2 className="size-3.5" aria-hidden />}>Already done</PanelEyebrow>
+        <PanelHeadline>Both of you have rated this flight</PanelHeadline>
+        <PanelMeta>{text}</PanelMeta>
+      </Panel>
+
+      <Section title="What happens next">
+        <p className="py-1 text-[17px] leading-relaxed text-foreground-soft">
+          Your instructor records the debrief on their turn -- there&rsquo;s nothing left for you to do here. This
+          page updates on its own once it&rsquo;s ready, so there&rsquo;s no need to keep checking back.
+        </p>
+      </Section>
+
+      <QuietRow href="/home" label="Back to Home" />
     </Screen>
   );
 }

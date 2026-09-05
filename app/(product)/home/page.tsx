@@ -22,9 +22,10 @@ export default async function StudentHomePage() {
   const solo = viewer.organization.kind === "individual";
   const studentId = viewer.user.id;
 
-  const [flights, brief] = await Promise.all([
+  const [flights, brief, trainingItems] = await Promise.all([
     repo.listFlights({ studentId }),
     computeNextLessonBrief(repo, studentId),
+    repo.listTrainingItems({ studentId }),
   ]);
 
   const pendingFlight = [...flights]
@@ -68,6 +69,21 @@ export default async function StudentHomePage() {
       showAutoRefresh: !solo,
     };
   } else if (brief.upcomingReservation) {
+    // "Before your next flight" training items (real, CFI/AI-authored,
+    // separate from brief.focusAreas' own AI-derived next-lesson-focus list)
+    // used to have their own "Action items" section on Progress -- moved
+    // here rather than deleted, since this is the one place StudentHomePanel
+    // already has a slot for exactly this ("focus on N things"). Honest
+    // string-level dedup against focusAreas: a CFI's manually-authored item
+    // and the AI's own derived focus frequently restate the same point, and
+    // showing both would double the same instruction rather than add a new
+    // one. No numeric priority field exists on TrainingItem, so order is
+    // preserved as returned (creation order), appended after focusAreas.
+    const existingFocus = new Set(brief.focusAreas.map((f) => f.trim().toLowerCase()));
+    const beforeNextFlightItems = trainingItems
+      .filter((t) => t.category === "before_next_flight" && !t.done && t.visibility === "shared")
+      .map((t) => t.description)
+      .filter((d) => !existingFocus.has(d.trim().toLowerCase()));
     panel = {
       kind: "nextFlight",
       dateTimeLabel: (
@@ -77,7 +93,7 @@ export default async function StudentHomePage() {
         />
       ),
       instructorName: brief.upcomingReservationInstructor?.name ?? "TBD",
-      focusItems: brief.focusAreas,
+      focusItems: [...brief.focusAreas, ...beforeNextFlightItems],
     };
   } else if (brief.lastFlight) {
     panel = {
