@@ -86,7 +86,7 @@ export async function computeDebriefProgress(
 export function debriefStageLabel(progress: DebriefProgress): string {
   switch (progress.stage) {
     case "awaiting_tasks":
-      return "Debrief not started";
+      return "Objectives not confirmed yet";
     case "awaiting_instructor_assessment":
       return "Waiting on your assessment";
     case "awaiting_student_assessment":

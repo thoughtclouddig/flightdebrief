@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { withUniversalTasks } from "@/lib/universal-tasks";
 import { authorize, canAccessRecord, recordNotFound } from "@/lib/auth/guard";
+import { assertCanSetFlightTasks } from "@/lib/auth/assessment-access";
 import { getRepository } from "@/lib/data";
 
 interface SetTasksBody {
@@ -8,9 +9,17 @@ interface SetTasksBody {
   tasks: { taskCode: string; label: string }[];
 }
 
-/** CFI's "Flight Complete" task picker -- which maneuvers were flown, driving both self-assessment screens. Replaces the flight's full task list. */
+/**
+ * Sets a flight's task list -- driving both self-assessment screens.
+ * Historically a CFI-only "Flight Complete" task picker; Milestone 2A adds a
+ * second, narrowly-scoped caller: the flight's own student, initializing an
+ * empty task set themselves rather than being stuck behind a CFI who hasn't
+ * visited a separate screen (see assertCanSetFlightTasks's own doc comment
+ * for the exact rules and the student-first-rating vs student-first-
+ * initialization distinction this closes).
+ */
 export async function POST(request: Request, { params }: RouteContext<"/api/flights/[id]/tasks">) {
-  const auth = await authorize(["instructor", "admin"]);
+  const auth = await authorize();
   if (auth.response) return auth.response;
 
   const { id } = await params;
@@ -19,6 +28,13 @@ export async function POST(request: Request, { params }: RouteContext<"/api/flig
   if (!flight || !canAccessRecord(auth.viewer, { studentId: flight.userId, organizationId: flight.organizationId })) {
     return recordNotFound();
   }
+
+  const [existingTasks, studentAssessment] = await Promise.all([
+    repo.listFlightTasks(id),
+    repo.getAssessment(id, "student"),
+  ]);
+  const access = assertCanSetFlightTasks(auth.viewer, flight, existingTasks.length, studentAssessment?.status === "submitted");
+  if (!access.ok) return access.response;
 
   const body = (await request.json()) as SetTasksBody;
   if (!Array.isArray(body.tasks) || body.tasks.length === 0) {
@@ -30,7 +46,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/flig
 
   // Preflight, radio and situational awareness are appended here rather than
   // left to the picker. They happen on every flight whatever the lesson was,
-  // and a CFI selecting today's objective never picks them -- so they were
+  // and nobody selecting today's objective ever picks them -- so they were
   // never rated, on any flight. See lib/universal-tasks.ts.
   const tasks = await repo.setFlightTasks(
     id,
@@ -38,7 +54,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/flig
       body.tasks.map((t) => ({
         taskCode: t.taskCode,
         label: t.label,
-        source: "instructor_selected" as const,
+        source: access.source,
       })),
     ),
   );

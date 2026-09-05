@@ -42,7 +42,7 @@ export default async function StudentHomePage() {
       bodyText: solo
         ? "Capture what mattered while it's fresh."
         : pendingProgress.stage === "awaiting_tasks"
-          ? "Waiting on your instructor."
+          ? "Confirm what you worked on to start your assessment."
           : pendingProgress.stage === "awaiting_instructor_assessment"
             ? "Hand the phone to your instructor."
             : pendingProgress.stage === "awaiting_student_assessment"
@@ -54,13 +54,15 @@ export default async function StudentHomePage() {
                   : "Both assessments are in -- your instructor is starting the debrief.",
       primaryLabel: solo
         ? "Start debrief"
-        : pendingProgress.stage === "awaiting_student_assessment"
-          ? "Do it now"
-          : pendingProgress.stage === "awaiting_instructor_assessment"
-            ? "Hand off"
-            : pendingProgress.stage === "ready_to_debrief" && pendingProgress.instructorAttribution === "guest_handoff"
-              ? "Continue"
-              : "Open",
+        : pendingProgress.stage === "awaiting_tasks"
+          ? "Start debrief"
+          : pendingProgress.stage === "awaiting_student_assessment"
+            ? "Do it now"
+            : pendingProgress.stage === "awaiting_instructor_assessment"
+              ? "Hand off"
+              : pendingProgress.stage === "ready_to_debrief" && pendingProgress.instructorAttribution === "guest_handoff"
+                ? "Continue"
+                : "Open",
       primaryHref: `/flights/${pendingFlight.id}/debrief`,
       secondaryHref: `/flights/${pendingFlight.id}`,
       showAutoRefresh: !solo,

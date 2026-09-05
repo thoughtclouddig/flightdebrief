@@ -490,7 +490,7 @@ export interface RevenueShareQualification {
 
 export type DebriefGuidanceMode = "guided" | "light" | "freeform";
 
-export type FlightTaskSource = "instructor_selected" | "syllabus" | "ai_suggested" | "carried_over";
+export type FlightTaskSource = "instructor_selected" | "syllabus" | "ai_suggested" | "carried_over" | "student_confirmed";
 
 /** Which maneuvers/tasks were flown this flight, selected by the CFI at "Flight Complete". */
 export interface FlightTask {

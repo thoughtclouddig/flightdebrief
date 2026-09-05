@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Viewer } from "@/lib/viewer";
 import type { Repository } from "@/lib/data/types";
-import type { AssessmentAttribution, AssessmentRole, FlightWithRelations } from "@/lib/types";
+import type { AssessmentAttribution, AssessmentRole, FlightTaskSource, FlightWithRelations } from "@/lib/types";
 
 /**
  * Independent-assessment access rule: a student may only act on their own
@@ -49,6 +49,51 @@ export function assertAssessmentRole(
   }
   if (viewer.user.id === flight.userId && studentAssessmentSubmitted) {
     return { role, attribution: "guest_handoff" };
+  }
+  return { response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+}
+
+/**
+ * Who may (re)set a flight's task list, and what provenance their submission
+ * gets. Milestone 2A: a student is no longer stuck behind a CFI who hasn't
+ * visited the task picker -- they may initialize their OWN flight's empty
+ * task set themselves (confirming what was worked on), scoped narrowly:
+ *
+ * - only when the flight has no tasks yet (never overwrites an existing
+ *   list -- neither the CFI's nor an earlier student submission)
+ * - only their own flight (`viewer.user.id === flight.userId`)
+ * - locked out entirely once their own assessment is submitted, same as the
+ *   CFI -- the whole point of independent assessment is that both parties
+ *   rate the same, frozen scope (see the "student-first rating order" vs
+ *   "student-first debrief initialization" distinction: this function is
+ *   about the latter).
+ *
+ * An instructor/admin keeps unrestricted set/revise rights right up until
+ * that same lock -- the existing CFI task picker remains valid as an
+ * optional pre-seeding mechanism, just no longer a prerequisite.
+ */
+export function assertCanSetFlightTasks(
+  viewer: Viewer,
+  flight: FlightWithRelations,
+  existingTaskCount: number,
+  studentAssessmentSubmitted: boolean,
+): { ok: true; source: FlightTaskSource; response?: undefined } | { ok?: undefined; source?: undefined; response: NextResponse } {
+  if (studentAssessmentSubmitted) {
+    return {
+      response: NextResponse.json(
+        { error: "The assessment scope is locked once the student has submitted." },
+        { status: 409 },
+      ),
+    };
+  }
+  if (viewer.role === "instructor" || viewer.role === "admin") {
+    return { ok: true, source: "instructor_selected" };
+  }
+  if (viewer.user.id === flight.userId) {
+    if (existingTaskCount > 0) {
+      return { response: NextResponse.json({ error: "Tasks already exist for this flight." }, { status: 409 }) };
+    }
+    return { ok: true, source: "student_confirmed" };
   }
   return { response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
 }

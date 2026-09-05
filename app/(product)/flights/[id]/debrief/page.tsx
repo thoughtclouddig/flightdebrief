@@ -63,12 +63,12 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
   const tasks = await repo.listFlightTasks(id);
   if (tasks.length === 0) {
     if (isInstructorViewer) redirect(`/flights/${id}/debrief/tasks`);
-    return (
-      <StudentWaitingMessage
-        flight={flight}
-        text="Your instructor needs to log what you worked on this flight before the debrief can start."
-      />
-    );
+    // Milestone 2A: the student is no longer stuck here waiting on a CFI --
+    // they confirm what was worked on themselves at /confirm (which now
+    // handles both "nothing picked yet, let the student choose" and its
+    // original "tasks exist, review and start" cases). See
+    // assertCanSetFlightTasks for the authorization this destination relies on.
+    redirect(`/flights/${id}/debrief/confirm`);
   }
 
   const [studentAssessment, instructorAssessment] = await Promise.all([

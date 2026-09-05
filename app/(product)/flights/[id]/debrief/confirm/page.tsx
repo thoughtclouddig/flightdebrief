@@ -3,6 +3,8 @@ import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { BackLink, Screen } from "@/components/student/ui";
 import { ObjectivesScreen } from "@/components/student/debrief/objectives-screen";
+import { ObjectiveConfirmationForm } from "@/components/student/debrief/objective-confirmation-form";
+import { allTrainingSkills } from "@/lib/topics";
 import { deriveLessonFocus } from "@/lib/lesson-focus";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightDate } from "@/lib/utils";
@@ -19,6 +21,11 @@ function formatHours(minutes: number): string {
  * rating form, same as before. See components/student/debrief/
  * objectives-screen.tsx for the shared presentation -- real flight, real
  * flight_tasks, real instructor here, no fixture data.
+ *
+ * Milestone 2A: when no flight_tasks exist yet, this is no longer a dead
+ * end behind a CFI -- the student confirms the scope themselves via
+ * ObjectiveConfirmationForm, then lands back on this same URL to see the
+ * normal review-and-start screen below with their own picks populated.
  */
 export default async function ConfirmDebriefPage(props: PageProps<"/flights/[id]/debrief/confirm">) {
   const { id } = await props.params;
@@ -30,14 +37,28 @@ export default async function ConfirmDebriefPage(props: PageProps<"/flights/[id]
 
   const repo = getRepository();
   const tasks = await repo.listFlightTasks(id);
-  // No objectives logged yet -- the resolver already handles this case for
-  // the main /debrief URL; a direct hit here with nothing to confirm has
-  // nothing useful to show either.
-  if (tasks.length === 0) notFound();
+  const dateLabel = flight.flightDate === localIsoDate() ? "Today" : formatFlightDate(flight.flightDate);
+
+  if (tasks.length === 0) {
+    return (
+      <Screen>
+        <BackLink href="/debrief">Debriefs</BackLink>
+        <ObjectiveConfirmationForm
+          flightId={id}
+          allSkills={allTrainingSkills()}
+          route={`${flight.departureAirport} → ${flight.arrivalAirport}`}
+          durationLabel={`${formatHours(flight.durationMinutes)} hr`}
+          dateLabel={dateLabel}
+          aircraftType={flight.aircraft.type}
+          tailNumber={flight.aircraft.tailNumber}
+          redirectTo={`/flights/${id}/debrief/confirm`}
+        />
+      </Screen>
+    );
+  }
 
   const lessonFocus = deriveLessonFocus(tasks);
   const cfi = resolveCfiFirstName(flight.instructor);
-  const dateLabel = flight.flightDate === localIsoDate() ? "Today" : formatFlightDate(flight.flightDate);
 
   return (
     <Screen>

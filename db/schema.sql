@@ -316,6 +316,16 @@ CREATE TABLE IF NOT EXISTS flight_tasks (
 CREATE INDEX IF NOT EXISTS flight_tasks_flight_idx ON flight_tasks (flight_id);
 CREATE UNIQUE INDEX IF NOT EXISTS flight_tasks_flight_task_idx ON flight_tasks (flight_id, task_code);
 
+-- Milestone 2A: a student may now initialize their own flight's task set
+-- (confirming what was worked on) when no CFI has picked one yet, rather
+-- than being stuck on "waiting on your instructor" -- see
+-- lib/auth/assessment-access.ts's assertCanSetFlightTasks. 'student_confirmed'
+-- is a distinct, honest provenance value, never disguised as
+-- 'instructor_selected'.
+ALTER TABLE flight_tasks DROP CONSTRAINT IF EXISTS flight_tasks_source_check;
+ALTER TABLE flight_tasks ADD CONSTRAINT flight_tasks_source_check
+  CHECK (source IN ('instructor_selected','syllabus','ai_suggested','carried_over','student_confirmed'));
+
 -- One row per (flight, role) -- UNIQUE enforces exactly one student and one
 -- instructor assessment per flight, which is what lets "CFI can't see
 -- student's ratings until their own is submitted" be a plain query condition
