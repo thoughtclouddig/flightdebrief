@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Plus, Radar } from "lucide-react";
 import { PageTitle, Panel, PanelButton, PanelEyebrow, PanelHeadline, QuietRow, Screen } from "@/components/student/ui";
 import { StudentHome } from "@/components/student/student-home";
-import { isStaging } from "@/lib/env";
+import { isStaging, v2StagingUsesRealData } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
 import { getRepository } from "@/lib/data";
 import { buildProductionHomeProps, type HomeHrefBuilders } from "@/lib/student/home-production-adapter";
@@ -41,11 +41,16 @@ const V2_PRODUCTION_HREFS: HomeHrefBuilders = {
  * Milestone 2A: environment-driven adapter selection, per the approved
  * architecture -- development keeps this exact fixture rendering (the
  * approved Milestone 1B reference), staging uses real repository data via
- * buildProductionHomeProps. Production is moot; app/v2/layout.tsx already
- * 404s there before this ever renders.
+ * buildProductionHomeProps once v2StagingUsesRealData() is true. Production
+ * is moot; app/v2/layout.tsx already 404s there before this ever renders.
+ *
+ * Staging baseline reversion: v2StagingUsesRealData() is false until
+ * staging has first proven the complete fixture reference app end-to-end --
+ * see lib/env.ts's own doc comment. Until then this behaves identically to
+ * development for every environment that can actually reach it.
  */
 export default async function V2Home({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
-  if (isStaging()) {
+  if (isStaging() && v2StagingUsesRealData()) {
     let viewer;
     try {
       viewer = await getViewer();

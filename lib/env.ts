@@ -35,3 +35,20 @@ export function isStaging(): boolean {
 export function isProduction(): boolean {
   return getAppEnv() === "production";
 }
+
+/**
+ * Staging /v2 baseline reversion (temporary product decision, not an
+ * environment fact): staging must first reproduce the complete approved V2
+ * fixture reference experience end-to-end -- Mia, Jake, every route, full
+ * navigation, exactly like development -- before the real-data Home adapter
+ * (lib/student/home-production-adapter.tsx) and the corresponding
+ * fixture-nav disabling get turned back on deliberately. That code is not
+ * deleted; every /v2 file that branches on this reads this one flag, so
+ * resuming real-data productionization later is flipping this back to
+ * `isStaging()`, not another multi-file change. Has no effect in
+ * development (always fixture) or production (/v2 is blocked entirely
+ * before anything reads this).
+ */
+export function v2StagingUsesRealData(): boolean {
+  return false;
+}
