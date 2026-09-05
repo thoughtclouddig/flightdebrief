@@ -42,16 +42,15 @@ real user sees it. Internal QA only, still fixture-backed Milestone 1B on
 - `/dev/login`, `/api/demo/enter`, `/api/demo/reset`: blocked — these gate on
   raw `REPLIT_DEPLOYMENT`, which is truthy on any real deployment, staging
   included.
-- **Known gap:** `POST /api/prototype/vector` is reachable here (correctly,
-  per policy — it's only blocked in production), but it has no access control
-  of its own beyond "not production." Anyone with the staging URL can hit it
-  without passing the site gate first. Low stakes today (`grade`/`chair_fly`
-  intents touch no external API; only `ask` calls Anthropic), but worth
-  gating explicitly before staging traffic is less trusted than it is now.
-- **Known gap:** no in-app visual marker distinguishes staging from
-  production — separation today rests entirely on the hostname. A small
-  "STAGING" banner would be a cheap follow-up if screenshots/recordings ever
-  need to be told apart at a glance.
+- `POST /api/prototype/vector`: requires the same gate cookie as `/v2`
+  (`hasValidSiteGateCookie()`, `lib/auth/session.ts`) — an anonymous request
+  gets a `404` before any body parsing, so it cannot reach `askVector()` or
+  spend real Anthropic API cost. Still fully open in development, still
+  blocked outright in production.
+- A fixed "STAGING" badge renders in the corner of every `/v2` screen,
+  driven by `isStaging()` alone (`app/v2/layout.tsx`) — never hostname. It
+  cannot appear in production, which `notFound()`s before the layout's
+  `return()` is ever reached.
 - Deploy trigger: manual Publish from this Repl's own Deployments pane, after
   pulling the target commit from `origin/main` into this workspace.
 - Rollback: this Repl's own Deployments history, one-click to a prior build.
@@ -84,10 +83,30 @@ real user sees it. Internal QA only, still fixture-backed Milestone 1B on
 ## Identifying what's actually deployed
 
 Replit deployments are a snapshot of the workspace's file state at publish
-time, not a git-ref checkout — there's no in-app version endpoint today. The
-reliable way to know what's live in either Repl is `git log --oneline -1` in
-that Repl's own shell, read past any empty `"Published your App"` marker
-commit to the real content commit underneath it.
+time, not a git-ref checkout — there's no in-app version endpoint today, and
+**publishing does not pull `origin/main` automatically.** The reliable way to
+know what's live in either Repl is `git log --oneline -1` in that Repl's own
+shell, read past any empty `"Published your App"` marker commit to the real
+content commit underneath it.
+
+This bit us twice building this contract: a workspace that was never pulled
+before Publish ships whatever was already sitting there, silently, with no
+warning that it doesn't match `origin/main`.
+
+**Before publishing either environment, in that Repl's own shell:**
+
+1. `git status --porcelain` — must be empty. A dirty working tree publishes
+   uncommitted state.
+2. `git log --oneline -1` — know what HEAD actually is before you act on it.
+3. `git fetch origin && git log --oneline --stat origin/main..HEAD` — confirm
+   HEAD matches (or intentionally differs from) the origin revision you mean
+   to publish. Anything real listed here needs a merge (`git pull --no-edit
+   --no-ff origin main`), never a reflexive `reset --hard` — see the trap
+   below.
+4. Confirm environment/database identity: `echo $APP_ENV` and a redacted
+   `DATABASE_URL` host check, not a full value pasted anywhere.
+
+Only then Publish.
 
 ## The workspace/GitHub divergence trap
 
