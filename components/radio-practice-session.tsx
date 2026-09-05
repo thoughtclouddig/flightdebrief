@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import type { RadioScenario } from "@/lib/radio-practice-scenarios";
 import type { RadioPracticeAssignment } from "@/lib/types";
 import { aimSectionUrl } from "@/lib/aim-links";
+import { trackEvent } from "@/lib/marketing/analytics";
 
 type Phase = "ready" | "call-playing" | "call-played" | "recording" | "submitting" | "done";
 
@@ -78,6 +79,10 @@ export function RadioPracticeSession({
   async function startRecording() {
     setPhase("recording");
     await transcription.start();
+    trackEvent("radio_practice_started", {
+      requires_readback: needsReadback,
+      transcription_mode: transcription.mode,
+    });
   }
 
   async function stopAndSubmit() {
@@ -113,6 +118,12 @@ export function RadioPracticeSession({
         modelReadback: data.modelReadback,
         transcript,
         coaching: data.coaching ?? null,
+      });
+      trackEvent("radio_practice_submitted", {
+        correct: Boolean(data.assignment.correct),
+        requires_readback: needsReadback,
+        used_recording: transcript.length > 0,
+        transcript_length: transcript.length,
       });
       setPhase("done");
     } catch (err) {

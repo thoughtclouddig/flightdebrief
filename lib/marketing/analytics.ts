@@ -1,11 +1,5 @@
 "use client";
 
-/**
- * Conversion events the marketing site fires. No analytics vendor is wired
- * up yet (none exists anywhere in this codebase) -- this is deliberately a
- * safe no-op (console-logged in dev only) so call sites don't need to
- * change when a real provider (GA4/PostHog/Plausible/etc.) is chosen later.
- */
 export type MarketingEvent =
   | "start_free"
   | "watch_overview_video"
@@ -24,11 +18,32 @@ export type MarketingEvent =
   | "login_click"
   | "flightscore_section_view";
 
-export function trackEvent(event: MarketingEvent, props?: Record<string, string | number | boolean>) {
-  if (process.env.NODE_ENV !== "production") {
-    console.log(`[analytics] ${event}`, props ?? {});
+export type ProductEvent =
+  | "onboarding_completed"
+  | "flight_created"
+  | "debrief_started"
+  | "debrief_completed"
+  | "radio_practice_started"
+  | "radio_practice_submitted"
+  | "checkout_started";
+
+export type AnalyticsEvent = MarketingEvent | ProductEvent;
+export type AnalyticsData = Record<string, string | number | boolean>;
+
+declare global {
+  interface Window {
+    umami?: {
+      track(name: string, data?: AnalyticsData): void;
+    };
   }
-  // Wire to a real provider here once one is chosen, e.g.:
-  // window.plausible?.(event, { props });
-  // window.gtag?.("event", event, props);
+}
+
+export function trackEvent(event: AnalyticsEvent, data?: AnalyticsData): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.umami?.track(event, data);
+  } catch {
+    // Analytics failures must never interrupt the user flow.
+  }
 }
