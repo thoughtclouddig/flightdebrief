@@ -4,7 +4,7 @@ import { BottomNav } from "@/components/student/bottom-nav";
 import { AppHeader } from "@/components/student/app-header";
 import { PrototypeChrome } from "@/components/prototype/prototype-chrome";
 import { V2HeaderActions } from "@/app/v2/_components/header-actions";
-import { isProduction, isStaging } from "@/lib/env";
+import { isDevelopment, isProduction, isStaging } from "@/lib/env";
 import { hasValidSiteGateCookie, isSiteGateEnabled } from "@/lib/auth/session";
 
 /**
@@ -27,6 +27,18 @@ import { hasValidSiteGateCookie, isSiteGateEnabled } from "@/lib/auth/session";
  * isStaging() alone, never by hostname -- it renders wherever APP_ENV
  * resolves to staging and cannot render in production, where this whole
  * layout 404s before it would ever reach return().
+ *
+ * Milestone 2A closeout: a real staging student must never be able to
+ * navigate from Home's real data into fixture content. PrototypeChrome
+ * (the "PROTOTYPE / Seeded data" bar and its ?state= switcher) is the
+ * fixture-simulation mechanism itself, so it is development-only now --
+ * staging's lifecycle must come exclusively from persisted data. BottomNav's
+ * Train/Debrief/Progress tabs and the header's Support/Profile icons all
+ * still point at Milestone-1B-fixture-only /v2 routes with no real per-user
+ * data behind them, so they're disabled in staging the same way Start
+ * Flight and Add Flight already are. None of this is productionizing those
+ * screens -- it's boundary enforcement so staging can't mix a real student
+ * with fixture personas.
  */
 export default async function V2Layout({ children }: { children: ReactNode }) {
   if (isProduction()) notFound();
@@ -46,13 +58,20 @@ export default async function V2Layout({ children }: { children: ReactNode }) {
         </div>
       ) : null}
       <div className="mx-auto min-h-dvh max-w-lg bg-surface-sunken pb-24">
-        <PrototypeChrome homeHref="/v2" />
+        {isDevelopment() ? <PrototypeChrome homeHref="/v2" /> : null}
         <Suspense fallback={null}>
-          <AppHeader homeHref="/v2" actions={<V2HeaderActions startFlightDisabled={isStaging()} />} hiddenOnPathPrefix="/v2/debrief/new" />
+          <AppHeader
+            homeHref="/v2"
+            actions={<V2HeaderActions startFlightDisabled={isStaging()} profileNavDisabled={isStaging()} />}
+            hiddenOnPathPrefix="/v2/debrief/new"
+          />
         </Suspense>
         {children}
       </div>
-      <BottomNav hrefs={{ home: "/v2", train: "/v2/train", debrief: "/v2/debrief", progress: "/v2/progress" }} />
+      <BottomNav
+        hrefs={{ home: "/v2", train: "/v2/train", debrief: "/v2/debrief", progress: "/v2/progress" }}
+        disabledKeys={isStaging() ? ["train", "debrief", "progress"] : []}
+      />
     </div>
   );
 }

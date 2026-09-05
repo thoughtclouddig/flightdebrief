@@ -36,9 +36,24 @@ const DEFAULT_HREFS = {
   progress: "/prototype/vector/progress",
 };
 
-export function BottomNav({ hrefs = DEFAULT_HREFS }: { hrefs?: Record<"home" | "train" | "debrief" | "progress", string> }) {
+/**
+ * disabledKeys: Milestone 2A -- staging's /v2 Home is real data, but Train/
+ * Debrief/Progress are still Milestone 1B fixture routes there (no per-user
+ * real data behind them yet). Rather than navigate a real staging student
+ * into fixture content, the caller marks those tabs disabled -- same
+ * "known gap, shown not hidden" span treatment as everywhere else in /v2's
+ * production-adapter mode. Empty by default, so every existing caller
+ * (prototype, production, dev-mode /v2) is unaffected.
+ */
+export function BottomNav({
+  hrefs = DEFAULT_HREFS,
+  disabledKeys = [],
+}: {
+  hrefs?: Record<"home" | "train" | "debrief" | "progress", string>;
+  disabledKeys?: readonly ("home" | "train" | "debrief" | "progress")[];
+}) {
   const pathname = usePathname();
-  const tabs = TAB_DEFS.map((t) => ({ ...t, href: hrefs[t.key] }));
+  const tabs = TAB_DEFS.map((t) => ({ ...t, href: hrefs[t.key], disabled: disabledKeys.includes(t.key) }));
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-surface/85 backdrop-blur-xl">
@@ -51,6 +66,18 @@ export function BottomNav({ hrefs = DEFAULT_HREFS }: { hrefs?: Record<"home" | "
           // /progress/[skill] still lights up Progress.
           const active = t.key === "home" ? pathname === t.href : pathname.startsWith(t.href);
           const Icon = t.icon;
+          if (t.disabled) {
+            return (
+              <span
+                key={t.href}
+                aria-disabled="true"
+                className="flex min-h-[56px] flex-1 cursor-not-allowed flex-col items-center justify-center gap-1 text-[11px] font-semibold tracking-tight text-foreground-soft opacity-40"
+              >
+                <Icon className="size-[25px]" strokeWidth={2} aria-hidden />
+                {t.label}
+              </span>
+            );
+          }
           return (
             <Link
               key={t.href}
