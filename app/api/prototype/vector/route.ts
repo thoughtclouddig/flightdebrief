@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { askVector, evaluateChairFly } from "@/lib/ai/vector";
 import { KNOWLEDGE_CHECK } from "@/lib/prototype-fixtures/vector-data";
 import { CHAIR_FLY } from "@/lib/prototype/chair-fly";
-import { isProduction } from "@/lib/env";
+import { isProduction, isStaging } from "@/lib/env";
+import { hasValidSiteGateCookie, isSiteGateEnabled } from "@/lib/auth/session";
 
 /**
  * The prototype's single endpoint. Three intents rather than three routes,
@@ -16,10 +17,19 @@ import { isProduction } from "@/lib/env";
  * request. Platform Hardening P0-5 blocks it in production -- unauthenticated
  * + real API cost + not in proxy.ts's matcher at all was an open spend/abuse
  * surface, not something "safe to ship alongside production" as this file
- * used to claim. Still available in dev/staging for prototype work.
+ * used to claim. Platform Hardening 2B closes the same gap in staging: an
+ * anonymous caller with the staging URL could hit this (and rack up real
+ * Anthropic spend via the "ask" intent) without ever passing the site gate
+ * that /v2 requires. Reuses that exact gate rather than a second scheme --
+ * same isStaging()/isSiteGateEnabled()/hasValidSiteGateCookie() used by
+ * app/v2/layout.tsx. Still fully open in development.
  */
 export async function POST(request: Request) {
   if (isProduction()) {
+    return NextResponse.json({ error: "Not found." }, { status: 404 });
+  }
+
+  if (isStaging() && isSiteGateEnabled() && !(await hasValidSiteGateCookie())) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 

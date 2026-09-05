@@ -207,3 +207,16 @@ export async function verifySiteGateJwt(token: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Whether the current request carries a currently-valid site-gate cookie.
+ * Shared by every surface that gates on SITE_ACCESS_CODE outside proxy.ts's
+ * own marketing-tier check -- app/v2/layout.tsx and the prototype Vector API
+ * both call this rather than each re-reading the cookie themselves, so there
+ * is one place that knows what "past the gate" means.
+ */
+export async function hasValidSiteGateCookie(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const gateToken = cookieStore.get(SITE_GATE_COOKIE)?.value;
+  return gateToken ? verifySiteGateJwt(gateToken) : false;
+}

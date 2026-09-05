@@ -1,12 +1,11 @@
 import { Suspense, type ReactNode } from "react";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { BottomNav } from "@/components/student/bottom-nav";
 import { AppHeader } from "@/components/student/app-header";
 import { PrototypeChrome } from "@/components/prototype/prototype-chrome";
 import { V2HeaderActions } from "@/app/v2/_components/header-actions";
 import { isProduction, isStaging } from "@/lib/env";
-import { isSiteGateEnabled, SITE_GATE_COOKIE, verifySiteGateJwt } from "@/lib/auth/session";
+import { hasValidSiteGateCookie, isSiteGateEnabled } from "@/lib/auth/session";
 
 /**
  * Milestone 1A clean-room shell -- structurally identical to
@@ -23,19 +22,29 @@ import { isSiteGateEnabled, SITE_GATE_COOKIE, verifySiteGateJwt } from "@/lib/au
  * is this repo's existing internal-QA access mechanism; a dedicated staging
  * policy can replace this once a staging deployment actually exists.
  * Development is open, matching every other fixture surface in this repo.
+ *
+ * Platform Hardening 2B: the fixed STAGING badge below is driven by
+ * isStaging() alone, never by hostname -- it renders wherever APP_ENV
+ * resolves to staging and cannot render in production, where this whole
+ * layout 404s before it would ever reach return().
  */
 export default async function V2Layout({ children }: { children: ReactNode }) {
   if (isProduction()) notFound();
 
-  if (isStaging() && isSiteGateEnabled()) {
-    const cookieStore = await cookies();
-    const gateToken = cookieStore.get(SITE_GATE_COOKIE)?.value;
-    const passed = gateToken ? await verifySiteGateJwt(gateToken) : false;
-    if (!passed) notFound();
+  if (isStaging() && isSiteGateEnabled() && !(await hasValidSiteGateCookie())) {
+    notFound();
   }
 
   return (
     <div className="min-h-dvh bg-surface-sunken">
+      {isStaging() ? (
+        <div
+          aria-label="Staging environment"
+          className="pointer-events-none fixed right-2 top-2 z-40 rounded-full bg-danger px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-on-brand shadow-sm"
+        >
+          Staging
+        </div>
+      ) : null}
       <div className="mx-auto min-h-dvh max-w-lg bg-surface-sunken pb-24">
         <PrototypeChrome homeHref="/v2" />
         <Suspense fallback={null}>
