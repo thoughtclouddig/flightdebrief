@@ -52,3 +52,29 @@ export function isProduction(): boolean {
 export function v2StagingUsesRealData(): boolean {
   return false;
 }
+
+/**
+ * Whether the current /v2 request should render real, signed-in Student data
+ * instead of the Mia/Jake fixture reference -- the one decision every /v2
+ * route/layout file calls, so no caller ever branches on isStaging()/
+ * isDevelopment() itself (that was the "pile of overlapping booleans" this
+ * replaces -- app/v2/page.tsx and app/v2/layout.tsx used to each repeat
+ * `isStaging() && v2StagingUsesRealData()` inline).
+ *
+ * Staging: v2StagingUsesRealData() alone -- a static, code-reviewed decision,
+ * unaffected by any cookie. Left completely untouched by this milestone.
+ *
+ * Development: hasRealDataCookie, a per-request signal (see
+ * lib/auth/session.ts's V2_REAL_DATA_COOKIE) so the fixture reference and the
+ * real-data vertical slice can both be reached in the same running dev
+ * server. Development is never real-data by default -- the cookie must be
+ * explicitly set via app/api/v2/enter-real-data.
+ *
+ * Production: always false -- moot, since app/v2/layout.tsx already 404s
+ * there before this is ever read.
+ */
+export function v2RealDataMode(hasRealDataCookie: boolean): boolean {
+  if (isStaging()) return v2StagingUsesRealData();
+  if (isDevelopment()) return hasRealDataCookie;
+  return false;
+}

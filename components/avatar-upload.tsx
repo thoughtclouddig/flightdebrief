@@ -34,7 +34,15 @@ function resizeToSquareDataUrl(img: HTMLImageElement): string {
  * before upload since there's no object storage in this app; see the
  * users.avatar_url doc comment in db/schema.sql for why it's stored inline.
  */
-export function AvatarUpload({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
+export function AvatarUpload({
+  name,
+  avatarUrl,
+  size = 48,
+}: {
+  name: string;
+  avatarUrl: string | null;
+  size?: number;
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
@@ -84,14 +92,20 @@ export function AvatarUpload({ name, avatarUrl }: { name: string; avatarUrl: str
     img.src = objectUrl;
   }
 
+  const badgeSize = Math.round(size * 0.417);
+  const iconSize = Math.round(badgeSize * 0.6);
+
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="relative size-12 shrink-0">
+      <div className="relative shrink-0" style={{ width: size, height: size }}>
         {avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- data: URL, not an optimizable remote asset
-          <img src={avatarUrl} alt="" className="size-12 rounded-full object-cover" />
+          <img src={avatarUrl} alt="" className="size-full rounded-full object-cover" />
         ) : (
-          <div className="flex size-12 items-center justify-center rounded-full bg-surface-sunken text-lg font-semibold text-foreground">
+          <div
+            className="flex size-full items-center justify-center rounded-full bg-surface-sunken font-semibold text-foreground"
+            style={{ fontSize: Math.round(size * 0.375) }}
+          >
             {initials(name)}
           </div>
         )}
@@ -101,9 +115,14 @@ export function AvatarUpload({ name, avatarUrl }: { name: string; avatarUrl: str
           onClick={() => inputRef.current?.click()}
           disabled={saving}
           aria-label="Change photo"
-          className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border border-hairline bg-surface text-foreground-faint hover:text-foreground"
+          className="absolute -bottom-1 -right-1 flex items-center justify-center rounded-full border border-hairline bg-surface text-foreground-faint hover:text-foreground"
+          style={{ width: badgeSize, height: badgeSize }}
         >
-          {saving ? <Loader2 className="size-3 animate-spin" /> : <Camera className="size-3" />}
+          {saving ? (
+            <Loader2 className="animate-spin" style={{ width: iconSize, height: iconSize }} />
+          ) : (
+            <Camera style={{ width: iconSize, height: iconSize }} />
+          )}
         </button>
 
         <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />

@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { Plus, Radar } from "lucide-react";
 import { PageTitle, Panel, PanelButton, PanelEyebrow, PanelHeadline, QuietRow, Screen } from "@/components/student/ui";
 import { StudentHome } from "@/components/student/student-home";
-import { isStaging, v2StagingUsesRealData } from "@/lib/env";
+import { v2RealDataMode } from "@/lib/env";
+import { hasV2RealDataCookie } from "@/lib/auth/session";
 import { getViewer } from "@/lib/viewer";
 import { getRepository } from "@/lib/data";
 import { buildProductionHomeProps, type HomeHrefBuilders } from "@/lib/student/home-production-adapter";
@@ -14,21 +15,23 @@ import { FLIGHT_DEFAULTS } from "@/lib/prototype-fixtures/flights";
 export const metadata: Metadata = { title: "Home — AfterFlight", robots: { index: false, follow: false } };
 
 /**
- * Milestone 2A: Home only. Every other /v2 experience (Flights, Debrief,
- * Train, Progress) is still Milestone 1B fixture product, so every builder
- * here is null except addFlight -- see HomeHrefBuilders' own doc comment for
- * what that means to the adapter. Milestone 2B replaces these one at a time
- * as each experience gets a real /v2 route with real data behind it.
+ * Development real-data milestone: every /v2 top-level screen now has a real
+ * route behind it (Flights, Flight Detail, Train, Debrief hub, Progress),
+ * so every builder below is real. Add Flight stays the one disabled
+ * exception -- Milestone 2A's own reasoning still applies: no production web
+ * save endpoint for live recording exists, and StudentHome's addFlightHref
+ * truthiness controls the whole Start-Flight/Add-Flight row, so it stays a
+ * real, non-empty, visibly-disabled href rather than null.
  */
 const V2_PRODUCTION_HREFS: HomeHrefBuilders = {
-  myFlights: null,
-  pastDebriefs: null,
-  debrief: null,
-  flightDetail: null,
-  train: null,
+  myFlights: "/v2/flights",
+  pastDebriefs: "/v2/debrief",
+  debrief: (flightId: string) => `/v2/flights/${flightId}/debrief`,
+  flightDetail: (flightId: string) => `/v2/flights/${flightId}`,
+  train: "/v2/train",
   addFlight: { href: "/v2/flights/new", disabled: true },
-  debriefResults: null,
-  progress: null,
+  debriefResults: (flightId: string) => `/v2/flights/${flightId}/debrief/results`,
+  progress: "/v2/progress",
 };
 
 /**
@@ -38,19 +41,15 @@ const V2_PRODUCTION_HREFS: HomeHrefBuilders = {
  * Fly), so nothing here is disabled anymore -- see Milestone 1A's version of
  * this file for the interim state.
  *
- * Milestone 2A: environment-driven adapter selection, per the approved
- * architecture -- development keeps this exact fixture rendering (the
- * approved Milestone 1B reference), staging uses real repository data via
- * buildProductionHomeProps once v2StagingUsesRealData() is true. Production
- * is moot; app/v2/layout.tsx already 404s there before this ever renders.
- *
- * Staging baseline reversion: v2StagingUsesRealData() is false until
- * staging has first proven the complete fixture reference app end-to-end --
- * see lib/env.ts's own doc comment. Until then this behaves identically to
- * development for every environment that can actually reach it.
+ * Development real-data milestone: v2RealDataMode() is the one check now
+ * (see its own doc comment in lib/env.ts) -- development renders this exact
+ * fixture experience unless the real-data cookie is set (app/api/v2/
+ * enter-real-data), staging renders it unless v2StagingUsesRealData() is
+ * deliberately flipped (untouched by this milestone). Production is moot;
+ * app/v2/layout.tsx already 404s there before this ever renders.
  */
 export default async function V2Home({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
-  if (isStaging() && v2StagingUsesRealData()) {
+  if (v2RealDataMode(await hasV2RealDataCookie())) {
     let viewer;
     try {
       viewer = await getViewer();

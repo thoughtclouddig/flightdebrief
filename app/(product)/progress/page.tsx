@@ -2,35 +2,30 @@ import { AlertCircle, Repeat, TrendingUp } from "lucide-react";
 import { AcsBadge } from "@/components/acs-badge";
 import { TrainingItemChecklist } from "@/components/training-item-checklist";
 import { Section } from "@/components/student/ui";
-import {
-  StudentProgress,
-  type ProgressAcsData,
-  type ProgressAcsRow,
-  type ProgressSkillRow,
-} from "@/components/student/student-progress";
+import { StudentProgress } from "@/components/student/student-progress";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
-import { computeSkillProgression, meterScoreForSkillStatus, toneForSkillStatus } from "@/lib/skill-progress";
 import { computeSchoolFreeDebriefs, computeStudentFreeFlights } from "@/lib/entitlements";
 import { hasActiveSubscription } from "@/lib/billing-gate";
-import { acsAreaForSkill } from "@/lib/acs";
-import { allTrainingSkills } from "@/lib/topics";
-import { resolveCfiFirstName } from "@/lib/instructor-attribution";
+import { buildProductionProgressProps } from "@/lib/student/progress-production-adapter";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Production data adapter for components/student/student-progress.tsx -- see
  * that file's doc comment for why the ACS tab is real but Area-granularity
- * only, not the prototype's full Area/Task/Skill hierarchy.
+ * only, not the prototype's full Area/Task/Skill hierarchy. Skills/ACS
+ * computation itself lives in lib/student/progress-production-adapter.ts,
+ * shared verbatim with app/v2/progress/page.tsx's own real-data branch.
  *
  * "Action items" / "Themes" / the free-usage banner / stat tiles have no
  * prototype equivalent -- they're real, already-shipped production
  * capabilities (open training items, recurring cross-instructor themes,
  * billing-gate usage) with nothing to migrate FROM, so they ride along in
  * the shared component's `extra` slot rather than being deleted to match
- * the fixture's simpler screen.
+ * the fixture's simpler screen. Computed here, independently of the shared
+ * adapter, since none of it is part of the approved V2 Skills/ACS view.
  */
 export default async function ProgressPage() {
   const repo = getRepository();
@@ -39,86 +34,29 @@ export default async function ProgressPage() {
   const studentId = viewer.user.id;
 
   const isSchoolOrg = viewer.organization.kind === "school";
-  const [flights, trainingItems, brief, memberships, signals, billingScopedFlights] = await Promise.all([
+  const [{ skills, acs }, flights, trainingItems, brief, billingScopedFlights] = await Promise.all([
+    buildProductionProgressProps(repo, viewer, (skill) => `/progress/${skill}`),
     repo.listFlights({ studentId }),
     repo.listTrainingItems(),
     computeNextLessonBrief(repo, studentId),
-    repo.listMembershipsForUser(studentId),
-    repo.listTrainingSignals({ studentId }),
     isSchoolOrg ? repo.listFlights({ organizationId: viewer.organization.id }) : Promise.resolve(null),
   ]);
-  const certificateType =
-    memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
 
   if (!viewer.user.guideProgress?.progress) {
     void repo.markGuideStepViewed(viewer.user.id, "progress").catch(() => {});
   }
 
+  const certificateType = (await repo.listMembershipsForUser(studentId)).find(
+    (m) => m.organizationId === viewer.organization.id,
+  )?.certificateType ?? null;
   const flightIds = new Set(flights.map((f) => f.id));
   const openItems = trainingItems.filter((t) => flightIds.has(t.flightId) && !t.done && t.visibility === "shared");
   const keepWorkingOn = openItems.filter((t) => t.category === "keep_working_on");
   const beforeFlight = openItems.filter((t) => t.category === "before_next_flight");
-  const progressions = computeSkillProgression(signals.filter((s) => !s.dismissed));
   const freeUsage = isSchoolOrg
     ? computeSchoolFreeDebriefs(billingScopedFlights ?? [])
     : computeStudentFreeFlights(flights);
   const showFreeUsage = viewer.organization.kind !== "independent_cfi" && !hasActiveSubscription(viewer.organization);
-  const instructorFirstName = resolveCfiFirstName(brief.lastInstructor) ?? "your instructor";
-
-  const skills: ProgressSkillRow[] = progressions.map((p) => ({
-    slug: p.skill,
-    href: `/progress/${p.skill}`,
-    label: p.label,
-    score: meterScoreForSkillStatus(p.status),
-    max: 4,
-    state: toneForSkillStatus(p.status),
-  }));
-
-  const progressionBySkill = new Map(progressions.map((p) => [p.skill, p]));
-  const areaMap = new Map<string, ProgressAcsRow[]>();
-  for (const s of allTrainingSkills()) {
-    const area = acsAreaForSkill(s.skill, certificateType);
-    if (!area) continue;
-    const p = progressionBySkill.get(s.skill);
-    const rows = areaMap.get(area.name) ?? [];
-    rows.push(
-      p
-        ? {
-            label: p.label,
-            code: null,
-            skills: [],
-            state: toneForSkillStatus(p.status),
-            score: meterScoreForSkillStatus(p.status),
-            max: 4,
-          }
-        : { label: s.label, code: null, skills: [], state: null, score: null, max: 4 },
-    );
-    areaMap.set(area.name, rows);
-  }
-  const areas = [...areaMap.entries()].map(([area, rows]) => ({ area, rows }));
-  const allRows = areas.flatMap((g) => g.rows);
-  const assessedRows = allRows.filter((r) => r.state !== null);
-
-  const acs: ProgressAcsData = {
-    meetingStandard: assessedRows.filter((r) => r.state === "Meets Standard").length,
-    assessed: assessedRows.length,
-    notAssessed: allRows.length - assessedRows.length,
-    total: allRows.length,
-    unitLabel: "skills",
-    areas,
-    readinessInfoTip: (
-      <span className="flex flex-col gap-2.5">
-        <span>
-          A skill counts as <strong className="font-semibold text-panel-foreground">assessed</strong> once{" "}
-          {instructorFirstName} has rated it in a debrief. Most skills here haven&rsquo;t come up in a lesson yet.
-        </span>
-        <span>
-          There is no percentage and no overall verdict. Signing you off for a checkride is {instructorFirstName}
-          &rsquo;s call.
-        </span>
-      </span>
-    ),
-  };
 
   return (
     <StudentProgress

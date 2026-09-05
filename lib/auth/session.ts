@@ -220,3 +220,21 @@ export async function hasValidSiteGateCookie(): Promise<boolean> {
   const gateToken = cookieStore.get(SITE_GATE_COOKIE)?.value;
   return gateToken ? verifySiteGateJwt(gateToken) : false;
 }
+
+/**
+ * Development-only per-request toggle for /v2's real-data mode -- lets the
+ * Mia/Jake fixture reference and a real, signed-in Student's own data be
+ * compared side by side in the same running dev server, without a restart or
+ * a code change. Set by app/api/v2/enter-real-data/route.ts, cleared by
+ * app/api/v2/exit-real-data/route.ts. No signing/verification needed the way
+ * the site gate has: this cookie only ever matters when lib/env.ts's
+ * v2RealDataMode() is also in development, and is otherwise inert -- it
+ * carries no privilege of its own, it only changes which of an *already*
+ * authenticated viewer's data /v2 reads.
+ */
+export const V2_REAL_DATA_COOKIE = "af_v2_real_data";
+
+export async function hasV2RealDataCookie(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return cookieStore.get(V2_REAL_DATA_COOKIE)?.value === "1";
+}

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { ChevronRight, LineChart, Mic, Sparkles } from "lucide-react";
 import { FlightMap } from "@/components/flight-map";
@@ -54,6 +55,7 @@ export function FlightDetailScreen({
   sourceLabel,
   needsDebrief,
   debriefHref,
+  debriefCta,
   analysisHref,
   debriefStatusLabel,
   debriefDetailHref,
@@ -76,6 +78,8 @@ export function FlightDetailScreen({
   sourceLabel: string;
   needsDebrief: boolean;
   debriefHref: string;
+  /** Overrides the default Start-debrief link when the real next step is an interactive action (e.g. resuming a saved-but-unanalyzed recording) rather than a plain navigation. Unused by any fixture caller. */
+  debriefCta?: ReactNode;
   analysisHref: string | null;
   /** Null when the flight has no debrief yet -- the section still shows, with an explanatory sentence instead of a link. */
   debriefStatusLabel: string | null;
@@ -104,10 +108,12 @@ export function FlightDetailScreen({
       </div>
 
       {needsDebrief ? (
-        <PrimaryButton href={debriefHref}>
-          <Mic className="size-[18px]" aria-hidden />
-          Start debrief
-        </PrimaryButton>
+        debriefCta ?? (
+          <PrimaryButton href={debriefHref}>
+            <Mic className="size-[18px]" aria-hidden />
+            Start debrief
+          </PrimaryButton>
+        )
       ) : null}
 
       <Section title={<>Flight path</>} flush>
