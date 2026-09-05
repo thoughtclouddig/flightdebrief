@@ -5,14 +5,14 @@ import { FlightMap } from "@/components/flight-map";
 import { DeleteFlightButton } from "@/components/delete-flight-button";
 import { ResumeDebriefButton } from "@/components/resume-debrief-button";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FlightDetailScreen } from "@/components/student/flights/flight-detail";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
-import { computeSkillProgression } from "@/lib/skill-progress";
 import { formatDuration } from "@/lib/utils";
-import { StudentFlightDetail } from "./student-flight-detail";
+import { buildProductionFlightDetailProps } from "@/lib/student/flight-detail-production-adapter";
 
 export default async function FlightDetailPage(props: PageProps<"/flights/[id]">) {
   const { id } = await props.params;
@@ -22,6 +22,19 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
 
   const repo = getRepository();
   const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
+
+  if (!isInstructorViewer) {
+    const productionProps = await buildProductionFlightDetailProps(repo, flight);
+    return (
+      <FlightDetailScreen
+        {...productionProps}
+        debriefCta={productionProps.hasPendingDebrief ? <ResumeDebriefButton flightId={flight.id} /> : undefined}
+        skills={[]}
+        acsArea={null}
+        carryForward={null}
+      />
+    );
+  }
 
   // Guided/light modes require the CFI to pick this flight's tasks before
   // anyone can start the debrief -- see app/(product)/flights/[id]/debrief/page.tsx.
@@ -54,33 +67,8 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
   // in lib/auth/guard.ts) -- deliberately, so any CFI at the school can pick up
   // a student mid-syllabus. Without saying so, though, another instructor's
   // flight just looks like it's wrongly showing up in your own account.
-  const student = isInstructorViewer ? await repo.getUser(flight.userId) : null;
-  const flownWithAnotherInstructor =
-    isInstructorViewer && Boolean(flight.instructor) && flight.instructor?.id !== viewer.user.id;
-
-  if (!isInstructorViewer) {
-    const [signals, memberships] = await Promise.all([
-      repo.listTrainingSignals({ studentId: flight.userId }),
-      repo.listMembershipsForUser(flight.userId),
-    ]);
-    const flightSkills = new Set(signals.filter((s) => s.flightId === flight.id).map((s) => s.skill));
-    const skillProgressions = computeSkillProgression(signals.filter((s) => !s.dismissed)).filter((p) =>
-      flightSkills.has(p.skill),
-    );
-    const certificateType =
-      memberships.find((m) => m.organizationId === flight.organizationId)?.certificateType ?? null;
-
-    return (
-      <StudentFlightDetail
-        flight={flight}
-        tasksPending={tasksPending}
-        hasPendingDebrief={hasPendingDebrief}
-        guidanceMode={guidanceMode}
-        skillProgressions={skillProgressions}
-        certificateType={certificateType}
-      />
-    );
-  }
+  const student = await repo.getUser(flight.userId);
+  const flownWithAnotherInstructor = Boolean(flight.instructor) && flight.instructor?.id !== viewer.user.id;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -135,21 +123,13 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
           <div className="w-full sm:flex-1">
             <ResumeDebriefButton flightId={flight.id} />
           </div>
-        ) : tasksPending && isInstructorViewer ? (
+        ) : tasksPending ? (
           <Link href={`/flights/${flight.id}/debrief/tasks`} className={buttonVariants({ size: "lg", className: "h-16 w-full text-lg font-semibold sm:flex-1" })}>
             Pick Today&rsquo;s Tasks
           </Link>
-        ) : tasksPending ? (
-          <Button size="lg" className="h-16 w-full text-lg font-semibold sm:flex-1" disabled>
-            Waiting on your CFI
-          </Button>
         ) : (
           <Link href={`/flights/${flight.id}/debrief`} className={buttonVariants({ size: "lg", className: "h-16 w-full text-lg font-semibold sm:flex-1" })}>
-            {/* Only a solo/freeform flight has the student recording their own
-                debrief -- in guided/light mode the CFI is the one who presses
-                record, so this label shouldn't read as an instruction to the
-                student to start anything themselves. */}
-            {!isInstructorViewer && guidanceMode !== "freeform" ? "Continue" : "Start Debrief"}
+            Start Debrief
           </Link>
         )}
         <Link href="/dashboard" className={buttonVariants({ size: "lg", variant: "outline" })}>

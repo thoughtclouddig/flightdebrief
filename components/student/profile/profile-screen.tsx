@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { BookOpen, LifeBuoy, LogOut, ShieldCheck } from "lucide-react";
 import { Avatar } from "@/components/prototype/avatar";
 import { QuietRow, Screen, Section } from "@/components/student/ui";
@@ -11,8 +12,12 @@ import { QuietRow, Screen, Section } from "@/components/student/ui";
  * have narrowed all of them to make room for the one nobody opens twice.
  */
 export function ProfileScreen({
+  banner,
   certificate,
   fullName,
+  email,
+  emailAction,
+  avatarSlot,
   flightsHref,
   flightsCount,
   debriefsHref,
@@ -22,9 +27,18 @@ export function ProfileScreen({
   guideHref,
   supportHref,
   dataHandlingHref,
+  signOutHref,
 }: {
-  certificate: string;
+  /** A notice/error banner rendered above everything else -- e.g. the result of an email-change confirmation. Unused by any fixture caller. */
+  banner?: ReactNode;
+  certificate?: string;
   fullName: string;
+  /** Unused by any fixture caller -- the approved reference has no email line at all. */
+  email?: string;
+  /** Rendered directly under email -- e.g. a real change-email form. Unused by any fixture caller. */
+  emailAction?: ReactNode;
+  /** Overrides the default (fixture-only, localStorage-backed) editable Avatar when a real upload capability exists. Unused by any fixture caller. */
+  avatarSlot?: ReactNode;
   flightsHref: string;
   flightsCount: number;
   debriefsHref: string;
@@ -34,14 +48,19 @@ export function ProfileScreen({
   guideHref: string;
   supportHref: string;
   dataHandlingHref: string;
+  /** When set, Sign out is a real link to this href instead of the inert fixture button. Unused by any fixture caller. */
+  signOutHref?: string;
 }) {
   return (
     <Screen>
+      {banner}
       <div className="flex flex-col gap-4 px-1.5">
-        <Avatar size={76} editable />
+        {avatarSlot ?? <Avatar size={76} editable />}
         <div className="min-w-0">
-          <p className="text-[15px] text-foreground-faint">{certificate}</p>
+          {certificate ? <p className="text-[15px] text-foreground-faint">{certificate}</p> : null}
           <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.02em] text-foreground">{fullName}</h1>
+          {email ? <p className="mt-1 text-[15px] text-foreground-soft">{email}</p> : null}
+          {emailAction}
         </div>
       </div>
 
@@ -85,10 +104,20 @@ export function ProfileScreen({
         </div>
       </Section>
 
-      <button className="flex min-h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-hairline text-[17px] font-medium text-foreground-soft">
-        <LogOut className="size-[18px]" aria-hidden />
-        Sign out
-      </button>
+      {signOutHref ? (
+        <a
+          href={signOutHref}
+          className="flex min-h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-hairline text-[17px] font-medium text-foreground-soft"
+        >
+          <LogOut className="size-[18px]" aria-hidden />
+          Sign out
+        </a>
+      ) : (
+        <button className="flex min-h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-hairline text-[17px] font-medium text-foreground-soft">
+          <LogOut className="size-[18px]" aria-hidden />
+          Sign out
+        </button>
+      )}
     </Screen>
   );
 }
