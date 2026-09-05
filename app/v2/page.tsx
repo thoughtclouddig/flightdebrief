@@ -1,11 +1,35 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Plus, Radar } from "lucide-react";
 import { PageTitle, Panel, PanelButton, PanelEyebrow, PanelHeadline, QuietRow, Screen } from "@/components/student/ui";
-import { StudentHome, type StudentHomePanel } from "@/components/student/student-home";
-import { INSTRUCTOR, NEXT_LESSON, PENDING_FLIGHT, STRUCTURED, STUDENT } from "@/lib/prototype-fixtures/vector-data";
+import { StudentHome } from "@/components/student/student-home";
+import { isStaging } from "@/lib/env";
+import { getViewer } from "@/lib/viewer";
+import { getRepository } from "@/lib/data";
+import { buildProductionHomeProps, type HomeHrefBuilders } from "@/lib/student/home-production-adapter";
+import { buildFixtureHomeProps } from "@/lib/prototype-fixtures/home-fixture-adapter";
+import { STUDENT } from "@/lib/prototype-fixtures/vector-data";
 import { FLIGHT_DEFAULTS } from "@/lib/prototype-fixtures/flights";
 
 export const metadata: Metadata = { title: "Home — AfterFlight", robots: { index: false, follow: false } };
+
+/**
+ * Milestone 2A: Home only. Every other /v2 experience (Flights, Debrief,
+ * Train, Progress) is still Milestone 1B fixture product, so every builder
+ * here is null except addFlight -- see HomeHrefBuilders' own doc comment for
+ * what that means to the adapter. Milestone 2B replaces these one at a time
+ * as each experience gets a real /v2 route with real data behind it.
+ */
+const V2_PRODUCTION_HREFS: HomeHrefBuilders = {
+  myFlights: null,
+  pastDebriefs: null,
+  debrief: null,
+  flightDetail: null,
+  train: null,
+  addFlight: { href: "/v2/flights/new", disabled: true },
+  debriefResults: null,
+  progress: null,
+};
 
 /**
  * Milestone 1B fixture-parity Home -- mechanically the same as
@@ -13,62 +37,33 @@ export const metadata: Metadata = { title: "Home — AfterFlight", robots: { ind
  * this screen offers now exists under /v2 (Flights, Debrief lifecycle/Detail,
  * Fly), so nothing here is disabled anymore -- see Milestone 1A's version of
  * this file for the interim state.
+ *
+ * Milestone 2A: environment-driven adapter selection, per the approved
+ * architecture -- development keeps this exact fixture rendering (the
+ * approved Milestone 1B reference), staging uses real repository data via
+ * buildProductionHomeProps. Production is moot; app/v2/layout.tsx already
+ * 404s there before this ever renders.
  */
 export default async function V2Home({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
-  const { state } = await searchParams;
-  if (state === "landed") return <JustLanded />;
-
-  if (state === "flown") {
-    const panel: StudentHomePanel = {
-      kind: "justFlew",
-      flightContext: PENDING_FLIGHT.lesson,
-      bodyText: "Capture what mattered while it's fresh.",
-      primaryLabel: "Start debrief",
-      primaryHref: "/v2/debrief/new",
-      secondaryHref: "/v2/flights/aug-29",
-      showAutoRefresh: false,
-    };
-    return (
-      <StudentHome
-        firstName={STUDENT.firstName}
-        panel={panel}
-        justFlewRows={{
-          myFlightsHref: "/v2/flights",
-          myFlightsCount: 5,
-          pastDebriefsHref: "/v2/debrief",
-          pastDebriefsCount: 3,
-        }}
-      />
-    );
+  if (isStaging()) {
+    let viewer;
+    try {
+      viewer = await getViewer();
+    } catch {
+      redirect("/login?from=%2Fv2&reason=no-session");
+    }
+    const props = await buildProductionHomeProps(getRepository(), viewer, V2_PRODUCTION_HREFS);
+    return <StudentHome {...props} />;
   }
 
-  const panel: StudentHomePanel = {
-    kind: "nextFlight",
-    dateTimeLabel: `${NEXT_LESSON.date} · ${NEXT_LESSON.time}`,
-    instructorName: `${INSTRUCTOR.firstName} · Crosswind + Short Field`,
-    focusItems: STRUCTURED.nextFlightFocus,
-  };
-  return (
-    <StudentHome
-      firstName={STUDENT.firstName}
-      panel={panel}
-      keyReminder={{ instructorFirstName: INSTRUCTOR.firstName, quote: STRUCTURED.instructorEmphasis[0]!.quote }}
-      trainCta={{ instructorFirstName: INSTRUCTOR.firstName, href: "/v2/train" }}
-      startFlight={{ href: "/v2/fly" }}
-      addFlightHref="/v2/flights/new"
-      bottomRows={{
-        myFlightsHref: "/v2/flights",
-        myFlightsCount: 5,
-        lastDebrief: { href: "/v2/debrief/latest", dateLabel: "Aug 29" },
-        progressHref: "/v2/progress",
-      }}
-    />
-  );
+  const { state } = await searchParams;
+  if (state === "landed") return <JustLanded />;
+  return <StudentHome {...buildFixtureHomeProps(state)} />;
 }
 
 /* --------------------------------------------- STATE B: flew, not added yet */
 
-/** Mirrors app/prototype/vector/page.tsx's own JustLanded exactly -- local, not shared, same as its prototype counterpart. */
+/** Mirrors app/prototype/vector/page.tsx's own JustLanded exactly -- local, not shared, same as its prototype counterpart. Fixture-only: no production counterpart exists (see this file's own module doc), so it is unreachable outside development. */
 function JustLanded() {
   return (
     <Screen>
