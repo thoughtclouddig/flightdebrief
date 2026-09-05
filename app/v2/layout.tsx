@@ -48,7 +48,7 @@ export default async function V2Layout({ children }: { children: ReactNode }) {
       <div className="mx-auto min-h-dvh max-w-lg bg-surface-sunken pb-24">
         <PrototypeChrome homeHref="/v2" />
         <Suspense fallback={null}>
-          <AppHeader homeHref="/v2" actions={<V2HeaderActions />} hiddenOnPathPrefix="/v2/debrief/new" />
+          <AppHeader homeHref="/v2" actions={<V2HeaderActions startFlightDisabled={isStaging()} />} hiddenOnPathPrefix="/v2/debrief/new" />
         </Suspense>
         {children}
       </div>
