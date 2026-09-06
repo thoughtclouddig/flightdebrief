@@ -48,3 +48,21 @@ export function formatFlightContext(flight: {
 }) {
   return `${flight.aircraft.tailNumber} · ${flight.departureAirport} → ${flight.arrivalAirport} · ${formatFlightDate(flight.flightDate)} · ${formatDurationShort(flight.durationMinutes)}`;
 }
+
+/**
+ * A shorter "which flight is this" line -- tail/route/date, no duration --
+ * for a subordinate metadata slot below a page's own H1 (e.g. "Record the
+ * debrief"), where the job is just letting the reader confirm they're on
+ * the right flight, not a full flight-record readout. formatFlightContext
+ * above stays the one used everywhere that already reads correctly (task
+ * picker, assessments, review, results); this is only for the debrief
+ * screens where the duration added noise without adding identification.
+ */
+export function formatFlightIdentity(flight: {
+  aircraft: { tailNumber: string };
+  departureAirport: string;
+  arrivalAirport: string;
+  flightDate: string;
+}) {
+  return `${flight.aircraft.tailNumber} · ${flight.departureAirport} → ${flight.arrivalAirport} · ${formatFlightDate(flight.flightDate)}`;
+}

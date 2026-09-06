@@ -14,6 +14,8 @@ import type { PerformanceLevelCode } from "@/lib/performance-levels";
  */
 export function RevealScreen({
   kicker,
+  eyebrow,
+  metadata,
   rows,
   instructorFirstName,
   studentFirstName,
@@ -21,7 +23,22 @@ export function RevealScreen({
   actionHref,
   onAction,
 }: {
-  kicker: string;
+  /**
+   * Deprecated in favor of `eyebrow`/`metadata` -- ignored whenever `eyebrow`
+   * is provided. Kept only so the one remaining caller still passing a long
+   * joined string here (app/(product)/flights/[id]/debrief/compare/page.tsx,
+   * canonical, out of scope for this pass) keeps rendering exactly as
+   * before, with zero behavior change.
+   */
+  kicker?: string;
+  /** Short semantic eyebrow, e.g. "Assessment comparison" -- the V2/CFI-V2 compare pages pass this instead of `kicker`. */
+  eyebrow?: string;
+  /**
+   * Compact subordinate context shown below the title (e.g. a date) --
+   * never the full list of assessed areas, which the cards below already
+   * name one by one.
+   */
+  metadata?: string;
   rows: { task: string; student: PerformanceLevelCode; instructor: PerformanceLevelCode }[];
   instructorFirstName: string;
   /** Only needed when viewerIsInstructor is true -- see ObjectiveComparison. */
@@ -33,10 +50,12 @@ export function RevealScreen({
 }) {
   return (
     <>
-      <PageTitle kicker={kicker}>How you both saw it</PageTitle>
+      <PageTitle kicker={eyebrow ?? kicker}>How you both saw it</PageTitle>
+
+      {metadata ? <p className="mt-1 text-[14px] text-foreground-faint">{metadata}</p> : null}
 
       {rows.length > 0 ? (
-        <p className="-mt-4 text-[17px] leading-relaxed text-foreground-soft">{agreementSummary(rows)}</p>
+        <p className="mt-3 text-[17px] leading-relaxed text-foreground-soft">{agreementSummary(rows)}</p>
       ) : null}
 
       <div className="flex flex-col gap-3">

@@ -9,7 +9,7 @@ import { getAuthorizedFlight } from "@/lib/auth/access";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
-import { formatFlightContext } from "@/lib/utils";
+import { formatFlightIdentity } from "@/lib/utils";
 
 /**
  * "Review Together" + Finish Debrief -- verified-CFI-only under CFI V2 (no
@@ -61,8 +61,8 @@ export default async function CfiV2DebriefReviewPage(props: { params: Promise<{ 
     <Screen>
       <BackLink href="/cfi-v2/debrief">Debriefs</BackLink>
       <div className="text-center">
-        <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
-        <PageTitle>Review together</PageTitle>
+        <PageTitle kicker="Debrief">Review together</PageTitle>
+        <p className="mt-1 text-[14px] text-foreground-faint">{formatFlightIdentity(flight)}</p>
         <p className="mt-2 text-[15px] text-foreground-soft">
           Walk through this with the student, then finish the debrief when you&rsquo;re both ready.
         </p>

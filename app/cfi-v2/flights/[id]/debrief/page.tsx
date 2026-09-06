@@ -4,7 +4,7 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { PageTitle, Screen } from "@/components/student/ui";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
-import { formatFlightContext } from "@/lib/utils";
+import { formatFlightIdentity } from "@/lib/utils";
 
 /**
  * CFI V2's debrief resolver -- same state machine as
@@ -67,8 +67,8 @@ export default async function CfiV2DebriefPage(props: {
       <Screen>
         <AutoRefresh />
         <div className="text-center">
-          <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
-          <PageTitle>Hand it over</PageTitle>
+          <PageTitle kicker="Debrief">Hand it over</PageTitle>
+          <p className="mt-1 text-[14px] text-foreground-faint">{formatFlightIdentity(flight)}</p>
           <p className="mt-2 text-[15px] text-foreground-soft">
             Ask {studentFirstName} to open AfterFlight and rate the flight first. This page moves on by itself once
             they do.
@@ -95,8 +95,8 @@ export default async function CfiV2DebriefPage(props: {
   return (
     <Screen>
       <div className="text-center">
-        <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
-        <PageTitle>Record the debrief</PageTitle>
+        <PageTitle kicker="Debrief">Record the debrief</PageTitle>
+        <p className="mt-1 text-[14px] text-foreground-faint">{formatFlightIdentity(flight)}</p>
       </div>
       <GuidedDebriefRecorder
         flightId={flight.id}

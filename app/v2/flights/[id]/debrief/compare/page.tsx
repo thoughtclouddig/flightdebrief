@@ -3,7 +3,6 @@ import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { BackLink, PageTitle, Screen } from "@/components/student/ui";
 import { RevealScreen } from "@/components/student/debrief/reveal-screen";
-import { deriveLessonFocus } from "@/lib/lesson-focus";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightDate } from "@/lib/utils";
 import { localIsoDate } from "@/lib/date";
@@ -61,7 +60,6 @@ export default async function V2ComparePage(props: PageProps<"/v2/flights/[id]/d
     })
     .filter((row) => row !== null);
 
-  const lessonFocus = deriveLessonFocus(tasks);
   const cfi = resolveCfiFirstName(flight.instructor);
   const dateLabel = flight.flightDate === localIsoDate() ? "Today" : formatFlightDate(flight.flightDate);
 
@@ -69,7 +67,8 @@ export default async function V2ComparePage(props: PageProps<"/v2/flights/[id]/d
     <Screen>
       <BackLink href="/v2/debrief">Debriefs</BackLink>
       <RevealScreen
-        kicker={`${lessonFocus ?? `${flight.departureAirport} → ${flight.arrivalAirport}`} · ${dateLabel}`}
+        eyebrow="Assessment comparison"
+        metadata={dateLabel}
         rows={rows}
         instructorFirstName={cfi ?? "your instructor"}
         actionHref={`/v2/flights/${id}/debrief?started=1`}

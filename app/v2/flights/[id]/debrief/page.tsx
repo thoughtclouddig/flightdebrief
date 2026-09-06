@@ -5,7 +5,7 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { PageTitle, Screen } from "@/components/student/ui";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
-import { formatFlightContext } from "@/lib/utils";
+import { formatFlightContext, formatFlightIdentity } from "@/lib/utils";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 /**
@@ -115,8 +115,8 @@ export default async function V2DebriefPage(props: PageProps<"/v2/flights/[id]/d
   return (
     <Screen>
       <div className="text-center">
-        <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
-        <PageTitle>Record the debrief</PageTitle>
+        <PageTitle kicker="Debrief">Record the debrief</PageTitle>
+        <p className="mt-1 text-[14px] text-foreground-faint">{formatFlightIdentity(flight)}</p>
       </div>
       <GuidedDebriefRecorder
         flightId={flight.id}

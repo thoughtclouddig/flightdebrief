@@ -9,7 +9,7 @@ import { getAuthorizedFlight } from "@/lib/auth/access";
 import { simplifyTrackForDisplay } from "@/lib/flight-track";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
-import { formatFlightContext } from "@/lib/utils";
+import { formatFlightIdentity } from "@/lib/utils";
 
 /**
  * Real V2 Review -- REAL STATE NOT MODELED IN V2 #2, now modeled. Same
@@ -77,8 +77,8 @@ export default async function V2DebriefReviewPage(props: PageProps<"/v2/flights/
     <Screen>
       <BackLink href="/v2/debrief">Debriefs</BackLink>
       <div className="text-center">
-        <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
-        <PageTitle>Review together</PageTitle>
+        <PageTitle kicker="Debrief">Review together</PageTitle>
+        <p className="mt-1 text-[14px] text-foreground-faint">{formatFlightIdentity(flight)}</p>
         <p className="mt-2 text-[15px] text-foreground-soft">
           {canActAsInstructor
             ? "Walk through this, then finish the debrief when you're ready."
