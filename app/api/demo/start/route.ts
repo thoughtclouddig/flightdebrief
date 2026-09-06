@@ -1,8 +1,9 @@
 import { after, NextResponse, type NextRequest } from "next/server";
 import { requestOrigin } from "@/lib/auth/origin";
-import { createSessionJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
+import { createSessionJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, V2_REAL_DATA_COOKIE } from "@/lib/auth/session";
 import { cleanupExpiredDemoOrgs, seedCfiSchoolDemo, seedPilotDemo } from "@/lib/demo/live-demo-seed";
 import { DEMO_HINT_COOKIE } from "@/lib/demo/live-demo-jobs";
+import { isDevelopment } from "@/lib/env";
 
 const DEMO_ORG_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
@@ -23,6 +24,10 @@ export const dynamic = "force-dynamic";
  * and redirects straight into the product. The seed writes are deliberately
  * batched so this reliable request-bound flow does not depend on an in-memory
  * background job surviving across autoscaled instances.
+ *
+ * In development only, the pilot persona redirects into real-data /v2
+ * instead of /home -- CFI and school personas are untouched, and staging/
+ * production keep the canonical redirect regardless of persona.
  */
 export async function GET(request: NextRequest) {
   const origin = requestOrigin(request);
@@ -44,7 +49,12 @@ export async function GET(request: NextRequest) {
     const result = persona === "pilot" ? await seedPilotDemo(expiresAt) : await seedCfiSchoolDemo(persona, expiresAt);
 
     const jwt = await createSessionJwt({ sub: result.loginEmail, email: result.loginEmail, name: result.loginName });
-    const response = NextResponse.redirect(`${origin}${result.redirectPath}`);
+    // Development-only: send the pilot demo into real-data /v2 instead of the
+    // canonical Student tree. Reuses the same cookie app/api/v2/enter-real-data
+    // sets -- lib/env.ts's v2RealDataMode() ignores this cookie outside
+    // development, so staging and production keep today's /home redirect.
+    const v2RealData = persona === "pilot" && isDevelopment();
+    const response = NextResponse.redirect(`${origin}${v2RealData ? "/v2" : result.redirectPath}`);
     response.cookies.set(SESSION_COOKIE, jwt, {
       httpOnly: true,
       secure: true,
@@ -59,6 +69,14 @@ export async function GET(request: NextRequest) {
       path: "/",
       maxAge: DEMO_ORG_TTL_MS / 1000,
     });
+    if (v2RealData) {
+      response.cookies.set(V2_REAL_DATA_COOKIE, "1", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/",
+      });
+    }
     return response;
   } catch (err) {
     console.error("Live demo provisioning failed:", err);
