@@ -25,14 +25,29 @@ export const dynamic = "force-dynamic";
  * batched so this reliable request-bound flow does not depend on an in-memory
  * background job surviving across autoscaled instances.
  *
- * In development only, the pilot persona redirects into real-data /v2
- * instead of /home -- CFI and school personas are untouched, and staging/
- * production keep the canonical redirect regardless of persona.
+ * In development only, the pilot persona redirects into the approved Mia
+ * /v2 fixture demo instead of /home -- this is the curated product demo,
+ * not a QA tool, so it never enables the real-data cookie (any stale one
+ * from a prior pilot-real session is explicitly cleared). CFI and school
+ * personas are untouched, and staging/production keep the canonical
+ * redirect regardless of persona.
+ *
+ * pilot-real is a separate, Development-only QA entry (invalid persona
+ * outside development) that seeds the identical Jordan org this route
+ * always has, but enables real-data /v2 instead -- for backend/lifecycle
+ * QA, never the curated demo. Mia (fixture) and Jordan (real-data QA) are
+ * deliberately not the same persona and must not be conflated: Jordan's
+ * real seeded backend (different instructor/history, real async CFI
+ * behavior, real persisted lifecycle state) cannot be expected to
+ * reproduce Mia's curated demo states, and nothing here tries to make it.
  */
 export async function GET(request: NextRequest) {
   const origin = requestOrigin(request);
   const persona = request.nextUrl.searchParams.get("persona");
-  if (persona !== "pilot" && persona !== "cfi" && persona !== "school") {
+  if (persona !== "pilot" && persona !== "pilot-real" && persona !== "cfi" && persona !== "school") {
+    return NextResponse.json({ error: "Invalid persona. Use ?persona=pilot|cfi|school." }, { status: 400 });
+  }
+  if (persona === "pilot-real" && !isDevelopment()) {
     return NextResponse.json({ error: "Invalid persona. Use ?persona=pilot|cfi|school." }, { status: 400 });
   }
 
@@ -46,15 +61,21 @@ export async function GET(request: NextRequest) {
     });
 
     const expiresAt = new Date(Date.now() + DEMO_ORG_TTL_MS);
-    const result = persona === "pilot" ? await seedPilotDemo(expiresAt) : await seedCfiSchoolDemo(persona, expiresAt);
+    const result =
+      persona === "pilot" || persona === "pilot-real"
+        ? await seedPilotDemo(expiresAt)
+        : await seedCfiSchoolDemo(persona, expiresAt);
 
     const jwt = await createSessionJwt({ sub: result.loginEmail, email: result.loginEmail, name: result.loginName });
-    // Development-only: send the pilot demo into real-data /v2 instead of the
-    // canonical Student tree. Reuses the same cookie app/api/v2/enter-real-data
-    // sets -- lib/env.ts's v2RealDataMode() ignores this cookie outside
-    // development, so staging and production keep today's /home redirect.
-    const v2RealData = persona === "pilot" && isDevelopment();
-    const response = NextResponse.redirect(`${origin}${v2RealData ? "/v2" : result.redirectPath}`);
+    // pilot-real is the Development-only real-data QA entry (validated
+    // above) -- enables real-data /v2 for backend/lifecycle testing.
+    // Plain pilot in development is the curated product demo: it goes to
+    // /v2 too, but must show Mia's approved fixture, never real data, so
+    // any stale real-data cookie from a prior pilot-real session is
+    // explicitly cleared rather than left to leak into this visit.
+    const v2RealData = persona === "pilot-real";
+    const v2Fixture = persona === "pilot" && isDevelopment();
+    const response = NextResponse.redirect(`${origin}${v2RealData || v2Fixture ? "/v2" : result.redirectPath}`);
     response.cookies.set(SESSION_COOKIE, jwt, {
       httpOnly: true,
       secure: true,
@@ -76,6 +97,8 @@ export async function GET(request: NextRequest) {
         sameSite: "lax",
         path: "/",
       });
+    } else if (v2Fixture) {
+      response.cookies.delete(V2_REAL_DATA_COOKIE);
     }
     return response;
   } catch (err) {
