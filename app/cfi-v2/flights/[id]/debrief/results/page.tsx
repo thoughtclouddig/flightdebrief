@@ -93,6 +93,7 @@ export default async function CfiV2DebriefResultsPage(props: { params: Promise<{
         instructorFirstName={instructorFirstName}
         certificateType={certificateType}
         canDismiss
+        showDebriefContext={false}
       />
 
       <PrimaryButton href={`/cfi-v2/students/${flight.userId}`}>Go to student</PrimaryButton>

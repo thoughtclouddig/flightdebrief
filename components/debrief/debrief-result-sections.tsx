@@ -43,6 +43,7 @@ export function DebriefResultSections({
   canDismiss,
   instructorFirstName,
   editableTrainingItems,
+  showDebriefContext = true,
 }: {
   result: StructuredDebrief;
   differenceRows: PerceptionGapRow[];
@@ -64,6 +65,18 @@ export function DebriefResultSections({
    * student viewers, which keep the static read-only rendering.
    */
   editableTrainingItems?: { keepWorkingOn: TrainingItem[]; beforeNextFlight: TrainingItem[] };
+  /**
+   * The "From your debrief with X" lede line below. Default true (every
+   * existing caller: /review pages, where this is the only place that
+   * context appears). False on a results page that already renders
+   * DebriefReplay directly above this component -- DebriefReplay's own
+   * cards already say "From/Based on your debrief with X" up to three
+   * times, so repeating it a fourth time right at this seam was pure
+   * restatement with no new information, not one of the legitimately
+   * repeated categories (summary, cue, recurring pattern, study rec,
+   * action item, next-flight prep).
+   */
+  showDebriefContext?: boolean;
 }) {
   return (
     <>
@@ -76,9 +89,11 @@ export function DebriefResultSections({
           The null fallback used to read "with your instructor" -- but null IS
           the no-instructor case, so it named someone who doesn't exist. */}
       <div className="flex flex-col gap-1.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">
-          {instructorFirstName ? `From your debrief with ${instructorFirstName}` : "From your debrief"}
-        </p>
+        {showDebriefContext ? (
+          <p className="text-xs font-semibold uppercase tracking-wide text-foreground-faint">
+            {instructorFirstName ? `From your debrief with ${instructorFirstName}` : "From your debrief"}
+          </p>
+        ) : null}
         {result.flightSummary ? (
           <p className="text-lg leading-relaxed text-foreground">{result.flightSummary}</p>
         ) : null}

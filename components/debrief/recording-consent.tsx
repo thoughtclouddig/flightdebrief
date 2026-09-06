@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * consent_records table comment).
  */
 const CONSENT_COPY =
-  "This debrief will be recorded, transcribed, and analyzed by AI, then stored in the student's training history. Both of you should be comfortable with that before starting.";
+  "This debrief will be recorded and analyzed by AI. The recording itself isn't kept -- what's saved to the student's training history is the transcript and the resulting debrief. Both of you should be comfortable with that before starting.";
 
 /**
  * A solo pilot is the only person in the recording, so the two-party framing
@@ -21,7 +21,7 @@ const CONSENT_COPY =
  * the one person actually reading it.
  */
 const SOLO_CONSENT_COPY =
-  "This debrief will be recorded, transcribed, and analyzed by AI, then stored in your training history.";
+  "This debrief will be recorded and analyzed by AI. The recording itself isn't kept -- what's saved to your training history is the transcript and the resulting debrief.";
 
 /**
  * Lightweight step shown before either recorder starts -- not a legal form,

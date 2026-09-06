@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList } from "lucide-react";
+import { ChevronRight, ClipboardList } from "lucide-react";
 import { PageTitle, Screen, Section } from "@/components/student/ui";
 import type { CfiV2DebriefQueue } from "@/lib/cfi-v2/debrief-queue";
 
@@ -48,7 +48,10 @@ export function CfiV2DebriefQueueScreen({ queue }: { queue: CfiV2DebriefQueue })
                 className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
               >
                 <span className="text-[15px] text-foreground">{c.studentName}</span>
-                <span className="text-[13px] text-foreground-faint">{c.flightContext}</span>
+                <span className="flex items-center gap-1 text-[13px] text-foreground-faint">
+                  {c.flightContext}
+                  <ChevronRight className="size-3.5 shrink-0" aria-hidden />
+                </span>
               </Link>
             ))}
           </div>
