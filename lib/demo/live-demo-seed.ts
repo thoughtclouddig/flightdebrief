@@ -121,6 +121,23 @@ function nextRealFlight() {
   return flight;
 }
 
+/**
+ * A demo's historical flights must stay recent as real time passes --
+ * REAL_DEMO_FLIGHTS' own `takeoffIso` values are fixed calendar dates from
+ * whenever scripts/fetch-real-tracks.mjs last ran, so using them directly as
+ * the visible flight date makes "this student flew last week" quietly become
+ * "flew months ago." This keeps the real flight's geometry (route, track,
+ * duration) entirely untouched -- withTimestamps only needs an anchor to
+ * space points across -- and only replaces WHEN it visibly happened, using
+ * the real flight's own time-of-day so seeded flights don't all land at
+ * midnight.
+ */
+function relativeTakeoffIso(daysAgo: number, realTakeoffIso: string): string {
+  const timeOfDay = realTakeoffIso.slice(11); // "HH:MM:SSZ"
+  const date = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+  return `${date.toISOString().slice(0, 10)}T${timeOfDay}`;
+}
+
 /** Reconstructs timestamps for a real track's points (FR24's raw points are already time-ordered, but scripts/fetch-real-tracks.mjs strips their absolute timestamps) by spreading them evenly across the flight's real duration starting at `startIso`. */
 function withTimestamps(track: { lat: number; lon: number; altitudeFt?: number; groundSpeedKt?: number }[], startIso: string, durationMinutes: number): TrackPosition[] {
   const startMs = new Date(startIso).getTime();
@@ -159,16 +176,31 @@ async function seedHistoricalFlights(
     aircraftId: string;
     aircraftTail: string;
     aircraftType: string;
+    /**
+     * How many days before "now" the LAST (most recent) entry happened;
+     * earlier entries recede further back by `intervalDays` each. Defaults
+     * give a normally-active student (most recent flight a couple of days
+     * ago, roughly weekly cadence before that) -- a caller seeding a stale
+     * "hasn't flown in a while" student passes a much larger
+     * `mostRecentDaysAgo` instead.
+     */
+    mostRecentDaysAgo?: number;
+    intervalDays?: number;
   },
 ): Promise<HistoricalFlightRecord[]> {
   const records: HistoricalFlightRecord[] = [];
   const flightRows: unknown[][] = [];
   const debriefRows: unknown[][] = [];
   let previousActionItems: string[] = [];
+  const mostRecentDaysAgo = opts.mostRecentDaysAgo ?? 2;
+  const intervalDays = opts.intervalDays ?? 6;
 
-  // Oldest-first so the narrative arc (transcripts are written as a
-  // progression) lines up with real chronological order.
-  const realFlights = entries.map(() => nextRealFlight()).sort((a, b) => a.takeoffIso.localeCompare(b.takeoffIso));
+  // Real flights only supply geometry now (route, track, duration) -- the
+  // visible date is synthetic (see relativeTakeoffIso), so there is no
+  // reason to sort them by their own fixed calendar date anymore. Drawn in
+  // whatever order the rotating cursor gives, paired 1:1 with entries, which
+  // are already oldest-first (the narrative arc's own order).
+  const realFlights = entries.map(() => nextRealFlight());
 
   // instructorId/instructorName travel WITH each transcript now, not as one
   // opts value for the whole call. That is what lets a single call seed a
@@ -182,8 +214,10 @@ async function seedHistoricalFlights(
     const real = realFlights[i];
     const flightId = `flight-demo-${randomUUID()}`;
     const debriefId = `debrief-demo-${randomUUID()}`;
-    const flightDate = real.takeoffIso.slice(0, 10);
-    const track = withTimestamps(real.track, real.takeoffIso, real.durationMinutes);
+    const daysAgo = mostRecentDaysAgo + (entries.length - 1 - i) * intervalDays;
+    const takeoffIso = relativeTakeoffIso(daysAgo, real.takeoffIso);
+    const flightDate = takeoffIso.slice(0, 10);
+    const track = withTimestamps(real.track, takeoffIso, real.durationMinutes);
 
     const result = analyzeMock({
       transcript,
@@ -212,7 +246,7 @@ async function seedHistoricalFlights(
       instructorId,
       "complete",
       JSON.stringify(track),
-      real.takeoffIso,
+      takeoffIso,
     ]);
     debriefRows.push([
       debriefId,
@@ -221,7 +255,7 @@ async function seedHistoricalFlights(
       Math.round(real.durationMinutes * 0.6),
       JSON.stringify(result),
       "mock",
-      real.takeoffIso,
+      takeoffIso,
     ]);
 
     records.push({
@@ -460,53 +494,100 @@ async function seedRadioPractice(organizationId: string, studentId: string, assi
   await getRepository().createRadioPracticeAssignment({ organizationId, studentId, assignedBy, scenarioId: scenario.id });
 }
 
-/**
- * Every-flight task set for a seeded guided debrief, plus the three items
- * lib/universal-tasks.ts appends to a real one. Duplicated here rather than
- * imported, because the real route builds these from a live flight -- if
- * that list changes, this one needs the same change to stay representative.
- */
-const TODAY_FLIGHT_TASKS: { code: string; label: string; source: string }[] = [
-  { code: "LANDINGS", label: "Traffic Pattern & Landings", source: "instructor_selected" },
-  { code: "PREFLIGHT_INSPECTION", label: "Preflight & preparation", source: "syllabus" },
-  { code: "RADIO_COMMUNICATIONS", label: "Radio communication", source: "syllabus" },
-  { code: "SITUATIONAL_AWARENESS", label: "Situational awareness", source: "syllabus" },
-];
+interface GuidedFlightVariant {
+  tasks: { code: string; label: string; source: string }[];
+  /** [task code, student rating, instructor rating]. */
+  ratings: [string, string, string][];
+  cards: { category: string; title: string; prompt: string; followUps: string[] }[];
+}
 
 /**
- * [task code, student rating, instructor rating]. Deliberately not
- * identical across the board: the student rates the landings harder on
- * themselves than the instructor does (a disagreement worth talking
- * through), both agree on preflight (a real point of agreement, not just
- * gaps), and the instructor is the one who flags the radio work the
- * student rated themselves independent on -- three different shapes of
- * feedback, not one repeated pattern.
+ * Two variants so two students can each have a real pending guided debrief
+ * without looking like clones of each other -- every-flight task set, plus
+ * the three items lib/universal-tasks.ts appends to a real one, duplicated
+ * here rather than imported because the real route builds these from a live
+ * flight (if that list changes, these need the same change to stay
+ * representative).
+ *
+ * Variant 0 (landings/preflight/radio/situational awareness): the student
+ * rates the landings harder on themselves than the instructor does (a
+ * disagreement worth talking through), both agree on preflight (a real
+ * agreement, not just gaps), and the instructor is the one who flags the
+ * radio work the student rated themselves independent on.
+ *
+ * Variant 1 (short-field/crosswind/checklist/decision-making): the reverse
+ * shape of disagreement -- the instructor rates crosswind handling higher
+ * than the student gives themselves credit for, a different, equally real
+ * kind of gap (underconfidence, not overconfidence).
  */
-const TODAY_FLIGHT_RATINGS: [string, string, string][] = [
-  ["LANDINGS", "LEARNING", "NEEDS_COACHING"],
-  ["PREFLIGHT_INSPECTION", "INDEPENDENT", "INDEPENDENT"],
-  ["RADIO_COMMUNICATIONS", "INDEPENDENT", "NEEDS_COACHING"],
-  ["SITUATIONAL_AWARENESS", "NEEDS_COACHING", "NEEDS_COACHING"],
-];
-
-const TODAY_FLIGHT_CARDS: { category: string; title: string; prompt: string; followUps: string[] }[] = [
+const GUIDED_FLIGHT_VARIANTS: GuidedFlightVariant[] = [
   {
-    category: "KEY_TASK",
-    title: "Approach Speed Control",
-    prompt: "Walk through the approach speed on today's landings -- on-speed by the time you turned final?",
-    followUps: ["Where in the pattern did you get configured -- downwind, base, or final?"],
+    tasks: [
+      { code: "LANDINGS", label: "Traffic Pattern & Landings", source: "instructor_selected" },
+      { code: "PREFLIGHT_INSPECTION", label: "Preflight & preparation", source: "syllabus" },
+      { code: "RADIO_COMMUNICATIONS", label: "Radio communication", source: "syllabus" },
+      { code: "SITUATIONAL_AWARENESS", label: "Situational awareness", source: "syllabus" },
+    ],
+    ratings: [
+      ["LANDINGS", "LEARNING", "NEEDS_COACHING"],
+      ["PREFLIGHT_INSPECTION", "INDEPENDENT", "INDEPENDENT"],
+      ["RADIO_COMMUNICATIONS", "INDEPENDENT", "NEEDS_COACHING"],
+      ["SITUATIONAL_AWARENESS", "NEEDS_COACHING", "NEEDS_COACHING"],
+    ],
+    cards: [
+      {
+        category: "KEY_TASK",
+        title: "Approach Speed Control",
+        prompt: "Walk through the approach speed on today's landings -- on-speed by the time you turned final?",
+        followUps: ["Where in the pattern did you get configured -- downwind, base, or final?"],
+      },
+      {
+        category: "STRENGTHS",
+        title: "What Went Well",
+        prompt: "Airspeed control and checklist flow both looked sharp today -- what changed from last time?",
+        followUps: ["How did the radio calls go?"],
+      },
+      {
+        category: "IMPROVEMENT",
+        title: "Flare and Centerline",
+        prompt: "A couple of those landings ballooned a little in the flare -- what were you seeing out front when that happened?",
+        followUps: ["What's one adjustment to hold centerline better through rollout?"],
+      },
+    ],
   },
   {
-    category: "STRENGTHS",
-    title: "What Went Well",
-    prompt: "Airspeed control and checklist flow both looked sharp today -- what changed from last time?",
-    followUps: ["How did the radio calls go?"],
-  },
-  {
-    category: "IMPROVEMENT",
-    title: "Flare and Centerline",
-    prompt: "A couple of those landings ballooned a little in the flare -- what were you seeing out front when that happened?",
-    followUps: ["What's one adjustment to hold centerline better through rollout?"],
+    tasks: [
+      { code: "CROSSWIND_LANDING", label: "Crosswind Landings", source: "instructor_selected" },
+      { code: "SHORT_FIELD_LANDING", label: "Short-field landings", source: "syllabus" },
+      { code: "CHECKLIST_DISCIPLINE", label: "Checklist usage", source: "syllabus" },
+      { code: "RISK_MANAGEMENT", label: "Aeronautical decision-making", source: "syllabus" },
+    ],
+    ratings: [
+      ["CROSSWIND_LANDING", "LEARNING", "INDEPENDENT"],
+      ["SHORT_FIELD_LANDING", "NEEDS_COACHING", "NEEDS_COACHING"],
+      ["CHECKLIST_DISCIPLINE", "INDEPENDENT", "INDEPENDENT"],
+      ["RISK_MANAGEMENT", "LEARNING", "NEEDS_COACHING"],
+    ],
+    cards: [
+      {
+        category: "KEY_TASK",
+        title: "Crosswind Correction",
+        prompt: "Talk through the crosswind landings today -- how did the correction feel through the flare?",
+        followUps: ["Did you feel behind the airplane at any point, or ahead of it the whole time?"],
+      },
+      {
+        category: "STRENGTHS",
+        title: "What Went Well",
+        prompt: "Checklist flow was clean start to finish -- what's making that stick this time?",
+        followUps: ["Anything from the short-field work you'd repeat next time?"],
+      },
+      {
+        category: "IMPROVEMENT",
+        title: "Short-Field Technique",
+        prompt: "The short-field landings were a little long a couple of times -- what were you seeing on short final?",
+        followUps: ["What's one adjustment to get the touchdown point more consistent?"],
+      },
+    ],
   },
 ];
 
@@ -514,10 +595,12 @@ const TODAY_FLIGHT_CARDS: { category: string; title: string; prompt: string; fol
  * The guided-debrief structure (flight_tasks, both assessments, their
  * ratings, and the pending debrief_cards) for one flight -- extracted from
  * what used to be seedCfiSchoolDemo's own inline block, now shared with
- * seedPilotDemo. Both personas get the identical rating pattern above: one
- * real disagreement on the recurring landing/flare weakness, one real
- * agreement on preflight, so the Compare screen has both a gap and a
- * calibration to show, not only conflict.
+ * seedPilotDemo and every V2 CFI/School roster student who gets a pending
+ * guided debrief. `variant` picks one of GUIDED_FLIGHT_VARIANTS so two
+ * students in the same org don't get an identical structure -- each variant
+ * carries its own real disagreement and its own real agreement, so the
+ * Compare screen always has both a gap and a calibration to show, never
+ * only conflict.
  *
  * Does not touch the `flights` row itself -- the caller decides that
  * flight's status, dates and track; this only adds the assessment layer
@@ -525,10 +608,11 @@ const TODAY_FLIGHT_CARDS: { category: string; title: string; prompt: string; fol
  */
 async function seedGuidedAssessedFlight(
   client: { query: (text: string, params?: unknown[]) => Promise<unknown> },
-  opts: { flightId: string; studentId: string; instructorId: string },
+  opts: { flightId: string; studentId: string; instructorId: string; variant?: number },
 ): Promise<void> {
+  const { tasks, ratings, cards } = GUIDED_FLIGHT_VARIANTS[opts.variant ?? 0]!;
   const taskIds: string[] = [];
-  for (const [i, task] of TODAY_FLIGHT_TASKS.entries()) {
+  for (const [i, task] of tasks.entries()) {
     const id = `flight-task-demo-${randomUUID()}`;
     taskIds.push(id);
     await client.query(
@@ -551,8 +635,8 @@ async function seedGuidedAssessedFlight(
     [instructorAssessmentId, opts.flightId, opts.instructorId],
   );
 
-  for (const [code, studentRating, instructorRating] of TODAY_FLIGHT_RATINGS) {
-    const taskId = taskIds[TODAY_FLIGHT_TASKS.findIndex((t) => t.code === code)];
+  for (const [code, studentRating, instructorRating] of ratings) {
+    const taskId = taskIds[tasks.findIndex((t) => t.code === code)];
     await client.query(
       `INSERT INTO debrief_assessment_ratings (id, assessment_id, flight_task_id, performance_level)
        VALUES ($1,$2,$3,$4)`,
@@ -566,7 +650,7 @@ async function seedGuidedAssessedFlight(
   }
 
   const cardsInsert = buildInsertRows(
-    TODAY_FLIGHT_CARDS.map((card, index) => [
+    cards.map((card, index) => [
       `card-demo-${randomUUID()}`,
       opts.flightId,
       "standard",
@@ -774,70 +858,93 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
   }
 }
 
+interface DemoRosterStudent {
+  name: string;
+  certificateType: "PRIVATE" | null;
+  /** How many of DEMO_HISTORY's entries (from the end) this student gets. */
+  flights: number;
+  /** Index into the org's aircraft array. */
+  aircraftIndex: number;
+  /** Index into the org's instructor array -- the student's current, active, primary CFI. */
+  instructorIndex: number;
+  /** Index into the org's instructor array for a prior CFI, if this student has an instructor-handoff story. */
+  priorInstructorIndex?: number;
+  /** How many of this student's `flights` (from the start) happened under `priorInstructorIndex` before the handoff to `instructorIndex`. */
+  handoffAt?: number;
+  /** Days before "now" the student's most recent historical flight happened (earlier ones recede further back). Default 2. A large value (e.g. 35+) is what makes a student read as stale/overdue. */
+  mostRecentDaysAgo?: number;
+  /** Forces a 3-flight recurring-weakness signal (see seedRecurringInsightSignal) on this student's most recent history. */
+  recurringWeakness?: boolean;
+  /** Gives this student their own real, not-yet-debriefed guided flight (flight_tasks + both assessments + ratings + pending cards) -- a genuine student/instructor rating disagreement, not just narrative. `daysAgo` of 0 is "today"; 1+ is a backlog item from a prior day. */
+  pendingGuidedDebrief?: { variant: number; daysAgo: number };
+  /** An upcoming (not yet flown) reservation N hours from now. Ignored if `pendingGuidedDebrief` is set (that student's reservation is already implied by daysAgo, in the past). */
+  scheduledInHours?: number;
+}
+
+interface DemoRosterConfig {
+  orgName: string;
+  expiresAt: Date;
+  /** Index 0 is always the CFI-persona login identity when loginAs === "instructor". */
+  instructorNames: string[];
+  aircraft: { prefix: string; type: string; make: string; model: string }[];
+  students: DemoRosterStudent[];
+  loginAs: "instructor" | "admin";
+  redirectPath: "/cfi/today" | "/admin/overview";
+  hint: string;
+}
+
 /**
- * The school's roster.
- *
- * Three students, each with an identical four-flight history, made the
- * insights page read as a toy: "most common training issues" over twelve
- * flights that were the same four flights three times. A prospect looking at
- * a school demo is asking whether this tells them anything about a real
- * school, and three identical students cannot.
- *
- * Eight now, with DIFFERENT amounts of history -- `flights` is how many of
- * DEMO_HISTORY's entries each one gets. That variation is the point:
- *
- *   - the deep ones give the aggregate something to aggregate
- *   - the thin ones are what an admin actually needs to see. A student with
- *     two debriefs is the one whose progress nobody can judge yet, and the
- *     insights page saying so is more use than another averaged bar.
- *
- * Capped at DEMO_HISTORY's ten entries. Ask for more and the slice silently
- * returns fewer, which is how a "six flight" student quietly becomes a
- * four-flight one.
+ * Shared roster-seeding machinery for both canonical V2 CFI/School demos --
+ * seedCfiV2Demo and seedSchoolV2Demo differ only in the DemoRosterConfig they
+ * pass in (roster size, instructor/aircraft count, which login lands where),
+ * not in how any of it gets built. Replaces the old seedCfiSchoolDemo, which
+ * conflated the two personas into one hardcoded single-instructor,
+ * single-aircraft roster with no real difference between them.
  */
-const SCHOOL_STUDENTS = [
-  { name: "Riley Student", certificateType: "PRIVATE" as const, flights: 6 },
-  { name: "Sam Trainee", certificateType: "PRIVATE" as const, flights: 2 },
-  { name: "Casey Learner", certificateType: null, flights: 5 },
-  { name: "Priya Raman", certificateType: "PRIVATE" as const, flights: 8 },
-  { name: "Marcus Webb", certificateType: null, flights: 4 },
-  { name: "Dana Osei", certificateType: "PRIVATE" as const, flights: 7 },
-  { name: "Tomas Ruiz", certificateType: null, flights: 3 },
-  { name: "Ellie Hart", certificateType: null, flights: 2 },
-];
-
-export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Date): Promise<LiveDemoResult> {
+async function seedDemoRosterOrg(config: DemoRosterConfig): Promise<LiveDemoResult> {
   const orgId = `org-demo-school-${randomUUID()}`;
-  const instructorUserId = `user-demo-instructor-${randomUUID()}`;
-  const adminUserId = `user-demo-admin-${randomUUID()}`;
-  const aircraftId = `aircraft-demo-${randomUUID()}`;
-  const instructorEmail = `${instructorUserId}@afterflight.demo`;
-  const adminEmail = `${adminUserId}@afterflight.demo`;
-  const instructorName = "Morgan CFI";
-  const adminName = "Taylor Admin";
-  const aircraftType = "Piper PA-28-181";
-
   const client = await getDb().connect();
   try {
     await client.query("BEGIN");
 
     await client.query(`INSERT INTO organizations (id, name, kind, demo_expires_at) VALUES ($1,$2,'school',$3)`, [
       orgId,
-      "Skyline Flight Academy",
-      expiresAt.toISOString(),
+      config.orgName,
+      config.expiresAt.toISOString(),
     ]);
 
-    await client.query(
-      `INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ($1,$2,$3,$3,true)`,
-      [instructorUserId, instructorName, instructorEmail],
+    const instructorIds = config.instructorNames.map(() => `user-demo-instructor-${randomUUID()}`);
+    const instructorEmails = instructorIds.map((id) => `${id}@afterflight.demo`);
+    const instructorUsersInsert = buildInsertRows(
+      instructorIds.map((id, i) => [id, config.instructorNames[i], instructorEmails[i], instructorEmails[i], true]),
     );
+    await client.query(
+      `INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ${instructorUsersInsert.placeholders}`,
+      instructorUsersInsert.values,
+    );
+    const instructorMembersInsert = buildInsertRows(
+      instructorIds.map((id) => [`member-demo-${randomUUID()}`, orgId, id, "instructor"]),
+    );
+    await client.query(
+      `INSERT INTO organization_members (id, organization_id, user_id, role) VALUES ${instructorMembersInsert.placeholders}`,
+      instructorMembersInsert.values,
+    );
+    const instructorsInsert = buildInsertRows(instructorIds.map((id, i) => [id, config.instructorNames[i], orgId]));
+    await client.query(
+      `INSERT INTO instructors (id, name, organization_id) VALUES ${instructorsInsert.placeholders}`,
+      instructorsInsert.values,
+    );
+
+    // Always present regardless of loginAs -- a real school/CFI org has an
+    // admin either way, and the CFI persona's own org still needs one to
+    // exist for the "who else is in this org" story to be honest, even
+    // though this persona never logs in as them.
+    const adminUserId = `user-demo-admin-${randomUUID()}`;
+    const adminEmail = `${adminUserId}@afterflight.demo`;
+    const adminName = "Taylor Admin";
     await client.query(
       `INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ($1,$2,$3,$3,true)`,
       [adminUserId, adminName, adminEmail],
-    );
-    await client.query(
-      `INSERT INTO organization_members (id, organization_id, user_id, role) VALUES ($1,$2,$3,'instructor')`,
-      [`member-demo-${randomUUID()}`, orgId, instructorUserId],
     );
     await client.query(`INSERT INTO organization_members (id, organization_id, user_id, role) VALUES ($1,$2,$3,'admin')`, [
       `member-demo-${randomUUID()}`,
@@ -845,49 +952,35 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       adminUserId,
     ]);
 
-    await client.query(`INSERT INTO instructors (id, name, organization_id) VALUES ($1,$2,$3)`, [
-      instructorUserId,
-      instructorName,
-      orgId,
-    ]);
+    const aircraftIds = config.aircraft.map(() => `aircraft-demo-${randomUUID()}`);
+    const aircraftTails: string[] = [];
+    for (let i = 0; i < config.aircraft.length; i++) {
+      const spec = config.aircraft[i]!;
+      aircraftTails.push(
+        await insertDemoAircraft(client, {
+          id: aircraftIds[i]!,
+          prefix: String(i + 2),
+          type: spec.type,
+          make: spec.make,
+          model: spec.model,
+          homeAirport: SCHOOL_AIRPORT,
+          organizationId: orgId,
+        }),
+      );
+    }
 
-    const tail = await insertDemoAircraft(client, {
-      id: aircraftId,
-      prefix: "2",
-      type: aircraftType,
-      make: "Piper",
-      model: "PA-28-181",
-      homeAirport: SCHOOL_AIRPORT,
-      organizationId: orgId,
-    });
-
-    const students = SCHOOL_STUDENTS.map((student) => {
-      const userId = `user-demo-student-${randomUUID()}`;
-      return {
-        ...student,
-        userId,
-        email: `${userId}@afterflight.demo`,
-      };
-    });
-    const studentIds = students.map((student) => student.userId);
-    const historicalRecords: HistoricalFlightRecord[] = [];
+    const students = config.students.map((student) => ({ ...student, userId: `user-demo-student-${randomUUID()}` }));
+    const studentIds = students.map((s) => s.userId);
     const usersInsert = buildInsertRows(
-      students.map((student) => [student.userId, student.name, student.email, student.email, true]),
+      students.map((s) => [s.userId, s.name, `${s.userId}@afterflight.demo`, `${s.userId}@afterflight.demo`, true]),
     );
     await client.query(
-      `INSERT INTO users (id, name, email, auth_user_id, profile_completed)
-       VALUES ${usersInsert.placeholders}`,
+      `INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ${usersInsert.placeholders}`,
       usersInsert.values,
     );
 
     const membersInsert = buildInsertRows(
-      students.map((student) => [
-        `member-demo-${randomUUID()}`,
-        orgId,
-        student.userId,
-        "student",
-        student.certificateType,
-      ]),
+      students.map((s) => [`member-demo-${randomUUID()}`, orgId, s.userId, "student", s.certificateType]),
     );
     await client.query(
       `INSERT INTO organization_members (id, organization_id, user_id, role, certificate_type)
@@ -895,160 +988,148 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
       membersInsert.values,
     );
 
-    const linksInsert = buildInsertRows(
-      students.map((student) => [
-        `link-demo-${randomUUID()}`,
-        student.userId,
-        instructorUserId,
-        orgId,
-        true,
-        "active",
-      ]),
-    );
+    // One active+primary link to the student's current instructor, plus one
+    // inactive link to their prior instructor for anyone with a handoff
+    // story -- the same real shape seedPilotDemo's own Jordan handoff uses
+    // (student_instructors.status/is_primary), not a narrative-only effect.
+    const linkRows: unknown[][] = [];
+    for (const s of students) {
+      linkRows.push([`link-demo-${randomUUID()}`, s.userId, instructorIds[s.instructorIndex], orgId, true, "active"]);
+      if (s.priorInstructorIndex !== undefined) {
+        linkRows.push([`link-demo-${randomUUID()}`, s.userId, instructorIds[s.priorInstructorIndex], orgId, false, "inactive"]);
+      }
+    }
+    const linksInsert = buildInsertRows(linkRows);
     await client.query(
       `INSERT INTO student_instructors (id, student_id, instructor_id, organization_id, is_primary, status)
        VALUES ${linksInsert.placeholders}`,
       linksInsert.values,
     );
 
-    for (const student of students) {
-
-      // Each student gets their own depth of history -- see SCHOOL_STUDENTS.
-      //
-      // Taken from the END of DEMO_HISTORY -- these students have a CFI, so
-      // the instructor-voiced transcripts are right here (the solo persona
-      // uses SOLO_DEMO_HISTORY instead). The end, because that is where the
-      // narrative converges on one repeated
-      // skill, which is what Progress's recurring-themes card needs before it
-      // will populate at all. A student with only two flights therefore has
-      // too little for a theme to emerge, which is correct -- that is exactly
-      // what "limited feedback" means on the insights page.
-      const wanted = Math.min(student.flights, DEMO_HISTORY.length);
-      const entries = DEMO_HISTORY.slice(-wanted).map((e) => ({
-        transcript: e.transcript,
-        instructorId: instructorUserId,
-        instructorName,
-      }));
+    // Each student gets their own depth of history (DemoRosterStudent.flights)
+    // and, if they have a handoff story, their early entries are attributed
+    // to the prior instructor and the rest to the current one -- entries are
+    // taken from the END of DEMO_HISTORY, same reasoning as before: that is
+    // where the narrative converges on one repeated skill, which is what
+    // Progress's/Insights' recurring-themes cards need before they populate
+    // at all.
+    const historicalRecords: HistoricalFlightRecord[] = [];
+    for (const s of students) {
+      const wanted = Math.min(s.flights, DEMO_HISTORY.length);
+      const slice = DEMO_HISTORY.slice(-wanted);
+      const entries = slice.map((e, i) => {
+        const usesPrior = s.priorInstructorIndex !== undefined && s.handoffAt !== undefined && i < s.handoffAt;
+        const idx = usesPrior ? s.priorInstructorIndex! : s.instructorIndex;
+        return { transcript: e.transcript, instructorId: instructorIds[idx]!, instructorName: config.instructorNames[idx]! };
+      });
       historicalRecords.push(
         ...(await seedHistoricalFlights(client, entries, {
-          studentId: student.userId,
+          studentId: s.userId,
           organizationId: orgId,
-          aircraftId,
-          aircraftTail: tail,
-          aircraftType,
+          aircraftId: aircraftIds[s.aircraftIndex]!,
+          aircraftTail: aircraftTails[s.aircraftIndex]!,
+          aircraftType: config.aircraft[s.aircraftIndex]!.type,
+          mostRecentDaysAgo: s.mostRecentDaysAgo,
         })),
       );
     }
 
-    // One "today" flight, guided mode, for the first student -- flight_tasks
-    // + 3 pending debrief_cards so the CFI persona has a real guided debrief
-    // to walk through, same shape as video-demo-seed.ts's seedTodayFlight().
-    const primaryStudentId = studentIds[0];
+    // Reservations: an upcoming lesson for anyone with scheduledInHours, or a
+    // (necessarily past) one for anyone with a pending guided debrief -- a
+    // real flight implies a real scheduled lesson either way.
+    const reservationRows: unknown[][] = [];
+    for (const s of students) {
+      if (s.pendingGuidedDebrief) {
+        const start = new Date(Date.now() - (s.pendingGuidedDebrief.daysAgo * 24 + 2) * 60 * 60 * 1000);
+        const end = new Date(start.getTime() + 60 * 60 * 1000);
+        reservationRows.push([
+          `reservation-demo-${randomUUID()}`,
+          orgId,
+          s.userId,
+          instructorIds[s.instructorIndex],
+          aircraftIds[s.aircraftIndex],
+          start.toISOString(),
+          end.toISOString(),
+          "scheduled",
+        ]);
+      } else if (s.scheduledInHours !== undefined) {
+        const start = new Date(Date.now() + s.scheduledInHours * 60 * 60 * 1000);
+        const end = new Date(start.getTime() + 60 * 60 * 1000);
+        reservationRows.push([
+          `reservation-demo-${randomUUID()}`,
+          orgId,
+          s.userId,
+          instructorIds[s.instructorIndex],
+          aircraftIds[s.aircraftIndex],
+          start.toISOString(),
+          end.toISOString(),
+          "scheduled",
+        ]);
+      }
+    }
+    if (reservationRows.length > 0) {
+      const reservationsInsert = buildInsertRows(reservationRows);
+      await client.query(
+        `INSERT INTO reservations (id, organization_id, student_id, instructor_id, aircraft_id, scheduled_start, scheduled_end, status)
+         VALUES ${reservationsInsert.placeholders}`,
+        reservationsInsert.values,
+      );
+    }
 
-    // Today-scheduled reservations are what actually populate the CFI
-    // Today page's "Today's Students" section (app/(product)/cfi/today/
-    // page.tsx filters reservations by status='scheduled' + today's date) --
-    // without these rows the roster below (Debrief In Progress) is the only
-    // thing that shows, and "Today's Students" reads empty. The primary
-    // student already flew (their reservation is in the past, matching the
-    // "today" flight + guided debrief below); the other two are scheduled
-    // later today so the CFI's day reads as a real, multi-student schedule
-    // instead of one lesson in isolation.
-    const now = new Date();
-    const scheduledStart = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-    const scheduledEnd = new Date(now.getTime() - 60 * 60 * 1000);
-    // Only some of the roster flies today, at spread times.
-    //
-    // The old version had a two-slot table and fell back to the last entry for
-    // everyone beyond it -- fine for three students, but the roster is eight
-    // now and six of them would have been booked into the identical hour. A
-    // schedule where most of the day is one time is worse than a short one.
-    //
-    // Four fly today: the primary student already flew (their reservation is
-    // in the past, matching the "today" flight and its guided debrief below),
-    // and three are booked at two-hour intervals ahead. The rest have history
-    // but nothing on the schedule, which is what a real day looks like.
-    const FLYING_TODAY = 4;
-    const reservationRows: [string, Date, Date][] = [
-      [primaryStudentId, scheduledStart, scheduledEnd],
-      ...studentIds.slice(1, FLYING_TODAY).map((studentId, i): [string, Date, Date] => {
-        const startHours = 2 + i * 2;
-        return [
-          studentId,
-          new Date(now.getTime() + startHours * 60 * 60 * 1000),
-          new Date(now.getTime() + (startHours + 1) * 60 * 60 * 1000),
-        ];
-      }),
-    ];
-    const reservationsInsert = buildInsertRows(
-      reservationRows.map(([studentId, start, end]) => [
-        `reservation-demo-${randomUUID()}`,
-        orgId,
-        studentId,
-        instructorUserId,
-        aircraftId,
-        start.toISOString(),
-        end.toISOString(),
-        "scheduled",
-      ]),
-    );
-    await client.query(
-      `INSERT INTO reservations (id, organization_id, student_id, instructor_id, aircraft_id, scheduled_start, scheduled_end, status)
-       VALUES ${reservationsInsert.placeholders}`,
-      reservationsInsert.values,
-    );
-
-    // Real route/duration/track (re-dated to this morning, matching the
-    // reservation above) so this flight's map never shows the "no track
-    // data available" empty state either -- see the same treatment on the
-    // pilot persona's today flight, above.
-    const todayReal = nextRealFlight();
-    const todayFlightId = `flight-demo-${randomUUID()}`;
-    await client.query(
-      `INSERT INTO flights (
-         id, student_id, organization_id, aircraft_id, departure_airport, arrival_airport,
-         flight_date, duration_minutes, instructor_id, debrief_status, track
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'not_started',$10)`,
-      [
-        todayFlightId,
-        primaryStudentId,
-        orgId,
-        aircraftId,
-        todayReal.departureAirport,
-        todayReal.arrivalAirport,
-        localIsoDate(),
-        todayReal.durationMinutes,
-        instructorUserId,
-        JSON.stringify(withTimestamps(todayReal.track, scheduledStart.toISOString(), todayReal.durationMinutes)),
-      ],
-    );
-
-    await seedGuidedAssessedFlight(client, { flightId: todayFlightId, studentId: primaryStudentId, instructorId: instructorUserId });
+    // Real route/duration/track per pending-guided student, re-dated to when
+    // they supposedly flew (today, or a prior day for a debrief backlog item)
+    // so the flight's map never shows the "no track data available" empty
+    // state -- same treatment seedPilotDemo's own today flight uses.
+    for (const s of students) {
+      if (!s.pendingGuidedDebrief) continue;
+      const real = nextRealFlight();
+      const flightId = `flight-demo-${randomUUID()}`;
+      const takeoffIso = relativeTakeoffIso(s.pendingGuidedDebrief.daysAgo, real.takeoffIso);
+      await client.query(
+        `INSERT INTO flights (
+           id, student_id, organization_id, aircraft_id, departure_airport, arrival_airport,
+           flight_date, duration_minutes, instructor_id, debrief_status, track
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'not_started',$10)`,
+        [
+          flightId,
+          s.userId,
+          orgId,
+          aircraftIds[s.aircraftIndex],
+          real.departureAirport,
+          real.arrivalAirport,
+          takeoffIso.slice(0, 10),
+          real.durationMinutes,
+          instructorIds[s.instructorIndex],
+          JSON.stringify(withTimestamps(real.track, takeoffIso, real.durationMinutes)),
+        ],
+      );
+      await seedGuidedAssessedFlight(client, {
+        flightId,
+        studentId: s.userId,
+        instructorId: instructorIds[s.instructorIndex]!,
+        variant: s.pendingGuidedDebrief.variant,
+      });
+    }
 
     await client.query("COMMIT");
     await Promise.all([
       seedDerivedContent(historicalRecords),
-      seedRecurringInsightSignal(historicalRecords.filter((r) => r.studentId === primaryStudentId)),
-      ...studentIds.map((studentId) => seedRadioPractice(orgId, studentId, instructorUserId)),
+      ...students
+        .filter((s) => s.recurringWeakness)
+        .map((s) => seedRecurringInsightSignal(historicalRecords.filter((r) => r.studentId === s.userId))),
+      ...studentIds.map((studentId) => seedRadioPractice(orgId, studentId, instructorIds[0]!)),
       warmDemoRecapAudio(historicalRecords),
     ]);
 
-    return persona === "cfi"
-      ? {
-          organizationId: orgId,
-          loginUserId: instructorUserId,
-          loginEmail: instructorEmail,
-          loginName: instructorName,
-          redirectPath: "/cfi/today",
-          hint: `Riley Student flew this morning and is ready to debrief -- open "Debrief In Progress" to try the guided flow.`,
-        }
+    return config.loginAs === "admin"
+      ? { organizationId: orgId, loginUserId: adminUserId, loginEmail: adminEmail, loginName: adminName, redirectPath: config.redirectPath, hint: config.hint }
       : {
           organizationId: orgId,
-          loginUserId: adminUserId,
-          loginEmail: adminEmail,
-          loginName: adminName,
-          redirectPath: "/admin/overview",
-          hint: "This is the same roster as the CFI demo, from the school admin's view -- check Students or Insights.",
+          loginUserId: instructorIds[0]!,
+          loginEmail: instructorEmails[0]!,
+          loginName: config.instructorNames[0]!,
+          redirectPath: config.redirectPath,
+          hint: config.hint,
         };
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
@@ -1056,6 +1137,101 @@ export async function seedCfiSchoolDemo(persona: "cfi" | "school", expiresAt: Da
   } finally {
     client.release();
   }
+}
+
+/**
+ * Ten students under two CFIs and two aircraft -- "a busy independent CFI or
+ * instructor inside a flight school," not a school dashboard. The second CFI
+ * (Jamie Ortiz) exists specifically for instructor continuity: Casey
+ * Learner's early flights are theirs, handed off to Morgan (the CFI persona's
+ * own login) partway through, so /cfi's roster shows a real handoff instead
+ * of a single-CFI roster that can never exercise one.
+ */
+const CFI_V2_STUDENTS: DemoRosterStudent[] = [
+  { name: "Riley Student", certificateType: "PRIVATE", flights: 1, aircraftIndex: 0, instructorIndex: 0, mostRecentDaysAgo: 3, scheduledInHours: 3 },
+  { name: "Sam Trainee", certificateType: "PRIVATE", flights: 3, aircraftIndex: 0, instructorIndex: 0, mostRecentDaysAgo: 4, scheduledInHours: 6 },
+  { name: "Priya Raman", certificateType: "PRIVATE", flights: 5, aircraftIndex: 1, instructorIndex: 0, mostRecentDaysAgo: 5 },
+  { name: "Dana Osei", certificateType: "PRIVATE", flights: 8, aircraftIndex: 0, instructorIndex: 0, mostRecentDaysAgo: 5, pendingGuidedDebrief: { variant: 0, daysAgo: 0 } },
+  { name: "Marcus Webb", certificateType: null, flights: 4, aircraftIndex: 1, instructorIndex: 0, mostRecentDaysAgo: 3, recurringWeakness: true },
+  { name: "Casey Learner", certificateType: null, flights: 6, aircraftIndex: 0, instructorIndex: 0, priorInstructorIndex: 1, handoffAt: 3, mostRecentDaysAgo: 4 },
+  { name: "Tomas Ruiz", certificateType: "PRIVATE", flights: 3, aircraftIndex: 1, instructorIndex: 0, mostRecentDaysAgo: 6, pendingGuidedDebrief: { variant: 1, daysAgo: 1 } },
+  { name: "Ellie Hart", certificateType: null, flights: 6, aircraftIndex: 0, instructorIndex: 0, mostRecentDaysAgo: 4, scheduledInHours: 26 },
+  { name: "Nina Alvarez", certificateType: null, flights: 2, aircraftIndex: 1, instructorIndex: 0, mostRecentDaysAgo: 40 },
+  { name: "Kevin Brooks", certificateType: null, flights: 1, aircraftIndex: 0, instructorIndex: 0, mostRecentDaysAgo: 5 },
+];
+
+export async function seedCfiV2Demo(expiresAt: Date): Promise<LiveDemoResult> {
+  return seedDemoRosterOrg({
+    orgName: "Skyline Flight Academy",
+    expiresAt,
+    instructorNames: ["Morgan CFI", "Jamie Ortiz"],
+    aircraft: [
+      { prefix: "2", type: "Piper PA-28-181", make: "Piper", model: "PA-28-181" },
+      { prefix: "3", type: "Cessna 172S", make: "Cessna", model: "172S" },
+    ],
+    students: CFI_V2_STUDENTS,
+    loginAs: "instructor",
+    redirectPath: "/cfi/today",
+    hint: `Dana Osei flew this morning and is ready to debrief -- open "Debrief In Progress" to try the guided flow.`,
+  });
+}
+
+/**
+ * Twenty-four students under five CFIs and four aircraft, distributed
+ * unevenly (5/5/6/4/4) -- a functioning school, not the CFI roster re-skinned
+ * under an admin login. Three instructor-handoff stories, each a different
+ * CFI pair, so /admin/instructors and the recurring-theme "N instructors"
+ * callouts have real variation to show instead of always naming the same
+ * two people.
+ */
+const SCHOOL_V2_STUDENTS: DemoRosterStudent[] = [
+  // Instructor 0 (Avery Chen) -- 5 students
+  { name: "Riley Student", certificateType: "PRIVATE", flights: 1, aircraftIndex: 0, instructorIndex: 0, mostRecentDaysAgo: 2, scheduledInHours: 2 },
+  { name: "Sam Trainee", certificateType: "PRIVATE", flights: 3, aircraftIndex: 1, instructorIndex: 0, mostRecentDaysAgo: 3, scheduledInHours: 5 },
+  { name: "Priya Raman", certificateType: "PRIVATE", flights: 5, aircraftIndex: 0, instructorIndex: 0, mostRecentDaysAgo: 4 },
+  { name: "Dana Osei", certificateType: "PRIVATE", flights: 8, aircraftIndex: 1, instructorIndex: 0, mostRecentDaysAgo: 5, pendingGuidedDebrief: { variant: 0, daysAgo: 0 } },
+  { name: "Marcus Webb", certificateType: null, flights: 4, aircraftIndex: 2, instructorIndex: 0, mostRecentDaysAgo: 3, recurringWeakness: true },
+  // Instructor 1 (Jamie Ortiz) -- 5 students
+  { name: "Ellie Hart", certificateType: null, flights: 6, aircraftIndex: 1, instructorIndex: 1, mostRecentDaysAgo: 4, scheduledInHours: 27 },
+  { name: "Tomas Ruiz", certificateType: "PRIVATE", flights: 3, aircraftIndex: 2, instructorIndex: 1, mostRecentDaysAgo: 6, pendingGuidedDebrief: { variant: 1, daysAgo: 1 } },
+  { name: "Grace Nakamura", certificateType: "PRIVATE", flights: 7, aircraftIndex: 0, instructorIndex: 1, mostRecentDaysAgo: 6 },
+  { name: "Owen Patel", certificateType: null, flights: 2, aircraftIndex: 3, instructorIndex: 1, mostRecentDaysAgo: 12 },
+  { name: "Casey Learner", certificateType: null, flights: 6, aircraftIndex: 1, instructorIndex: 1, priorInstructorIndex: 2, handoffAt: 3, mostRecentDaysAgo: 4 },
+  // Instructor 2 (Devon Brooks) -- 6 students
+  { name: "Nina Alvarez", certificateType: null, flights: 2, aircraftIndex: 2, instructorIndex: 2, mostRecentDaysAgo: 45 },
+  { name: "Kevin Brooks", certificateType: null, flights: 1, aircraftIndex: 3, instructorIndex: 2, mostRecentDaysAgo: 5 },
+  { name: "Harper Sims", certificateType: "PRIVATE", flights: 8, aircraftIndex: 0, instructorIndex: 2, mostRecentDaysAgo: 3, scheduledInHours: 30 },
+  { name: "Miguel Torres", certificateType: "PRIVATE", flights: 5, aircraftIndex: 1, instructorIndex: 2, mostRecentDaysAgo: 7 },
+  { name: "Ava Kimura", certificateType: null, flights: 4, aircraftIndex: 2, instructorIndex: 2, priorInstructorIndex: 0, handoffAt: 2, mostRecentDaysAgo: 4, recurringWeakness: true },
+  { name: "Lucas Ferreira", certificateType: "PRIVATE", flights: 3, aircraftIndex: 3, instructorIndex: 2, mostRecentDaysAgo: 9 },
+  // Instructor 3 (Sasha Volkov) -- 4 students
+  { name: "Zoe Bennett", certificateType: "PRIVATE", flights: 7, aircraftIndex: 0, instructorIndex: 3, mostRecentDaysAgo: 5 },
+  { name: "Ibrahim Khan", certificateType: null, flights: 2, aircraftIndex: 1, instructorIndex: 3, mostRecentDaysAgo: 18 },
+  { name: "Chloe Martin", certificateType: "PRIVATE", flights: 6, aircraftIndex: 2, instructorIndex: 3, mostRecentDaysAgo: 4, scheduledInHours: 51 },
+  { name: "Diego Ramirez", certificateType: null, flights: 4, aircraftIndex: 3, instructorIndex: 3, mostRecentDaysAgo: 8 },
+  // Instructor 4 (Nora Fitzgerald) -- 4 students
+  { name: "Isla Murphy", certificateType: "PRIVATE", flights: 8, aircraftIndex: 0, instructorIndex: 4, mostRecentDaysAgo: 6 },
+  { name: "Theo Anderson", certificateType: null, flights: 3, aircraftIndex: 1, instructorIndex: 4, mostRecentDaysAgo: 10 },
+  { name: "Amara Okafor", certificateType: "PRIVATE", flights: 5, aircraftIndex: 2, instructorIndex: 4, priorInstructorIndex: 3, handoffAt: 2, mostRecentDaysAgo: 5 },
+  { name: "Felix Chen", certificateType: null, flights: 2, aircraftIndex: 3, instructorIndex: 4, mostRecentDaysAgo: 22 },
+];
+
+export async function seedSchoolV2Demo(expiresAt: Date): Promise<LiveDemoResult> {
+  return seedDemoRosterOrg({
+    orgName: "Skyline Flight Academy",
+    expiresAt,
+    instructorNames: ["Avery Chen", "Jamie Ortiz", "Devon Brooks", "Sasha Volkov", "Nora Fitzgerald"],
+    aircraft: [
+      { prefix: "2", type: "Piper PA-28-181", make: "Piper", model: "PA-28-181" },
+      { prefix: "3", type: "Cessna 172S", make: "Cessna", model: "172S" },
+      { prefix: "4", type: "Cessna 172N", make: "Cessna", model: "172N" },
+      { prefix: "5", type: "Piper PA-28-161", make: "Piper", model: "PA-28-161" },
+    ],
+    students: SCHOOL_V2_STUDENTS,
+    loginAs: "admin",
+    redirectPath: "/admin/overview",
+    hint: "24 students across 5 instructors -- check Instructors, Students, or Insights for the roster-wide view.",
+  });
 }
 
 /**

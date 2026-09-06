@@ -1,7 +1,7 @@
 import { after, NextResponse, type NextRequest } from "next/server";
 import { requestOrigin } from "@/lib/auth/origin";
 import { createSessionJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, V2_REAL_DATA_COOKIE } from "@/lib/auth/session";
-import { cleanupExpiredDemoOrgs, seedCfiSchoolDemo, seedPilotDemo } from "@/lib/demo/live-demo-seed";
+import { cleanupExpiredDemoOrgs, seedCfiV2Demo, seedPilotDemo, seedSchoolV2Demo } from "@/lib/demo/live-demo-seed";
 import { DEMO_HINT_COOKIE } from "@/lib/demo/live-demo-jobs";
 import { isDevelopment } from "@/lib/env";
 
@@ -41,7 +41,12 @@ export const dynamic = "force-dynamic";
  * real Jordan org, mints a real session, enables real-data /v2. Backend/
  * lifecycle QA only, never the curated demo -- Mia (fixture) and Jordan
  * (real-data QA) are deliberately not the same persona and must not be
- * conflated. CFI and school personas are completely unchanged.
+ * conflated.
+ *
+ * cfi and school now call the two explicit V2 roster seeds
+ * (seedCfiV2Demo/seedSchoolV2Demo) instead of one seedCfiSchoolDemo(persona)
+ * that conflated them into a single, identical, single-instructor org --
+ * see lib/demo/live-demo-seed.ts's own doc comments for the composition.
  */
 export async function GET(request: NextRequest) {
   const origin = requestOrigin(request);
@@ -68,7 +73,12 @@ export async function GET(request: NextRequest) {
     });
 
     const expiresAt = new Date(Date.now() + DEMO_ORG_TTL_MS);
-    const result = persona === "pilot-real" ? await seedPilotDemo(expiresAt) : await seedCfiSchoolDemo(persona, expiresAt);
+    const result =
+      persona === "pilot-real"
+        ? await seedPilotDemo(expiresAt)
+        : persona === "cfi"
+          ? await seedCfiV2Demo(expiresAt)
+          : await seedSchoolV2Demo(expiresAt);
 
     const jwt = await createSessionJwt({ sub: result.loginEmail, email: result.loginEmail, name: result.loginName });
     // pilot-real is the only remaining persona that enables real-data /v2
