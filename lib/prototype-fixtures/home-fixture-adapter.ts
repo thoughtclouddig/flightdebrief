@@ -1,32 +1,35 @@
 import type { StudentHomePanel, StudentHomeProps } from "@/components/student/student-home";
 import { INSTRUCTOR, NEXT_LESSON, PENDING_FLIGHT, STRUCTURED, STUDENT } from "@/lib/prototype-fixtures/vector-data";
+import type { FixtureStudentHrefs } from "@/lib/prototype-fixtures/fixture-student-hrefs";
 
 /**
- * The fixture adapter for /v2 Home -- Milestone 2A's formalization of what
- * app/v2/page.tsx already did inline, preserving Milestone 1B's approved
- * rendering exactly (mechanical extraction, no behavior change). Covers the
- * `state=flown` and default ("nextFlight") cases; `state=landed` stays a
- * page-level concern, since JustLanded has no StudentHomeProps shape at all
- * (no production counterpart -- see its own doc comment in app/v2/page.tsx).
+ * The fixture adapter for Mia's Home -- shared between app/v2/page.tsx's
+ * fixture branch and app/demo/student/page.tsx, which is the whole reason
+ * hrefs come in as a parameter rather than being hardcoded here: one caller
+ * needs /v2/**, the other /demo/student/**, and this function has to
+ * produce identical content either way. Covers the `state=flown` and
+ * default ("nextFlight") cases; `state=landed` stays a page-level concern,
+ * since JustLanded has no StudentHomeProps shape at all (no production
+ * counterpart -- see its own doc comment in app/v2/page.tsx).
  */
-export function buildFixtureHomeProps(state: string | undefined): StudentHomeProps {
+export function buildFixtureHomeProps(state: string | undefined, hrefs: FixtureStudentHrefs): StudentHomeProps {
   if (state === "flown") {
     const panel: StudentHomePanel = {
       kind: "justFlew",
       flightContext: PENDING_FLIGHT.lesson,
       bodyText: "Capture what mattered while it's fresh.",
       primaryLabel: "Start debrief",
-      primaryHref: "/v2/debrief/new",
-      secondaryHref: "/v2/flights/aug-29",
+      primaryHref: hrefs.debriefNew,
+      secondaryHref: hrefs.flightDetail("aug-29"),
       showAutoRefresh: false,
     };
     return {
       firstName: STUDENT.firstName,
       panel,
       justFlewRows: {
-        myFlightsHref: "/v2/flights",
+        myFlightsHref: hrefs.flights,
         myFlightsCount: 5,
-        pastDebriefsHref: "/v2/debrief",
+        pastDebriefsHref: hrefs.debriefHub,
         pastDebriefsCount: 3,
       },
     };
@@ -42,14 +45,14 @@ export function buildFixtureHomeProps(state: string | undefined): StudentHomePro
     firstName: STUDENT.firstName,
     panel,
     keyReminder: { instructorFirstName: INSTRUCTOR.firstName, quote: STRUCTURED.instructorEmphasis[0]!.quote },
-    trainCta: { instructorFirstName: INSTRUCTOR.firstName, href: "/v2/train" },
-    startFlight: { href: "/v2/fly" },
-    addFlightHref: "/v2/flights/new",
+    trainCta: { instructorFirstName: INSTRUCTOR.firstName, href: hrefs.train },
+    startFlight: { href: hrefs.fly },
+    addFlightHref: hrefs.flightsNew,
     bottomRows: {
-      myFlightsHref: "/v2/flights",
+      myFlightsHref: hrefs.flights,
       myFlightsCount: 5,
-      lastDebrief: { href: "/v2/debrief/latest", dateLabel: "Aug 29" },
-      progressHref: "/v2/progress",
+      lastDebrief: { href: hrefs.debriefLatest, dateLabel: "Aug 29" },
+      progressHref: hrefs.progress,
     },
   };
 }

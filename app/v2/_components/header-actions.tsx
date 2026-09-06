@@ -22,16 +22,28 @@ import { Avatar } from "@/components/prototype/avatar";
  * "known gap, shown not hidden" span already used elsewhere (see
  * components/student-nav-v2.tsx's identical Start Flight pattern). Not
  * productionizing Profile/Support here -- boundary enforcement only.
+ *
+ * flyHref/profileHref/supportHref default to /v2/** so this file's existing
+ * behavior is unchanged for every current caller -- app/demo/student/
+ * layout.tsx is the one caller that overrides them, keeping the public demo
+ * entirely inside its own namespace instead of hardcoding a second /v2-only
+ * copy of this component.
  */
 export function V2HeaderActions({
   startFlightDisabled = false,
   profileNavDisabled = false,
+  flyHref = "/v2/fly",
+  profileHref = "/v2/profile",
+  supportHref = "/v2/profile/support",
 }: {
   startFlightDisabled?: boolean;
   profileNavDisabled?: boolean;
+  flyHref?: string;
+  profileHref?: string;
+  supportHref?: string;
 }) {
   const pathname = usePathname();
-  const onProfile = pathname.startsWith("/v2/profile");
+  const onProfile = pathname.startsWith(profileHref);
 
   return (
     <>
@@ -45,7 +57,7 @@ export function V2HeaderActions({
         </span>
       ) : (
         <Link
-          href="/v2/fly"
+          href={flyHref}
           aria-label="Start flight"
           className="flex size-11 items-center justify-center rounded-full text-foreground-faint transition-colors hover:text-foreground"
         >
@@ -63,7 +75,7 @@ export function V2HeaderActions({
         </span>
       ) : (
         <Link
-          href="/v2/profile/support"
+          href={supportHref}
           aria-label="Support"
           className="flex size-11 items-center justify-center rounded-full text-foreground-faint transition-colors hover:text-foreground"
         >
@@ -76,7 +88,7 @@ export function V2HeaderActions({
         </span>
       ) : (
         <Link
-          href="/v2/profile"
+          href={profileHref}
           aria-label="Profile"
           className={cn("ml-1 rounded-full transition-shadow", onProfile && "ring-2 ring-brand ring-offset-2 ring-offset-surface-sunken")}
         >

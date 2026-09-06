@@ -9,6 +9,7 @@ import { getViewer } from "@/lib/viewer";
 import { getRepository } from "@/lib/data";
 import { buildProductionHomeProps, type HomeHrefBuilders } from "@/lib/student/home-production-adapter";
 import { buildFixtureHomeProps } from "@/lib/prototype-fixtures/home-fixture-adapter";
+import { buildFixtureStudentHrefs } from "@/lib/prototype-fixtures/fixture-student-hrefs";
 import { STUDENT } from "@/lib/prototype-fixtures/vector-data";
 import { FLIGHT_DEFAULTS } from "@/lib/prototype-fixtures/flights";
 
@@ -62,7 +63,7 @@ export default async function V2Home({ searchParams }: { searchParams: Promise<{
 
   const { state } = await searchParams;
   if (state === "landed") return <JustLanded />;
-  return <StudentHome {...buildFixtureHomeProps(state)} />;
+  return <StudentHome {...buildFixtureHomeProps(state, buildFixtureStudentHrefs("/v2"))} />;
 }
 
 /* --------------------------------------------- STATE B: flew, not added yet */

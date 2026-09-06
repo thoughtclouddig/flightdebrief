@@ -8,22 +8,25 @@ import { StudentTrain, type StudentTrainAction, type StudentTrainRecommended, ty
 import { CONCEPTS, INSTRUCTOR, LAST_FLIGHT, NEXT_LESSON, SKILL_SCORES, SUGGESTED } from "@/lib/prototype-fixtures/vector-data";
 import { recommendedDrill } from "@/lib/prototype/chair-fly";
 
-const CHAIR_FLY_HREF = "/v2/train/chair-fly";
-
 type Mode = "menu" | "review" | "quiz" | "ask";
 
 /**
  * Milestone 1A fixture-parity Train -- mechanically the same as
  * app/prototype/vector/train/page.tsx (same fixtures, same recommendation
- * logic, same Review/Quiz/Ask local-state modes). Only Chair Flying's href
- * and each skill row's Progress link are repointed at /v2/**; Review/Quiz/Ask
+ * logic, same Review/Quiz/Ask local-state modes). Chair Flying's href and
+ * each skill row's Progress link are supplied by the caller as plain
+ * strings, so this same component now serves both app/v2/train/page.tsx
+ * and app/demo/student/train/page.tsx without hardcoding either namespace.
+ * progressBasePath (not a skillHref callback) because this is a "use
+ * client" component rendered from a Server Component -- a function prop
+ * can't cross that boundary, only serializable values can. Review/Quiz/Ask
  * never navigate anywhere (client-state modes on this same page), so they
- * need no change.
+ * need no hrefs at all.
  *
  * Moved out of page.tsx (which now branches real-data/fixture) so the real
  * branch never has to import a "use client" module it doesn't use.
  */
-export function V2TrainFixture() {
+export function V2TrainFixture({ hrefs }: { hrefs: { chairFlyHref: string; progressBasePath: string } }) {
   const [mode, setMode] = useState<Mode>("menu");
   const crosswind = CONCEPTS["crosswind-correction-through-touchdown"]!;
   const open = SKILL_SCORES.filter((s) => s.state !== "Meets Standard");
@@ -42,7 +45,7 @@ export function V2TrainFixture() {
             context={`${LAST_FLIGHT.lesson} · ${INSTRUCTOR.firstName} · ${LAST_FLIGHT.date}`}
             suggestions={SUGGESTED.nextFlight}
             onAction={(t) => setMode(t === "quiz" ? "quiz" : "menu")}
-            chairFlyHref={CHAIR_FLY_HREF}
+            chairFlyHref={hrefs.chairFlyHref}
           />
         ) : null}
         {mode === "review" ? (
@@ -92,7 +95,7 @@ export function V2TrainFixture() {
   const primaryAction: StudentTrainAction = drill
     ? {
         label: "Start chair flying",
-        href: CHAIR_FLY_HREF,
+        href: hrefs.chairFlyHref,
         caption: `About ${drill.estimatedMinutes} minutes · rehearse it before ${NEXT_LESSON.date}`,
       }
     : { label: "Start 5-minute review", onClick: () => setMode("review") };
@@ -109,7 +112,7 @@ export function V2TrainFixture() {
     state: s.state,
     score: s.score,
     max: s.max,
-    href: `/v2/progress/${s.slug}`,
+    href: `${hrefs.progressBasePath}/${s.slug}`,
   }));
 
   return (

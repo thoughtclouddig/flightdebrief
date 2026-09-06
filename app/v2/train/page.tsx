@@ -29,5 +29,5 @@ export default async function V2TrainPage() {
     return <StudentTrain {...props} />;
   }
 
-  return <V2TrainFixture />;
+  return <V2TrainFixture hrefs={{ chairFlyHref: "/v2/train/chair-fly", progressBasePath: "/v2/progress" }} />;
 }
