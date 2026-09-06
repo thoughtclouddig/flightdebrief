@@ -47,6 +47,13 @@ export const dynamic = "force-dynamic";
  * (seedCfiV2Demo/seedSchoolV2Demo) instead of one seedCfiSchoolDemo(persona)
  * that conflated them into a single, identical, single-instructor org --
  * see lib/demo/live-demo-seed.ts's own doc comments for the composition.
+ *
+ * cfi-v2 is the Development-only entry into the CFI V2 clean-room preview
+ * (app/cfi-v2/**) -- same seedCfiV2Demo call and the same real CFI session
+ * as persona=cfi, just redirected at /cfi-v2 instead of canonical /cfi/today
+ * so the new tree can be reviewed against the real 10/2/2 roster without
+ * repointing the canonical persona. Mirrors pilot-real's Development-only
+ * gating exactly, and disappears once CFI V2 is ready to cut over.
  */
 export async function GET(request: NextRequest) {
   const origin = requestOrigin(request);
@@ -56,10 +63,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}${STUDENT_DEMO_PATH}`);
   }
 
-  if (persona !== "pilot-real" && persona !== "cfi" && persona !== "school") {
+  if (persona !== "pilot-real" && persona !== "cfi" && persona !== "cfi-v2" && persona !== "school") {
     return NextResponse.json({ error: "Invalid persona. Use ?persona=pilot|cfi|school." }, { status: 400 });
   }
-  if (persona === "pilot-real" && !isDevelopment()) {
+  if ((persona === "pilot-real" || persona === "cfi-v2") && !isDevelopment()) {
     return NextResponse.json({ error: "Invalid persona. Use ?persona=pilot|cfi|school." }, { status: 400 });
   }
 
@@ -76,16 +83,16 @@ export async function GET(request: NextRequest) {
     const result =
       persona === "pilot-real"
         ? await seedPilotDemo(expiresAt)
-        : persona === "cfi"
+        : persona === "cfi" || persona === "cfi-v2"
           ? await seedCfiV2Demo(expiresAt)
           : await seedSchoolV2Demo(expiresAt);
 
     const jwt = await createSessionJwt({ sub: result.loginEmail, email: result.loginEmail, name: result.loginName });
-    // pilot-real is the only remaining persona that enables real-data /v2
-    // (validated Development-only above) -- backend/lifecycle QA, not the
-    // product demo.
+    // pilot-real is the only persona that enables real-data /v2 (validated
+    // Development-only above) -- backend/lifecycle QA, not the product demo.
     const v2RealData = persona === "pilot-real";
-    const response = NextResponse.redirect(`${origin}${v2RealData ? "/v2" : result.redirectPath}`);
+    const redirectPath = persona === "cfi-v2" ? "/cfi-v2" : v2RealData ? "/v2" : result.redirectPath;
+    const response = NextResponse.redirect(`${origin}${redirectPath}`);
     response.cookies.set(SESSION_COOKIE, jwt, {
       httpOnly: true,
       secure: true,
