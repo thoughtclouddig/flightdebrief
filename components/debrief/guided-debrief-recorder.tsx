@@ -19,12 +19,15 @@ export function GuidedDebriefRecorder({
   initialCards,
   guidanceMode,
   taskLabels = [],
+  reviewHref,
 }: {
   flightId: string;
   initialCards: DebriefCard[];
   guidanceMode: DebriefGuidanceMode;
   /** The maneuvers the CFI logged as flown -- surfaced on the opening objective card so they aren't recalling the flight cold. */
   taskLabels?: string[];
+  /** Where a finished recording lands for the "walk through it together" review step -- canonical or /v2, supplied by the caller so this shared component never hardcodes either tree. */
+  reviewHref: string;
 }) {
   const router = useRouter();
   const transcription = useTranscription();
@@ -156,7 +159,7 @@ export function GuidedDebriefRecorder({
         const body = await res.json().catch(() => null);
         throw new Error(body?.message || "Something went wrong analyzing your debrief. Please try again.");
       }
-      router.push(`/flights/${flightId}/debrief/review`);
+      router.push(reviewHref);
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : "Something went wrong analyzing your debrief. Please try again.");
       setPhase("recording");

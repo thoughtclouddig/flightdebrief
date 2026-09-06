@@ -17,10 +17,8 @@ export const metadata: Metadata = { title: "Debriefs — AfterFlight", robots: {
  *
  * Development real-data milestone: same adapter
  * app/(product)/debrief/page.tsx uses. "Start new debrief" when no single
- * pending flight can be auto-selected still points at the canonical
- * /debrief/new -- that screen's own real eligible-flights query has no /v2
- * route yet (out of scope for this milestone's "wire these first" list);
- * this is a disclosed, temporary cross-tree link, not a fixture leak.
+ * pending flight can be auto-selected now points at the real /v2/debrief/new
+ * (app/v2/debrief/new/page.tsx's own real-data branch), not canonical.
  */
 export default async function V2DebriefHub() {
   if (v2RealDataMode(await hasV2RealDataCookie())) {
@@ -32,7 +30,7 @@ export default async function V2DebriefHub() {
     }
     const props = await buildProductionDebriefHubProps(getRepository(), viewer, {
       debriefResultsHref: (flightId) => `/v2/flights/${flightId}/debrief/results`,
-      newDebriefHref: "/debrief/new",
+      newDebriefHref: "/v2/debrief/new",
       startDebriefHref: (flightId) => `/v2/flights/${flightId}/debrief`,
     });
     return <StudentDebriefHub {...props} />;

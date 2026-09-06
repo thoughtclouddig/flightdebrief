@@ -5,6 +5,8 @@ import { FLIGHTS, flightById } from "@/lib/prototype-fixtures/flights";
 import { analysisFor } from "@/lib/prototype/moments";
 import { compareSegments } from "@/lib/student/telemetry";
 import { ACS_AREAS } from "@/lib/prototype-fixtures/vector-data";
+import { v2RealDataMode } from "@/lib/env";
+import { hasV2RealDataCookie } from "@/lib/auth/session";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -12,8 +14,14 @@ export function generateStaticParams() {
   return FLIGHTS.filter((f) => analysisFor(f.id)).map((f) => ({ id: f.id }));
 }
 
-/** Milestone 1B fixture-parity Compare Attempts -- mechanically the same as app/prototype/vector/flights/[id]/compare/page.tsx, hrefs repointed at /v2/**. */
+/**
+ * Milestone 1B fixture-parity Compare Attempts -- mechanically the same as app/prototype/vector/flights/[id]/compare/page.tsx, hrefs repointed at /v2/**.
+ *
+ * Real-data guard: same gap as ../analysis/page.tsx -- no production
+ * telemetry-comparison source exists. notFound() rather than fixture content.
+ */
 export default async function V2ComparePage({ params }: { params: Promise<{ id: string }> }) {
+  if (v2RealDataMode(await hasV2RealDataCookie())) notFound();
   const { id } = await params;
   const flight = flightById(id);
   const analysis = analysisFor(id);

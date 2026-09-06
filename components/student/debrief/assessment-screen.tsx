@@ -43,6 +43,7 @@ export function AssessmentScreen({
   tasks,
   initialRatings,
   redirectTo,
+  backHref,
   kicker,
   title,
   helpText,
@@ -52,6 +53,7 @@ export function AssessmentScreen({
   tasks: TaskInput[];
   initialRatings: Record<string, PerformanceLevelCode>;
   redirectTo: string;
+  backHref: string;
   kicker?: string;
   title: string;
   helpText: string;
@@ -106,7 +108,7 @@ export function AssessmentScreen({
 
   return (
     <Screen>
-      <BackLink href="/debrief">Debriefs</BackLink>
+      <BackLink href={backHref}>Debriefs</BackLink>
       <PageTitle kicker={kicker}>{title}</PageTitle>
       <p className="-mt-4 px-1.5 text-[15px] leading-relaxed text-foreground-soft">{helpText}</p>
 

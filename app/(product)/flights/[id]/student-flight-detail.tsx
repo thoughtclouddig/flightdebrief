@@ -69,7 +69,7 @@ export function StudentFlightDetail({
       {flight.debriefStatus === "complete" ? (
         <PrimaryButton href={`/flights/${flight.id}/debrief/results`}>View debrief</PrimaryButton>
       ) : hasPendingDebrief ? (
-        <ResumeDebriefButton flightId={flight.id} />
+        <ResumeDebriefButton flightId={flight.id} resultsHref={`/flights/${flight.id}/debrief/results`} />
       ) : tasksPending ? (
         <p className="rounded-2xl border border-hairline bg-surface-sunken px-5 py-4 text-center text-[15px] text-foreground-soft">
           Waiting on your CFI to pick today&rsquo;s tasks.

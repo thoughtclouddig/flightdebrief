@@ -33,12 +33,15 @@ export interface FlightListRow {
 export function FlightsList({
   backHref,
   addFlightHref,
+  addFlightDisabled = false,
   trackedHoursLabel,
   trackedHoursDisclaimer,
   flights,
 }: {
   backHref: string;
   addFlightHref: string;
+  /** Known gap, not a dead end -- see app/v2/flights/page.tsx's own doc comment. */
+  addFlightDisabled?: boolean;
   trackedHoursLabel: string;
   trackedHoursDisclaimer: string;
   flights: FlightListRow[];
@@ -66,7 +69,7 @@ export function FlightsList({
         </div>
       </div>
 
-      <PrimaryButton href={addFlightHref}>
+      <PrimaryButton href={addFlightHref} disabled={addFlightDisabled}>
         <Plus className="size-[18px]" aria-hidden />
         Add flight
       </PrimaryButton>

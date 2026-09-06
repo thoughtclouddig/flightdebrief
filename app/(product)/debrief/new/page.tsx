@@ -4,6 +4,7 @@ import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { BackLink, PageTitle, QuietRow, Screen } from "@/components/student/ui";
 import { formatFlightDate } from "@/lib/utils";
+import { listEligibleFlightsForNewDebrief } from "@/lib/student/debrief-hub-production-adapter";
 
 export const dynamic = "force-dynamic";
 
@@ -11,18 +12,16 @@ export const dynamic = "force-dynamic";
  * The real destination for the Debrief hub's "Start new debrief" when the
  * hub couldn't auto-select a single pending flight -- the primary action
  * stays visible either way (see app/(product)/debrief/page.tsx); this is
- * what it leads to instead of disappearing. Real eligible-flights query, not
- * a fixture: if exactly one flight qualifies, skip straight to confirming
- * it; if several do, let the student pick; if none do, say so honestly and
- * offer to add one.
+ * what it leads to instead of disappearing. Real eligible-flights query
+ * (lib/student/debrief-hub-production-adapter.ts, shared with app/v2/
+ * debrief/new/page.tsx's own real-data branch), not a fixture: if exactly
+ * one flight qualifies, skip straight to confirming it; if several do, let
+ * the student pick; if none do, say so honestly and offer to add one.
  */
 export default async function StartDebriefPage() {
   const repo = getRepository();
   const viewer = await getViewer();
-  const flights = await repo.listFlights({ studentId: viewer.user.id });
-  const eligible = flights
-    .filter((f) => f.debriefStatus !== "complete")
-    .sort((a, b) => b.flightDate.localeCompare(a.flightDate));
+  const eligible = await listEligibleFlightsForNewDebrief(repo, viewer.user.id);
 
   if (eligible.length === 1) {
     redirect(`/flights/${eligible[0]!.id}/debrief/confirm`);

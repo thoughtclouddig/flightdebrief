@@ -73,7 +73,7 @@ export default async function V2ConfirmDebriefPage(props: PageProps<"/v2/flights
         tailNumber={flight.aircraft.tailNumber}
         objectives={tasks.map((t) => t.label)}
         instructorFirstName={cfi}
-        changeHref={`/flights/${id}/debrief/confirm/change`}
+        changeHref={`/v2/flights/${id}/debrief/confirm/change`}
         startHref={`/v2/flights/${id}/debrief/self-assessment`}
       />
     </Screen>

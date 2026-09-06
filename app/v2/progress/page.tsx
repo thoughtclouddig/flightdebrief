@@ -31,7 +31,7 @@ export default async function V2Progress() {
     } catch {
       redirect("/login?from=%2Fv2%2Fprogress&reason=no-session");
     }
-    const props = await buildProductionProgressProps(getRepository(), viewer, (skill) => `/progress/${skill}`);
+    const props = await buildProductionProgressProps(getRepository(), viewer, (skill) => `/v2/progress/${skill}`);
     return <StudentProgress {...props} />;
   }
 

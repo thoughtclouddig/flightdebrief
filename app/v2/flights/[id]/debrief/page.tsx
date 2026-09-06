@@ -1,48 +1,39 @@
 import { redirect, notFound } from "next/navigation";
 import { GuidedDebriefRecorder } from "@/components/debrief/guided-debrief-recorder";
+import { WaitingOnCfiScreen } from "@/components/student/debrief/waiting-on-cfi-screen";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { PageTitle, Screen } from "@/components/student/ui";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { formatFlightContext } from "@/lib/utils";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 /**
  * Real guided-debrief resolver under /v2 -- same state machine as
  * app/(product)/flights/[id]/debrief/page.tsx, hrefs repointed at /v2/**,
  * Student-only (app/v2/layout.tsx already blocks any other role).
  *
- * Two real states fall back to their CANONICAL URL instead of rendering
- * anything under /v2, per this milestone's explicit instruction not to
- * invent presentation for a state the approved V2 reference has no
- * equivalent for:
+ * Two real states now render real V2 presentation instead of falling back
+ * to canonical:
  *
- * REAL STATE NOT MODELED IN V2: async verified-CFI waiting
- *   Backend state: both assessments submitted by real, non-guest-handoff
- *     accounts; the student's own device has nothing left to do until the
- *     CFI, on their own separate device, starts the recording.
- *   When it occurs: guided/light-mode flight, real (not guest-handoff) CFI
- *     account, canContinueDebrief === false for the student viewer.
- *   Current canonical behavior: StudentWaitingMessage
- *     (app/(product)/flights/[id]/debrief/page.tsx) -- Screen/Panel/
- *     PanelEyebrow, "Both of you have rated this flight" / "what happens
- *     next" copy, AutoRefresh.
- *   Why /v2 has no equivalent: the approved reference
- *     (components/student/debrief/guided-debrief-demo.tsx) simulates both
- *     roles in one client-side session -- it never had a second real
- *     account to wait on.
- *   Decision needed: whether/how this state gets its own approved V2
- *     presentation, not just a redirect back to canonical.
+ * REAL STATE NOT MODELED IN V2 #1: async verified-CFI waiting -- both
+ *   assessments submitted by real, non-guest-handoff accounts; the
+ *   student's own device has nothing left to do until the CFI, on their
+ *   own separate device, starts the recording. Rendered inline via
+ *   WaitingOnCfiScreen rather than redirecting to canonical
+ *   StudentWaitingMessage.
  *
- * REAL STATE NOT MODELED IN V2: review ("walk through it together")
- *   Backend state: a Debrief row exists but hasn't been finalized yet.
- *   When it occurs: after recording ends, before either party finishes.
- *   Current canonical behavior: app/(product)/flights/[id]/debrief/review/
- *     page.tsx -- confirmed NOT V2-styled (max-w-2xl, text-slate-adjacent
- *     generic markup, shared verbatim between student and CFI, no
- *     student-specific variant the way /results has StudentDebriefV2).
- *   Why /v2 has no equivalent: this page was never given a V2 presentation
- *     pass at all, unlike every other step in this flow.
- *   Decision needed: a real V2 Review screen needs to be designed, not
- *     wired -- this is new product design, not an adapter gap.
+ * REAL STATE NOT MODELED IN V2 #2: review ("walk through it together") --
+ *   a Debrief row exists but hasn't been finalized yet. Now redirects to
+ *   the real app/v2/flights/[id]/debrief/review/page.tsx, which reuses the
+ *   canonical review page's exact business logic (DebriefResultSections/
+ *   DebriefWrapUp, buildPerceptionGapRow, computeSkillProgression) under V2
+ *   presentation.
+ *
+ * REAL STATE NOT MODELED IN V2 #3: freeform debrief mode -- still an
+ *   explicit, temporary canonical fallback (see below), not accepted for
+ *   general Student V2 cutover. Not reachable by this milestone's guided-
+ *   mode demo persona.
  */
 export default async function V2DebriefPage(props: PageProps<"/v2/flights/[id]/debrief">) {
   const { id } = await props.params;
@@ -65,12 +56,12 @@ export default async function V2DebriefPage(props: PageProps<"/v2/flights/[id]/d
   const guidanceMode = org?.defaultGuidanceMode ?? "freeform";
 
   if (guidanceMode === "freeform") {
-    // Freeform's real recorder (components/debrief-recorder.tsx) is
-    // confirmed NOT V2-styled (text-slate-*/bg-slate-900 literal colors, not
-    // the design-token classes the rest of V2 uses) -- also out of this
-    // milestone's named vertical slice (guided/light mode). Falling back to
-    // canonical rather than wiring visibly-V1 markup under /v2 or silently
-    // restyling a component this milestone didn't ask for.
+    // REAL STATE NOT MODELED IN V2 #3: freeform debrief mode. Freeform's
+    // real recorder (components/debrief-recorder.tsx) is confirmed NOT
+    // V2-styled (text-slate-*/bg-slate-900 literal colors, not the
+    // design-token classes the rest of V2 uses) -- out of this milestone's
+    // named vertical slice (guided/light mode only). Explicit, temporary
+    // canonical fallback -- not accepted for general Student V2 cutover.
     redirect(`/flights/${id}/debrief`);
   }
 
@@ -95,19 +86,25 @@ export default async function V2DebriefPage(props: PageProps<"/v2/flights/[id]/d
 
   const existingDebrief = await repo.getDebriefByFlight(id);
   if (existingDebrief) {
-    // REAL STATE NOT MODELED IN V2: review -- see this file's own doc
-    // comment. Falls back to canonical rather than inventing a V2 Review
-    // screen.
-    redirect(`/flights/${id}/debrief/review`);
+    // REAL STATE NOT MODELED IN V2 #2: review -- see this file's own doc
+    // comment. Real V2 destination now, not a canonical fallback.
+    redirect(`/v2/flights/${id}/debrief/review`);
   }
 
   const cards = await repo.listCards(id);
   if (!canContinueDebrief) {
-    // REAL STATE NOT MODELED IN V2: async verified-CFI waiting -- see this
-    // file's own doc comment. Falls back to canonical rather than carrying
-    // forward 65775c3's redesigned StudentWaitingMessage, which was never
-    // approved as part of the V2 reference.
-    redirect(`/flights/${id}/debrief`);
+    // REAL STATE NOT MODELED IN V2 #1: async verified-CFI waiting -- see
+    // this file's own doc comment. Rendered inline, real V2 presentation,
+    // not a canonical fallback.
+    return (
+      <Screen>
+        <AutoRefresh />
+        <WaitingOnCfiScreen
+          flightContext={formatFlightContext(flight)}
+          instructorFirstName={resolveCfiFirstName(flight.instructor)}
+        />
+      </Screen>
+    );
   }
 
   const searchParams = await props.searchParams;
@@ -126,6 +123,7 @@ export default async function V2DebriefPage(props: PageProps<"/v2/flights/[id]/d
         initialCards={cards}
         guidanceMode={guidanceMode}
         taskLabels={tasks.map((t) => t.label)}
+        reviewHref={`/v2/flights/${id}/debrief/review`}
       />
     </Screen>
   );

@@ -1,9 +1,22 @@
 import type { StudentDebriefRow } from "@/components/student/debrief/student-debrief-hub";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
+import type { FlightWithRelations } from "@/lib/types";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { deriveLessonFocus } from "@/lib/lesson-focus";
 import { formatAudioDuration, formatFlightDate } from "@/lib/utils";
+
+/**
+ * Real eligible-flights query for "Start new debrief" when the hub couldn't
+ * auto-select a single pending flight -- shared between app/(product)/
+ * debrief/new/page.tsx and app/v2/debrief/new/page.tsx's own real-data
+ * branch. Extracted verbatim from the canonical page's prior inline logic
+ * (no behavior change).
+ */
+export async function listEligibleFlightsForNewDebrief(repo: Repository, studentId: string): Promise<FlightWithRelations[]> {
+  const flights = await repo.listFlights({ studentId });
+  return flights.filter((f) => f.debriefStatus !== "complete").sort((a, b) => b.flightDate.localeCompare(a.flightDate));
+}
 
 export interface ProductionDebriefHubProps {
   justLandedHref: string;

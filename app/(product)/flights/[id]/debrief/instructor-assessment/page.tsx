@@ -61,6 +61,7 @@ export default async function InstructorAssessmentPage(props: PageProps<"/flight
       tasks={tasks.map((t) => ({ id: t.id, label: t.label, taskCode: t.taskCode }))}
       initialRatings={initialRatings}
       redirectTo={`/flights/${id}/debrief/instructor-assessment`}
+      backHref="/debrief"
       kicker={cfi ? `${cfi}'s assessment` : "Instructor's assessment"}
       title="How did the student do?"
       helpText="Rate independently -- you won't see the student's self-assessment until you submit yours."

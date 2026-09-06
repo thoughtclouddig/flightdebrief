@@ -50,6 +50,12 @@ export default async function V2DebriefResultsPage(props: PageProps<"/v2/flights
       ttsEnabled={ttsEnabled}
       flightId={flight.id}
       audioDurationSeconds={debrief.audioDurationSeconds}
+      // V2 DESTINATION NOT MODELED: Next-Lesson Brief. app/(product)/next-lesson/page.tsx
+      // is a full, real screen (upcoming reservation, focus areas, study
+      // references, listen-to-brief audio) with no /v2 mirror -- not a simple
+      // href repoint, genuine unbuilt product surface. Disabled rather than
+      // sent to canonical, per this milestone's routing rule.
+      nextLessonHref={null}
     />
   );
 }

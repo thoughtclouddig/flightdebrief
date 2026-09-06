@@ -16,8 +16,12 @@ export const metadata: Metadata = { title: "My flights — AfterFlight", robots:
  *
  * Development real-data milestone: reuses the same adapter built for
  * app/(product)/dashboard/page.tsx, hrefs repointed at /v2/flights/[id].
- * Add Flight still points at the canonical /flights/new -- out of scope for
- * this milestone's "wire these first" list.
+ * Add Flight is consistently disabled across all of real-data /v2 (see
+ * app/v2/page.tsx's own Home, which disables it too) rather than pointing at
+ * canonical -- the real Add Flight form (app/(product)/flights/new/student-
+ * new-flight-client.tsx) has no shared shape with the fixture UI at
+ * /v2/flights/new, so presenting it there would be new product design, not
+ * a wire-up.
  */
 export default async function V2MyFlights() {
   if (v2RealDataMode(await hasV2RealDataCookie())) {
@@ -29,10 +33,10 @@ export default async function V2MyFlights() {
     }
     const props = await buildProductionFlightsListProps(getRepository(), viewer.user.id, {
       backHref: "/v2/profile",
-      addFlightHref: "/flights/new",
+      addFlightHref: "/v2/flights/new",
       flightHref: (flightId) => `/v2/flights/${flightId}`,
     });
-    return <FlightsList {...props} />;
+    return <FlightsList {...props} addFlightDisabled />;
   }
 
   const flights: FlightListRow[] = FLIGHTS.map((f) => ({

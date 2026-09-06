@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { SkillDetailScreen } from "@/components/student/progress/skill-detail";
 import { objectiveForSkill } from "@/lib/prototype/assessment";
 import { INSTRUCTOR, SKILL_SCORES, skillBySlug } from "@/lib/prototype-fixtures/vector-data";
+import { v2RealDataMode } from "@/lib/env";
+import { hasV2RealDataCookie } from "@/lib/auth/session";
+import { getViewer } from "@/lib/viewer";
+import { getRepository } from "@/lib/data";
+import { buildProductionSkillDetailProps } from "@/lib/student/skill-detail-production-adapter";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -10,9 +15,29 @@ export function generateStaticParams() {
   return SKILL_SCORES.map((s) => ({ skill: s.slug }));
 }
 
-/** Milestone 1A fixture-parity Skill Detail -- mechanically the same as app/prototype/vector/progress/[skill]/page.tsx, hrefs repointed at /v2/**. */
+/**
+ * Milestone 1A fixture-parity Skill Detail -- mechanically the same as app/prototype/vector/progress/[skill]/page.tsx, hrefs repointed at /v2/**.
+ *
+ * Real-data branch: same adapter app/(product)/progress/[skill]/page.tsx
+ * uses, hrefs repointed at /v2/**. Closes the D-classified gap from the
+ * routing audit -- Progress's skill rows and Train's "still working on"
+ * rows now stay under /v2 for this route too.
+ */
 export default async function V2SkillDetail({ params }: { params: Promise<{ skill: string }> }) {
   const { skill: slug } = await params;
+
+  if (v2RealDataMode(await hasV2RealDataCookie())) {
+    let viewer;
+    try {
+      viewer = await getViewer();
+    } catch {
+      redirect(`/login?from=%2Fv2%2Fprogress%2F${slug}&reason=no-session`);
+    }
+    const props = await buildProductionSkillDetailProps(getRepository(), viewer, slug);
+    if (!props) notFound();
+    return <SkillDetailScreen {...props} backHref="/v2/progress" trainHref="/v2/train" lessonHistoryHref="/v2/debrief" />;
+  }
+
   const skill = skillBySlug(slug);
   if (!skill) notFound();
   const gap = objectiveForSkill(skill.skill);

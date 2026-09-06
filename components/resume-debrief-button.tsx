@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /** Finishes analyzing a recording that was saved while billing-blocked -- no re-recording needed, see app/api/debrief/analyze/route.ts. */
-export function ResumeDebriefButton({ flightId }: { flightId: string }) {
+export function ResumeDebriefButton({ flightId, resultsHref }: { flightId: string; resultsHref: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export function ResumeDebriefButton({ flightId }: { flightId: string }) {
         return;
       }
       if (!res.ok) throw new Error();
-      router.push(`/flights/${flightId}/debrief/results`);
+      router.push(resultsHref);
     } catch {
       setError("Something went wrong analyzing your debrief. Try again.");
       setLoading(false);

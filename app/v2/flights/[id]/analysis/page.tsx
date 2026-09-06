@@ -4,6 +4,8 @@ import { FlightAnalysisScreen, type FlightAnalysisMomentRow } from "@/components
 import { FLIGHTS, flightById, formatHours } from "@/lib/prototype-fixtures/flights";
 import { analysisFor } from "@/lib/prototype/moments";
 import { momentTone, formatElapsed } from "@/lib/student/telemetry";
+import { v2RealDataMode } from "@/lib/env";
+import { hasV2RealDataCookie } from "@/lib/auth/session";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -11,8 +13,17 @@ export function generateStaticParams() {
   return FLIGHTS.filter((f) => f.track).map((f) => ({ id: f.id }));
 }
 
-/** Milestone 1B fixture-parity Flight Analysis -- mechanically the same as app/prototype/vector/flights/[id]/analysis/page.tsx, hrefs repointed at /v2/**. */
+/**
+ * Milestone 1B fixture-parity Flight Analysis -- mechanically the same as app/prototype/vector/flights/[id]/analysis/page.tsx, hrefs repointed at /v2/**.
+ *
+ * Real-data guard: no production source computes approach-by-approach
+ * telemetry analysis from Flight.track (see lib/student/debrief/debrief-
+ * production-adapter's own doc comment on Flight Moments) -- real Flight
+ * Detail already passes analysisHref: null, so nothing in the real-data
+ * graph reaches this route. notFound() rather than fixture content.
+ */
 export default async function V2AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
+  if (v2RealDataMode(await hasV2RealDataCookie())) notFound();
   const { id } = await params;
   const flight = flightById(id);
   const analysis = analysisFor(id);

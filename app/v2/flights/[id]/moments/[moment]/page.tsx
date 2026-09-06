@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { MomentDetailScreen } from "@/components/student/flights/moment-detail";
 import { FLIGHTS, flightById } from "@/lib/prototype-fixtures/flights";
 import { analysisFor } from "@/lib/prototype/moments";
+import { v2RealDataMode } from "@/lib/env";
+import { hasV2RealDataCookie } from "@/lib/auth/session";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -10,8 +12,14 @@ export function generateStaticParams() {
   return FLIGHTS.flatMap((f) => (analysisFor(f.id)?.moments ?? []).map((m) => ({ id: f.id, moment: m.id })));
 }
 
-/** Milestone 1B fixture-parity Moment Detail -- mechanically the same as app/prototype/vector/flights/[id]/moments/[moment]/page.tsx, hrefs repointed at /v2/**. */
+/**
+ * Milestone 1B fixture-parity Moment Detail -- mechanically the same as app/prototype/vector/flights/[id]/moments/[moment]/page.tsx, hrefs repointed at /v2/**.
+ *
+ * Real-data guard: same gap as ../analysis/page.tsx -- no production
+ * telemetry-moment source exists. notFound() rather than fixture content.
+ */
 export default async function V2MomentDetail({ params }: { params: Promise<{ id: string; moment: string }> }) {
+  if (v2RealDataMode(await hasV2RealDataCookie())) notFound();
   const { id, moment: momentId } = await params;
   const flight = flightById(id);
   const analysis = analysisFor(id);

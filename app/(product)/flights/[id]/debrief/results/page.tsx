@@ -85,6 +85,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
         ttsEnabled={ttsEnabled}
         flightId={flight.id}
         audioDurationSeconds={debrief.audioDurationSeconds}
+        nextLessonHref="/next-lesson"
       />
     );
   }

@@ -24,7 +24,7 @@ export default async function V2TrainPage() {
     }
     const props = await buildProductionTrainProps(getRepository(), viewer, {
       chairFlyHref: "/v2/train/chair-fly",
-      skillHref: (skill) => `/progress/${skill}`,
+      skillHref: (skill) => `/v2/progress/${skill}`,
     });
     return <StudentTrain {...props} />;
   }

@@ -133,7 +133,7 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
           </Link>
         ) : hasPendingDebrief ? (
           <div className="w-full sm:flex-1">
-            <ResumeDebriefButton flightId={flight.id} />
+            <ResumeDebriefButton flightId={flight.id} resultsHref={`/flights/${flight.id}/debrief/results`} />
           </div>
         ) : tasksPending && isInstructorViewer ? (
           <Link href={`/flights/${flight.id}/debrief/tasks`} className={buttonVariants({ size: "lg", className: "h-16 w-full text-lg font-semibold sm:flex-1" })}>

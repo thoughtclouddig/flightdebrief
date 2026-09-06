@@ -24,6 +24,7 @@ export function StudentDebriefV2({
   ttsEnabled,
   flightId,
   audioDurationSeconds,
+  nextLessonHref,
 }: {
   flight: FlightWithRelations;
   result: StructuredDebrief;
@@ -33,6 +34,8 @@ export function StudentDebriefV2({
   ttsEnabled: boolean;
   flightId: string;
   audioDurationSeconds: number;
+  /** Null where no approved destination for this concept exists yet -- renders as a known, visibly disabled gap rather than escaping to a route this tree doesn't own. */
+  nextLessonHref: string | null;
 }) {
   const cfi = instructorFirstName ?? "your instructor";
   const lessonFocus = deriveLessonFocus(tasks);
@@ -60,7 +63,9 @@ export function StudentDebriefV2({
       {/* No prototype equivalent -- Next-Lesson Brief is real production
           capability with nothing in the fixture demo to link to, so it
           lives here rather than in the shared hierarchy itself. */}
-      <PrimaryButton href="/next-lesson">Go to Next-Lesson Brief</PrimaryButton>
+      <PrimaryButton href={nextLessonHref ?? undefined} disabled={nextLessonHref === null}>
+        Go to Next-Lesson Brief
+      </PrimaryButton>
     </DebriefDetail>
   );
 }

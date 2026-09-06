@@ -4,6 +4,8 @@ import { BackLink, PageTitle, Screen } from "@/components/student/ui";
 import { FlightReplay } from "@/components/student/flight-replay";
 import { FLIGHTS, flightById, formatHours } from "@/lib/prototype-fixtures/flights";
 import { analysisFor } from "@/lib/prototype/moments";
+import { v2RealDataMode } from "@/lib/env";
+import { hasV2RealDataCookie } from "@/lib/auth/session";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -11,7 +13,12 @@ export function generateStaticParams() {
   return FLIGHTS.filter((f) => f.track).map((f) => ({ id: f.id }));
 }
 
-/** Milestone 1B fixture-parity Flight Replay -- mechanically the same as app/prototype/vector/flights/[id]/replay/page.tsx, backHref repointed at /v2/**. */
+/**
+ * Milestone 1B fixture-parity Flight Replay -- mechanically the same as app/prototype/vector/flights/[id]/replay/page.tsx, backHref repointed at /v2/**.
+ *
+ * Real-data guard: same gap as ../analysis/page.tsx -- no production
+ * telemetry-replay source exists. notFound() rather than fixture content.
+ */
 export default async function V2ReplayPage({
   params,
   searchParams,
@@ -19,6 +26,7 @@ export default async function V2ReplayPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ t?: string }>;
 }) {
+  if (v2RealDataMode(await hasV2RealDataCookie())) notFound();
   const { id } = await params;
   const { t } = await searchParams;
   const flight = flightById(id);

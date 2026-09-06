@@ -202,8 +202,26 @@ const PRIMARY =
  * the whole product's orange fills change together -- see that token for the
  * measured contrast and why white is a deliberate exception.
  */
-export function PrimaryButton({ children, onClick, href }: { children: ReactNode; onClick?: () => void; href?: string }) {
-  const cls = cn(PRIMARY, "bg-brand text-on-brand");
+export function PrimaryButton({
+  children,
+  onClick,
+  href,
+  disabled = false,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  href?: string;
+  /** Known gap, not a dead end -- renders as a visibly non-interactive marker instead of a link. */
+  disabled?: boolean;
+}) {
+  const cls = cn(PRIMARY, "bg-brand text-on-brand", disabled && "cursor-not-allowed opacity-40");
+  if (disabled) {
+    return (
+      <span className={cls} aria-disabled="true">
+        {children}
+      </span>
+    );
+  }
   return href ? (
     <Link href={href} className={cls}>
       {children}

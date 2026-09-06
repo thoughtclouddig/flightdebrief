@@ -20,12 +20,15 @@ export function DebriefWrapUp({
   studentId,
   aircraft,
   scheduleCaption,
+  resultsHref,
 }: {
   flightId: string;
   studentId: string;
   aircraft: Aircraft[];
   /** Shown above the schedule fields -- e.g. the FSP-sync disclosure for school orgs. */
   scheduleCaption?: string;
+  /** Where "Finish Debrief" lands after scheduling/skipping -- canonical or /v2, supplied by the caller so this shared component never hardcodes either tree. */
+  resultsHref: string;
 }) {
   const router = useRouter();
   const [stage, setStage] = useState<"review" | "finishing" | "schedule">("review");
@@ -45,7 +48,7 @@ export function DebriefWrapUp({
   }
 
   function goToResults() {
-    router.push(`/flights/${flightId}/debrief/results`);
+    router.push(resultsHref);
   }
 
   if (stage === "schedule") {

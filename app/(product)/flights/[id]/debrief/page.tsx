@@ -156,6 +156,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
         initialCards={cards}
         guidanceMode={guidanceMode}
         taskLabels={tasks.map((t) => t.label)}
+        reviewHref={`/flights/${id}/debrief/review`}
       />
     </Screen>
   );

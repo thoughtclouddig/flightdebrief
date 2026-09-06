@@ -56,7 +56,11 @@ export default async function V2FlightDetail({ params }: { params: Promise<{ id:
     return (
       <FlightDetailScreen
         {...productionProps}
-        debriefCta={productionProps.hasPendingDebrief ? <ResumeDebriefButton flightId={flight.id} /> : undefined}
+        debriefCta={
+          productionProps.hasPendingDebrief ? (
+            <ResumeDebriefButton flightId={flight.id} resultsHref={`/v2/flights/${flight.id}/debrief/results`} />
+          ) : undefined
+        }
         skills={[]}
         acsArea={null}
         carryForward={null}

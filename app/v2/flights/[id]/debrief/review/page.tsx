@@ -1,6 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DebriefResultSections } from "@/components/debrief/debrief-result-sections";
 import { DebriefWrapUp } from "@/components/debrief/debrief-wrap-up";
+import { BackLink, PageTitle, Screen } from "@/components/student/ui";
 import { buildPerceptionGapRow, type PerceptionGapRow } from "@/lib/perception-gap";
 import { discrepancyDistance, discrepancyStatusFor } from "@/lib/debrief-cards/discrepancy";
 import { getRepository } from "@/lib/data";
@@ -11,42 +12,51 @@ import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightContext } from "@/lib/utils";
 
 /**
- * The "walk through it together" moment between recording ending and the
- * debrief actually being finalized -- see GuidedDebriefRecorder's handleEnd,
- * which lands here instead of /results now. Reachable by both roles (same
- * content either way); only the CFI gets the Finish Debrief action.
+ * Real V2 Review -- REAL STATE NOT MODELED IN V2 #2, now modeled. Same
+ * business logic as app/(product)/flights/[id]/debrief/review/page.tsx
+ * (getAuthorizedFlight, buildPerceptionGapRow, computeSkillProgression,
+ * DebriefResultSections, DebriefWrapUp) -- nothing here recomputes or
+ * duplicates finalization; only the surrounding chrome changes (Screen/
+ * PageTitle instead of the canonical page's plain max-w-2xl div/h1).
+ *
+ * Student-only (app/v2/layout.tsx already blocks any other role), and
+ * further gated to this flight's own student -- canActAsInstructor is
+ * still computed exactly as canonical does, since a guest-handoff student
+ * (same phone, no separate CFI account) can legitimately finish the
+ * debrief from here too; DebriefWrapUp itself already renders nothing for
+ * a viewer who can't act (see that component's own doc comment). Jordan's
+ * demo (real, non-guest-handoff CFI) never exercises that branch, but this
+ * route isn't only for Jordan's specific persona.
  */
-export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/debrief/review">) {
+export default async function V2DebriefReviewPage(props: PageProps<"/v2/flights/[id]/debrief/review">) {
   const { id } = await props.params;
-  const authorized = await getAuthorizedFlight(id);
+  let authorized;
+  try {
+    authorized = await getAuthorizedFlight(id);
+  } catch {
+    redirect(`/login?from=%2Fv2%2Fflights%2F${id}%2Fdebrief%2Freview&reason=no-session`);
+  }
   if (!authorized) notFound();
   const { flight, viewer } = authorized;
+  if (viewer.role !== "student" || viewer.user.id !== flight.userId) notFound();
+
   const repo = getRepository();
   const debrief = await repo.getDebriefByFlight(id);
   if (!debrief) notFound();
 
   const { structuredResult: result } = debrief;
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
-  const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
-  // Guest-handoff flights have no separate verified CFI session -- the same
-  // student who did the handoff is the only one who can ever finish this
-  // debrief. See app/api/flights/[id]/debrief/finish/route.ts, the real
-  // enforcement boundary for the action this unlocks.
   const instructorAssessment = await repo.getAssessment(id, "instructor");
-  const canActAsInstructor =
-    isInstructorViewer || (instructorAssessment?.attribution === "guest_handoff" && viewer.user.id === flight.userId);
+  const canActAsInstructor = instructorAssessment?.attribution === "guest_handoff" && viewer.user.id === flight.userId;
 
-  const [allStudentSignals, memberships, aircraft, flightTrainingItems] = await Promise.all([
+  const [allStudentSignals, memberships, flightTrainingItems] = await Promise.all([
     repo.listTrainingSignals({ studentId: flight.userId }),
     repo.listMembershipsForUser(flight.userId),
-    isInstructorViewer ? repo.listAircraft(viewer.organization.id) : Promise.resolve([]),
     canActAsInstructor ? repo.listTrainingItems({ flightId: flight.id }) : Promise.resolve([]),
   ]);
   const certificateType =
     memberships.find((m) => m.organizationId === flight.organizationId)?.certificateType ?? null;
-  const flightSkills = new Set(
-    allStudentSignals.filter((s) => s.flightId === flight.id).map((s) => s.skill),
-  );
+  const flightSkills = new Set(allStudentSignals.filter((s) => s.flightId === flight.id).map((s) => s.skill));
   const flightSkillProgressions = computeSkillProgression(allStudentSignals.filter((s) => !s.dismissed)).filter((p) =>
     flightSkills.has(p.skill),
   );
@@ -61,16 +71,18 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
     }),
   );
   const displayTrack = simplifyTrackForDisplay(flight.track);
+  const cfi = resolveCfiFirstName(flight.instructor);
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8">
-      <div>
-        <p className="text-sm font-medium uppercase tracking-wide text-brand">Review Together</p>
-        <h1 className="mt-1 text-2xl font-semibold text-foreground">{formatFlightContext(flight)}</h1>
-        <p className="mt-1 text-sm text-foreground-soft">
+    <Screen>
+      <BackLink href="/v2/debrief">Debriefs</BackLink>
+      <div className="text-center">
+        <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
+        <PageTitle>Review together</PageTitle>
+        <p className="mt-2 text-[15px] text-foreground-soft">
           {canActAsInstructor
-            ? "Walk through this with the student, then finish the debrief when you're both ready."
-            : "Your instructor is walking through this with you before it's finalized."}
+            ? "Walk through this, then finish the debrief when you're ready."
+            : `${cfi ?? "Your instructor"} is walking through this with you before it's finalized.`}
         </p>
       </div>
 
@@ -78,11 +90,8 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
         <DebriefWrapUp
           flightId={flight.id}
           studentId={flight.userId}
-          aircraft={aircraft}
-          scheduleCaption={
-            viewer.organization.kind === "school" ? "For your own planning -- this doesn't sync with Flight Schedule Pro." : undefined
-          }
-          resultsHref={`/flights/${flight.id}/debrief/results`}
+          aircraft={[]}
+          resultsHref={`/v2/flights/${flight.id}/debrief/results`}
         />
       ) : null}
 
@@ -96,7 +105,7 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
         flightSkillProgressions={flightSkillProgressions}
         certificateType={certificateType}
         canDismiss={canActAsInstructor}
-        instructorFirstName={resolveCfiFirstName(flight.instructor)}
+        instructorFirstName={cfi}
         editableTrainingItems={
           canActAsInstructor
             ? {
@@ -106,6 +115,6 @@ export default async function DebriefReviewPage(props: PageProps<"/flights/[id]/
             : undefined
         }
       />
-    </div>
+    </Screen>
   );
 }
