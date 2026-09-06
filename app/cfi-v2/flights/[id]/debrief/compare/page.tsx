@@ -66,10 +66,12 @@ export default async function CfiV2ComparePage(props: { params: Promise<{ id: st
       <BackLink href="/cfi-v2/debrief">Debriefs</BackLink>
       <RevealScreen
         eyebrow="Assessment comparison"
-        metadata={dateLabel}
+        dateLabel={dateLabel}
+        flightIdentity={`${flight.aircraft.tailNumber} · ${flight.departureAirport} → ${flight.arrivalAirport}`}
         rows={rows}
         instructorFirstName={cfi ?? "your instructor"}
         studentFirstName={student?.name?.split(" ")[0] ?? "Student"}
+        studentName={student?.name ?? "Student"}
         viewerIsInstructor
         actionHref={`/cfi-v2/flights/${id}/debrief?started=1`}
       />

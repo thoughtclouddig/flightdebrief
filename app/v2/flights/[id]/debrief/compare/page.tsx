@@ -68,7 +68,8 @@ export default async function V2ComparePage(props: PageProps<"/v2/flights/[id]/d
       <BackLink href="/v2/debrief">Debriefs</BackLink>
       <RevealScreen
         eyebrow="Assessment comparison"
-        metadata={dateLabel}
+        dateLabel={dateLabel}
+        flightIdentity={`${flight.aircraft.tailNumber} · ${flight.departureAirport} → ${flight.arrivalAirport}`}
         rows={rows}
         instructorFirstName={cfi ?? "your instructor"}
         actionHref={`/v2/flights/${id}/debrief?started=1`}
