@@ -146,7 +146,7 @@ export function CfiV2StudentDetailScreen({ detail }: { detail: CfiV2StudentDetai
                 ) : null}
               </>
             ) : null}
-            <Link href={`/flights/${brief.lastFlight.id}/debrief/results`} className="self-start text-[14px] font-semibold text-brand">
+            <Link href={`/cfi-v2/flights/${brief.lastFlight.id}/debrief/results`} className="self-start text-[14px] font-semibold text-brand">
               View full debrief &rarr;
             </Link>
           </div>
@@ -189,7 +189,7 @@ export function CfiV2StudentDetailScreen({ detail }: { detail: CfiV2StudentDetai
             {detail.timeline.map(({ flight, topics }) => (
               <li key={flight.id} className="relative">
                 <span className="absolute -left-[29px] top-1 flex size-3.5 items-center justify-center rounded-full border-2 border-surface bg-brand" />
-                <Link href={`/flights/${flight.id}/debrief/results`} className="group">
+                <Link href={`/cfi-v2/flights/${flight.id}/debrief/results`} className="group">
                   <p className="text-[15px] font-semibold text-foreground group-hover:text-brand">
                     {new Date(flight.flightDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </p>

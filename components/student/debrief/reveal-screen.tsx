@@ -16,12 +16,18 @@ export function RevealScreen({
   kicker,
   rows,
   instructorFirstName,
+  studentFirstName,
+  viewerIsInstructor = false,
   actionHref,
   onAction,
 }: {
   kicker: string;
   rows: { task: string; student: PerformanceLevelCode; instructor: PerformanceLevelCode }[];
   instructorFirstName: string;
+  /** Only needed when viewerIsInstructor is true -- see ObjectiveComparison. */
+  studentFirstName?: string;
+  /** A CFI viewing this same reveal is the instructor rater, not the student -- flips which row reads "You". Defaults to false so every existing (student-viewer) call site is unchanged. */
+  viewerIsInstructor?: boolean;
   actionHref?: string;
   onAction?: () => void;
 }) {
@@ -35,7 +41,15 @@ export function RevealScreen({
 
       <div className="flex flex-col gap-3">
         {rows.map((r) => (
-          <ObjectiveComparison key={r.task} task={r.task} student={r.student} instructor={r.instructor} instructorName={instructorFirstName} />
+          <ObjectiveComparison
+            key={r.task}
+            task={r.task}
+            student={r.student}
+            instructor={r.instructor}
+            instructorName={instructorFirstName}
+            studentName={studentFirstName}
+            viewerIsInstructor={viewerIsInstructor}
+          />
         ))}
       </div>
 

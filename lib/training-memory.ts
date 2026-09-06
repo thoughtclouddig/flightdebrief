@@ -287,6 +287,8 @@ export interface StudentRosterEntry {
   currentFocus: string[];
   /** Whether there's anything in Keep Working On / Before Next Flight -- these are auto-drafted from the transcript and reviewed by the CFI on /review, so this is only false for a debrief thin enough that nothing came out of it. */
   hasNextLessonItems: boolean;
+  /** This student's strongest recurring theme, if any -- already computed as part of the brief below, just not previously surfaced. Lets a roster-level view (CFI V2's Needs-You-Now) flag a genuine cross-lesson pattern without a second query per student. */
+  topRecurringTheme: RecurringTheme | null;
 }
 
 export async function computeInstructorRoster(
@@ -328,6 +330,7 @@ export async function computeInstructorRoster(
         nextReservation,
         currentFocus: brief.focusAreas,
         hasNextLessonItems: brief.keepWorkingOnTrainingItems.length > 0 || brief.beforeFlightTrainingItems.length > 0,
+        topRecurringTheme: brief.recurringThemes[0] ?? null,
       };
     }),
   );

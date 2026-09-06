@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { needsYouNowFromRoster } from "./today";
-import type { StudentRosterEntry } from "@/lib/training-memory";
+import { recurringThemeSummary, type RecurringTheme, type StudentRosterEntry } from "@/lib/training-memory";
 import type { Repository } from "@/lib/data/types";
 import type { DebriefAssessment, FlightTask, FlightWithRelations, Organization, User } from "@/lib/types";
 
@@ -68,6 +68,25 @@ function org(overrides: Partial<Organization> = {}): Organization {
   };
 }
 
+function recurringTheme(overrides: Partial<RecurringTheme> = {}): RecurringTheme {
+  return {
+    theme: "Crosswind landings",
+    skill: "CROSSWIND_LANDING",
+    count: 3,
+    consideredFlights: 8,
+    instructorCount: 2,
+    lessons: [],
+    ...overrides,
+  };
+}
+
+/** Real-clock relative date so staleness assertions never depend on when the suite happens to run. */
+function daysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
 function rosterEntry(overrides: Partial<StudentRosterEntry> = {}): StudentRosterEntry {
   return {
     student: user(),
@@ -79,6 +98,7 @@ function rosterEntry(overrides: Partial<StudentRosterEntry> = {}): StudentRoster
     nextReservation: null,
     currentFocus: [],
     hasNextLessonItems: true,
+    topRecurringTheme: null,
     ...overrides,
   };
 }
@@ -105,7 +125,10 @@ describe("needsYouNowFromRoster", () => {
     // badge to /debrief/tasks -- a string debriefStageLabel() has never
     // produced since the awaiting_tasks label became "Objectives not
     // confirmed yet", so that branch is dead. This asserts the V2 path gets
-    // the link right by construction, keyed off the stage enum instead.
+    // the link right by construction, keyed off the stage enum instead --
+    // and by routing through the single debrief resolver rather than a
+    // hand-computed sub-route, so this list can never drift from what the
+    // resolver itself would actually do next.
     const repo = fakeRepo({ organization: org(), tasks: [] });
     const roster = [rosterEntry({ pendingFlight: flight() })];
 
@@ -116,7 +139,7 @@ describe("needsYouNowFromRoster", () => {
       studentId: "student-1",
       reason: "Objectives not confirmed yet",
       actionLabel: "Confirm objectives",
-      actionHref: "/flights/flight-1/debrief/tasks",
+      actionHref: "/cfi-v2/flights/flight-1/debrief",
     });
   });
 
@@ -153,7 +176,7 @@ describe("needsYouNowFromRoster", () => {
     const result = await needsYouNowFromRoster(repo, roster, "instructor-1");
 
     expect(result.map((r) => r.studentId)).toEqual(["student-ready", "student-waiting"]);
-    expect(result[0]!.actionLabel).toBe("Finish review");
+    expect(result[0]!.actionLabel).toBe("Review");
     expect(result[1]!.reason).toBe("Waiting on student");
   });
 
@@ -166,22 +189,83 @@ describe("needsYouNowFromRoster", () => {
     expect(result[0]!.otherInstructorName).toBe("Jamie Ortiz");
   });
 
-  it("combines multiple attention reasons for a student with no pending flight into one item, linking to their profile", async () => {
+  it("flags a recurring theme even with no pending flight -- a real cross-lesson pattern, not merely a gap in the calendar", async () => {
+    const repo = fakeRepo({});
+    const theme = recurringTheme();
+    const roster = [rosterEntry({ pendingFlight: null, topRecurringTheme: theme })];
+
+    const result = await needsYouNowFromRoster(repo, roster, "instructor-1");
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.reason).toBe(recurringThemeSummary(theme));
+    expect(result[0]!.actionHref).toBe("/cfi-v2/students/student-1");
+  });
+
+  it("flags a genuinely stale gap since the last flight", async () => {
     const repo = fakeRepo({});
     const roster = [
       rosterEntry({
         pendingFlight: null,
-        mostRecentFlight: flight({ debriefStatus: "complete" }),
-        hasNextLessonItems: false,
-        nextReservation: null,
+        mostRecentFlight: flight({ flightDate: daysAgo(30) }),
+        topRecurringTheme: null,
       }),
     ];
 
     const result = await needsYouNowFromRoster(repo, roster, "instructor-1");
 
     expect(result).toHaveLength(1);
-    expect(result[0]!.reason).toBe("Next lesson has no objectives · No flight scheduled");
-    expect(result[0]!.actionHref).toBe("/cfi-v2/students/student-1");
+    expect(result[0]!.reason).toBe("No flight in 30 days");
+  });
+
+  it("flags an upcoming lesson that still has no objectives set", async () => {
+    const repo = fakeRepo({});
+    const roster = [
+      rosterEntry({
+        pendingFlight: null,
+        mostRecentFlight: flight({ flightDate: daysAgo(3) }),
+        hasNextLessonItems: false,
+        nextReservation: {
+          id: "r1",
+          organizationId: "org-1",
+          studentId: "student-1",
+          instructorId: "instructor-1",
+          aircraftId: "aircraft-1",
+          scheduledStart: "2026-09-10T15:00:00.000Z",
+          scheduledEnd: "2026-09-10T16:00:00.000Z",
+          status: "scheduled",
+          externalProvider: null,
+          externalId: null,
+        },
+      }),
+    ];
+
+    const result = await needsYouNowFromRoster(repo, roster, "instructor-1");
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.reason).toBe("Upcoming lesson has no objectives yet");
+    expect(result[0]!.actionHref).toBe("/cfi-v2/students/student-1#next-flight");
+  });
+
+  it("does NOT flag a student merely because no flight is scheduled -- that alone isn't urgent", async () => {
+    // This is the specific over-inclusion the CFI-V2-2 audit found: V1's
+    // attentionReasons() fires on "No flight scheduled" alone, which most of
+    // a healthy roster hits on any given day. Nothing else is wrong here --
+    // recent flight, no recurring theme, objectives already set -- so this
+    // student should be entirely absent from the list.
+    const repo = fakeRepo({});
+    const roster = [
+      rosterEntry({
+        pendingFlight: null,
+        mostRecentFlight: flight({ flightDate: daysAgo(3) }),
+        hasNextLessonItems: true,
+        nextReservation: null,
+        topRecurringTheme: null,
+      }),
+    ];
+
+    const result = await needsYouNowFromRoster(repo, roster, "instructor-1");
+
+    expect(result).toHaveLength(0);
   });
 
   it("omits a student with nothing to flag", async () => {
@@ -189,7 +273,7 @@ describe("needsYouNowFromRoster", () => {
     const roster = [
       rosterEntry({
         pendingFlight: null,
-        mostRecentFlight: flight({ debriefStatus: "complete" }),
+        mostRecentFlight: flight({ flightDate: daysAgo(3) }),
         hasNextLessonItems: true,
         nextReservation: {
           id: "r1",

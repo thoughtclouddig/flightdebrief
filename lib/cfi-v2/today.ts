@@ -1,5 +1,6 @@
-import { attentionReasons, computeInstructorRoster, computeNextLessonBrief } from "@/lib/training-memory";
-import { computeDebriefProgress, debriefStageLabel, type DebriefStage } from "@/lib/debrief-progress";
+import { computeInstructorRoster, computeNextLessonBrief, recurringThemeSummary } from "@/lib/training-memory";
+import { computeDebriefProgress, debriefStageLabel } from "@/lib/debrief-progress";
+import { STAGE_ACTION_INFO, debriefResolverHref } from "@/lib/cfi-v2/debrief-actions";
 import { localIsoDate } from "@/lib/date";
 import { formatFlightDate } from "@/lib/utils";
 import type { Repository } from "@/lib/data/types";
@@ -42,30 +43,11 @@ export interface CfiV2Today {
   isAllCaughtUp: boolean;
 }
 
-/**
- * One action per debrief stage, keyed off the DebriefStage enum itself
- * rather than any display label -- see the ATTENTION BUG note on
- * needsYouNowFromRoster below for why that distinction matters.
- */
-const STAGE_ACTION: Record<Exclude<DebriefStage, "complete">, { label: string; href: (flightId: string) => string }> = {
-  awaiting_tasks: { label: "Confirm objectives", href: (id) => `/flights/${id}/debrief/tasks` },
-  awaiting_student_assessment: { label: "View flight", href: (id) => `/flights/${id}` },
-  awaiting_instructor_assessment: { label: "Assess flight", href: (id) => `/flights/${id}/debrief/instructor-assessment` },
-  ready_to_debrief: { label: "Record debrief", href: (id) => `/flights/${id}/debrief` },
-  awaiting_finish: { label: "Finish review", href: (id) => `/flights/${id}/debrief/review` },
-};
-
-/** Lower number = more urgent. "Waiting on student" sits last -- nothing here is the instructor's next move. */
-const STAGE_PRIORITY: Record<Exclude<DebriefStage, "complete">, number> = {
-  awaiting_finish: 0,
-  ready_to_debrief: 1,
-  awaiting_instructor_assessment: 2,
-  awaiting_tasks: 3,
-  awaiting_student_assessment: 4,
-};
-
 /** Anything with no pending flight sorts after every active debrief action. */
 const NO_PENDING_FLIGHT_PRIORITY = 10;
+
+/** Below this many days since the last flight, staleness alone isn't worth flagging -- see needsYouNowFromRoster's no-pending-flight branch. */
+const STALE_DAYS_THRESHOLD = 21;
 
 export async function computeCfiV2Today(repo: Repository, viewer: Viewer): Promise<CfiV2Today> {
   const instructorId = viewer.user.id;
@@ -104,7 +86,7 @@ export async function computeCfiV2Today(repo: Repository, viewer: Viewer): Promi
         aircraftType: aircraft?.type ?? "—",
         currentFocus: brief.focusAreas,
         actionLabel: todaysFlight ? "Open brief" : "View student",
-        actionHref: todaysFlight ? `/flights/${todaysFlight.id}/debrief` : `/cfi-v2/students/${reservation.studentId}`,
+        actionHref: todaysFlight ? debriefResolverHref(todaysFlight.id) : `/cfi-v2/students/${reservation.studentId}`,
       };
     }),
   );
@@ -142,6 +124,10 @@ export async function computeCfiV2Today(repo: Repository, viewer: Viewer): Promi
   };
 }
 
+function daysSince(isoDate: string): number {
+  return Math.floor((Date.now() - new Date(isoDate + "T12:00:00").getTime()) / (1000 * 60 * 60 * 24));
+}
+
 /**
  * Unifies V1's "Debrief In Progress" and "Students Needing Attention" into
  * one priority-sorted list -- the same student's state no longer appears in
@@ -159,6 +145,21 @@ export async function computeCfiV2Today(repo: Repository, viewer: Viewer): Promi
  * here -- there's no string to fall out of sync with in the first place.
  * V1's file is left untouched; it stays this milestone's frozen functional
  * reference.
+ *
+ * CFI-V2-2 tightened the no-pending-flight branch: V1's attentionReasons()
+ * fires on "No flight scheduled" alone, which isn't inherently urgent (most
+ * of a healthy roster has no flight scheduled on any given day). This list
+ * now only includes a student with no pending debrief for one of three
+ * concrete, backend-supported reasons -- a recurring theme, a genuinely
+ * stale gap since their last flight, or an upcoming lesson with no
+ * objectives set for it yet. A student who's simply between lessons with
+ * nothing else going on is correctly absent, not merely under-flagged --
+ * "instructor handoff/continuity" and a bare "no flights yet" were
+ * considered and deliberately left out of this pass: a real continuity
+ * signal would need a per-student query this roster-wide list doesn't
+ * already pay for, and a brand-new student with zero flights isn't
+ * inherently urgent on its own. Both are reasonable additions for a later
+ * pass, not silently dropped -- see the CFI-V2-2 report.
  */
 export async function needsYouNowFromRoster(
   repo: Repository,
@@ -171,9 +172,9 @@ export async function needsYouNowFromRoster(
     if (entry.pendingFlight) {
       const progress = await computeDebriefProgress(repo, entry.pendingFlight);
       if (progress.stage === "complete") continue; // pendingFlight excludes complete flights already; defensive only.
-      const action = STAGE_ACTION[progress.stage];
+      const action = STAGE_ACTION_INFO[progress.stage];
       ranked.push({
-        priority: STAGE_PRIORITY[progress.stage],
+        priority: action.priority,
         item: {
           studentId: entry.student.id,
           studentName: entry.student.name,
@@ -183,27 +184,59 @@ export async function needsYouNowFromRoster(
             entry.pendingFlight.instructor && entry.pendingFlight.instructor.id !== instructorId
               ? entry.pendingFlight.instructor.name
               : null,
-          actionLabel: action.label,
-          actionHref: action.href(entry.pendingFlight.id),
+          actionLabel: action.ctaLabel,
+          actionHref: debriefResolverHref(entry.pendingFlight.id),
         },
       });
       continue;
     }
 
-    const reasons = attentionReasons(entry);
-    if (reasons.length === 0) continue;
-    ranked.push({
-      priority: NO_PENDING_FLIGHT_PRIORITY,
-      item: {
-        studentId: entry.student.id,
-        studentName: entry.student.name,
-        reason: reasons.join(" · "),
-        flightContext: null,
-        otherInstructorName: null,
-        actionLabel: "View student",
-        actionHref: `/cfi-v2/students/${entry.student.id}`,
-      },
-    });
+    if (entry.topRecurringTheme) {
+      ranked.push({
+        priority: NO_PENDING_FLIGHT_PRIORITY,
+        item: {
+          studentId: entry.student.id,
+          studentName: entry.student.name,
+          reason: recurringThemeSummary(entry.topRecurringTheme),
+          flightContext: null,
+          otherInstructorName: null,
+          actionLabel: "View student",
+          actionHref: `/cfi-v2/students/${entry.student.id}`,
+        },
+      });
+      continue;
+    }
+
+    if (entry.mostRecentFlight && daysSince(entry.mostRecentFlight.flightDate) >= STALE_DAYS_THRESHOLD) {
+      ranked.push({
+        priority: NO_PENDING_FLIGHT_PRIORITY,
+        item: {
+          studentId: entry.student.id,
+          studentName: entry.student.name,
+          reason: `No flight in ${daysSince(entry.mostRecentFlight.flightDate)} days`,
+          flightContext: null,
+          otherInstructorName: null,
+          actionLabel: "View student",
+          actionHref: `/cfi-v2/students/${entry.student.id}`,
+        },
+      });
+      continue;
+    }
+
+    if (entry.nextReservation && !entry.hasNextLessonItems) {
+      ranked.push({
+        priority: NO_PENDING_FLIGHT_PRIORITY,
+        item: {
+          studentId: entry.student.id,
+          studentName: entry.student.name,
+          reason: "Upcoming lesson has no objectives yet",
+          flightContext: null,
+          otherInstructorName: null,
+          actionLabel: "View student",
+          actionHref: `/cfi-v2/students/${entry.student.id}#next-flight`,
+        },
+      });
+    }
   }
 
   return ranked.sort((a, b) => a.priority - b.priority).map((r) => r.item);

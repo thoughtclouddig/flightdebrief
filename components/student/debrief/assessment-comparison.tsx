@@ -28,12 +28,18 @@ export function ObjectiveComparison({
   student,
   instructor,
   instructorName,
+  studentName,
+  viewerIsInstructor = false,
   children,
 }: {
   task: string;
   student: PerformanceLevelCode;
   instructor: PerformanceLevelCode;
   instructorName: string;
+  /** Only needed when viewerIsInstructor is true -- the student's own row is labeled "You" by default, since every prior caller of this component is a student viewer. */
+  studentName?: string;
+  /** Flips which row reads "You" -- a CFI viewing this same comparison is the instructor rater, not the student. Defaults to false so every existing (student-viewer) call site is unchanged. */
+  viewerIsInstructor?: boolean;
   children?: React.ReactNode;
 }) {
   const aligned = agreement(student, instructor) === "aligned";
@@ -53,8 +59,8 @@ export function ObjectiveComparison({
       </div>
 
       <div className="flex flex-col gap-3">
-        <RatingLine who="You" code={student} rater="student" />
-        <RatingLine who={instructorName} code={instructor} rater="instructor" />
+        <RatingLine who={viewerIsInstructor ? (studentName ?? "Student") : "You"} code={student} rater="student" />
+        <RatingLine who={viewerIsInstructor ? "You" : instructorName} code={instructor} rater="instructor" />
       </div>
 
       {children ? <div className="flex flex-col gap-4 border-t border-hairline pt-4">{children}</div> : null}
