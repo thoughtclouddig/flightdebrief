@@ -22,7 +22,7 @@ export function CfiV2ProfileScreen({ profile }: { profile: CfiV2Profile }) {
   return (
     <Screen>
       <div className="flex flex-col gap-4 px-1.5">
-        <AvatarUpload size={76} name={profile.name} avatarUrl={profile.avatarUrl} />
+        <AvatarUpload size={76} name={profile.name} avatarUrl={profile.avatarUrl} emphasizeBadge />
         <div className="min-w-0">
           <p className="text-[15px] text-foreground-faint">Instructor</p>
           <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.02em] text-foreground">{profile.name}</h1>

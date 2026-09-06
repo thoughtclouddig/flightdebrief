@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Loader2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const OUTPUT_SIZE = 256;
 
@@ -38,10 +39,21 @@ export function AvatarUpload({
   name,
   avatarUrl,
   size = 48,
+  emphasizeBadge = false,
 }: {
   name: string;
   avatarUrl: string | null;
   size?: number;
+  /**
+   * Opt-in only, default false -- every existing caller (canonical CFI/
+   * Student profile, Student V2 profile) renders exactly as before. Makes
+   * the edit-photo badge read as the tappable affordance it is (brand-fill,
+   * a ring matching the surrounding page so it visually sits on top of the
+   * circle rather than beside it, deeper overlap) instead of the quiet
+   * outline default, which read as an unfinished, separate control rather
+   * than something attached to the avatar.
+   */
+  emphasizeBadge?: boolean;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -115,7 +127,12 @@ export function AvatarUpload({
           onClick={() => inputRef.current?.click()}
           disabled={saving}
           aria-label="Change photo"
-          className="absolute -bottom-1 -right-1 flex items-center justify-center rounded-full border border-hairline bg-surface text-foreground-faint hover:text-foreground"
+          className={cn(
+            "absolute flex items-center justify-center rounded-full",
+            emphasizeBadge
+              ? "-bottom-1.5 -right-1.5 border-2 border-surface bg-brand text-on-brand shadow-sm"
+              : "-bottom-1 -right-1 border border-hairline bg-surface text-foreground-faint hover:text-foreground",
+          )}
           style={{ width: badgeSize, height: badgeSize }}
         >
           {saving ? (

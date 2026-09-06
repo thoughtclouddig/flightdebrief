@@ -886,6 +886,20 @@ interface DemoRosterConfig {
   expiresAt: Date;
   /** Index 0 is always the CFI-persona login identity when loginAs === "instructor". */
   instructorNames: string[];
+  /**
+   * Per-instructor override for the LOCAL PART of their demo login email,
+   * index-aligned with instructorNames -- undefined (the default, and every
+   * current School V2 instructor) falls back to `${id}@afterflight.demo`,
+   * where id already contains a full UUID and reads as an obviously
+   * synthetic address anywhere it's shown back to the viewer (e.g. CFI V2
+   * Profile). A short random suffix is still appended even when an override
+   * is given, because users.email is UNIQUE and a demo org lives for up to
+   * DEMO_ORG_TTL_MS -- two people starting a fresh CFI demo within that
+   * window would otherwise collide on one literal fixed address and the
+   * second seed transaction would fail outright. Only the CFI persona's
+   * login (index 0, "Morgan CFI") uses this today.
+   */
+  instructorEmailLocalParts?: (string | undefined)[];
   aircraft: { prefix: string; type: string; make: string; model: string }[];
   students: DemoRosterStudent[];
   loginAs: "instructor" | "admin";
@@ -914,7 +928,16 @@ async function seedDemoRosterOrg(config: DemoRosterConfig): Promise<LiveDemoResu
     ]);
 
     const instructorIds = config.instructorNames.map(() => `user-demo-instructor-${randomUUID()}`);
-    const instructorEmails = instructorIds.map((id) => `${id}@afterflight.demo`);
+    const instructorEmails = instructorIds.map((id, i) => {
+      const localPart = config.instructorEmailLocalParts?.[i];
+      // "+shortSuffix" is a real, valid email convention (delivered to
+      // localPart@domain by any mail system that matters here, which is
+      // none -- this domain never accepts mail) that keeps the visible
+      // name legible while still guaranteeing per-run uniqueness -- see
+      // this field's own doc comment on DemoRosterConfig for why a fully
+      // fixed address isn't safe against the UNIQUE constraint.
+      return localPart ? `${localPart}+${randomUUID().slice(0, 8)}@afterflight.demo` : `${id}@afterflight.demo`;
+    });
     const instructorUsersInsert = buildInsertRows(
       instructorIds.map((id, i) => [id, config.instructorNames[i], instructorEmails[i], instructorEmails[i], true]),
     );
@@ -1165,6 +1188,11 @@ export async function seedCfiV2Demo(expiresAt: Date): Promise<LiveDemoResult> {
     orgName: "Skyline Flight Academy",
     expiresAt,
     instructorNames: ["Morgan CFI", "Jamie Ortiz"],
+    // Only Morgan (the CFI persona's own login) gets a credible email --
+    // this is the address CFI V2 Profile now renders back to the viewer.
+    // Jamie Ortiz is roster context, never signed into, so the default
+    // UUID-based address (invisible to anyone) is unchanged.
+    instructorEmailLocalParts: ["morgan.cfi"],
     aircraft: [
       { prefix: "2", type: "Piper PA-28-181", make: "Piper", model: "PA-28-181" },
       { prefix: "3", type: "Cessna 172S", make: "Cessna", model: "172S" },
