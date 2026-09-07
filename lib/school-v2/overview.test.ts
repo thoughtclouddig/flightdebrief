@@ -106,11 +106,18 @@ function schoolRosterEntry(overrides: Partial<StudentRosterEntry> = {}, instruct
   };
 }
 
-function fakeRepo(opts: { organization?: Organization | null } = {}): Repository {
+function fakeRepo(
+  opts: {
+    organization?: Organization | null;
+    tasks?: { id: string; flightId: string; taskCode: string; label: string; source: string; sortOrder: number; createdAt: string }[];
+    studentAssessment?: unknown;
+  } = {},
+): Repository {
   return {
     getOrganization: async () => opts.organization ?? null,
-    listFlightTasks: async () => [],
-    getAssessment: async () => null,
+    listFlightTasks: async () => opts.tasks ?? [],
+    getAssessment: async (_flightId: string, role: "student" | "instructor") =>
+      role === "student" ? (opts.studentAssessment ?? null) : null,
     getDebriefByFlight: async () => null,
   } as unknown as Repository;
 }
@@ -128,9 +135,26 @@ describe("schoolAttentionFromRoster", () => {
       studentName: "Riley Student",
       instructorName: "Morgan CFI",
       reason: "unresolved_debrief",
+      statusLabel: "Waiting on CFI",
       href: "/school-v2/students/student-1",
     });
     expect(result[0]!.detail).not.toMatch(/your/i);
+  });
+
+  it("names the student, not the CFI, as who the lifecycle is waiting on when that's the real state", async () => {
+    const repo = fakeRepo({
+      organization: org({ defaultGuidanceMode: "guided" }),
+      tasks: [{ id: "t1", flightId: "flight-1", taskCode: "SHORT_FIELD_LANDING", label: "Short field landing", source: "instructor_selected", sortOrder: 0, createdAt: "2026-08-20T20:00:00.000Z" }],
+      studentAssessment: null,
+    });
+    const roster = [schoolRosterEntry({ pendingFlight: flight() })];
+
+    const result = await schoolAttentionFromRoster(repo, roster);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.statusLabel).toBe("Waiting on student");
+    // Never a bare action word that reads as something the SCHOOL should do.
+    expect(result[0]!.statusLabel).not.toBe("Debrief");
   });
 
   it("flags a recurring theme by reusing recurringThemeSummary verbatim, not a re-derived string", async () => {
@@ -156,6 +180,7 @@ describe("schoolAttentionFromRoster", () => {
     // asserts the shape and that the threshold held, not an exact count.
     expect(result).toHaveLength(1);
     expect(result[0]!.reason).toBe("stale_gap");
+    expect(result[0]!.statusLabel).toBe("Training gap");
     expect(result[0]!.detail).toMatch(/^No flight in (29|30) days$/);
   });
 

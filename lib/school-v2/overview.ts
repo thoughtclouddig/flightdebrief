@@ -17,6 +17,14 @@ export interface SchoolAttentionItem {
   studentName: string;
   instructorName: string;
   reason: SchoolAttentionReason;
+  /**
+   * Short, truthful status word/phrase for a badge -- never an instruction
+   * to the school admin. For "unresolved_debrief" this names who the
+   * lifecycle is actually waiting on (DebriefProgress.waitingOn, a real
+   * backend-computed field, never invented) rather than a generic "Debrief"
+   * word that read as an action for the school to take.
+   */
+  statusLabel: string;
   detail: string;
   flightContext: string | null;
   href: string;
@@ -71,6 +79,19 @@ function neutralStageLabel(stage: Exclude<DebriefStage, "complete">): string {
 }
 
 /**
+ * The status badge for an in-flight debrief -- named by who the lifecycle
+ * is actually waiting on (DebriefProgress.waitingOn), not a bare "Debrief"
+ * word that reads as an action request to the school admin. waitingOn is
+ * only null at stage "complete", which pendingFlight already excludes, so
+ * the fallback below is defensive, not a real case.
+ */
+function debriefStatusLabel(waitingOn: "instructor" | "student" | null): string {
+  if (waitingOn === "instructor") return "Waiting on CFI";
+  if (waitingOn === "student") return "Waiting on student";
+  return "Debrief pending";
+}
+
+/**
  * The school-wide analog of lib/cfi-v2/today.ts's needsYouNowFromRoster --
  * same four backend-supported reasons (an in-flight debrief stuck somewhere
  * in the lifecycle, a recurring theme, a genuinely stale gap since the last
@@ -104,6 +125,7 @@ export async function schoolAttentionFromRoster(
           studentName: entry.student.name,
           instructorName: entry.primaryInstructorName,
           reason: "unresolved_debrief",
+          statusLabel: debriefStatusLabel(progress.waitingOn),
           detail: neutralStageLabel(progress.stage),
           flightContext: entry.pendingFlight.flightDate,
           href,
@@ -120,6 +142,7 @@ export async function schoolAttentionFromRoster(
           studentName: entry.student.name,
           instructorName: entry.primaryInstructorName,
           reason: "recurring_theme",
+          statusLabel: "Recurring",
           detail: recurringThemeSummary(entry.topRecurringTheme),
           flightContext: null,
           href,
@@ -136,6 +159,7 @@ export async function schoolAttentionFromRoster(
           studentName: entry.student.name,
           instructorName: entry.primaryInstructorName,
           reason: "stale_gap",
+          statusLabel: "Training gap",
           detail: `No flight in ${daysSince(entry.mostRecentFlight.flightDate)} days`,
           flightContext: null,
           href,
@@ -152,6 +176,7 @@ export async function schoolAttentionFromRoster(
           studentName: entry.student.name,
           instructorName: entry.primaryInstructorName,
           reason: "no_objectives_yet",
+          statusLabel: "Unplanned",
           detail: "Upcoming lesson has no objectives yet",
           flightContext: null,
           href: `${href}#next-flight`,

@@ -3,11 +3,12 @@ import type { SchoolV2InstructorSummary } from "@/lib/school-v2/instructors";
 import { formatFlightDate } from "@/lib/utils";
 
 /**
- * School V2's instructor roster -- identity, current workload, recency.
- * Deliberately no quality score, ranking, agreement percentage, or
- * leaderboard ordering: rows sort by name, and the only number shown is a
- * plain student count, the same fact canonical /admin/instructors already
- * shows.
+ * School V2's instructor roster -- identity, current workload, recency, and
+ * how many of their current students need attention. Deliberately no
+ * quality score, ranking, agreement percentage, or leaderboard ordering:
+ * rows sort by name, and every number shown (student count, attention
+ * count) describes STUDENT needs on that roster, never the instructor's
+ * own performance -- there is no coloring or ranking of instructors here.
  */
 export function SchoolV2InstructorsScreen({ instructors }: { instructors: SchoolV2InstructorSummary[] }) {
   return (
@@ -22,20 +23,23 @@ export function SchoolV2InstructorsScreen({ instructors }: { instructors: School
       ) : (
         <div className="overflow-hidden rounded-2xl border border-hairline bg-surface">
           <div className="flex flex-col divide-y divide-hairline">
-            {instructors.map(({ instructor, activeStudentCount, recentFlightDate }) => (
+            {instructors.map(({ instructor, activeStudentCount, recentFlightDate, attentionCount }) => (
               <Link
                 key={instructor.id}
                 href={`/school-v2/instructors/${instructor.id}`}
                 className="flex items-center justify-between gap-4 px-5 py-3.5 transition-colors hover:bg-surface-sunken"
               >
                 <p className="text-[15px] font-semibold text-foreground">{instructor.name}</p>
-                <div className="flex shrink-0 items-center gap-4 text-[13px] text-foreground-soft">
-                  <span>
+                <div className="flex shrink-0 flex-col items-end gap-0.5 text-right">
+                  <p className="text-[13px] text-foreground-soft">
                     {activeStudentCount} student{activeStudentCount === 1 ? "" : "s"}
-                  </span>
-                  <span className="text-foreground-faint">
-                    {recentFlightDate ? `Last flight ${formatFlightDate(recentFlightDate)}` : "No recent flights"}
-                  </span>
+                    <span className="text-foreground-faint"> · {recentFlightDate ? `Last flight ${formatFlightDate(recentFlightDate)}` : "No recent flights"}</span>
+                  </p>
+                  {attentionCount > 0 ? (
+                    <p className="text-[13px] text-foreground-faint">
+                      {attentionCount} student{attentionCount === 1 ? "" : "s"} need attention
+                    </p>
+                  ) : null}
                 </div>
               </Link>
             ))}

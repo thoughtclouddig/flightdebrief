@@ -4,6 +4,7 @@ import { RecurrenceTimeline } from "@/components/debrief/recurrence-timeline";
 import { LocalDateTime } from "@/components/local-date-time";
 import { SkillProgressList } from "@/components/skill-progress-list";
 import type { CfiV2StudentDetail } from "@/lib/cfi-v2/student-detail";
+import type { SchoolAttentionItem } from "@/lib/school-v2/overview";
 import { formatFlightDate } from "@/lib/utils";
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -15,36 +16,46 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
-function MiniList({ title, items }: { title: string; items: string[] }) {
+function BulletList({ items, cap }: { items: string[]; cap: number }) {
   if (items.length === 0) return null;
   return (
-    <div>
-      <p className="mb-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">{title}</p>
-      <ul className="flex flex-col gap-1">
-        {items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2 text-[14px] text-foreground-soft">
-            <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ul className="flex flex-col gap-1">
+      {items.slice(0, cap).map((item, i) => (
+        <li key={i} className="flex items-start gap-2 text-[14px] text-foreground">
+          <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
+          {item}
+        </li>
+      ))}
+    </ul>
   );
 }
 
 /**
- * School V2's Student Detail -- the same core hierarchy as CFI V2's (Next
- * Flight, Current Focus, Last Flight, Progress, Perception, History), built
- * from the identical computeCfiV2StudentDetail data, but strictly view-only:
- * no scheduling forms, no editable training-item lists, no radio-practice
+ * School V2's Student Detail -- reuses the identical computeCfiV2StudentDetail
+ * data CFI V2's own screen does (zero new data-fetching logic), but a
+ * deliberately different, shorter hierarchy for a school administrator
+ * rather than the CFI's own working screen: identity, then WHY this student
+ * needs attention (only when they actually do), then next flight, a
+ * condensed "current training" instead of separate Current Focus/Last
+ * Flight cards, progress, and a collapsed-by-default history. No
+ * Recommended Starting Point section -- that's CFI instructional guidance,
+ * not school monitoring context. Strictly view-only throughout: no
+ * scheduling forms, no editable training-item lists, no radio-practice
  * assignment, no student-notes editing, no "log a flight" action, and no
- * outbound links into /cfi-v2/** (School V2 stays inside /school-v2/**).
- * This is a monitoring/drill-down surface, not another student-control one.
+ * outbound links into /cfi-v2/**.
  */
-export function SchoolV2StudentDetailScreen({ detail }: { detail: CfiV2StudentDetail }) {
+export function SchoolV2StudentDetailScreen({
+  detail,
+  attentionItem,
+}: {
+  detail: CfiV2StudentDetail;
+  /** This student's own row from schoolAttentionFromRoster, if the school flagged them -- the SAME logic and reasons Overview/Students use, not a re-derived one. Undefined for a student with nothing to flag. */
+  attentionItem?: SchoolAttentionItem;
+}) {
   const { student, brief } = detail;
   const result = detail.lastDebriefResult;
-  const firstName = student.name.split(" ")[0];
+
+  const workingOn = [...brief.keepWorkingOn, ...brief.beforeFlightItems];
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8 md:px-10 md:py-10">
@@ -56,9 +67,27 @@ export function SchoolV2StudentDetailScreen({ detail }: { detail: CfiV2StudentDe
         ) : null}
       </header>
 
+      {attentionItem ? (
+        <section>
+          <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-amber">Why this student needs attention</h2>
+          {attentionItem.reason === "recurring_theme" && brief.recurringThemes[0] ? (
+            <div className="flex flex-col gap-2">
+              <RecurrenceTimeline theme={brief.recurringThemes[0]} />
+              <div className="flex justify-end">
+                <AcsBadge skill={brief.recurringThemes[0].skill} certificateType={detail.certificateType} />
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-amber/40 bg-surface px-5 py-4">
+              <p className="text-[15px] text-foreground">{attentionItem.detail}</p>
+            </div>
+          )}
+        </section>
+      ) : null}
+
       <SectionCard title="Next flight">
         <div className="flex flex-col gap-4">
-          <div>
+          <div id="next-flight">
             <p className="mb-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">When</p>
             {brief.upcomingReservation ? (
               <>
@@ -97,67 +126,33 @@ export function SchoolV2StudentDetailScreen({ detail }: { detail: CfiV2StudentDe
         </div>
       </SectionCard>
 
-      <SectionCard title="Current focus">
+      <SectionCard title="Current training">
         <div className="flex flex-col gap-4">
           <div>
-            <p className="mb-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">In the air</p>
-            {brief.keepWorkingOn.length > 0 ? (
-              <ul className="flex flex-col gap-1">
-                {brief.keepWorkingOn.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[14px] text-foreground">
-                    <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
+            <p className="mb-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">Working on</p>
+            {workingOn.length > 0 ? <BulletList items={workingOn} cap={3} /> : <p className="text-[14px] text-foreground-faint">Nothing yet.</p>}
+          </div>
+          <div className="border-t border-hairline pt-3">
+            <p className="mb-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">Last flight</p>
+            {brief.lastFlight ? (
+              <>
+                <p className="text-[14px] text-foreground-faint">
+                  {formatFlightDate(brief.lastFlight.flightDate)}
+                  {brief.lastFlight.aircraft ? ` · ${brief.lastFlight.aircraft.tailNumber}` : ""}
+                </p>
+                {result && result.needsWork.length > 0 ? <div className="mt-1.5"><BulletList items={result.needsWork} cap={2} /></div> : null}
+              </>
             ) : (
-              <p className="text-[14px] text-foreground-faint">Nothing yet.</p>
+              <p className="text-[14px] text-foreground-faint">No completed flights yet.</p>
             )}
           </div>
-          {brief.beforeFlightItems.length > 0 ? (
-            <div className="border-t border-hairline pt-3">
-              <p className="mb-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">On the ground</p>
-              <ul className="flex flex-col gap-1">
-                {brief.beforeFlightItems.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[14px] text-foreground">
-                    <span className="mt-1.5 size-1 shrink-0 rounded-full bg-brand" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
         </div>
-      </SectionCard>
-
-      <SectionCard title="Last flight">
-        {brief.lastFlight ? (
-          <div className="flex flex-col gap-4">
-            <p className="text-[14px] text-foreground-faint">
-              {formatFlightDate(brief.lastFlight.flightDate)}
-              {brief.lastFlight.aircraft ? ` · ${brief.lastFlight.aircraft.tailNumber}` : ""}
-            </p>
-            {result ? (
-              <>
-                <MiniList title="Went well" items={result.wentWell.slice(0, 3)} />
-                <MiniList title="Needs work" items={result.needsWork.slice(0, 3)} />
-                {result.instructorGuidance[0] ? (
-                  <blockquote className="rounded-lg bg-surface-sunken px-3 py-2 text-[14px] italic text-foreground-soft">
-                    &ldquo;{result.instructorGuidance[0].quote}&rdquo;
-                  </blockquote>
-                ) : null}
-              </>
-            ) : null}
-          </div>
-        ) : (
-          <p className="text-[15px] text-foreground-faint">No completed flights yet.</p>
-        )}
       </SectionCard>
 
       <section>
         <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">Progress</h2>
         <div className="rounded-2xl border border-hairline bg-surface px-5 py-4">
-          <SkillProgressList progressions={detail.skillProgressions} certificateType={detail.certificateType} />
+          <SkillProgressList progressions={detail.skillProgressions} certificateType={detail.certificateType} audience="school" />
         </div>
       </section>
 
@@ -168,44 +163,33 @@ export function SchoolV2StudentDetailScreen({ detail }: { detail: CfiV2StudentDe
         </section>
       ) : null}
 
-      {brief.recurringThemes[0] ? (
-        <div className="flex flex-col gap-2">
-          <RecurrenceTimeline theme={brief.recurringThemes[0]} />
-          <div className="flex justify-end">
-            <AcsBadge skill={brief.recurringThemes[0].skill} certificateType={detail.certificateType} />
-          </div>
-        </div>
-      ) : null}
-
-      {detail.startingPoint ? (
-        <SectionCard title="Recommended starting point">
-          <p className="text-[15px] text-foreground">{detail.startingPoint}</p>
-        </SectionCard>
-      ) : null}
-
-      <SectionCard title="History">
+      <section>
+        <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-foreground-faint">History</h2>
         {detail.timeline.length > 0 ? (
-          <ol className="relative flex flex-col gap-6 border-l border-hairline pl-6">
-            {detail.timeline.map(({ flight, topics }) => (
-              <li key={flight.id} className="relative">
-                <span className="absolute -left-[29px] top-1 flex size-3.5 items-center justify-center rounded-full border-2 border-surface bg-brand" />
-                <p className="text-[15px] font-semibold text-foreground">{formatFlightDate(flight.flightDate)}</p>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {topics.map((topic, i) => (
-                    <span key={i} className="rounded-md bg-surface-sunken px-2 py-0.5 text-[12px] font-medium text-foreground-soft">
-                      {topic}
-                    </span>
-                  ))}
-                </div>
-              </li>
-            ))}
-          </ol>
+          <details className="group overflow-hidden rounded-2xl border border-hairline bg-surface px-5 py-4">
+            <summary className="cursor-pointer text-[14px] font-semibold text-foreground-soft">
+              {detail.timeline.length} debriefed flight{detail.timeline.length === 1 ? "" : "s"}
+            </summary>
+            <ol className="relative mt-4 flex flex-col gap-6 border-l border-hairline pl-6">
+              {detail.timeline.map(({ flight, topics }) => (
+                <li key={flight.id} className="relative">
+                  <span className="absolute -left-[29px] top-1 flex size-3.5 items-center justify-center rounded-full border-2 border-surface bg-brand" />
+                  <p className="text-[15px] font-semibold text-foreground">{formatFlightDate(flight.flightDate)}</p>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {topics.map((topic, i) => (
+                      <span key={i} className="rounded-md bg-surface-sunken px-2 py-0.5 text-[12px] font-medium text-foreground-soft">
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </details>
         ) : (
           <p className="text-[15px] text-foreground-faint">No debrief history yet.</p>
         )}
-      </SectionCard>
-
-      <p className="text-[13px] text-foreground-faint">{firstName}&rsquo;s CFI can edit objectives and notes from CFI V2.</p>
+      </section>
     </div>
   );
 }

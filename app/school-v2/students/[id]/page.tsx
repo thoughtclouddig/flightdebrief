@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { SchoolV2StudentDetailScreen } from "@/components/school-v2/student-detail-screen";
 import { getRepository } from "@/lib/data";
 import { computeCfiV2StudentDetail } from "@/lib/cfi-v2/student-detail";
+import { schoolAttentionFromRoster } from "@/lib/school-v2/overview";
+import { computeSchoolV2Roster } from "@/lib/school-v2/roster";
 import { getViewer } from "@/lib/viewer";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +13,11 @@ export const dynamic = "force-dynamic";
  * layout above already gates this to an org admin, and that function
  * already branches admin-safe fields behind isCfiOrAdmin), rendered by a
  * School-specific screen component that never imports an editing control.
+ *
+ * The "why this student needs attention" section reuses
+ * schoolAttentionFromRoster -- the SAME logic Overview/Students use -- run
+ * against just this one student's roster entry, rather than inventing a
+ * second definition of "needs attention" for this page.
  */
 export default async function SchoolV2StudentDetailPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
@@ -20,5 +27,9 @@ export default async function SchoolV2StudentDetailPage(props: { params: Promise
   const detail = await computeCfiV2StudentDetail(repo, viewer, id);
   if (!detail) notFound();
 
-  return <SchoolV2StudentDetailScreen detail={detail} />;
+  const roster = await computeSchoolV2Roster(repo, viewer.organization.id);
+  const entry = roster.find((r) => r.student.id === id);
+  const attentionItem = entry ? (await schoolAttentionFromRoster(repo, [entry]))[0] : undefined;
+
+  return <SchoolV2StudentDetailScreen detail={detail} attentionItem={attentionItem} />;
 }

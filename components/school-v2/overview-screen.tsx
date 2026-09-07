@@ -1,14 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
-import type { SchoolAttentionReason, SchoolV2Overview } from "@/lib/school-v2/overview";
+import type { SchoolV2Overview } from "@/lib/school-v2/overview";
 import { formatFlightDate } from "@/lib/utils";
-
-const REASON_LABEL: Record<SchoolAttentionReason, string> = {
-  unresolved_debrief: "Debrief",
-  recurring_theme: "Recurring",
-  stale_gap: "Stale",
-  no_objectives_yet: "Unplanned",
-};
 
 /**
  * School V2's Overview -- "what needs attention" leads, "school at a
@@ -54,7 +47,7 @@ export function SchoolV2OverviewScreen({ data }: { data: SchoolV2Overview }) {
                     </div>
                   </div>
                   <span className="mt-0.5 shrink-0 whitespace-nowrap rounded-md bg-amber-soft px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-amber-ink">
-                    {REASON_LABEL[item.reason]}
+                    {item.statusLabel}
                   </span>
                 </Link>
               ))}
