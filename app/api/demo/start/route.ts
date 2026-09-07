@@ -48,12 +48,15 @@ export const dynamic = "force-dynamic";
  * that conflated them into a single, identical, single-instructor org --
  * see lib/demo/live-demo-seed.ts's own doc comments for the composition.
  *
- * cfi-v2 is the Development-only entry into the CFI V2 clean-room preview
- * (app/cfi-v2/**) -- same seedCfiV2Demo call and the same real CFI session
- * as persona=cfi, just redirected at /cfi-v2 instead of canonical /cfi/today
- * so the new tree can be reviewed against the real 10/2/2 roster without
- * repointing the canonical persona. Mirrors pilot-real's Development-only
- * gating exactly, and disappears once CFI V2 is ready to cut over.
+ * cfi-v2 is a Development-only alias for persona=cfi -- same seedCfiV2Demo
+ * call and the same real CFI session, kept only because it's already the
+ * URL used in prior review notes. In Development, persona=cfi itself now
+ * redirects to /cfi-v2 too (see redirectPath below): Development is where
+ * the new tree gets reviewed against the real 10/2/2 roster, so there is no
+ * canonical /cfi/today left to preserve there. Staging and Production are
+ * unaffected -- persona=cfi still resolves to canonical /cfi/today, since
+ * isDevelopment() is false in both. Mirrors pilot-real's Development-only
+ * gating, and disappears once CFI V2 is ready to cut over.
  */
 export async function GET(request: NextRequest) {
   const origin = requestOrigin(request);
@@ -91,7 +94,8 @@ export async function GET(request: NextRequest) {
     // pilot-real is the only persona that enables real-data /v2 (validated
     // Development-only above) -- backend/lifecycle QA, not the product demo.
     const v2RealData = persona === "pilot-real";
-    const redirectPath = persona === "cfi-v2" ? "/cfi-v2" : v2RealData ? "/v2" : result.redirectPath;
+    const cfiV2Preview = persona === "cfi-v2" || (persona === "cfi" && isDevelopment());
+    const redirectPath = cfiV2Preview ? "/cfi-v2" : v2RealData ? "/v2" : result.redirectPath;
     const response = NextResponse.redirect(`${origin}${redirectPath}`);
     response.cookies.set(SESSION_COOKIE, jwt, {
       httpOnly: true,
