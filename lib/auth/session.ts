@@ -128,13 +128,28 @@ export async function verifySignupLinkJwt(token: string): Promise<SignupLinkClai
  */
 export const EMAIL_CHANGE_MAX_AGE_SECONDS = 60 * 15; // 15 minutes
 
+/**
+ * Where confirmation should land, beyond the confirm route's own per-role
+ * default (see app/api/auth/confirm-email-change/route.ts's profilePathFor)
+ * -- a closed enum, never a client-supplied URL/path. The confirm route
+ * still re-verifies the claimed viewer's actual role before honoring this,
+ * so a forged or stale claim can only ever route to a page that role is
+ * already allowed on, never elsewhere.
+ */
+export type EmailChangeReturnContext = "school-v2-settings";
+
 export interface EmailChangeClaims {
   userId: string;
   newEmail: string;
+  returnContext?: EmailChangeReturnContext;
 }
 
 export async function createEmailChangeJwt(input: EmailChangeClaims): Promise<string> {
-  return new SignJWT({ purpose: "email-change", userId: input.userId })
+  return new SignJWT({
+    purpose: "email-change",
+    userId: input.userId,
+    ...(input.returnContext ? { returnContext: input.returnContext } : {}),
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(input.newEmail.trim().toLowerCase())
     .setIssuedAt()
@@ -148,7 +163,8 @@ export async function verifyEmailChangeJwt(token: string): Promise<EmailChangeCl
     if (payload.purpose !== "email-change" || typeof payload.sub !== "string" || typeof payload.userId !== "string") {
       return null;
     }
-    return { userId: payload.userId, newEmail: payload.sub };
+    const returnContext = payload.returnContext === "school-v2-settings" ? "school-v2-settings" : undefined;
+    return { userId: payload.userId, newEmail: payload.sub, returnContext };
   } catch {
     return null;
   }

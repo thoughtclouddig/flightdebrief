@@ -77,7 +77,9 @@ export function SchoolV2InsightsScreen({ data }: { data: SchoolV2Insights }) {
                   {data.coverage.map((item) => (
                     <div key={item.skill} className="flex items-center justify-between gap-3 px-5 py-2.5">
                       <p className="text-[14px] text-foreground">{item.label}</p>
-                      <p className="shrink-0 text-[13px] text-foreground-faint">{item.occurrences}</p>
+                      <p className="shrink-0 text-[13px] text-foreground-faint">
+                        {item.occurrences} occurrence{item.occurrences === 1 ? "" : "s"}
+                      </p>
                     </div>
                   ))}
                 </div>

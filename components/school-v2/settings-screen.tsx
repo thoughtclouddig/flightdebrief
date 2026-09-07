@@ -62,11 +62,13 @@ export function SchoolV2SettingsScreen({
           <p className="text-[17px] font-medium text-foreground">{name}</p>
         </div>
         <div className="mt-4 flex flex-col gap-1.5 border-t border-hairline pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="flex items-center gap-2 text-[14px] text-foreground-soft">
-            <Mail className="size-4 text-foreground-faint" aria-hidden />
-            {email}
+          <p className="flex min-w-0 items-center gap-2 text-[14px] text-foreground-soft">
+            <Mail className="size-4 shrink-0 text-foreground-faint" aria-hidden />
+            <span className="truncate">{email}</span>
           </p>
-          <ChangeEmailForm />
+          <div className="shrink-0 whitespace-nowrap">
+            <ChangeEmailForm returnContext="school-v2-settings" />
+          </div>
         </div>
       </SectionCard>
     </div>

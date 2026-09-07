@@ -4,8 +4,9 @@ import { useState } from "react";
 import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { EmailChangeReturnContext } from "@/lib/auth/session";
 
-export function ChangeEmailForm() {
+export function ChangeEmailForm({ returnContext }: { returnContext?: EmailChangeReturnContext } = {}) {
   const [editing, setEditing] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [sending, setSending] = useState(false);
@@ -20,7 +21,7 @@ export function ChangeEmailForm() {
       const res = await fetch("/api/auth/change-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newEmail }),
+        body: JSON.stringify({ newEmail, returnContext }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {

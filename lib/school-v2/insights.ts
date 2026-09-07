@@ -84,15 +84,18 @@ export function aggregateRecurringPatterns(
 }
 
 /**
- * Insights owns patterns, Overview owns immediate workflow exceptions --
- * so this keeps only the two schoolAttentionFromRoster reasons that
- * describe a longer-term training pattern (a recurring theme, a genuine
- * stale gap) and drops the two that are pure debrief-lifecycle workflow
- * (an in-flight debrief stuck somewhere, an upcoming lesson missing
- * objectives) even though those also come from the same function.
+ * Insights owns patterns, Overview owns immediate workflow exceptions.
+ * Browser review found an ordinary stale_gap (e.g. Felix Chen, "no flight in
+ * 22 days") reading as just a repeat of Overview's own queue -- a plain
+ * attendance gap on its own says nothing about an emerging PATTERN, only a
+ * scheduling fact Overview already surfaces. Of schoolAttentionFromRoster's
+ * four reasons, only recurring_theme actually describes a training pattern
+ * (the same skill persisting, possibly across an instructor change); the
+ * other three (unresolved_debrief, stale_gap, no_objectives_yet) are all
+ * workflow/attendance facts about a single point in time, not a pattern.
  */
 export function selectStudentsToWatch(attentionItems: SchoolAttentionItem[]): SchoolAttentionItem[] {
-  return attentionItems.filter((item) => item.reason === "recurring_theme" || item.reason === "stale_gap");
+  return attentionItems.filter((item) => item.reason === "recurring_theme");
 }
 
 /**

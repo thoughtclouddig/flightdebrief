@@ -900,6 +900,8 @@ interface DemoRosterConfig {
    * login (index 0, "Morgan CFI") uses this today.
    */
   instructorEmailLocalParts?: (string | undefined)[];
+  /** Same convention as instructorEmailLocalParts, for the org's always-present Taylor Admin -- undefined falls back to `${adminUserId}@afterflight.demo`, which embeds a full UUID. Only School V2's admin login (Taylor Admin) uses this today. */
+  adminEmailLocalPart?: string;
   aircraft: { prefix: string; type: string; make: string; model: string }[];
   students: DemoRosterStudent[];
   loginAs: "instructor" | "admin";
@@ -963,7 +965,9 @@ async function seedDemoRosterOrg(config: DemoRosterConfig): Promise<LiveDemoResu
     // exist for the "who else is in this org" story to be honest, even
     // though this persona never logs in as them.
     const adminUserId = `user-demo-admin-${randomUUID()}`;
-    const adminEmail = `${adminUserId}@afterflight.demo`;
+    const adminEmail = config.adminEmailLocalPart
+      ? `${config.adminEmailLocalPart}+${randomUUID().slice(0, 8)}@afterflight.demo`
+      : `${adminUserId}@afterflight.demo`;
     const adminName = "Taylor Admin";
     await client.query(
       `INSERT INTO users (id, name, email, auth_user_id, profile_completed) VALUES ($1,$2,$3,$3,true)`,
@@ -1256,6 +1260,7 @@ export async function seedSchoolV2Demo(expiresAt: Date): Promise<LiveDemoResult>
       { prefix: "5", type: "Piper PA-28-161", make: "Piper", model: "PA-28-161" },
     ],
     students: SCHOOL_V2_STUDENTS,
+    adminEmailLocalPart: "taylor.admin",
     loginAs: "admin",
     redirectPath: "/admin/overview",
     hint: "24 students across 5 instructors -- check Instructors, Students, or Insights for the roster-wide view.",

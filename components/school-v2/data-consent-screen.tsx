@@ -31,6 +31,16 @@ function SectionCard({ title, children }: { title: string; children: React.React
  * transcript on demand, and no transcript is being auto-purged on a timer.
  * This screen says so truthfully instead of repeating the claim -- see the
  * SCHOOL-V2-2 report for the full audit trail.
+ *
+ * Browser review tightened the customer-facing wording once more: dropped
+ * "two things aren't built yet" (internal/backlog-sounding) in favor of
+ * plain present-tense statements, and dropped "subpoena" from the audio
+ * copy (a legal-sounding claim about discoverability this product makes no
+ * assertion about) in favor of a direct implementation fact. "Contact
+ * AfterFlight Support" is phrased as a question-routing statement, not a
+ * promise Support can perform a deletion -- no operational path for that
+ * exists today (see the audit above), so promising one would repeat the
+ * same kind of overstatement this screen exists to avoid.
  */
 export function SchoolV2DataConsentScreen({ retentionDays }: { retentionDays: number | null }) {
   return (
@@ -56,9 +66,8 @@ export function SchoolV2DataConsentScreen({ retentionDays }: { retentionDays: nu
 
       <SectionCard title="What AfterFlight discards">
         <p className="text-[15px] text-foreground">
-          The microphone audio is streamed from the browser straight to the transcription service while the debrief is
-          happening, and is never written to AfterFlight&rsquo;s servers or database. There is no audio file to
-          retrieve, export, or subpoena &mdash; only the text.
+          AfterFlight does not store the original audio recording. Audio is streamed to the transcription service
+          during the debrief and is not saved to AfterFlight&rsquo;s servers or database.
         </p>
       </SectionCard>
 
@@ -70,20 +79,24 @@ export function SchoolV2DataConsentScreen({ retentionDays }: { retentionDays: nu
       </SectionCard>
 
       <SectionCard title="Data deletion">
-        <div className="flex flex-col gap-3">
-          <p className="text-[15px] text-foreground">
-            {retentionDays === null
-              ? "Your school's retention setting keeps verbatim transcripts indefinitely."
-              : `Your school's retention setting is ${retentionDays} days for verbatim transcripts${retentionDays === 365 ? " (the default)" : ""}.`}{" "}
-            The structured training record isn&rsquo;t affected by this setting and is kept regardless, so a student
-            never loses their history when a transcript ages out.
-          </p>
-          <p className="text-[14px] text-foreground-soft">
-            Two things aren&rsquo;t built yet, and we&rsquo;d rather say so than overstate what exists: automatic
-            enforcement of that retention schedule isn&rsquo;t live, so no transcript is currently deleted on a timer;
-            and there&rsquo;s no self-serve control yet for an admin to delete a specific debrief&rsquo;s transcript on
-            demand. If you need something removed sooner, contact support and we&rsquo;ll evaluate it manually.
-          </p>
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="mb-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-foreground-faint">Transcript retention</p>
+            <p className="text-[15px] text-foreground">
+              {retentionDays === null
+                ? "Your school's current retention setting keeps debrief transcripts indefinitely."
+                : `Your school's current retention setting keeps debrief transcripts for ${retentionDays} days.`}{" "}
+              Structured training records are retained separately, so the student&rsquo;s training history remains
+              available.
+            </p>
+          </div>
+          <div className="border-t border-hairline pt-4">
+            <p className="mb-1 text-[13px] font-semibold uppercase tracking-[0.06em] text-foreground-faint">Deletion requests</p>
+            <p className="text-[15px] text-foreground">
+              Self-service transcript deletion is not currently available. For questions about transcript deletion,
+              contact AfterFlight Support.
+            </p>
+          </div>
         </div>
       </SectionCard>
 

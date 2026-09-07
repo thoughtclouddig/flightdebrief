@@ -136,9 +136,14 @@ describe("aggregateRecurringPatterns", () => {
 });
 
 describe("selectStudentsToWatch", () => {
-  it("keeps training-pattern reasons (recurring theme, stale gap)", () => {
-    const items = [attentionItem({ reason: "recurring_theme" }), attentionItem({ reason: "stale_gap" })];
-    expect(selectStudentsToWatch(items)).toHaveLength(2);
+  it("keeps recurring_theme -- the only reason that describes an actual training pattern", () => {
+    const items = [attentionItem({ reason: "recurring_theme" })];
+    expect(selectStudentsToWatch(items)).toHaveLength(1);
+  });
+
+  it("excludes a bare stale_gap -- an attendance fact Overview already owns, not a pattern", () => {
+    const items = [attentionItem({ reason: "stale_gap" })];
+    expect(selectStudentsToWatch(items)).toEqual([]);
   });
 
   it("excludes bare debrief-lifecycle workflow reasons that Overview already owns", () => {
@@ -146,13 +151,13 @@ describe("selectStudentsToWatch", () => {
     expect(selectStudentsToWatch(items)).toEqual([]);
   });
 
-  it("keeps only the pattern items out of a mixed list", () => {
+  it("keeps only recurring_theme out of a mixed list, dropping stale_gap alongside the workflow reasons", () => {
     const items = [
       attentionItem({ studentId: "s1", reason: "unresolved_debrief" }),
       attentionItem({ studentId: "s2", reason: "recurring_theme" }),
       attentionItem({ studentId: "s3", reason: "no_objectives_yet" }),
       attentionItem({ studentId: "s4", reason: "stale_gap" }),
     ];
-    expect(selectStudentsToWatch(items).map((i) => i.studentId)).toEqual(["s2", "s4"]);
+    expect(selectStudentsToWatch(items).map((i) => i.studentId)).toEqual(["s2"]);
   });
 });

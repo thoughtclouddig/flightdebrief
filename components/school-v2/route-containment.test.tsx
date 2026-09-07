@@ -76,11 +76,28 @@ describe("SchoolV2DataConsentScreen route containment + truthfulness (rendered)"
     expect(markup).not.toMatch(/self-serve control is coming/i);
   });
 
-  it("truthfully states retention enforcement isn't live and there's no self-serve delete yet", () => {
+  it("truthfully states there's no self-serve deletion, without promising Support can do it", () => {
     const markup = renderToStaticMarkup(<SchoolV2DataConsentScreen retentionDays={365} />);
 
-    expect(markup).toMatch(/enforcement.*isn.t live/i);
-    expect(markup).toMatch(/no self-serve control yet/i);
+    expect(markup).toMatch(/self-service transcript deletion is not currently available/i);
+    // Phrased as a question-routing statement ("contact Support"), never a promise Support performs the deletion.
+    expect(markup).not.toMatch(/support (will|can) (delete|perform|process|handle)/i);
+    expect(markup).not.toMatch(/available today/i);
+  });
+
+  it("never contains internal/backlog-sounding language on a customer-facing screen", () => {
+    const markup = renderToStaticMarkup(<SchoolV2DataConsentScreen retentionDays={365} />);
+
+    expect(markup).not.toMatch(/aren.t built yet/i);
+    expect(markup).not.toMatch(/we.d rather say so/i);
+    expect(markup).not.toMatch(/coming soon|on the roadmap/i);
+  });
+
+  it("never makes a legal claim about subpoenas or discoverability", () => {
+    const markup = renderToStaticMarkup(<SchoolV2DataConsentScreen retentionDays={365} />);
+
+    expect(markup).not.toMatch(/subpoena/i);
+    expect(markup).toMatch(/does not store the original audio recording/i);
   });
 
   it("renders 'kept indefinitely' when the org has no retention limit, not a stale day count", () => {

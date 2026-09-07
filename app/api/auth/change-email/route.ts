@@ -19,11 +19,19 @@ export async function POST(request: Request) {
   const { viewer } = auth;
 
   let newEmail: string | undefined;
+  let returnContext: string | undefined;
   try {
-    newEmail = (await request.json())?.newEmail;
+    const body = await request.json();
+    newEmail = body?.newEmail;
+    returnContext = body?.returnContext;
   } catch {
     /* fall through to validation */
   }
+  // Closed allowlist, not a client-supplied URL -- confirm-email-change's
+  // own profilePathFor also re-verifies the viewer's actual role before
+  // honoring this, so a forged value still can't route anywhere that role
+  // couldn't already reach.
+  const validatedReturnContext = returnContext === "school-v2-settings" ? "school-v2-settings" : undefined;
   const normalized = typeof newEmail === "string" ? newEmail.trim().toLowerCase() : "";
   if (!normalized || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
@@ -47,7 +55,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Couldn't send confirmation email. Try again shortly." }, { status: 500 });
   }
 
-  const token = await createEmailChangeJwt({ userId: viewer.user.id, newEmail: normalized });
+  const token = await createEmailChangeJwt({ userId: viewer.user.id, newEmail: normalized, returnContext: validatedReturnContext });
   const url = new URL("/api/auth/confirm-email-change", origin);
   url.searchParams.set("token", token);
   const sent = await sendEmailChangeEmail({ to: normalized, url: url.toString() });

@@ -1,9 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requestOrigin } from "@/lib/auth/origin";
-import { createSessionJwt, verifyEmailChangeJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/lib/auth/session";
+import {
+  createSessionJwt,
+  verifyEmailChangeJwt,
+  SESSION_COOKIE,
+  SESSION_MAX_AGE_SECONDS,
+  type EmailChangeReturnContext,
+} from "@/lib/auth/session";
 import { getUserByEmail, listMembershipsForUser, updateUserEmail } from "@/lib/auth/store";
 import { getDb } from "@/lib/db";
 import { appOrigin } from "@/lib/email";
+import { isDevelopment } from "@/lib/env";
 
 /**
  * Email-change, step 2: verifies the token clicked from the NEW inbox
@@ -16,12 +23,26 @@ import { appOrigin } from "@/lib/email";
  * again; other already-open sessions for this user will simply need to
  * sign back in with the new email next time they load a page.
  */
-/** Each role has its own profile/settings route (not a shared page), so send them back to the one they actually use. */
-async function profilePathFor(userId: string): Promise<string> {
+/**
+ * Each role has its own profile/settings route (not a shared page), so send
+ * them back to the one they actually use. returnContext narrows an admin's
+ * destination further -- School V2's Settings is a Development-only
+ * presentation of the same admin capability, not a different role, so an
+ * admin who started the change there should land back there instead of
+ * canonical /admin/settings. The role itself is re-verified fresh from the
+ * database here regardless of what the token claims, so a forged or stale
+ * returnContext can only ever redirect within a destination this user's
+ * ACTUAL current role already has -- never to a page they couldn't
+ * otherwise reach.
+ */
+async function profilePathFor(userId: string, returnContext?: EmailChangeReturnContext): Promise<string> {
   const memberships = await listMembershipsForUser(userId);
   const active = memberships.find((m) => m.status === "active");
   if (active?.role === "instructor") return "/cfi/profile";
-  if (active?.role === "admin") return "/admin/settings";
+  if (active?.role === "admin") {
+    if (returnContext === "school-v2-settings" && isDevelopment()) return "/school-v2/settings";
+    return "/admin/settings";
+  }
   return "/profile";
 }
 
@@ -34,7 +55,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const destination = await profilePathFor(claims.userId);
+    const destination = await profilePathFor(claims.userId, claims.returnContext);
 
     // Re-check for a collision at confirm time too -- the window between
     // request and click is when a race against another account claiming the
