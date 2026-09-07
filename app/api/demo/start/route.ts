@@ -1,6 +1,7 @@
 import { after, NextResponse, type NextRequest } from "next/server";
 import { requestOrigin } from "@/lib/auth/origin";
 import { createSessionJwt, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, V2_REAL_DATA_COOKIE } from "@/lib/auth/session";
+import { resolveDemoRedirectPath } from "@/lib/demo/demo-redirect";
 import { cleanupExpiredDemoOrgs, seedCfiV2Demo, seedPilotDemo, seedSchoolV2Demo } from "@/lib/demo/live-demo-seed";
 import { DEMO_HINT_COOKIE } from "@/lib/demo/live-demo-jobs";
 import { isDevelopment } from "@/lib/env";
@@ -51,12 +52,23 @@ export const dynamic = "force-dynamic";
  * cfi-v2 is a Development-only alias for persona=cfi -- same seedCfiV2Demo
  * call and the same real CFI session, kept only because it's already the
  * URL used in prior review notes. In Development, persona=cfi itself now
- * redirects to /cfi-v2 too (see redirectPath below): Development is where
- * the new tree gets reviewed against the real 10/2/2 roster, so there is no
- * canonical /cfi/today left to preserve there. Staging and Production are
- * unaffected -- persona=cfi still resolves to canonical /cfi/today, since
- * isDevelopment() is false in both. Mirrors pilot-real's Development-only
- * gating, and disappears once CFI V2 is ready to cut over.
+ * redirects to /cfi-v2 too (see resolveDemoRedirectPath): Development is
+ * where the new tree gets reviewed against the real 10/2/2 roster, so
+ * there is no canonical /cfi/today left to preserve there. Staging and
+ * Production are unaffected -- persona=cfi still resolves to canonical
+ * /cfi/today, since isDevelopment() is false in both. Mirrors pilot-real's
+ * Development-only gating, and disappears once CFI V2 is ready to cut
+ * over.
+ *
+ * persona=school mirrors that exact pattern for School V2, now that it has
+ * passed Development browser acceptance: in Development, persona=school
+ * redirects to /school-v2 instead of canonical /admin/overview, using the
+ * same seedSchoolV2Demo call and the same real Taylor Admin session as
+ * always. Staging and Production are unaffected for the same reason as
+ * CFI -- isDevelopment() is false in both, so persona=school still
+ * resolves to canonical /admin/overview there, and /school-v2 itself
+ * still 404s outside Development regardless (app/school-v2/layout.tsx's
+ * own gate).
  */
 export async function GET(request: NextRequest) {
   const origin = requestOrigin(request);
@@ -94,8 +106,7 @@ export async function GET(request: NextRequest) {
     // pilot-real is the only persona that enables real-data /v2 (validated
     // Development-only above) -- backend/lifecycle QA, not the product demo.
     const v2RealData = persona === "pilot-real";
-    const cfiV2Preview = persona === "cfi-v2" || (persona === "cfi" && isDevelopment());
-    const redirectPath = cfiV2Preview ? "/cfi-v2" : v2RealData ? "/v2" : result.redirectPath;
+    const redirectPath = resolveDemoRedirectPath({ persona, isDev: isDevelopment(), seedRedirectPath: result.redirectPath });
     const response = NextResponse.redirect(`${origin}${redirectPath}`);
     response.cookies.set(SESSION_COOKIE, jwt, {
       httpOnly: true,
