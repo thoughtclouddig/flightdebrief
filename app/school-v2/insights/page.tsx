@@ -1,12 +1,13 @@
-import { LineChart } from "lucide-react";
-import { SchoolV2PlaceholderScreen } from "@/components/school-v2/placeholder-screen";
+import { SchoolV2InsightsScreen } from "@/components/school-v2/insights-screen";
+import { getRepository } from "@/lib/data";
+import { computeSchoolV2Insights } from "@/lib/school-v2/insights";
+import { getViewer } from "@/lib/viewer";
 
-export default function SchoolV2InsightsPage() {
-  return (
-    <SchoolV2PlaceholderScreen
-      title="Insights"
-      description="Deeper training-pattern views across the whole school -- most common issues, recurring student themes, and coverage -- land here in a later milestone."
-      icon={LineChart}
-    />
-  );
+export const dynamic = "force-dynamic";
+
+export default async function SchoolV2InsightsPage() {
+  const viewer = await getViewer();
+  const repo = getRepository();
+  const data = await computeSchoolV2Insights(repo, viewer);
+  return <SchoolV2InsightsScreen data={data} />;
 }

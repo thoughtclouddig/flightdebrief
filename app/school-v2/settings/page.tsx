@@ -1,12 +1,17 @@
-import { Settings } from "lucide-react";
-import { SchoolV2PlaceholderScreen } from "@/components/school-v2/placeholder-screen";
+import { SchoolV2SettingsScreen } from "@/components/school-v2/settings-screen";
+import { getViewer } from "@/lib/viewer";
 
-export default function SchoolV2SettingsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function SchoolV2SettingsPage() {
+  const viewer = await getViewer();
   return (
-    <SchoolV2PlaceholderScreen
-      title="Settings"
-      description="Organization name, workspace details, and account settings land here in a later School V2 milestone. Canonical /admin/settings is unaffected."
-      icon={Settings}
+    <SchoolV2SettingsScreen
+      name={viewer.user.name}
+      email={viewer.user.email}
+      avatarUrl={viewer.user.avatarUrl}
+      organizationName={viewer.organization.name}
+      organizationKind={viewer.organization.kind}
     />
   );
 }

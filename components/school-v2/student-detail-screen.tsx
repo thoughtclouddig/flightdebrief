@@ -5,6 +5,7 @@ import { LocalDateTime } from "@/components/local-date-time";
 import { SkillProgressList } from "@/components/skill-progress-list";
 import type { CfiV2StudentDetail } from "@/lib/cfi-v2/student-detail";
 import type { SchoolAttentionItem } from "@/lib/school-v2/overview";
+import { dedupeWorkingOnItems } from "@/lib/school-v2/student-detail-presentation";
 import { formatFlightDate } from "@/lib/utils";
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -55,7 +56,7 @@ export function SchoolV2StudentDetailScreen({
   const { student, brief } = detail;
   const result = detail.lastDebriefResult;
 
-  const workingOn = [...brief.keepWorkingOn, ...brief.beforeFlightItems];
+  const workingOn = dedupeWorkingOnItems([...brief.keepWorkingOn, ...brief.beforeFlightItems]);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-8 md:px-10 md:py-10">

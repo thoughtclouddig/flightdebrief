@@ -1,12 +1,14 @@
-import { ShieldCheck } from "lucide-react";
-import { SchoolV2PlaceholderScreen } from "@/components/school-v2/placeholder-screen";
+import { SchoolV2DataConsentScreen } from "@/components/school-v2/data-consent-screen";
+import { effectiveRetentionDays } from "@/lib/consent";
+import { getRepository } from "@/lib/data";
+import { getViewer } from "@/lib/viewer";
 
-export default function SchoolV2DataPage() {
-  return (
-    <SchoolV2PlaceholderScreen
-      title="Data & consent"
-      description="Retention settings and consent/trust details land here in a later School V2 milestone. Canonical /admin/data-handling is unaffected."
-      icon={ShieldCheck}
-    />
-  );
+export const dynamic = "force-dynamic";
+
+export default async function SchoolV2DataPage() {
+  const viewer = await getViewer();
+  const repo = getRepository();
+  const org = await repo.getOrganization(viewer.organization.id);
+  const retentionDays = effectiveRetentionDays(org?.transcriptRetentionDays);
+  return <SchoolV2DataConsentScreen retentionDays={retentionDays} />;
 }
