@@ -2,6 +2,8 @@
 
 Status: audit only. No product code changed except where explicitly noted in §17. Branch: `student-v2-clean-cutover` @ `0e5fe8b365a598c975ee2c8df1ad816b7bf11f6a` (the accepted Web V2 baseline through the School V2 demo-entry cutover).
 
+**STAGING-RC-0 update:** the §15 P0 item "`/prototype/vector` pages have no environment-level gate" is **resolved** — `app/prototype/layout.tsx` now calls `notFound()` for any request where `isDevelopment()` is false, a single shared guard covering the entire `/prototype/**` route family (no other page routes sit outside it). This no longer depends on `SITE_ACCESS_CODE` at all; that gate remains in `proxy.ts` as an unrelated, now-redundant-for-correctness optional layer. §15/§16/§17 below are updated to reflect this; the rest of the audit is unchanged.
+
 Release principle: **Development proves the product. Staging proves the release. Production receives only what Staging already proved. Staging should look like Production, not Development.**
 
 ---
@@ -29,7 +31,7 @@ Development = explicit `APP_ENV=development`, or no `REPLIT_DEPLOYMENT` and no v
 | `/v2/**` (Student V2) | Open; fixture by default, real-data via `af_v2_real_data` cookie | Reachable if `SITE_ACCESS_CODE` unset or gate cookie present; **fixture-only** — `v2StagingUsesRealData()` hardcodes `return false` | **Hard 404** (`isProduction()` check, the sole guard — `proxy.ts` doesn't even list `/v2` in its matcher) |
 | `/cfi-v2/**` | Open, real session + `instructor` role required | **Hard 404** (`!isDevelopment()`) | **Hard 404** |
 | `/school-v2/**` | Open, real session + `admin`/superadmin role required | **Hard 404** (`!isDevelopment()`) | **Hard 404** |
-| `/prototype/vector/**` (pages) | Open | **No environment-level page gate at all** — only the optional `SITE_ACCESS_CODE` marketing-site password gate | **Same — no environment-level page gate.** Reachable in Production if `SITE_ACCESS_CODE` is unset. |
+| `/prototype/vector/**` (pages) | Open | **Resolved by STAGING-RC-0:** `app/prototype/layout.tsx` now calls `notFound()` unless `isDevelopment()` | **Resolved by STAGING-RC-0:** same code-level `notFound()`, independent of `SITE_ACCESS_CODE` |
 | `/api/prototype/vector` (POST, backs the prototype's Ask/grade/chair-fly interactions) | Open | 404 if site gate configured and not passed | **Always 404**, unconditional `isProduction()` check |
 | `/api/demo/start?persona=pilot\|cfi\|school` | Open | Open — real seeded org+session; `cfi`/`school` resolve to canonical `/cfi/today`/`/admin/overview` since `isDev` is false | Open **by design** — this is the marketing site's live "try it" demo, meant to run in real Production |
 | `/api/demo/start?persona=pilot-real\|cfi-v2` | Open | **400** (`!isDevelopment()`) | **400** |
@@ -38,7 +40,7 @@ Development = explicit `APP_ENV=development`, or no `REPLIT_DEPLOYMENT` and no v
 
 **Two findings that need a decision before Staging is treated as production-like:**
 
-1. **`/prototype/vector`'s ~19 page routes have no code-level environment gate whatsoever.** Their only protection is the same optional password gate that fronts the whole marketing site. Whether `SITE_ACCESS_CODE` is actually configured for Staging/Production is a Replit Secrets-pane fact outside this repository's visibility — this audit cannot confirm it either way from source, and flags it as the single highest-priority item to verify operationally before Staging is trusted to "look like Production."
+1. ~~`/prototype/vector`'s ~19 page routes have no code-level environment gate whatsoever.~~ **Resolved by STAGING-RC-0** — `app/prototype/layout.tsx` now hard-gates the whole family with `notFound()` unless `isDevelopment()`, independent of whether `SITE_ACCESS_CODE` is configured.
 2. **CFI V2 and School V2 are entirely unreachable in Staging today.** If the intent is to demo/QA them in Staging before a canonical cutover, this requires a deliberate decision (§16) — either temporarily widen the gate for Staging QA, or accept they stay Development-only until the canonical cutover itself happens directly in Production-adjacent Staging.
 
 **Membership switcher is not a stale dev-only leak** — `isMembershipSwitcherEnabled()` in `lib/auth/membership-switcher.ts` hardcodes `return true`, with a doc comment explaining it used to be Development-only and was changed because that "quietly broke every multi-membership case the product actually supports." Safety is server-side re-verification of the caller's own memberships, not environment restriction. If prior documentation said otherwise, that's stale; the code has moved past it.
@@ -233,7 +235,7 @@ The one deliberately-scoped, honestly-disclosed gap: **continuity/attention logi
 
 | Area | Current state | Staging requirement | Blocker? | Severity | Recommended fix |
 |---|---|---|---|---|---|
-| `/prototype/vector` pages have no environment-level gate | Reachable in Staging/Production if `SITE_ACCESS_CODE` unset | Confirm the password gate is actually configured, or add a real `isProduction()`/`isStaging()` code-level block matching `/api/prototype/vector`'s own pattern | **Yes, until verified or fixed** | **P0** | Smallest fix: mirror the API route's exact `isProduction()`/`isStaging()+site-gate` check into the page-level layout, so reachability doesn't depend solely on an operational secret |
+| `/prototype/vector` pages have no environment-level gate | **Resolved (STAGING-RC-0)** — `app/prototype/layout.tsx` calls `notFound()` unless `isDevelopment()` | — | **No — resolved** | — | Shipped as STAGING-RC-0; see commit noted in §17 |
 | Raw-`REPLIT_DEPLOYMENT` gates inconsistent with `isDevelopment()` on 5 surfaces (`demo/enter`, `dev-login`, `demo/reset`, `demo/overview`, `dev/login`) | Correct today only if Staging always sets `REPLIT_DEPLOYMENT` | Confirm Staging's deployment target actually sets `REPLIT_DEPLOYMENT`, or migrate these 5 call sites to `isDevelopment()` | **Conditional — yes if unconfirmed** | **P1** | Small, mechanical migration to the canonical helper once decided |
 | `DATABASE_URL` isolation between Staging and Production is entirely operational, unverified from code | Single connection string, no code-level same-DB guard | Explicit operator confirmation of distinct `DATABASE_URL` values | **Yes, until confirmed** | **P0** | Not a code fix — a configuration verification step before any Staging QA touches real data |
 | CFI V2 / School V2 unreachable in Staging | Development-only layout gate | A decision on whether Staging needs to QA these before the canonical cutover | **No** (Student V2 is the RC-1 scope; this is a later-phase decision) | **P1** | Widen the gate deliberately when ready, per §16's phased plan |
@@ -249,28 +251,21 @@ The one deliberately-scoped, honestly-disclosed gap: **continuity/attention logi
 
 ## 16. Recommended Staging plan
 
-**STAGING-RC-1 — Prove Student V2 in Staging conditions, canonical routes only**
-- **Goal:** confirm the already-canonical Student V2 product behaves correctly against Staging's own isolated database, with real auth, real recording (Deepgram configured), and no Development-only surfaces leaking through.
-- **Areas involved:** environment/secrets configuration only (§15's P0/P1 items) — `DATABASE_URL` isolation confirmed, `NEXT_PUBLIC_DEEPGRAM_API_KEY`/`DEEPGRAM_API_KEY` set, `RESEND_API_KEY`/`INVITE_EMAIL_FROM`/`APP_BASE_URL` set, `SITE_ACCESS_CODE` posture confirmed for `/prototype/vector`, Stripe test-mode keys configured.
+**STAGING-RC-1 — Operational environment verification + Staging publication + real-data lifecycle acceptance**
+- **Goal:** confirm the already-canonical Student V2 product behaves correctly against a genuinely published Staging deployment with its own isolated database, real auth, real recording (Deepgram configured), and no Development-only surfaces leaking through. Absorbs the original RC-1 configuration checklist plus the one remaining RC-2 verification item (the prototype gate itself shipped in STAGING-RC-0, so it's no longer part of this milestone).
+- **Areas involved:** environment/secrets configuration (§15's remaining P0/P1 items) — `DATABASE_URL` isolation confirmed, `NEXT_PUBLIC_DEEPGRAM_API_KEY`/`DEEPGRAM_API_KEY` set, `RESEND_API_KEY`/`INVITE_EMAIL_FROM`/`APP_BASE_URL` set, Stripe test-mode keys configured, and confirmation (or correction) of the raw-`REPLIT_DEPLOYMENT` vs. `isDevelopment()` inconsistency on the five demo/dev-login surfaces.
 - **What remains unchanged:** all product code; CFI/School V2 stay Development-only; canonical `/cfi/**`/`/admin/**` (V1) remain the only reachable CFI/School experience in Staging, exactly as in Production today.
-- **Browser acceptance required:** full Student debrief lifecycle (confirm → self-assess → handoff → instructor-assess → reveal → consent → real recording → real transcription → real analysis → review → results with real recap audio) against a real, non-demo Staging account; login/logout/session-expiry; the public `persona=pilot`/`cfi`/`school` demo entries still work and land on canonical routes.
+- **Browser acceptance required:** full Student debrief lifecycle (confirm → self-assess → handoff → instructor-assess → reveal → consent → real recording → real transcription → real analysis → review → results with real recap audio) against a real, non-demo Staging account; login/logout/session-expiry; the public `persona=pilot`/`cfi`/`school` demo entries still work and land on canonical routes; confirm `/prototype/vector/**` correctly 404s in the published Staging environment; confirm dev-only surfaces correctly 404 regardless of how Staging's deployment target sets its environment signals.
 - **Rollback boundary:** configuration-only change; rollback is reverting secrets, no code to revert.
 
-**STAGING-RC-2 — Close the P0 verification gaps found in this audit**
-- **Goal:** the `/prototype/vector` page-level gate fix (mirror the API route's own environment check), and confirmation (or correction) of the raw-`REPLIT_DEPLOYMENT` vs. `isDevelopment()` inconsistency on the five demo/dev-login surfaces.
-- **Areas involved:** `app/prototype/layout.tsx` (or a new guard), the five raw-`REPLIT_DEPLOYMENT` call sites if migration is chosen.
-- **What remains unchanged:** everything else; this is a narrow, targeted hardening pass.
-- **Browser acceptance required:** confirm `/prototype/vector/**` correctly 404s (or requires the site gate) in Staging; confirm dev-only surfaces correctly 404 regardless of how Staging's deployment target sets its environment signals.
-- **Rollback boundary:** small, isolated code diff; easy single-commit revert if anything regresses.
-
-**STAGING-RC-3 — Decide and execute the CFI/School V2 Staging exposure**
+**STAGING-RC-2 — Decide and execute the CFI/School V2 Staging exposure**
 - **Goal:** a deliberate decision on whether CFI V2 and School V2 need Staging QA before their own canonical cutover, and if so, widen their layout gates analogous to how Student's `/v2` gate already distinguishes `isStaging()` from `isProduction()` explicitly.
 - **Areas involved:** `app/cfi-v2/layout.tsx`, `app/school-v2/layout.tsx`, and `lib/demo/demo-redirect.ts` if the demo entry should also route to them outside Development.
 - **What remains unchanged:** canonical `/cfi/**`/`/admin/**` stay exactly as they are — this is additive reachability, not a cutover.
 - **Browser acceptance required:** full CFI V2 and School V2 walkthroughs against real Staging accounts, mirroring the original Development acceptance passes already completed.
 - **Rollback boundary:** single-line gate reverts per file if anything regresses.
 
-**Explicitly not proposed in this plan:** the canonical V1→V2 cutover itself for CFI/School (making `/cfi/**`/`/admin/**` redirect to or render V2). That is a materially larger, higher-stakes decision this audit recommends treating as its own separate milestone, sequenced after STAGING-RC-3 proves CFI V2/School V2 sound in Staging first.
+**Explicitly not proposed in this plan:** the canonical V1→V2 cutover itself for CFI/School (making `/cfi/**`/`/admin/**` redirect to or render V2). That is a materially larger, higher-stakes decision this audit recommends treating as its own separate milestone, sequenced after STAGING-RC-2 proves CFI V2/School V2 sound in Staging first.
 
 ---
 
@@ -281,11 +276,11 @@ The one deliberately-scoped, honestly-disclosed gap: **continuity/attention logi
 1. Confirm (with whoever manages Replit/Cloud Run deployment secrets) that Staging's `DATABASE_URL` is a genuinely distinct value from Production's, and that it points at a real, build-time-reachable Postgres instance.
 2. Set `NEXT_PUBLIC_DEEPGRAM_API_KEY` and `DEEPGRAM_API_KEY` on Staging's own secrets scope.
 3. Set `RESEND_API_KEY`, `INVITE_EMAIL_FROM`, and `APP_BASE_URL` (or confirm `REPLIT_DOMAINS`) on Staging's own secrets scope.
-4. Confirm `SITE_ACCESS_CODE`'s posture for Staging (set it, or accept `/prototype/vector` is publicly reachable there until STAGING-RC-2's code fix lands).
+4. Confirm (or migrate) the raw-`REPLIT_DEPLOYMENT` vs. `isDevelopment()` inconsistency on the five demo/dev-login surfaces named in §15.
 5. Configure a Stripe test-mode key pair and register a webhook endpoint pointed at Staging's own URL.
-6. Only after 1–5 are confirmed: run the full Student debrief-lifecycle browser acceptance pass against a real (non-demo) Staging account, and confirm the public demo entries (`persona=pilot`/`cfi`/`school`) still resolve to canonical routes as expected.
+6. Only after 1–5 are confirmed: run the full Student debrief-lifecycle browser acceptance pass against a real (non-demo) Staging account, confirm the public demo entries (`persona=pilot`/`cfi`/`school`) still resolve to canonical routes as expected, and confirm `/prototype/vector/**` 404s.
 
-No product code changes were made to produce this audit, consistent with the "documentation only" instruction; §15/§16's P0 code item (`/prototype/vector`'s page-level gate) is explicitly deferred to STAGING-RC-2, not bundled into this document.
+No product code changes were made to produce the original audit, consistent with the "documentation only" instruction. STAGING-RC-0 is the one exception: it closed the §15 P0 item on `/prototype/vector`'s page-level gate (`app/prototype/layout.tsx`, plus focused tests) ahead of this checklist, since that fix was small, isolated, and did not depend on any Staging secrets being configured first.
 
 ---
 
