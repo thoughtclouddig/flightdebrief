@@ -46,8 +46,15 @@ export interface CfiV2Today {
 /** Anything with no pending flight sorts after every active debrief action. */
 const NO_PENDING_FLIGHT_PRIORITY = 10;
 
-/** Below this many days since the last flight, staleness alone isn't worth flagging -- see needsYouNowFromRoster's no-pending-flight branch. */
-const STALE_DAYS_THRESHOLD = 21;
+/**
+ * Below this many days since the last flight, staleness alone isn't worth
+ * flagging -- see needsYouNowFromRoster's no-pending-flight branch. Exported
+ * so School V2's org-wide "what needs attention" view (which has no
+ * per-instructor roster of its own to run this same check against) can flag
+ * staleness using the identical threshold instead of picking a second,
+ * potentially-drifting number.
+ */
+export const STALE_DAYS_THRESHOLD = 21;
 
 export async function computeCfiV2Today(repo: Repository, viewer: Viewer): Promise<CfiV2Today> {
   const instructorId = viewer.user.id;
