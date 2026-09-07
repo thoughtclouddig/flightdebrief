@@ -861,8 +861,22 @@ export async function seedPilotDemo(expiresAt: Date): Promise<LiveDemoResult> {
 interface DemoRosterStudent {
   name: string;
   certificateType: "PRIVATE" | null;
-  /** How many of DEMO_HISTORY's entries (from the end) this student gets. */
+  /** How many of DEMO_HISTORY's entries this student gets -- see historyEndIndex for WHICH entries. */
   flights: number;
+  /**
+   * Which DEMO_HISTORY entry is this student's own most recent flight --
+   * undefined (the default, and every CFI_V2_STUDENTS entry) means the last
+   * entry in the array, DEMO_HISTORY.length - 1. School V2's roster sets
+   * this per student (see demoHistoryWindow) so 24 students don't all
+   * inherit the exact same "current" flight, and therefore the exact same
+   * current-skill-state, from the one shared narrative array -- see the
+   * SCHOOL-V2-2 correction report for why that undermined the point of a
+   * 24-student demo. Clamped automatically (via demoHistoryWindow) to stay
+   * in range for this student's own `flights` count, so an out-of-range
+   * value here can never crash a seed or silently produce a shorter
+   * history than requested.
+   */
+  historyEndIndex?: number;
   /** Index into the org's aircraft array. */
   aircraftIndex: number;
   /** Index into the org's instructor array -- the student's current, active, primary CFI. */
@@ -879,6 +893,29 @@ interface DemoRosterStudent {
   pendingGuidedDebrief?: { variant: number; daysAgo: number };
   /** An upcoming (not yet flown) reservation N hours from now. Ignored if `pendingGuidedDebrief` is set (that student's reservation is already implied by daysAgo, in the past). */
   scheduledInHours?: number;
+}
+
+/**
+ * Maps one student's (flights, historyEndIndex) onto an actual [start, end]
+ * range inside DEMO_HISTORY -- pure integer math, no DB, so the assignment
+ * logic is directly unit-testable (see live-demo-seed.test.ts) without
+ * exercising the rest of the seed transaction.
+ *
+ * `end` is clamped to historyLength - 1 (can't reach past the array) and to
+ * at least `wanted - 1` (can't request fewer entries than `flights` calls
+ * for, which would happen if a hand-picked historyEndIndex were too low for
+ * a student with a large `flights` count) -- so every caller-supplied value
+ * is safe by construction, never a source of an out-of-range slice.
+ */
+export function demoHistoryWindow(
+  flights: number,
+  historyEndIndex: number | undefined,
+  historyLength: number,
+): { start: number; end: number } {
+  const wanted = Math.min(flights, historyLength);
+  const requestedEnd = historyEndIndex ?? historyLength - 1;
+  const end = Math.max(wanted - 1, Math.min(requestedEnd, historyLength - 1));
+  return { start: end - wanted + 1, end };
 }
 
 interface DemoRosterConfig {
@@ -1034,16 +1071,20 @@ async function seedDemoRosterOrg(config: DemoRosterConfig): Promise<LiveDemoResu
     );
 
     // Each student gets their own depth of history (DemoRosterStudent.flights)
-    // and, if they have a handoff story, their early entries are attributed
-    // to the prior instructor and the rest to the current one -- entries are
-    // taken from the END of DEMO_HISTORY, same reasoning as before: that is
-    // where the narrative converges on one repeated skill, which is what
-    // Progress's/Insights' recurring-themes cards need before they populate
-    // at all.
+    // AND their own window into DEMO_HISTORY (historyEndIndex, defaulting to
+    // the last entry) -- and, if they have a handoff story, their early
+    // entries are attributed to the prior instructor and the rest to the
+    // current one. Every student used to take the exact same tail slice, so
+    // all 24 School V2 students inherited the identical "current" flight and
+    // therefore the identical current-skill-state from the one shared
+    // narrative array (see the SCHOOL-V2-2 correction report). demoHistoryWindow
+    // still lets a student converge on the array's repeated-skill ending when
+    // that's the intended story (Progress's/Insights' recurring-themes cards
+    // need SOME students there) -- it just isn't every student anymore.
     const historicalRecords: HistoricalFlightRecord[] = [];
     for (const s of students) {
-      const wanted = Math.min(s.flights, DEMO_HISTORY.length);
-      const slice = DEMO_HISTORY.slice(-wanted);
+      const { start, end } = demoHistoryWindow(s.flights, s.historyEndIndex, DEMO_HISTORY.length);
+      const slice = DEMO_HISTORY.slice(start, end + 1);
       const entries = slice.map((e, i) => {
         const usesPrior = s.priorInstructorIndex !== undefined && s.handoffAt !== undefined && i < s.handoffAt;
         const idx = usesPrior ? s.priorInstructorIndex! : s.instructorIndex;
@@ -1215,37 +1256,51 @@ export async function seedCfiV2Demo(expiresAt: Date): Promise<LiveDemoResult> {
  * CFI pair, so /admin/instructors and the recurring-theme "N instructors"
  * callouts have real variation to show instead of always naming the same
  * two people.
+ *
+ * historyEndIndex diversifies WHICH DEMO_HISTORY entry lands as each
+ * student's own most recent flight, so their current skill state varies
+ * too -- see the SCHOOL-V2-2 correction report for why leaving every
+ * student at the implicit default (the array's last entry) made 22-24 of
+ * 24 students all currently "need work" on the exact same one or two
+ * skills. Left unset (default: the shared final entry, DEMO_HISTORY.length
+ * - 1) for Marcus Webb, Ava Kimura, Casey Learner, and Amara Okafor -- the
+ * four students whose specific, already browser-proven stories
+ * (recurringWeakness's forced signal, or a handoff) don't need to move and
+ * shouldn't risk moving. 8 of 24 students still land on that shared ending
+ * (the four protected ones plus four unset here) -- a legitimate subset
+ * showing the same real pattern, not the whole roster.
  */
-const SCHOOL_V2_STUDENTS: DemoRosterStudent[] = [
+/** Exported for live-demo-seed.test.ts -- lets the roster-shape invariants (instructor distribution, handoff pairs, recurring-weakness students, historyEndIndex diversity) be verified directly without a live DB. */
+export const SCHOOL_V2_STUDENTS: DemoRosterStudent[] = [
   // Instructor 0 (Avery Chen) -- 5 students
-  { name: "Riley Student", certificateType: "PRIVATE", flights: 1, aircraftIndex: 0, instructorIndex: 0, mostRecentDaysAgo: 2, scheduledInHours: 2 },
-  { name: "Sam Trainee", certificateType: "PRIVATE", flights: 3, aircraftIndex: 1, instructorIndex: 0, mostRecentDaysAgo: 3, scheduledInHours: 5 },
+  { name: "Riley Student", certificateType: "PRIVATE", flights: 1, historyEndIndex: 0, aircraftIndex: 0, instructorIndex: 0, mostRecentDaysAgo: 2, scheduledInHours: 2 },
+  { name: "Sam Trainee", certificateType: "PRIVATE", flights: 3, historyEndIndex: 2, aircraftIndex: 1, instructorIndex: 0, mostRecentDaysAgo: 3, scheduledInHours: 5 },
   { name: "Priya Raman", certificateType: "PRIVATE", flights: 5, aircraftIndex: 0, instructorIndex: 0, mostRecentDaysAgo: 4 },
   { name: "Dana Osei", certificateType: "PRIVATE", flights: 8, aircraftIndex: 1, instructorIndex: 0, mostRecentDaysAgo: 5, pendingGuidedDebrief: { variant: 0, daysAgo: 0 } },
   { name: "Marcus Webb", certificateType: null, flights: 4, aircraftIndex: 2, instructorIndex: 0, mostRecentDaysAgo: 3, recurringWeakness: true },
   // Instructor 1 (Jamie Ortiz) -- 5 students
-  { name: "Ellie Hart", certificateType: null, flights: 6, aircraftIndex: 1, instructorIndex: 1, mostRecentDaysAgo: 4, scheduledInHours: 27 },
-  { name: "Tomas Ruiz", certificateType: "PRIVATE", flights: 3, aircraftIndex: 2, instructorIndex: 1, mostRecentDaysAgo: 6, pendingGuidedDebrief: { variant: 1, daysAgo: 1 } },
+  { name: "Ellie Hart", certificateType: null, flights: 6, historyEndIndex: 6, aircraftIndex: 1, instructorIndex: 1, mostRecentDaysAgo: 4, scheduledInHours: 27 },
+  { name: "Tomas Ruiz", certificateType: "PRIVATE", flights: 3, historyEndIndex: 4, aircraftIndex: 2, instructorIndex: 1, mostRecentDaysAgo: 6, pendingGuidedDebrief: { variant: 1, daysAgo: 1 } },
   { name: "Grace Nakamura", certificateType: "PRIVATE", flights: 7, aircraftIndex: 0, instructorIndex: 1, mostRecentDaysAgo: 6 },
-  { name: "Owen Patel", certificateType: null, flights: 2, aircraftIndex: 3, instructorIndex: 1, mostRecentDaysAgo: 12 },
+  { name: "Owen Patel", certificateType: null, flights: 2, historyEndIndex: 1, aircraftIndex: 3, instructorIndex: 1, mostRecentDaysAgo: 12 },
   { name: "Casey Learner", certificateType: null, flights: 6, aircraftIndex: 1, instructorIndex: 1, priorInstructorIndex: 2, handoffAt: 3, mostRecentDaysAgo: 4 },
   // Instructor 2 (Devon Brooks) -- 6 students
-  { name: "Nina Alvarez", certificateType: null, flights: 2, aircraftIndex: 2, instructorIndex: 2, mostRecentDaysAgo: 45 },
-  { name: "Kevin Brooks", certificateType: null, flights: 1, aircraftIndex: 3, instructorIndex: 2, mostRecentDaysAgo: 5 },
-  { name: "Harper Sims", certificateType: "PRIVATE", flights: 8, aircraftIndex: 0, instructorIndex: 2, mostRecentDaysAgo: 3, scheduledInHours: 30 },
-  { name: "Miguel Torres", certificateType: "PRIVATE", flights: 5, aircraftIndex: 1, instructorIndex: 2, mostRecentDaysAgo: 7 },
+  { name: "Nina Alvarez", certificateType: null, flights: 2, historyEndIndex: 2, aircraftIndex: 2, instructorIndex: 2, mostRecentDaysAgo: 45 },
+  { name: "Kevin Brooks", certificateType: null, flights: 1, historyEndIndex: 1, aircraftIndex: 3, instructorIndex: 2, mostRecentDaysAgo: 5 },
+  { name: "Harper Sims", certificateType: "PRIVATE", flights: 8, historyEndIndex: 7, aircraftIndex: 0, instructorIndex: 2, mostRecentDaysAgo: 3, scheduledInHours: 30 },
+  { name: "Miguel Torres", certificateType: "PRIVATE", flights: 5, historyEndIndex: 4, aircraftIndex: 1, instructorIndex: 2, mostRecentDaysAgo: 7 },
   { name: "Ava Kimura", certificateType: null, flights: 4, aircraftIndex: 2, instructorIndex: 2, priorInstructorIndex: 0, handoffAt: 2, mostRecentDaysAgo: 4, recurringWeakness: true },
   { name: "Lucas Ferreira", certificateType: "PRIVATE", flights: 3, aircraftIndex: 3, instructorIndex: 2, mostRecentDaysAgo: 9 },
   // Instructor 3 (Sasha Volkov) -- 4 students
-  { name: "Zoe Bennett", certificateType: "PRIVATE", flights: 7, aircraftIndex: 0, instructorIndex: 3, mostRecentDaysAgo: 5 },
-  { name: "Ibrahim Khan", certificateType: null, flights: 2, aircraftIndex: 1, instructorIndex: 3, mostRecentDaysAgo: 18 },
-  { name: "Chloe Martin", certificateType: "PRIVATE", flights: 6, aircraftIndex: 2, instructorIndex: 3, mostRecentDaysAgo: 4, scheduledInHours: 51 },
-  { name: "Diego Ramirez", certificateType: null, flights: 4, aircraftIndex: 3, instructorIndex: 3, mostRecentDaysAgo: 8 },
+  { name: "Zoe Bennett", certificateType: "PRIVATE", flights: 7, historyEndIndex: 6, aircraftIndex: 0, instructorIndex: 3, mostRecentDaysAgo: 5 },
+  { name: "Ibrahim Khan", certificateType: null, flights: 2, historyEndIndex: 4, aircraftIndex: 1, instructorIndex: 3, mostRecentDaysAgo: 18 },
+  { name: "Chloe Martin", certificateType: "PRIVATE", flights: 6, historyEndIndex: 5, aircraftIndex: 2, instructorIndex: 3, mostRecentDaysAgo: 4, scheduledInHours: 51 },
+  { name: "Diego Ramirez", certificateType: null, flights: 4, historyEndIndex: 5, aircraftIndex: 3, instructorIndex: 3, mostRecentDaysAgo: 8 },
   // Instructor 4 (Nora Fitzgerald) -- 4 students
-  { name: "Isla Murphy", certificateType: "PRIVATE", flights: 8, aircraftIndex: 0, instructorIndex: 4, mostRecentDaysAgo: 6 },
-  { name: "Theo Anderson", certificateType: null, flights: 3, aircraftIndex: 1, instructorIndex: 4, mostRecentDaysAgo: 10 },
+  { name: "Isla Murphy", certificateType: "PRIVATE", flights: 8, historyEndIndex: 7, aircraftIndex: 0, instructorIndex: 4, mostRecentDaysAgo: 6 },
+  { name: "Theo Anderson", certificateType: null, flights: 3, historyEndIndex: 3, aircraftIndex: 1, instructorIndex: 4, mostRecentDaysAgo: 10 },
   { name: "Amara Okafor", certificateType: "PRIVATE", flights: 5, aircraftIndex: 2, instructorIndex: 4, priorInstructorIndex: 3, handoffAt: 2, mostRecentDaysAgo: 5 },
-  { name: "Felix Chen", certificateType: null, flights: 2, aircraftIndex: 3, instructorIndex: 4, mostRecentDaysAgo: 22 },
+  { name: "Felix Chen", certificateType: null, flights: 2, historyEndIndex: 6, aircraftIndex: 3, instructorIndex: 4, mostRecentDaysAgo: 22 },
 ];
 
 export async function seedSchoolV2Demo(expiresAt: Date): Promise<LiveDemoResult> {
