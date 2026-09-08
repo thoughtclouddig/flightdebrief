@@ -63,18 +63,30 @@ export async function POST(
   const assessment = await repo.getOrCreateAssessment(id, role, auth.viewer.user.id, roleCheck.attribution);
   await repo.submitAssessment(assessment.id, body.overallReflection ?? null);
 
+  // Cards are generated once whatever the flight actually needs is in: both
+  // assessments for an instructional flight, or just the student's for a
+  // genuinely solo one (flight.instructor === null) -- there is no second
+  // assessment to wait for and never will be, so waiting on
+  // OTHER_ROLE[role] to be "submitted" would leave a solo debrief stuck with
+  // zero cards forever. See GuidedDebriefRecorder's own "No debrief cards
+  // yet" state, which is what that stuck state looked like from the flight.
   const otherAssessment = await repo.getAssessment(id, OTHER_ROLE[role]);
-  if (otherAssessment?.status === "submitted") {
+  const soloReady = role === "student" && flight.instructor === null;
+  if (otherAssessment?.status === "submitted" || soloReady) {
     const existingCards = await repo.listCards(id);
     if (existingCards.length === 0) {
-      await generateAndPersistCards(id, role === "student" ? assessment.id : otherAssessment.id, role === "instructor" ? assessment.id : otherAssessment.id);
+      await generateAndPersistCards(
+        id,
+        role === "student" ? assessment.id : otherAssessment!.id,
+        role === "instructor" ? assessment.id : (otherAssessment?.id ?? null),
+      );
     }
   }
 
   return NextResponse.json({ ok: true });
 }
 
-async function generateAndPersistCards(flightId: string, studentAssessmentId: string, instructorAssessmentId: string) {
+async function generateAndPersistCards(flightId: string, studentAssessmentId: string, instructorAssessmentId: string | null) {
   const repo = getRepository();
   const flight = await repo.getFlight(flightId);
   if (!flight) return;
@@ -82,7 +94,7 @@ async function generateAndPersistCards(flightId: string, studentAssessmentId: st
   const [flightTasks, studentRatingRows, instructorRatingRows, cardDefinitions, recentSkillHistory] = await Promise.all([
     repo.listFlightTasks(flightId),
     repo.listAssessmentRatings(studentAssessmentId),
-    repo.listAssessmentRatings(instructorAssessmentId),
+    instructorAssessmentId ? repo.listAssessmentRatings(instructorAssessmentId) : Promise.resolve([]),
     repo.listCardDefinitions(flight.organizationId ?? undefined),
     computeRecentSkillHistory(repo, flight.userId, flightId, flight.flightDate),
   ]);

@@ -27,14 +27,22 @@ export interface DebriefProgress {
 }
 
 /**
- * The same three-tier state machine app/(product)/flights/[id]/debrief/
- * page.tsx already walks to decide which screen *the current viewer* sees,
- * extracted so it can be computed for *other* students' flights too (the
- * student dashboard's "needs your input" card, the CFI's "Students Needing
+ * The same state machine app/(product)/flights/[id]/debrief/page.tsx
+ * already walks to decide which screen *the current viewer* sees, extracted
+ * so it can be computed for *other* students' flights too (the student
+ * dashboard's "needs your input" card, the CFI's "Students Needing
  * Attention" list) without duplicating that branching logic. Student always
  * goes first now (see the same rule enforced in the assessments submit
  * route and instructor-assessment/page.tsx), so a flight is never
  * "awaiting_instructor" until the student's own assessment is actually in.
+ *
+ * Driven by real per-flight state -- flight_tasks/debrief_assessments
+ * existing, and whether this flight has a real instructor attached -- never
+ * by the org's `defaultGuidanceMode`. Every real signup's org starts on
+ * 'freeform' unconditionally with no product UI to ever change it, so
+ * gating this on guidanceMode meant no real flight, solo or instructional,
+ * could ever reach a stage past "ready_to_debrief" -- see the STAGING-RC
+ * lifecycle correction this function was fixed alongside.
  */
 export async function computeDebriefProgress(
   repo: Repository,
@@ -55,14 +63,7 @@ export async function computeDebriefProgress(
     return { stage: "awaiting_finish", waitingOn: "instructor" };
   }
 
-  const org = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
-  const guidanceMode = org?.defaultGuidanceMode ?? "freeform";
-
-  // Freeform orgs have no task-picking/assessment step at all -- either
-  // party can just start recording once the flight exists.
-  if (guidanceMode === "freeform") {
-    return { stage: "ready_to_debrief", waitingOn: "instructor" };
-  }
+  const hasInstructor = flight.instructor !== null;
 
   const tasks = await repo.listFlightTasks(flight.id);
   if (tasks.length === 0) {
@@ -72,6 +73,12 @@ export async function computeDebriefProgress(
   const studentAssessment = await repo.getAssessment(flight.id, "student");
   if (studentAssessment?.status !== "submitted") {
     return { stage: "awaiting_student_assessment", waitingOn: "student" };
+  }
+
+  if (!hasInstructor) {
+    // Solo: the student's own assessment is the entire lifecycle. There is
+    // no instructor assessment to wait on, ever -- nothing here invents one.
+    return { stage: "ready_to_debrief", waitingOn: null };
   }
 
   const instructorAssessment = await repo.getAssessment(flight.id, "instructor");

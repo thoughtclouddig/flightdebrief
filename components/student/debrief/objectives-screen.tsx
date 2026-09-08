@@ -21,6 +21,7 @@ export function ObjectivesScreen({
   aircraftType,
   tailNumber,
   objectives,
+  hasInstructor,
   instructorFirstName,
   changeHref,
   startHref,
@@ -33,6 +34,15 @@ export function ObjectivesScreen({
   aircraftType: string;
   tailNumber: string;
   objectives: string[];
+  /**
+   * Whether this flight has a real instructor attached at all -- distinct
+   * from instructorFirstName below, which is only about whether a name could
+   * be derived. A flight can have an instructor with no resolvable first
+   * name; it can never have `hasInstructor: false` with a real CFI still
+   * waiting for a handoff. Solo flights (hasInstructor: false) get their own
+   * honest copy, never "hand the phone to your instructor."
+   */
+  hasInstructor: boolean;
   instructorFirstName: string | null;
   changeHref: string;
   startHref?: string;
@@ -68,9 +78,11 @@ export function ObjectivesScreen({
       </Section>
 
       <p className="text-[15px] leading-relaxed text-foreground-soft">
-        {instructorFirstName
-          ? `You'll rate each one first, then hand the phone to ${instructorFirstName}. Your answers stay hidden until you've both finished.`
-          : "You'll rate each one first, then hand the phone to your instructor. Your answers stay hidden until you've both finished."}
+        {hasInstructor
+          ? instructorFirstName
+            ? `You'll rate each one first, then hand the phone to ${instructorFirstName}. Your answers stay hidden until you've both finished.`
+            : "You'll rate each one first, then hand the phone to your instructor. Your answers stay hidden until you've both finished."
+          : "This is your own read of the flight -- there's no one else to hand the phone to."}
       </p>
 
       <PrimaryButton href={startHref} onClick={onStart}>

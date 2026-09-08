@@ -126,6 +126,7 @@ function Objectives({ addFlightHref, onStart }: { addFlightHref: string; onStart
       aircraftType={FLIGHT.aircraftType}
       tailNumber={FLIGHT.tailNumber}
       objectives={OBJECTIVES}
+      hasInstructor
       instructorFirstName={INSTRUCTOR.firstName}
       changeHref={addFlightHref}
       onStart={onStart}

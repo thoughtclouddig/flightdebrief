@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getAuthorizedFlight } from "@/lib/auth/access";
 import { getRepository } from "@/lib/data";
 import { AssessmentScreen } from "@/components/student/debrief/assessment-screen";
@@ -42,6 +42,14 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
         </Screen>
       );
     }
+    // Solo: there's nobody to hand the phone to. The main resolver is what
+    // actually gets the student into recording once their assessment is in
+    // (see app/(product)/flights/[id]/debrief/page.tsx's hasInstructor
+    // branch) -- redirecting there rather than duplicating that logic here.
+    if (!flight.instructor) {
+      redirect(`/flights/${id}/debrief`);
+    }
+
     const student = await repo.getUser(flight.userId);
     const studentFirstName = student?.name?.split(" ")[0] ?? "Your";
     return (
@@ -70,7 +78,9 @@ export default async function SelfAssessmentPage(props: PageProps<"/flights/[id]
       backHref="/debrief"
       kicker="Your assessment"
       title="How did this feel to you?"
-      helpText={`Your own read of the flight, before you see anything else. There is no wrong answer here -- it is what you thought.${cfi ? ` You'll rate each one first, then hand the phone to ${cfi}.` : ""}`}
+      helpText={`Your own read of the flight, before you see anything else. There is no wrong answer here -- it is what you thought.${
+        flight.instructor ? ` You'll rate each one first, then hand the phone to ${cfi ?? "your instructor"}.` : ""
+      }`}
     />
   );
 }

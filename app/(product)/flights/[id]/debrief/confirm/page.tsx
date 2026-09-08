@@ -71,6 +71,7 @@ export default async function ConfirmDebriefPage(props: PageProps<"/flights/[id]
         aircraftType={flight.aircraft.type}
         tailNumber={flight.aircraft.tailNumber}
         objectives={tasks.map((t) => t.label)}
+        hasInstructor={flight.instructor !== null}
         instructorFirstName={cfi}
         changeHref={`/flights/${id}/debrief/confirm/change`}
         startHref={`/flights/${id}/debrief/self-assessment`}

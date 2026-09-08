@@ -12,8 +12,25 @@ import type { FlightWithRelations } from "@/lib/types";
  * State-machine resolver: which step of the structured debrief flow a viewer
  * sees is entirely derived from flight_tasks/debrief_assessments/debrief_cards
  * existing (or not) for this flight -- no separate status table, so closing
- * the browser mid-session is safely resumable for free. Freeform-mode orgs
- * fall straight through to the unchanged DebriefRecorder.
+ * the browser mid-session is safely resumable for free.
+ *
+ * The lifecycle question -- does Student self-assessment, same-device CFI
+ * handoff, CFI assessment and perception-gap comparison happen before
+ * recording -- is answered by `hasInstructor` (whether this FLIGHT has a
+ * real instructor attached), never by the org's `defaultGuidanceMode`.
+ * Every real signup's org starts on 'freeform' unconditionally (see
+ * db/schema.sql's INSERTs) and there is no product UI that ever changes it
+ * -- gating the assessment lifecycle on it meant no real account could ever
+ * reach Student self-assessment, solo or instructional. Student assessment
+ * is foundational; CFI assessment is additive; neither is a `guidanceMode`
+ * concern.
+ *
+ * `guidanceMode` keeps exactly one legitimate job, unchanged: once the
+ * lifecycle above is satisfied, it picks which recorder captures the actual
+ * audio -- the simple free-talk DebriefRecorder for freeform, or the
+ * card-by-card GuidedDebriefRecorder for guided/light. That distinction is
+ * real (see components/debrief-recorder.tsx vs.
+ * components/debrief/guided-debrief-recorder.tsx) and is preserved as-is.
  */
 export default async function DebriefPage(props: PageProps<"/flights/[id]/debrief">) {
   const { id } = await props.params;
@@ -29,36 +46,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
   const org = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
   const guidanceMode = org?.defaultGuidanceMode ?? "freeform";
   const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
-
-  if (guidanceMode === "freeform") {
-    // No role branch existed here before either -- freeform mode has always
-    // let whoever gets to this page first (student or CFI) press record, so
-    // DebriefRecorder itself is untouched and shared exactly as it was;
-    // only the wrapper around it differs by viewer.
-    if (isInstructorViewer) {
-      return (
-        <div className="mx-auto flex max-w-xl flex-col gap-6">
-          <div className="text-center">
-            <p className="text-sm font-medium uppercase tracking-wide text-brand">Voice Debrief</p>
-            <h1 className="mt-1 text-2xl font-semibold text-foreground">{formatFlightContext(flight)}</h1>
-          </div>
-          <DebriefRecorder flightId={flight.id} solo={org?.kind === "individual"} />
-        </div>
-      );
-    }
-    return (
-      <Screen>
-        <div className="text-center">
-          <p className="text-[15px] text-foreground-faint">{formatFlightContext(flight)}</p>
-          <PageTitle>Debrief</PageTitle>
-        </div>
-        {/* "Solo" is org kind, not guidance mode: a school can run freeform
-            debriefs and still have a CFI in the room. Only an individual org
-            has genuinely nobody else. */}
-        <DebriefRecorder flightId={flight.id} solo={org?.kind === "individual"} />
-      </Screen>
-    );
-  }
+  const hasInstructor = flight.instructor !== null;
 
   const tasks = await repo.listFlightTasks(id);
   if (tasks.length === 0) {
@@ -68,20 +56,19 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
     // handles both "nothing picked yet, let the student choose" and its
     // original "tasks exist, review and start" cases). See
     // assertCanSetFlightTasks for the authorization this destination relies on.
+    // This is every real flight's entry point now, freeform included.
     redirect(`/flights/${id}/debrief/confirm`);
   }
 
   const [studentAssessment, instructorAssessment] = await Promise.all([
     repo.getAssessment(id, "student"),
-    repo.getAssessment(id, "instructor"),
+    hasInstructor ? repo.getAssessment(id, "instructor") : Promise.resolve(null),
   ]);
 
-  // Student always goes first now (see the same rule enforced server-side
-  // in the submit route and instructor-assessment/page.tsx) -- the
-  // instructor branch only redirects to their form once the student's is
-  // actually in. The student and instructor share one phone right after the
-  // flight, so the student's own read has to happen before the instructor's
-  // judgment can reach them.
+  // Student always goes first, on every real flight -- solo or instructional
+  // (see the same rule enforced server-side in the submit route and
+  // instructor-assessment/page.tsx). The student's own read has to happen
+  // before an instructor's judgment can reach them.
   if (!isInstructorViewer && studentAssessment?.status !== "submitted") {
     // Confirm the flight and objectives first -- self-assessment/page.tsx is
     // still the real rating form and destination once they tap "Start
@@ -102,25 +89,34 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
       />
     );
   }
-  if (isInstructorViewer && instructorAssessment?.status !== "submitted") {
-    redirect(`/flights/${id}/debrief/instructor-assessment`);
-  }
-  // Guest-handoff flights never have an isInstructorViewer -- the same
-  // student session continues on the same phone. self-assessment/page.tsx's
-  // "hand the phone over" screen is the real destination and CTA; landing
-  // there (rather than a dead-end message here) also covers a real CFI
-  // account still mid-rating on their own separate device.
-  if (!isInstructorViewer && instructorAssessment?.status !== "submitted") {
-    redirect(`/flights/${id}/debrief/self-assessment`);
+
+  // Everything below only applies when this flight actually has an
+  // instructor. A solo flight has nobody to hand off to, no second
+  // assessment, and no perception-gap comparison -- the student's own
+  // submission above is the entire lifecycle before recording, and nothing
+  // here invents a CFI to satisfy it.
+  if (hasInstructor) {
+    if (isInstructorViewer && instructorAssessment?.status !== "submitted") {
+      redirect(`/flights/${id}/debrief/instructor-assessment`);
+    }
+    // Guest-handoff flights never have an isInstructorViewer -- the same
+    // student session continues on the same phone. self-assessment/page.tsx's
+    // "hand the phone over" screen is the real destination and CTA; landing
+    // there (rather than a dead-end message here) also covers a real CFI
+    // account still mid-rating on their own separate device.
+    if (!isInstructorViewer && instructorAssessment?.status !== "submitted") {
+      redirect(`/flights/${id}/debrief/self-assessment`);
+    }
   }
 
-  // From here on, both assessments are in. Whoever is holding this device
-  // now continues into compare/recording -- either a verified CFI/admin
-  // account, or (the guest-handoff case) the flight's own student session,
+  // Whoever is holding this device now continues into compare/recording --
+  // a solo student (nobody else was ever going to), a real instructor/admin
+  // viewer, or (the guest-handoff case) the flight's own student session,
   // recognizable because their instructor assessment is attributed
   // "guest_handoff" rather than to a separate verified account. No one else
   // reaches this point at all (canAccessRecord already filtered the viewer).
-  const canContinueDebrief = isInstructorViewer || (instructorAssessment?.attribution === "guest_handoff" && viewer.user.id === flight.userId);
+  const canContinueDebrief =
+    !hasInstructor || isInstructorViewer || (instructorAssessment?.attribution === "guest_handoff" && viewer.user.id === flight.userId);
 
   // A recording already happened and got analyzed, but the debrief hasn't
   // been finished on /review yet -- send both roles there instead of back
@@ -132,19 +128,35 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
     redirect(`/flights/${id}/debrief/review`);
   }
 
-  const cards = await repo.listCards(id);
   if (!canContinueDebrief) {
     return <StudentWaitingMessage flight={flight} text="Both assessments are in -- your instructor is starting the debrief." />;
   }
 
   // Both assessments are in but nobody's come from the Reveal screen yet --
   // send them there first (its "Talk it through" button links back here
-  // with ?started=1 to skip this redirect on the way back).
-  const searchParams = await props.searchParams;
-  if (searchParams.started !== "1") {
-    redirect(`/flights/${id}/debrief/compare`);
+  // with ?started=1 to skip this redirect on the way back). Solo has no
+  // perception gap to reveal -- there is only ever the student's own
+  // assessment, so this screen is skipped entirely, never rendered empty.
+  if (hasInstructor) {
+    const searchParams = await props.searchParams;
+    if (searchParams.started !== "1") {
+      redirect(`/flights/${id}/debrief/compare`);
+    }
   }
 
+  if (guidanceMode === "freeform") {
+    return (
+      <div className="mx-auto flex max-w-xl flex-col gap-6">
+        <div className="text-center">
+          <p className="text-sm font-medium uppercase tracking-wide text-brand">Voice Debrief</p>
+          <h1 className="mt-1 text-2xl font-semibold text-foreground">{formatFlightContext(flight)}</h1>
+        </div>
+        <DebriefRecorder flightId={flight.id} solo={!hasInstructor} />
+      </div>
+    );
+  }
+
+  const cards = await repo.listCards(id);
   return (
     <Screen>
       <div className="text-center">
