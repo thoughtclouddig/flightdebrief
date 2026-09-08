@@ -39,6 +39,13 @@ export default async function StudentHomePage() {
     panel = {
       kind: "justFlew",
       flightContext: formatFlightContext(pendingFlight),
+      // pendingFlight.instructor === null is a FLIGHT-level solo signal --
+      // distinct from `solo` above (org.kind === "individual", an account
+      // that never has an instructor at all). A school-org student can still
+      // fly a genuinely solo flight (no CFI on this one), and once
+      // computeDebriefProgress reaches ready_to_debrief for that flight there
+      // is no second assessment and no instructor "starting the debrief" --
+      // the org-level `solo` short-circuit above doesn't cover this case.
       bodyText: solo
         ? "Capture what mattered while it's fresh."
         : pendingProgress.stage === "awaiting_tasks"
@@ -49,9 +56,11 @@ export default async function StudentHomePage() {
               ? "Your turn to rate it."
               : pendingProgress.stage === "awaiting_finish"
                 ? "Recorded -- your instructor still needs to finish reviewing it with you."
-                : pendingProgress.instructorAttribution === "guest_handoff"
-                  ? "Continue where you left off."
-                  : "Both assessments are in -- your instructor is starting the debrief.",
+                : pendingFlight.instructor === null
+                  ? "Ready to record your debrief."
+                  : pendingProgress.instructorAttribution === "guest_handoff"
+                    ? "Continue where you left off."
+                    : "Both assessments are in -- your instructor is starting the debrief.",
       primaryLabel: solo
         ? "Start debrief"
         : pendingProgress.stage === "awaiting_tasks"
@@ -60,12 +69,16 @@ export default async function StudentHomePage() {
             ? "Do it now"
             : pendingProgress.stage === "awaiting_instructor_assessment"
               ? "Hand off"
-              : pendingProgress.stage === "ready_to_debrief" && pendingProgress.instructorAttribution === "guest_handoff"
-                ? "Continue"
-                : "Open",
+              : pendingProgress.stage === "ready_to_debrief" && pendingFlight.instructor === null
+                ? "Start debrief"
+                : pendingProgress.stage === "ready_to_debrief" && pendingProgress.instructorAttribution === "guest_handoff"
+                  ? "Continue"
+                  : "Open",
       primaryHref: `/flights/${pendingFlight.id}/debrief`,
       secondaryHref: `/flights/${pendingFlight.id}`,
-      showAutoRefresh: !solo,
+      // Nothing to poll for on a flight-level-solo flight either -- it can
+      // never reach a stage where someone else still needs to act.
+      showAutoRefresh: !solo && pendingFlight.instructor !== null,
     };
   } else if (brief.upcomingReservation) {
     panel = {
