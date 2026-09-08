@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { getFlightDataProvider } from "@/lib/flight-data";
+import { getFlightDataProvider, isMockProviderFlightId } from "@/lib/flight-data";
 import { getRepository } from "@/lib/data";
 import { authorize } from "@/lib/auth/guard";
+import { isDevelopment } from "@/lib/env";
 
 interface CreateFlightBody {
   tailNumber: string;
@@ -67,12 +68,23 @@ export async function POST(request: Request) {
       ? await repo.getOrCreateInstructor(instructorName, viewer.organization.id)
       : null;
 
+    // A mock-provider id reaching this route outside Development can only be
+    // a stale/replayed request (search never returns one there since
+    // getFlightDataProvider() itself returns null) -- treat it as no lookup
+    // at all rather than let a field named fr24FlightId ever represent a
+    // mock result in a real environment.
+    const providerFlightId =
+      body.providerFlightId && (isDevelopment() || !isMockProviderFlightId(body.providerFlightId)) ? body.providerFlightId : null;
+
     let track = null;
-    if (body.providerFlightId) {
-      try {
-        track = await getFlightDataProvider().getFlightTrack(body.providerFlightId);
-      } catch (err) {
-        console.error("[Flights] failed to fetch track for", body.providerFlightId, err);
+    if (providerFlightId) {
+      const provider = getFlightDataProvider();
+      if (provider) {
+        try {
+          track = await provider.getFlightTrack(providerFlightId);
+        } catch (err) {
+          console.error("[Flights] failed to fetch track for", providerFlightId, err);
+        }
       }
     }
 
@@ -85,7 +97,7 @@ export async function POST(request: Request) {
       flightDate: body.flightDate,
       durationMinutes: body.durationMinutes,
       instructorId: instructor?.id ?? null,
-      fr24FlightId: body.providerFlightId ?? null,
+      fr24FlightId: providerFlightId,
       track,
     });
 
