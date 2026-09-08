@@ -1,5 +1,6 @@
 import { BookOpen, Mail, MessageSquare } from "lucide-react";
 import { BackLink, Card, PageTitle, QuietRow, Screen, Section } from "@/components/student/ui";
+import { SUPPORT_EMAIL } from "@/components/support-link";
 
 /**
  * Support -- shared between app/prototype/vector/profile/support/page.tsx
@@ -44,7 +45,7 @@ export function SupportScreen({ backHref, guideHref, trainHref }: { backHref: st
       <Section title={<>Still stuck</>}>
         <div className="flex flex-col">
           <QuietRow
-            href="mailto:support@getafterflight.com"
+            href={`mailto:${SUPPORT_EMAIL}`}
             label={
               <span className="flex items-center gap-3">
                 <Mail className="size-[18px] shrink-0 text-foreground-faint" aria-hidden />
@@ -75,8 +76,8 @@ export function SupportScreen({ backHref, guideHref, trainHref }: { backHref: st
       </Section>
 
       <p className="text-[13px] leading-relaxed text-foreground-faint">
-        Vector can answer questions about your flying. For anything about your account, billing or your school, email
-        us &mdash; a person reads it.
+        Vector can answer questions about your flying. For anything about your account, billing or your school, email{" "}
+        <span className="select-all text-foreground-soft">{SUPPORT_EMAIL}</span> &mdash; a person reads it.
       </p>
     </Screen>
   );

@@ -106,7 +106,7 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
       <Section title="Help">
         <div className="flex flex-col">
           <QuietRow
-            href="/how-it-works"
+            href="/profile/guide"
             label={
               <span className="flex items-center gap-3">
                 <BookOpen className="size-[18px] shrink-0 text-foreground-faint" aria-hidden />
@@ -115,7 +115,7 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
             }
           />
           <QuietRow
-            href="mailto:support@getafterflight.com"
+            href="/profile/support"
             label={
               <span className="flex items-center gap-3">
                 <LifeBuoy className="size-[18px] shrink-0 text-foreground-faint" aria-hidden />
@@ -125,6 +125,7 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
           />
           <QuietRow
             href="/data-handling"
+            external
             label={
               <span className="flex items-center gap-3">
                 <ShieldCheck className="size-[18px] shrink-0 text-foreground-faint" aria-hidden />

@@ -1,9 +1,9 @@
 "use client";
 
-import { Plane } from "lucide-react";
+import Link from "next/link";
+import { LifeBuoy, Plane } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
-import { SupportLink } from "@/components/support-link";
 import type { MembershipOption, Viewer } from "@/lib/viewer";
 
 /**
@@ -50,9 +50,14 @@ export function StudentHeaderActions({
       <div className="flex size-11 items-center justify-center">
         <ThemeToggle compact />
       </div>
-      <div className="flex size-11 items-center justify-center">
-        <SupportLink name={viewer.user.name} email={viewer.user.email} organizationName={viewer.organization.name} role={viewer.role} compact />
-      </div>
+      <Link
+        href="/profile/support"
+        aria-label="Support"
+        title="Support"
+        className="flex size-11 items-center justify-center rounded-full text-foreground-faint transition-colors hover:text-foreground"
+      >
+        <LifeBuoy className="size-[22px]" aria-hidden />
+      </Link>
       <div className="ml-1 flex size-11 items-center justify-center">
         <UserMenu viewer={viewer} memberships={memberships} compact />
       </div>
