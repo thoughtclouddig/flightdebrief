@@ -321,6 +321,7 @@ export function QuietRow({
   meta,
   onClick,
   disabled = false,
+  external = false,
 }: {
   href?: string;
   label: ReactNode;
@@ -328,6 +329,8 @@ export function QuietRow({
   onClick?: () => void;
   /** Known gap, not a dead end -- renders as a visibly non-interactive marker instead of a link. */
   disabled?: boolean;
+  /** Opens in a new tab (target="_blank") instead of navigating this one away -- for a row whose destination genuinely leaves the authenticated app (e.g. a public legal page), so the app is still right there in the original tab rather than requiring a back button to return to it. */
+  external?: boolean;
 }) {
   const inner = (
     <>
@@ -348,7 +351,7 @@ export function QuietRow({
     );
   }
   return href ? (
-    <Link href={href} className={cls}>
+    <Link href={href} className={cls} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
       {inner}
     </Link>
   ) : (
