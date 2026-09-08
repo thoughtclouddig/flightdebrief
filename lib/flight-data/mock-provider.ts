@@ -34,11 +34,17 @@ function candidatesForTail(tailNumber: string): FlightCandidate[] {
   return candidates;
 }
 
+/** Every id this provider hands out -- see candidatesForTail() below. */
+export function isMockProviderFlightId(providerFlightId: string): boolean {
+  return providerFlightId.startsWith("mock-");
+}
+
 /**
- * Deterministic, no-network flight data source used whenever FR24_API_KEY is
- * not configured. Produces believable candidate flights and pattern tracks so
- * the whole "search by tail number -> select -> view track" flow works
- * out of the box.
+ * Deterministic, no-network flight data source used in Development whenever
+ * FR24_API_KEY is not configured (see lib/flight-data/index.ts -- this
+ * provider is never selected in Staging/Production regardless of the key).
+ * Produces believable candidate flights and pattern tracks so the whole
+ * "search by tail number -> select -> view track" flow works out of the box.
  */
 export class MockFlightDataProvider implements FlightDataProvider {
   readonly name = "mock";

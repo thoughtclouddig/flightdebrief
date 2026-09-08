@@ -13,6 +13,12 @@ export async function GET(request: Request) {
   }
 
   const provider = getFlightDataProvider();
+  if (!provider) {
+    // No FR24_API_KEY outside Development: an honest empty result, the same
+    // shape the client already renders as "try entering the flight manually"
+    // -- never a fabricated candidate list. See lib/flight-data/index.ts.
+    return NextResponse.json({ provider: "unavailable", candidates: [] });
+  }
   try {
     const candidates = await provider.searchFlightsByTailNumber(tail);
     // Most recent flight first -- that's almost always the one matching today's lesson.
