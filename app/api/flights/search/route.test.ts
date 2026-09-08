@@ -54,4 +54,47 @@ describe("GET /api/flights/search", () => {
     expect(json.candidates).toHaveLength(1);
     expect(json.candidates[0].providerFlightId).toBe("fr24-123");
   });
+
+  it("a genuine zero-candidate FR24 response reports the real provider name, distinct from provider-unavailable", async () => {
+    const fakeProvider: FlightDataProvider = {
+      name: "fr24",
+      searchFlightsByTailNumber: vi.fn().mockResolvedValue([]),
+      getFlight: vi.fn(),
+      getFlightTrack: vi.fn(),
+    };
+    vi.mocked(getFlightDataProvider).mockReturnValue(fakeProvider);
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    const res = await GET(request("OXF6250"));
+    const json = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(json.candidates).toEqual([]);
+    expect(json.provider).toBe("fr24");
+    expect(json.provider).not.toBe("unavailable");
+    // Zero-result requests are logged, unlike before -- the server-side gap
+    // that made this case indistinguishable from provider-unavailable in
+    // Staging logs.
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("returned zero candidates for tail=OXF6250"));
+    logSpy.mockRestore();
+  });
+
+  it("a provider error surfaces as a 502 with no candidates -- never a silent empty or fabricated result", async () => {
+    const fakeProvider: FlightDataProvider = {
+      name: "fr24",
+      searchFlightsByTailNumber: vi.fn().mockRejectedValue(new Error("FR24 request failed (401): unauthorized")),
+      getFlight: vi.fn(),
+      getFlightTrack: vi.fn(),
+    };
+    vi.mocked(getFlightDataProvider).mockReturnValue(fakeProvider);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await GET(request("N728DE"));
+    const json = await res.json();
+
+    expect(res.status).toBe(502);
+    expect(json.candidates).toBeUndefined();
+    expect(json.error).toMatch(/unauthorized/i);
+    errorSpy.mockRestore();
+  });
 });

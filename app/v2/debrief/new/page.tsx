@@ -64,5 +64,5 @@ export default async function V2NewDebrief() {
     );
   }
 
-  return <GuidedDebriefDemo hubHref="/v2/debrief" addFlightHref="/v2/flights/new" resultHref="/v2/debrief/latest" />;
+  return <GuidedDebriefDemo hubHref="/v2/debrief" resultHref="/v2/debrief/latest" />;
 }

@@ -18,10 +18,7 @@ function formatHours(minutes: number): string {
  * Real objective confirmation under /v2 -- identical logic to
  * app/(product)/flights/[id]/debrief/confirm/page.tsx (same
  * ObjectivesScreen/ObjectiveConfirmationForm, same real flight_tasks), hrefs
- * repointed at /v2/**. "Change objectives" still points at the canonical
- * /flights/[id]/debrief/confirm/change -- not part of this milestone's
- * named vertical slice; a disclosed, temporary cross-tree link, not a
- * fixture leak (that screen is real, just not yet mirrored under /v2).
+ * repointed at /v2/**.
  */
 export default async function V2ConfirmDebriefPage(props: PageProps<"/v2/flights/[id]/debrief/confirm">) {
   const { id } = await props.params;
@@ -74,7 +71,6 @@ export default async function V2ConfirmDebriefPage(props: PageProps<"/v2/flights
         objectives={tasks.map((t) => t.label)}
         hasInstructor={flight.instructor !== null}
         instructorFirstName={cfi}
-        changeHref={`/v2/flights/${id}/debrief/confirm/change`}
         startHref={`/v2/flights/${id}/debrief/self-assessment`}
       />
     </Screen>

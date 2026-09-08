@@ -10,9 +10,16 @@ const BASE_PROPS = {
   aircraftType: "Cessna 172",
   tailNumber: "N123AB",
   objectives: ["Crosswind landings", "Short-field technique"],
-  changeHref: "/flights/flight-1/debrief/confirm/change",
   startHref: "/flights/flight-1/debrief/self-assessment",
 };
+
+describe("ObjectivesScreen — no dead-end Change action", () => {
+  it("never renders a Change link on the flight-identity card", () => {
+    const markup = renderToStaticMarkup(<ObjectivesScreen {...BASE_PROPS} hasInstructor={false} instructorFirstName={null} />);
+
+    expect(markup).not.toMatch(/Change/);
+  });
+});
 
 describe("ObjectivesScreen — solo vs instructional copy", () => {
   it("never mentions an instructor when hasInstructor is false, regardless of a stray instructorFirstName", () => {

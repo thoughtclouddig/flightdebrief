@@ -23,7 +23,6 @@ export function ObjectivesScreen({
   objectives,
   hasInstructor,
   instructorFirstName,
-  changeHref,
   startHref,
   onStart,
 }: {
@@ -44,7 +43,6 @@ export function ObjectivesScreen({
    */
   hasInstructor: boolean;
   instructorFirstName: string | null;
-  changeHref: string;
   startHref?: string;
   onStart?: () => void;
 }) {
@@ -61,9 +59,6 @@ export function ObjectivesScreen({
             {dateLabel} · {aircraftType} · {tailNumber}
           </span>
         </span>
-        <a href={changeHref} className="shrink-0 text-[15px] font-medium text-brand">
-          Change
-        </a>
       </Card>
 
       <Section title="Today's objectives">

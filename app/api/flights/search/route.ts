@@ -17,10 +17,18 @@ export async function GET(request: Request) {
     // No FR24_API_KEY outside Development: an honest empty result, the same
     // shape the client already renders as "try entering the flight manually"
     // -- never a fabricated candidate list. See lib/flight-data/index.ts.
+    // Logged per-request (not just once at boot in getFlightDataProvider) so
+    // this case is distinguishable in Staging logs from a real FR24 miss --
+    // both return `candidates: []`, but only one of them means the key is
+    // missing or the process resolved it before the key was set.
+    console.warn(`[flights/search] no flight data provider configured -- returning unavailable for tail=${tail}`);
     return NextResponse.json({ provider: "unavailable", candidates: [] });
   }
   try {
     const candidates = await provider.searchFlightsByTailNumber(tail);
+    if (candidates.length === 0) {
+      console.log(`[flights/search] ${provider.name} returned zero candidates for tail=${tail}`);
+    }
     // Most recent flight first -- that's almost always the one matching today's lesson.
     candidates.sort((a, b) => b.scheduledDeparture.localeCompare(a.scheduledDeparture));
     return NextResponse.json({ provider: provider.name, candidates });

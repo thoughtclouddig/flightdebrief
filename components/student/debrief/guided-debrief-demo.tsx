@@ -51,8 +51,7 @@ type Ratings = Partial<Record<string, PerformanceLevelCode>>;
  * (app/(product)/flights/[id]/debrief/**), which is server-resumable across
  * real routes with real persistence -- this is the single-page fixture
  * walkthrough the two demo namespaces share. `hubHref`/`resultHref` are the
- * only two seams; the "Change" link inside the Objectives step also varies
- * by caller (addFlightHref), everything else is identical.
+ * only two seams; everything else is identical.
  *
  * The old flow opened by asking who was giving feedback and then ran one of
  * two independent paths. That framing was the mistake: it treated the
@@ -70,11 +69,9 @@ type Ratings = Partial<Record<string, PerformanceLevelCode>>;
  */
 export function GuidedDebriefDemo({
   hubHref,
-  addFlightHref,
   resultHref,
 }: {
   hubHref: string;
-  addFlightHref: string;
   resultHref: string;
 }) {
   const [stage, setStage] = useState<Stage>("objectives");
@@ -85,7 +82,7 @@ export function GuidedDebriefDemo({
     <Screen>
       {stage === "recording" ? null : <BackLink href={hubHref}>Debriefs</BackLink>}
 
-      {stage === "objectives" ? <Objectives addFlightHref={addFlightHref} onStart={() => setStage("student")} /> : null}
+      {stage === "objectives" ? <Objectives onStart={() => setStage("student")} /> : null}
       {stage === "student" ? (
         <Assess
           rater="student"
@@ -116,7 +113,7 @@ export function GuidedDebriefDemo({
 
 /* ------------------------------------------------------ 1. objectives */
 
-function Objectives({ addFlightHref, onStart }: { addFlightHref: string; onStart: () => void }) {
+function Objectives({ onStart }: { onStart: () => void }) {
   return (
     <ObjectivesScreen
       lessonTitle={PENDING_FLIGHT.lesson}
@@ -128,7 +125,6 @@ function Objectives({ addFlightHref, onStart }: { addFlightHref: string; onStart
       objectives={OBJECTIVES}
       hasInstructor
       instructorFirstName={INSTRUCTOR.firstName}
-      changeHref={addFlightHref}
       onStart={onStart}
     />
   );
