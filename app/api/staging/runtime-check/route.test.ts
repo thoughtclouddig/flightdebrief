@@ -83,6 +83,28 @@ describe("GET /api/staging/runtime-check", () => {
     expect(json.deployment).toBe(true);
   });
 
+  it("reports fr24AliasTestKey true when AFTERFLIGHT_FR24_TEST_KEY is present", async () => {
+    vi.stubEnv("APP_ENV", "staging");
+    vi.stubEnv("AFTERFLIGHT_FR24_TEST_KEY", "test-alias-value");
+    vi.mocked(getFlightDataProvider).mockReturnValue(null);
+
+    const res = await GET();
+    const json = await res.json();
+
+    expect(json.environment.fr24AliasTestKey).toBe(true);
+  });
+
+  it("reports fr24AliasTestKey false when AFTERFLIGHT_FR24_TEST_KEY is absent", async () => {
+    vi.stubEnv("APP_ENV", "staging");
+    vi.stubEnv("AFTERFLIGHT_FR24_TEST_KEY", "");
+    vi.mocked(getFlightDataProvider).mockReturnValue(null);
+
+    const res = await GET();
+    const json = await res.json();
+
+    expect(json.environment.fr24AliasTestKey).toBe(false);
+  });
+
   it("never includes a secret value, length, or any field beyond the closed diagnostic shape", async () => {
     vi.stubEnv("APP_ENV", "staging");
     vi.stubEnv("DATABASE_URL", "postgres://user:pass@host:5432/db");
@@ -91,6 +113,7 @@ describe("GET /api/staging/runtime-check", () => {
     vi.stubEnv("DEEPGRAM_API_KEY", "deepgram-secret-key");
     vi.stubEnv("ANTHROPIC_API_KEY", "anthropic-secret-key");
     vi.stubEnv("RESEND_API_KEY", "resend-secret-key");
+    vi.stubEnv("AFTERFLIGHT_FR24_TEST_KEY", "alias-secret-value");
     vi.mocked(getFlightDataProvider).mockReturnValue(FR24_PROVIDER);
 
     const res = await GET();
@@ -103,6 +126,7 @@ describe("GET /api/staging/runtime-check", () => {
       "deepgram-secret-key",
       "anthropic-secret-key",
       "resend-secret-key",
+      "alias-secret-value",
       "host:5432",
     ]) {
       expect(text).not.toContain(secret);
@@ -111,7 +135,7 @@ describe("GET /api/staging/runtime-check", () => {
     const json = JSON.parse(text);
     expect(Object.keys(json).sort()).toEqual(["appEnv", "deployment", "environment", "flightDataProvider"]);
     expect(Object.keys(json.environment).sort()).toEqual(
-      ["anthropicApiKey", "databaseUrl", "deepgramApiKey", "fr24ApiKey", "resendApiKey", "sessionSecret"].sort(),
+      ["anthropicApiKey", "databaseUrl", "deepgramApiKey", "fr24AliasTestKey", "fr24ApiKey", "resendApiKey", "sessionSecret"].sort(),
     );
     for (const value of Object.values(json.environment)) {
       expect(typeof value).toBe("boolean");

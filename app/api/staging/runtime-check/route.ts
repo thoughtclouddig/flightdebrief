@@ -25,6 +25,17 @@ import { getFlightDataProvider } from "@/lib/flight-data";
  * Booleans and a closed set of string literals only in the response --
  * never a value, length, prefix, or anything else that could identify or
  * help brute-force a credential.
+ *
+ * `fr24AliasTestKey` is a one-off probe, not a permanent field: with
+ * FR24_API_KEY confirmed present and value-matched against Production in
+ * both the Staging shell and the deployment's own Secrets store, yet still
+ * reading false here, the remaining open question is whether the deployment
+ * secret *name* "FR24_API_KEY" specifically is the thing failing to inject
+ * -- as opposed to every secret, or something about this value. Reading
+ * `AFTERFLIGHT_FR24_TEST_KEY`, a name nothing else in this codebase uses,
+ * isolates that question: if a secret set under this different name reaches
+ * the process while FR24_API_KEY still doesn't, the name itself is
+ * implicated, not the deployment's secret-injection mechanism generally.
  */
 export async function GET() {
   if (!isStaging()) {
@@ -43,6 +54,7 @@ export async function GET() {
       deepgramApiKey: Boolean(process.env.DEEPGRAM_API_KEY),
       anthropicApiKey: Boolean(process.env.ANTHROPIC_API_KEY),
       resendApiKey: Boolean(process.env.RESEND_API_KEY),
+      fr24AliasTestKey: Boolean(process.env.AFTERFLIGHT_FR24_TEST_KEY),
     },
     flightDataProvider: provider?.name === "fr24" ? "fr24" : "unavailable",
   });
