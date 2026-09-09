@@ -30,5 +30,12 @@ export interface FinishedTranscription {
 
 export interface UseTranscription extends TranscriptionState {
   start: () => Promise<void>;
-  stop: () => FinishedTranscription;
+  /**
+   * Async, not a synchronous read of whatever's accumulated so far: a live
+   * provider (lib/transcription/use-deepgram-transcription.ts) needs to
+   * flush and wait for in-flight transcription before this can be trusted
+   * as the complete transcript -- the tail end of what the student just
+   * said is exactly what's still in-flight the moment they tap Finish.
+   */
+  stop: () => Promise<FinishedTranscription>;
 }

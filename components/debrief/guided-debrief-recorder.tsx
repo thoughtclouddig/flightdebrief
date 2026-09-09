@@ -133,8 +133,12 @@ export function GuidedDebriefRecorder({
     setPhase("analyzing");
     setError(null);
     const recordingStartedAt = new Date(Date.now() - transcription.elapsedSeconds * 1000).toISOString();
-    const { transcript, durationSeconds, words } = transcription.stop();
+    // Captured now, not after stop() resolves: stop() waits out a
+    // finalization grace period before returning (see use-deepgram-
+    // transcription.ts), which would otherwise push this timestamp ~1.5s
+    // past when the student actually stopped talking.
     const recordingEndedAt = new Date().toISOString();
+    const { transcript, durationSeconds, words } = await transcription.stop();
 
     try {
       const res = await fetch("/api/debrief/analyze", {

@@ -76,7 +76,10 @@ export function useMockTranscription(scriptedTranscript?: string): UseTranscript
     timers.current.push(amplitudeTimer);
   }, [script]);
 
-  const stop = useCallback((): FinishedTranscription => {
+  const stop = useCallback(async (): Promise<FinishedTranscription> => {
+    // No provider round-trip to wait for -- everything's already in refs,
+    // synchronously updated on every tick. Async only to match
+    // UseTranscription's shared interface with the live provider.
     clearTimers();
     const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt.current) / 1000));
     const finalTranscript = finalTranscriptRef.current || script;
