@@ -3,6 +3,7 @@ import { getFlightDataProvider, isMockProviderFlightId } from "@/lib/flight-data
 import { getRepository } from "@/lib/data";
 import { authorize } from "@/lib/auth/guard";
 import { isDevelopment } from "@/lib/env";
+import { nearestKnownAirport } from "@/lib/geo";
 
 interface CreateFlightBody {
   tailNumber: string;
@@ -31,8 +32,11 @@ export async function POST(request: Request) {
   if (!body.tailNumber || !body.flightDate || !body.durationMinutes) {
     return NextResponse.json({ error: "Missing required flight fields" }, { status: 400 });
   }
-  const departureAirport = body.departureAirport?.trim() || "UNKNOWN";
-  const arrivalAirport = body.arrivalAirport?.trim() || "UNKNOWN";
+  // Left un-finalized (not yet "UNKNOWN") until after the track fetch below --
+  // a real track can resolve one of these even when FR24's own summary
+  // couldn't (see nearestKnownAirport's doc comment).
+  const rawDepartureAirport = body.departureAirport?.trim() ?? "";
+  const rawArrivalAirport = body.arrivalAirport?.trim() ?? "";
 
   const repo = getRepository();
 
@@ -56,18 +60,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    const aircraft = await repo.getOrCreateAircraft({
-      tailNumber: body.tailNumber,
-      type: body.aircraftType ?? "Unknown",
-      homeAirport: departureAirport,
-      organizationId: viewer.organization.id,
-    });
-
-    const instructorName = loggedByInstructor ? viewer.user.name : body.instructorName?.trim();
-    const instructor = instructorName
-      ? await repo.getOrCreateInstructor(instructorName, viewer.organization.id)
-      : null;
-
     // A mock-provider id reaching this route outside Development can only be
     // a stale/replayed request (search never returns one there since
     // getFlightDataProvider() itself returns null) -- treat it as no lookup
@@ -88,12 +80,40 @@ export async function POST(request: Request) {
       }
     }
 
+    // Real telemetry, not a guess: only consulted when FR24's own summary
+    // left a side blank, and only ever names an airport the flight's actual
+    // first/last plotted position places it at (see nearestKnownAirport).
+    // Never fires for a genuinely distant/unknown position -- it falls
+    // through to the same honest "UNKNOWN" as before.
+    const departureAirport = (
+      rawDepartureAirport ||
+      (track?.length ? nearestKnownAirport(track[0].lat, track[0].lon) : null) ||
+      "UNKNOWN"
+    ).toUpperCase();
+    const arrivalAirport = (
+      rawArrivalAirport ||
+      (track?.length ? nearestKnownAirport(track[track.length - 1].lat, track[track.length - 1].lon) : null) ||
+      "UNKNOWN"
+    ).toUpperCase();
+
+    const aircraft = await repo.getOrCreateAircraft({
+      tailNumber: body.tailNumber,
+      type: body.aircraftType ?? "Unknown",
+      homeAirport: departureAirport,
+      organizationId: viewer.organization.id,
+    });
+
+    const instructorName = loggedByInstructor ? viewer.user.name : body.instructorName?.trim();
+    const instructor = instructorName
+      ? await repo.getOrCreateInstructor(instructorName, viewer.organization.id)
+      : null;
+
     const flight = await repo.createFlight({
       aircraftId: aircraft.id,
       organizationId: viewer.organization.id,
       studentId,
-      departureAirport: departureAirport.toUpperCase(),
-      arrivalAirport: arrivalAirport.toUpperCase(),
+      departureAirport,
+      arrivalAirport,
       flightDate: body.flightDate,
       durationMinutes: body.durationMinutes,
       instructorId: instructor?.id ?? null,

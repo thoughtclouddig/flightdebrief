@@ -8,6 +8,46 @@ export const AIRPORTS: Record<string, { name: string; lat: number; lon: number }
   KGYR: { name: "Phoenix Goodyear", lat: 33.4227, lon: -112.375 },
 };
 
+const EARTH_RADIUS_KM = 6371;
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * Resolves a genuine GPS/ADS-B position to one of AIRPORTS by proximity --
+ * grounded in real telemetry, not a guess. FR24 sometimes can't resolve a
+ * departure (or arrival) ICAO for a local-pattern flight that never
+ * distinctly left one field's vicinity, even when it supplies a perfectly
+ * real track for that same flight. Rather than accept an unresolved empty
+ * string or, worse, invent an airport with no evidence, this checks whether
+ * the flight's own first/last real plotted position sits essentially on top
+ * of one of the known local training airports.
+ *
+ * maxDistanceKm is deliberately tight -- well inside a normal traffic
+ * pattern's radius and far below the ~20km+ separation between any two
+ * entries in AIRPORTS -- so this only ever resolves a position that is
+ * unambiguously at one specific known field, never a guess between two, and
+ * returns null (leaving the caller's own honest "unknown" fallback intact)
+ * for any position that isn't a confident match.
+ */
+export function nearestKnownAirport(lat: number, lon: number, maxDistanceKm = 3): string | null {
+  let closest: string | null = null;
+  let closestDistanceKm = Infinity;
+  for (const [code, airport] of Object.entries(AIRPORTS)) {
+    const distanceKm = haversineKm(lat, lon, airport.lat, airport.lon);
+    if (distanceKm < closestDistanceKm) {
+      closestDistanceKm = distanceKm;
+      closest = code;
+    }
+  }
+  return closest !== null && closestDistanceKm <= maxDistanceKm ? closest : null;
+}
+
 function seededRandom(seed: number) {
   let s = seed % 2147483647;
   if (s <= 0) s += 2147483646;
