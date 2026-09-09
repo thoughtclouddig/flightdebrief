@@ -10,6 +10,7 @@ import { buildTranscriptSegments, type CardBoundary } from "@/lib/debrief-cards/
 import { computeAssessmentDifferences } from "@/lib/debrief-cards/differences";
 import { buildDebriefNarration } from "@/lib/debrief-narration";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
+import { assessTranscriptAdequacy } from "@/lib/transcript-adequacy";
 import { synthesizeSpeech } from "@/lib/deepgram-tts";
 import { toPilotSpeak } from "@/lib/narration";
 import { setCachedAudio, audioCacheKey } from "@/lib/audio-cache";
@@ -85,6 +86,29 @@ export async function POST(request: Request) {
     }
   }
   const guidanceMode = pending.guidanceMode;
+
+  // Runs before the analyzer is ever called -- on a fresh submission or a
+  // resumed pending transcript alike, so a previously-rejected recording
+  // can't slip through on retry just by resubmitting unchanged. The prompt
+  // in lib/ai/prompt.ts already asks the model not to invent claims from
+  // thin content; this is the backstop for when it doesn't comply. Nothing
+  // below this point runs -- no analyzeDebrief call, no TrainingItem/
+  // TrainingSignal rows, no TTS pre-warm -- and the pending transcript row
+  // is left untouched (deletePendingDebriefTranscript is never reached), so
+  // the student's recording and their already-submitted self-assessment
+  // ratings are both preserved for a retry.
+  const adequacy = assessTranscriptAdequacy(pending.transcript);
+  if (!adequacy.adequate) {
+    console.log(`[debrief-analyze] rejected transcript for flight=${flight.id} reason=${adequacy.reason}`);
+    return NextResponse.json(
+      {
+        error: "insufficient_content",
+        message:
+          "We didn't get enough detail from that recording to build a reliable debrief. Try again and talk through what went well, what felt difficult, and what you want to work on next.",
+      },
+      { status: 422 },
+    );
+  }
 
   const organization = flight.organizationId ? await repo.getOrganization(flight.organizationId) : null;
   if (organization && (await isBillingBlocked(repo, organization))) {
