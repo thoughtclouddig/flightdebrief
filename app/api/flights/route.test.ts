@@ -122,3 +122,160 @@ describe("POST /api/flights — provider provenance", () => {
     expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ fr24FlightId: null, track: null }));
   });
 });
+
+describe("POST /api/flights — airport resolution (the N728DE 'UNKNOWN -> KFFZ' regression)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(authorize).mockResolvedValue({ viewer });
+    vi.mocked(isDevelopment).mockReturnValue(false);
+  });
+
+  /** A real KFFZ position -- see lib/geo.ts's AIRPORTS. */
+  const KFFZ_POINT = { lat: 33.4634, lon: -111.728, timestamp: "2026-09-09T16:00:00.000Z" };
+  const FAR_FROM_ANY_KNOWN_AIRPORT = { lat: 33.4484, lon: -112.074, timestamp: "2026-09-09T16:05:00.000Z" };
+
+  function withProvider(track: { lat: number; lon: number; timestamp: string }[]) {
+    const provider: FlightDataProvider = {
+      name: "fr24",
+      searchFlightsByTailNumber: vi.fn(),
+      getFlight: vi.fn(),
+      getFlightTrack: vi.fn().mockResolvedValue(track),
+    };
+    vi.mocked(getFlightDataProvider).mockReturnValue(provider);
+  }
+
+  it("a valid provider-supplied KFFZ departure is persisted as-is, never overridden by track inference", async () => {
+    withProvider([KFFZ_POINT]);
+    const createFlight = vi.fn().mockResolvedValue({ id: "flight-1" });
+    vi.mocked(getRepository).mockReturnValue(fakeRepo(createFlight) as unknown as ReturnType<typeof getRepository>);
+
+    await POST(requestBody({ ...baseBody, departureAirport: "KFFZ", providerFlightId: "fr24-1" }));
+
+    expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ departureAirport: "KFFZ" }));
+  });
+
+  it("FR24 leaving departureAirport blank for a real local-pattern flight resolves from the real track's first point, not UNKNOWN", async () => {
+    // This is exactly the N728DE shape: FR24 resolved the arrival (KFFZ) but
+    // not the departure ICAO for a flight that never left the pattern --
+    // real track evidence places the first point right at KFFZ.
+    withProvider([KFFZ_POINT, KFFZ_POINT]);
+    const createFlight = vi.fn().mockResolvedValue({ id: "flight-1" });
+    vi.mocked(getRepository).mockReturnValue(fakeRepo(createFlight) as unknown as ReturnType<typeof getRepository>);
+
+    const res = await POST(
+      requestBody({ ...baseBody, departureAirport: "", arrivalAirport: "KFFZ", providerFlightId: "fr24-2" }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ departureAirport: "KFFZ", arrivalAirport: "KFFZ" }));
+  });
+
+  it("also resolves a blank arrival from the track's last point, symmetric with departure", async () => {
+    withProvider([KFFZ_POINT, KFFZ_POINT]);
+    const createFlight = vi.fn().mockResolvedValue({ id: "flight-1" });
+    vi.mocked(getRepository).mockReturnValue(fakeRepo(createFlight) as unknown as ReturnType<typeof getRepository>);
+
+    await POST(requestBody({ ...baseBody, departureAirport: "KFFZ", arrivalAirport: "", providerFlightId: "fr24-3" }));
+
+    expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ departureAirport: "KFFZ", arrivalAirport: "KFFZ" }));
+  });
+
+  it("never fabricates an airport when the track's position isn't actually near any known field -- stays honestly UNKNOWN", async () => {
+    withProvider([FAR_FROM_ANY_KNOWN_AIRPORT]);
+    const createFlight = vi.fn().mockResolvedValue({ id: "flight-1" });
+    vi.mocked(getRepository).mockReturnValue(fakeRepo(createFlight) as unknown as ReturnType<typeof getRepository>);
+
+    await POST(requestBody({ ...baseBody, departureAirport: "", arrivalAirport: "KCHD", providerFlightId: "fr24-4" }));
+
+    expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ departureAirport: "UNKNOWN" }));
+  });
+
+  it("stays UNKNOWN when no track is available at all (no provider configured), exactly as before this fix", async () => {
+    vi.mocked(getFlightDataProvider).mockReturnValue(null);
+    const createFlight = vi.fn().mockResolvedValue({ id: "flight-1" });
+    vi.mocked(getRepository).mockReturnValue(fakeRepo(createFlight) as unknown as ReturnType<typeof getRepository>);
+
+    await POST(requestBody({ ...baseBody, departureAirport: "", arrivalAirport: "", providerFlightId: "fr24-5" }));
+
+    expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ departureAirport: "UNKNOWN", arrivalAirport: "UNKNOWN" }));
+  });
+
+  it("manual entry with a genuinely blank departure (no providerFlightId, no track) still resolves to UNKNOWN, not a guess", async () => {
+    const createFlight = vi.fn().mockResolvedValue({ id: "flight-1" });
+    vi.mocked(getRepository).mockReturnValue(fakeRepo(createFlight) as unknown as ReturnType<typeof getRepository>);
+
+    await POST(requestBody({ ...baseBody, departureAirport: "" }));
+
+    expect(getFlightDataProvider).not.toHaveBeenCalled();
+    expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ departureAirport: "UNKNOWN" }));
+  });
+
+  it("the aircraft's homeAirport reflects the track-resolved departure, not the pre-resolution UNKNOWN placeholder", async () => {
+    withProvider([KFFZ_POINT]);
+    const getOrCreateAircraft = vi.fn().mockResolvedValue({ id: "aircraft-1" });
+    vi.mocked(getRepository).mockReturnValue({
+      getOrCreateAircraft,
+      getOrCreateInstructor: vi.fn(),
+      createFlight: vi.fn().mockResolvedValue({ id: "flight-1" }),
+    } as unknown as ReturnType<typeof getRepository>);
+
+    await POST(requestBody({ ...baseBody, departureAirport: "", providerFlightId: "fr24-6" }));
+
+    expect(getOrCreateAircraft).toHaveBeenCalledWith(expect.objectContaining({ homeAirport: "KFFZ" }));
+  });
+});
+
+describe("POST /api/flights — guest instructor vs. true Solo (instructorId semantics)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(authorize).mockResolvedValue({ viewer });
+    vi.mocked(isDevelopment).mockReturnValue(false);
+  });
+
+  function repoWithInstructor(instructor: { id: string } | null) {
+    const getOrCreateInstructor = vi.fn().mockResolvedValue(instructor);
+    const createFlight = vi.fn().mockResolvedValue({ id: "flight-1" });
+    vi.mocked(getRepository).mockReturnValue({
+      getOrCreateAircraft: vi.fn().mockResolvedValue({ id: "aircraft-1" }),
+      getOrCreateInstructor,
+      createFlight,
+    } as unknown as ReturnType<typeof getRepository>);
+    return { getOrCreateInstructor, createFlight };
+  }
+
+  it("an existing linked instructor's name still resolves to a non-null instructorId", async () => {
+    const { getOrCreateInstructor, createFlight } = repoWithInstructor({ id: "instructor-steve" });
+
+    await POST(requestBody({ ...baseBody, instructorName: "Steve Ceefi" }));
+
+    expect(getOrCreateInstructor).toHaveBeenCalledWith("Steve Ceefi", "org-1");
+    expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ instructorId: "instructor-steve" }));
+  });
+
+  it("a guest/unlinked instructor's free-text name (the 'Someone else' flow) reaches the same getOrCreateInstructor path and produces a non-null instructorId -- no account required", async () => {
+    const { getOrCreateInstructor, createFlight } = repoWithInstructor({ id: "instructor-guest" });
+
+    await POST(requestBody({ ...baseBody, instructorName: "John Smith" }));
+
+    expect(getOrCreateInstructor).toHaveBeenCalledWith("John Smith", "org-1");
+    expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ instructorId: "instructor-guest" }));
+  });
+
+  it("true Solo (no instructorName at all) never calls getOrCreateInstructor and persists a null instructorId", async () => {
+    const { getOrCreateInstructor, createFlight } = repoWithInstructor(null);
+
+    await POST(requestBody({ ...baseBody, instructorName: undefined }));
+
+    expect(getOrCreateInstructor).not.toHaveBeenCalled();
+    expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ instructorId: null }));
+  });
+
+  it("an empty-string instructorName (never submitted, not just omitted) is also treated as Solo, not a name to look up", async () => {
+    const { getOrCreateInstructor, createFlight } = repoWithInstructor(null);
+
+    await POST(requestBody({ ...baseBody, instructorName: "" }));
+
+    expect(getOrCreateInstructor).not.toHaveBeenCalled();
+    expect(createFlight).toHaveBeenCalledWith(expect.objectContaining({ instructorId: null }));
+  });
+});
