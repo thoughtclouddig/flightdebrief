@@ -51,6 +51,7 @@ export default async function ConfirmDebriefPage(props: PageProps<"/flights/[id]
           dateLabel={dateLabel}
           aircraftType={flight.aircraft.type}
           tailNumber={flight.aircraft.tailNumber}
+          hasInstructor={flight.instructor !== null}
           redirectTo={`/flights/${id}/debrief/confirm`}
         />
       </Screen>

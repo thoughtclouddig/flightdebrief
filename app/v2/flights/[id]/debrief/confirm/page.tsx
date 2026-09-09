@@ -49,6 +49,7 @@ export default async function V2ConfirmDebriefPage(props: PageProps<"/v2/flights
           dateLabel={dateLabel}
           aircraftType={flight.aircraft.type}
           tailNumber={flight.aircraft.tailNumber}
+          hasInstructor={flight.instructor !== null}
           redirectTo={`/v2/flights/${id}/debrief/confirm`}
         />
       </Screen>
