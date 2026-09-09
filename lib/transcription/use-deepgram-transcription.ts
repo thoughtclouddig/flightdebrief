@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import type { ListenLiveClient } from "@deepgram/sdk";
 import type { FinishedTranscription, TranscriptionState, TranscriptWord, UseTranscription } from "./types";
+import { mergeFinalAndInterim } from "./merge-transcript";
 
 // Amplitude below this reads as room noise, not speech (same 0-1 scale as
 // the waveform's own amplitude prop). Below it for SILENCE_WARNING_MS straight
@@ -13,13 +14,27 @@ const SILENCE_GRACE_SECONDS = 4;
 const SILENCE_WARNING_MS = 6000;
 
 /**
- * How long stop() waits, after asking Deepgram to flush, before reading
- * whatever's accumulated in finalChunksRef. Bounded and deterministic on
- * purpose -- long enough for a final Transcript event to make a normal
- * round trip over the socket, short enough that "Finish Debrief" doesn't
- * feel stuck. See stop()'s own comment for why this wait exists at all.
+ * Backstop only, not the primary wait. stop() first waits for Deepgram's own
+ * `from_finalize: true` flag on a Results message -- the SDK's documented,
+ * explicit signal that it has finished flushing everything it was holding in
+ * response to our finalize() call (see stop()'s own comment). This timeout
+ * only fires if that message never arrives at all (a dropped frame, a socket
+ * hiccup) so "Finish Debrief" can't hang forever. It used to be the *only*
+ * mechanism (a flat 1500ms sleep) -- that worked for a short debrief but
+ * silently dropped most of a long, low-pause one: a real ~2-minute Staging
+ * recording sat mostly as unfinalized interim text because nothing had
+ * triggered Deepgram's endpointing, and 1500ms was nowhere near enough time
+ * for finalize() to transcribe and return that whole backlog. Sized well
+ * above a normal round trip specifically so it stays a true worst case, not
+ * a second version of the same bug at a bigger number.
  */
-const FINALIZE_GRACE_MS = 1500;
+const FINALIZE_SIGNAL_TIMEOUT_MS = 6000;
+
+/** Counts only, never logs the words themselves -- see stop()'s diagnostic log. */
+function wordCount(text: string): number {
+  const trimmed = text.trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
+}
 
 /**
  * Live browser mic -> Deepgram streaming STT. Uses Deepgram's documented
@@ -46,8 +61,16 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
   const rafRef = useRef<number | null>(null);
   const startedAt = useRef<number>(0);
   const finalChunksRef = useRef<string[]>([]);
+  // Mirrors state.interimTranscript so stop() -- a useCallback that doesn't
+  // re-close over every render's state -- can read the current value instead
+  // of whatever was current when the hook first mounted.
+  const interimTranscriptRef = useRef("");
   const wordsRef = useRef<TranscriptWord[]>([]);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Resolved by the Transcript handler the moment a `from_finalize: true`
+  // message arrives, or by stop()'s own backstop timeout -- whichever comes
+  // first. Null whenever no finalize() call is currently awaiting a result.
+  const finalizeDeferredRef = useRef<{ resolve: () => void } | null>(null);
   // Tracks how long amplitude has stayed near-zero so the recorder can warn
   // the CFI mid-session -- e.g. the wrong input device is selected -- instead
   // of only finding out after submitting to an empty transcript.
@@ -64,7 +87,9 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
 
   const start = useCallback(async () => {
     finalChunksRef.current = [];
+    interimTranscriptRef.current = "";
     wordsRef.current = [];
+    finalizeDeferredRef.current = null;
     startedAt.current = Date.now();
     silentSinceRef.current = null;
     setState((s) => ({ ...s, status: "connecting", transcript: "", interimTranscript: "", error: null, lowAudioWarning: false }));
@@ -144,22 +169,34 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
       connection.on(LiveTranscriptionEvents.Transcript, (data) => {
         const alternative = data.channel?.alternatives?.[0];
         const text: string = alternative?.transcript ?? "";
-        if (!text) return;
-        if (data.is_final) {
-          finalChunksRef.current.push(text);
-          // Deepgram's streaming word timestamps are already offsets (seconds) from
-          // the start of the audio stream -- the same clock as `elapsedSeconds`.
-          for (const w of alternative?.words ?? []) {
-            wordsRef.current.push({
-              word: w.punctuated_word ?? w.word,
-              start: w.start,
-              end: w.end,
-              speaker: typeof w.speaker === "number" ? w.speaker : null,
-            });
+        if (text) {
+          if (data.is_final) {
+            finalChunksRef.current.push(text);
+            interimTranscriptRef.current = "";
+            // Deepgram's streaming word timestamps are already offsets (seconds) from
+            // the start of the audio stream -- the same clock as `elapsedSeconds`.
+            for (const w of alternative?.words ?? []) {
+              wordsRef.current.push({
+                word: w.punctuated_word ?? w.word,
+                start: w.start,
+                end: w.end,
+                speaker: typeof w.speaker === "number" ? w.speaker : null,
+              });
+            }
+            setState((s) => ({ ...s, transcript: finalChunksRef.current.join(" "), interimTranscript: "" }));
+          } else {
+            interimTranscriptRef.current = text;
+            setState((s) => ({ ...s, interimTranscript: text }));
           }
-          setState((s) => ({ ...s, transcript: finalChunksRef.current.join(" "), interimTranscript: "" }));
-        } else {
-          setState((s) => ({ ...s, interimTranscript: text }));
+        }
+        // Checked independent of `text`/`is_final` -- Deepgram can send a
+        // from_finalize acknowledgment with no new transcript at all (e.g.
+        // nothing was pending), and it can arrive on the same message as the
+        // last is_final chunk of a flush. Either way, this is the explicit
+        // "finalize() is done" signal stop() is waiting for.
+        if (data.from_finalize) {
+          finalizeDeferredRef.current?.resolve();
+          finalizeDeferredRef.current = null;
         }
       });
 
@@ -179,9 +216,10 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
 
   const stop = useCallback(async (): Promise<FinishedTranscription> => {
     // Duration is measured now, at the moment the student actually stopped
-    // talking and tapped Finish -- not after the grace period below, which
-    // would otherwise pad every recording's reported length.
+    // talking and tapped Finish -- not after finalization below, which would
+    // otherwise pad every recording's reported length.
     const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt.current) / 1000));
+    const liveWordCount = wordCount(mergeFinalAndInterim(finalChunksRef.current.join(" "), interimTranscriptRef.current));
 
     // The words spoken right before Finish is tapped are exactly the ones
     // most likely to still be in flight: MediaRecorder buffers audio in
@@ -194,24 +232,57 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
     // buffer immediately; connection.finalize() is the SDK's own documented
     // mechanism for "flush whatever you're holding and send final results
     // for it," not a bespoke workaround. Both are fire-and-forget on their
-    // own, which is why this still waits: the grace period below is what
-    // actually gives those trailing Transcript events (handled above, which
-    // push into finalChunksRef) time to arrive before this function reads
-    // that ref.
+    // own, which is why this still waits -- for Deepgram's own `from_finalize`
+    // acknowledgment where possible, falling back to FINALIZE_SIGNAL_TIMEOUT_MS
+    // only if that acknowledgment never arrives (see that constant's comment
+    // for why a blind fixed wait alone isn't enough for a long recording).
+    let signalReceived = false;
     try {
       if (recorderRef.current && recorderRef.current.state !== "inactive") {
         recorderRef.current.requestData();
       }
-      connectionRef.current?.finalize();
+      if (connectionRef.current) {
+        signalReceived = await new Promise<boolean>((resolve) => {
+          const timeout = setTimeout(() => {
+            finalizeDeferredRef.current = null;
+            resolve(false);
+          }, FINALIZE_SIGNAL_TIMEOUT_MS);
+          finalizeDeferredRef.current = {
+            resolve: () => {
+              clearTimeout(timeout);
+              resolve(true);
+            },
+          };
+          connectionRef.current?.finalize();
+        });
+      }
     } catch (err) {
       console.error("[Deepgram] finalize before stop failed:", err);
     }
-    await new Promise((resolve) => setTimeout(resolve, FINALIZE_GRACE_MS));
 
-    const transcript = finalChunksRef.current.join(" ");
+    // Whatever's left in interimTranscriptRef at this point is, by
+    // construction, always the tail *after* the last committed final chunk --
+    // every final Transcript event clears it in the same tick (see the
+    // handler above) -- so it never overlaps a final chunk from an earlier
+    // utterance. It can still repeat a short run of words at the seam
+    // between the two (Deepgram revising a final segment's last word or two
+    // as more audio arrives); mergeFinalAndInterim accounts for that instead
+    // of concatenating blindly.
+    const transcript = mergeFinalAndInterim(finalChunksRef.current.join(" "), interimTranscriptRef.current);
+    const finalWordCount = wordCount(transcript);
+    interimTranscriptRef.current = "";
     const words = wordsRef.current;
     teardown();
     setState((s) => ({ ...s, status: "stopped", amplitude: 0, interimTranscript: "", transcript }));
+
+    // Counts only, never transcript content -- lets a future Staging report
+    // ("live transcript looked complete, but the debrief got rejected") be
+    // distinguished from a genuinely thin recording without reading anyone's
+    // actual words.
+    console.info(
+      `[Deepgram] stop(): finalize ${signalReceived ? "confirmed" : "timed out"}, live~${liveWordCount} words, returned ${finalWordCount} words`,
+    );
+
     return { transcript, durationSeconds, words };
   }, [teardown]);
 
