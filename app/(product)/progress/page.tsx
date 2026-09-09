@@ -1,6 +1,5 @@
-import { AlertCircle, Repeat, TrendingUp } from "lucide-react";
+import { Repeat, TrendingUp } from "lucide-react";
 import { AcsBadge } from "@/components/acs-badge";
-import { TrainingItemChecklist } from "@/components/training-item-checklist";
 import { Section } from "@/components/student/ui";
 import { StudentProgress } from "@/components/student/student-progress";
 import { getRepository } from "@/lib/data";
@@ -19,13 +18,23 @@ export const dynamic = "force-dynamic";
  * computation itself lives in lib/student/progress-production-adapter.ts,
  * shared verbatim with app/v2/progress/page.tsx's own real-data branch.
  *
- * "Action items" / "Themes" / the free-usage banner / stat tiles have no
- * prototype equivalent -- they're real, already-shipped production
- * capabilities (open training items, recurring cross-instructor themes,
- * billing-gate usage) with nothing to migrate FROM, so they ride along in
- * the shared component's `extra` slot rather than being deleted to match
- * the fixture's simpler screen. Computed here, independently of the shared
- * adapter, since none of it is part of the approved V2 Skills/ACS view.
+ * "Themes" / the free-usage banner have no prototype equivalent -- they're
+ * real, already-shipped production capabilities (recurring cross-instructor
+ * themes, billing-gate usage) with nothing to migrate FROM, so they ride
+ * along in the shared component's `extra` slot rather than being deleted to
+ * match the fixture's simpler screen. Computed here, independently of the
+ * shared adapter, since none of it is part of the approved V2 Skills/ACS
+ * view.
+ *
+ * Action Items deliberately does NOT live here. It was carried over
+ * verbatim from the pre-V2 production Progress page during the V2 cutover
+ * (see git history around the V2 progress migration) rather than being
+ * designed for this screen -- Progress answers "what am I getting better
+ * at, and how close am I to proficiency," and open training items belong
+ * to Next Flight ("what should I focus on before my next lesson") and
+ * Train, both of which already surface them. Rendering the same open
+ * items a third time here duplicated Next Flight's "Before you fly"
+ * checklist verbatim and pushed Skills/ACS below the fold.
  */
 export default async function ProgressPage() {
   const repo = getRepository();
@@ -34,10 +43,9 @@ export default async function ProgressPage() {
   const studentId = viewer.user.id;
 
   const isSchoolOrg = viewer.organization.kind === "school";
-  const [{ skills, acs }, flights, trainingItems, brief, billingScopedFlights] = await Promise.all([
+  const [{ skills, acs }, flights, brief, billingScopedFlights] = await Promise.all([
     buildProductionProgressProps(repo, viewer, (skill) => `/progress/${skill}`),
     repo.listFlights({ studentId }),
-    repo.listTrainingItems(),
     computeNextLessonBrief(repo, studentId),
     isSchoolOrg ? repo.listFlights({ organizationId: viewer.organization.id }) : Promise.resolve(null),
   ]);
@@ -49,10 +57,6 @@ export default async function ProgressPage() {
   const certificateType = (await repo.listMembershipsForUser(studentId)).find(
     (m) => m.organizationId === viewer.organization.id,
   )?.certificateType ?? null;
-  const flightIds = new Set(flights.map((f) => f.id));
-  const openItems = trainingItems.filter((t) => flightIds.has(t.flightId) && !t.done && t.visibility === "shared");
-  const keepWorkingOn = openItems.filter((t) => t.category === "keep_working_on");
-  const beforeFlight = openItems.filter((t) => t.category === "before_next_flight");
   const freeUsage = isSchoolOrg
     ? computeSchoolFreeDebriefs(billingScopedFlights ?? [])
     : computeStudentFreeFlights(flights);
@@ -76,43 +80,6 @@ export default async function ProgressPage() {
                 : `${freeUsage.used} of ${freeUsage.cap} free ${isSchoolOrg ? "debriefs" : "flights"} used`}
             </p>
           ) : null}
-
-          <Section title="Action items">
-            {keepWorkingOn.length > 0 || beforeFlight.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                {keepWorkingOn.length > 0 ? (
-                  <div>
-                    <p className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.06em] text-foreground-faint">
-                      <AlertCircle className="size-3.5" aria-hidden />
-                      Ongoing ({keepWorkingOn.length})
-                    </p>
-                    <p className="mt-1 text-[15px] text-foreground-soft">
-                      {solo
-                        ? "Skills that came out of your own debriefs."
-                        : "Skills your instructor called out across debriefs."}{" "}
-                      These clear on their own once a later flight shows you&rsquo;ve got it -- or check one off
-                      yourself if you feel ready.
-                    </p>
-                    <div className="mt-2">
-                      <TrainingItemChecklist items={keepWorkingOn} />
-                    </div>
-                  </div>
-                ) : null}
-                {beforeFlight.length > 0 ? (
-                  <div>
-                    <p className="text-[13px] font-semibold uppercase tracking-[0.06em] text-foreground-faint">
-                      Before your next flight ({beforeFlight.length})
-                    </p>
-                    <div className="mt-2">
-                      <TrainingItemChecklist items={beforeFlight} />
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <p className="py-6 text-center text-[15px] text-foreground-faint">Nothing open right now.</p>
-            )}
-          </Section>
 
           <Section title="Themes">
             {brief.focusAreas.length > 0 ? (

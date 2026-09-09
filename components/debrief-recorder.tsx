@@ -10,7 +10,41 @@ import { useTranscription } from "@/lib/transcription";
 import { trackEvent } from "@/lib/marketing/analytics";
 import { cn } from "@/lib/utils";
 
-export function DebriefRecorder({ flightId, solo = false }: { flightId: string; solo?: boolean }) {
+/**
+ * Real, persisted flight_tasks selected before the assessment step (see
+ * app/(product)/flights/[id]/debrief/page.tsx) -- a memory aid only, never a
+ * questionnaire. No checkbox/completion state exists here on purpose: the
+ * approved product is "use these as a reminder," not "cover every one."
+ */
+function FlightObjectives({ taskLabels }: { taskLabels: string[] }) {
+  if (taskLabels.length === 0) return null;
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-slate-900/40">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Flight Objectives</p>
+      <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+        Use these as a reminder. You don&rsquo;t need to cover them in order.
+      </p>
+      <ul className="mt-2.5 flex flex-col gap-1.5">
+        {taskLabels.map((label) => (
+          <li key={label} className="text-sm text-slate-600 dark:text-slate-300">
+            {label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function DebriefRecorder({
+  flightId,
+  solo = false,
+  taskLabels = [],
+}: {
+  flightId: string;
+  solo?: boolean;
+  /** The maneuvers/tasks logged for this flight -- surfaced as a reminder during recording. */
+  taskLabels?: string[];
+}) {
   const router = useRouter();
   const transcription = useTranscription();
   const [phase, setPhase] = useState<"consent" | "ready" | "recording" | "analyzing">("consent");
@@ -69,9 +103,9 @@ export function DebriefRecorder({ flightId, solo = false }: { flightId: string; 
     return (
       <div className="flex flex-col items-center gap-6 py-10 text-center">
         <p className="max-w-sm text-slate-500 dark:text-slate-400">
-          {solo
-            ? "Talk through the flight the way you'd replay it in your head on the drive home. No questionnaire -- just start talking."
-            : "Talk through the flight naturally, like you would with your instructor. No questionnaire -- just start talking."}
+          {taskLabels.length > 0
+            ? "Talk through the flight in your own words. What went well? What needs work? Use your flight objectives below if you need a reminder."
+            : "Talk through the flight in your own words. What went well? What needs work?"}
         </p>
         <button
           onClick={handleStart}
@@ -86,6 +120,9 @@ export function DebriefRecorder({ flightId, solo = false }: { flightId: string; 
           </p>
         ) : null}
         {submitError ? <p className="text-sm text-red-600">{submitError}</p> : null}
+        <div className="w-full text-left">
+          <FlightObjectives taskLabels={taskLabels} />
+        </div>
       </div>
     );
   }
@@ -151,6 +188,8 @@ export function DebriefRecorder({ flightId, solo = false }: { flightId: string; 
           <p className="text-slate-400">Listening…</p>
         )}
       </div>
+
+      <FlightObjectives taskLabels={taskLabels} />
 
       {submitError ? <p className="text-center text-sm text-red-600">{submitError}</p> : null}
     </div>

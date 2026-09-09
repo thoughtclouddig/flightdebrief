@@ -151,7 +151,7 @@ export default async function DebriefPage(props: PageProps<"/flights/[id]/debrie
           <p className="text-sm font-medium uppercase tracking-wide text-brand">Voice Debrief</p>
           <h1 className="mt-1 text-2xl font-semibold text-foreground">{formatFlightContext(flight)}</h1>
         </div>
-        <DebriefRecorder flightId={flight.id} solo={!hasInstructor} />
+        <DebriefRecorder flightId={flight.id} solo={!hasInstructor} taskLabels={tasks.map((t) => t.label)} />
       </div>
     );
   }

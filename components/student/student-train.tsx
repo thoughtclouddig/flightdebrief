@@ -48,7 +48,8 @@ export interface StudentTrainRecommended {
   contextLine: string;
   /** "You called this X. {instructor} called it Y." -- only meaningful when a real contested-objective comparison exists. Prototype-only for now; production has no wiring for this comparison yet. */
   comparisonLine?: ReactNode | null;
-  evidence: { label: string; text: string };
+  /** Null when no real quote backs this recommendation -- omit the block entirely rather than render one with empty text. */
+  evidence: { label: string; text: string } | null;
 }
 
 export interface StudentTrainAction {
@@ -131,11 +132,13 @@ export function StudentTrain({ recommended, emptyMessage, vectorInfo, primaryAct
             <p className="mt-4 text-[15px] leading-relaxed text-panel-foreground-soft">{recommended.comparisonLine}</p>
           ) : null}
 
-          {/* The reason, in the instructor's own words. A recommendation
-              without its evidence is just a suggestion. */}
-          <div className="mt-5">
-            <Evidence label={recommended.evidence.label} tone="instructor" text={recommended.evidence.text} onPanel />
-          </div>
+          {/* The reason, in the instructor's own words -- omitted when there
+              isn't a real quote to show rather than rendered empty. */}
+          {recommended.evidence ? (
+            <div className="mt-5">
+              <Evidence label={recommended.evidence.label} tone="instructor" text={recommended.evidence.text} onPanel />
+            </div>
+          ) : null}
 
           {primaryAction || (secondaryActions && secondaryActions.length > 0) ? (
             <div className="mt-6 flex flex-col gap-2.5">

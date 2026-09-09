@@ -1,4 +1,5 @@
 import type { StudentTrainAction, StudentTrainProps, StudentTrainRecommended, StudentTrainSkillRow } from "@/components/student/student-train";
+import { RadioPracticeCard, type RadioCardItem } from "@/components/radio-practice-card";
 import { acsAreaForSkill } from "@/lib/acs";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
@@ -11,7 +12,12 @@ import { allTrainingSkills } from "@/lib/topics";
 import { performanceLevelLabelFor } from "@/lib/performance-levels";
 import { deriveLessonFocus } from "@/lib/lesson-focus";
 import { formatFlightDate } from "@/lib/utils";
+import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import type { SkillProgressionStatus } from "@/lib/types";
+
+function radioScenarioTitle(scenarioId: string): string {
+  return RADIO_PRACTICE_SCENARIOS.find((s) => s.id === scenarioId)?.title ?? "Radio call practice";
+}
 
 const STATUS_RANK: Record<SkillProgressionStatus, number> = {
   "Needs Coaching": 0,
@@ -39,10 +45,11 @@ export async function buildProductionTrainProps(
 ): Promise<StudentTrainProps> {
   const studentId = viewer.user.id;
 
-  const [brief, signals, memberships] = await Promise.all([
+  const [brief, signals, memberships, radioAssignments] = await Promise.all([
     computeNextLessonBrief(repo, studentId),
     repo.listTrainingSignals({ studentId }),
     repo.listMembershipsForUser(studentId),
+    repo.listRadioPracticeAssignments(studentId),
   ]);
   const certificateType =
     memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
@@ -67,6 +74,12 @@ export async function buildProductionTrainProps(
   const theme = brief.recurringThemes[0] ?? null;
   const latestLesson = theme?.lessons[theme.lessons.length - 1] ?? null;
   const weakest = [...open].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status])[0] ?? null;
+  // Only reachable when neither a contested objective nor a recurring theme
+  // exists to explain the recommendation -- the weakest-open-skill fallback.
+  // Its own supporting quote, when one exists, is the actual TrainingSignal
+  // statement that drove that skill's status (see SkillProgression's own
+  // latestSignalId doc comment), not a placeholder.
+  const weakestSignal = weakest ? (signals.find((s) => s.id === weakest.latestSignalId) ?? null) : null;
   const recommendedSkill = contestedProgression ?? (theme ? (progressions.find((p) => p.skill === theme.skill) ?? null) : weakest);
   const recommendedLabel = contested?.taskLabel ?? theme?.theme ?? recommendedSkill?.label ?? null;
   const recommendedAcsArea = recommendedSkill ? acsAreaForSkill(recommendedSkill.skill, certificateType) : null;
@@ -93,12 +106,18 @@ export async function buildProductionTrainProps(
         ) : theme && theme.instructorCount >= 2
             ? `Come up in ${theme.count} of your last ${theme.consideredFlights} debriefs -- across ${theme.instructorCount} instructors.`
             : null,
+        // Omitted entirely, never rendered with empty text -- a recommendation
+        // without real supporting evidence is still an honest recommendation
+        // (the skill genuinely is the weakest open one), it just doesn't get
+        // to claim a quote it doesn't have.
         evidence:
           contested && brief.lastInstructorNote
             ? { label: `${cfi ?? "Your instructor"} · ${formatFlightDate(brief.lastFlight!.flightDate)}`, text: brief.lastInstructorNote.quote }
             : latestLesson
               ? { label: `${latestLesson.instructorName ?? "Your debrief"} · ${formatFlightDate(latestLesson.flightDate)}`, text: latestLesson.statement }
-              : { label: "Your debrief", text: "" },
+              : weakestSignal
+                ? { label: `Your debrief · ${formatFlightDate(weakestSignal.flightDate)}`, text: weakestSignal.statement }
+                : null,
       }
     : null;
 
@@ -114,13 +133,31 @@ export async function buildProductionTrainProps(
         }
       : undefined;
 
-  const secondaryActions: StudentTrainAction[] | undefined = contested
+  // Shown whenever there's a recommendation at all, not only when it's a
+  // contested objective -- a known gap ("no production Review/Quiz/Ask yet")
+  // stays visible as a known gap regardless of which recommendation branch
+  // produced the panel above it. Never linked into the prototype's routes.
+  const secondaryActions: StudentTrainAction[] | undefined = recommended
     ? [
         { label: "Review", disabled: true },
         { label: "Quiz", disabled: true },
         { label: "Ask", disabled: true },
       ]
     : undefined;
+
+  const radioAssigned: RadioCardItem[] = radioAssignments
+    .filter((a) => a.status === "assigned")
+    .map((a) => ({ id: a.id, title: radioScenarioTitle(a.scenarioId) }));
+  const radioPracticed: RadioCardItem[] = radioAssignments
+    .filter((a) => a.status === "completed")
+    .map((a) => ({ id: a.id, title: radioScenarioTitle(a.scenarioId), correct: a.correct ?? undefined }));
+  // Contextually relevant means "this student actually has radio practice to
+  // do or review" -- omitted entirely for a student with none, rather than
+  // showing an evergreen empty card on every Train screen.
+  const afterHeader =
+    radioAssigned.length > 0 || radioPracticed.length > 0 ? (
+      <RadioPracticeCard assigned={radioAssigned} practiced={radioPracticed} />
+    ) : undefined;
 
   const stillWorkingOn: StudentTrainSkillRow[] = open.map((p) => ({
     key: p.skill,
@@ -152,6 +189,7 @@ export async function buildProductionTrainProps(
     },
     primaryAction,
     secondaryActions,
+    afterHeader,
     stillWorkingOn,
   };
 }

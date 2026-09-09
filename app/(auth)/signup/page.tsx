@@ -8,7 +8,7 @@ const ROLES: { href: string; icon: LucideIcon; badge: string; title: string; cop
     icon: GraduationCap,
     badge: "First 3 Flights Free",
     title: "I'm a student pilot",
-    copy: "Fly solo, or join through your CFI or flight school's invite.",
+    copy: "Use AfterFlight with any instructor — they don't need an account.",
   },
   {
     href: "/signup/cfi",

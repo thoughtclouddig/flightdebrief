@@ -11,6 +11,17 @@ import { trackEvent } from "@/lib/marketing/analytics";
 
 type Mode = "search" | "manual";
 
+/**
+ * Whether an instructor participated in this flight at all -- distinct from
+ * whether that instructor has an AfterFlight account. "No instructor picked"
+ * used to silently mean Solo, which conflated the two: a normal dual lesson
+ * with a CFI who has no account (or hasn't been invited) had no way to be
+ * represented as anything but Solo. Defaulting to "with_instructor" makes
+ * Solo something a student actively selects rather than something they fall
+ * into by leaving a field blank.
+ */
+type Participation = "solo" | "with_instructor";
+
 /** HH:MM in UTC -- matches how FR24's own app labels times, so candidates are directly comparable. */
 function formatClockUtc(iso: string): string {
   return new Date(iso).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" });
@@ -90,6 +101,16 @@ function TextField({
 const FIELD_CLASS =
   "h-11 w-full rounded-xl border border-hairline bg-surface px-3 text-[15px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
 
+const CUSTOM_INSTRUCTOR_VALUE = "__custom__";
+
+/**
+ * Picking "With an instructor" always requires a name -- either an existing
+ * linked account, or free text for a real CFI who doesn't have (or doesn't
+ * want) an AfterFlight account. That free-text path is the actual fix for
+ * the guest-CFI gap: the backend (getOrCreateInstructor, app/api/flights/
+ * route.ts) already accepts an arbitrary instructor name for a student-
+ * submitted flight -- nothing here previously exposed a way to type one in.
+ */
 function InstructorSelect({
   id,
   value,
@@ -104,6 +125,8 @@ function InstructorSelect({
   allowInviteCfi?: boolean;
 }) {
   const router = useRouter();
+  const isKnownName = value !== "" && instructorNames.includes(value);
+  const [customMode, setCustomMode] = useState(value !== "" && !isKnownName);
   const [inviting, setInviting] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -140,14 +163,40 @@ function InstructorSelect({
 
   return (
     <div className="flex flex-col gap-2">
-      <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className={FIELD_CLASS}>
-        <option value="">No instructor</option>
+      <select
+        id={id}
+        value={customMode ? CUSTOM_INSTRUCTOR_VALUE : value}
+        onChange={(e) => {
+          if (e.target.value === CUSTOM_INSTRUCTOR_VALUE) {
+            setCustomMode(true);
+            onChange("");
+          } else {
+            setCustomMode(false);
+            onChange(e.target.value);
+          }
+        }}
+        className={FIELD_CLASS}
+      >
+        <option value="" disabled>
+          Select instructor
+        </option>
         {instructorNames.map((n) => (
           <option key={n} value={n}>
             {n}
           </option>
         ))}
+        <option value={CUSTOM_INSTRUCTOR_VALUE}>Enter a name (no account needed)</option>
       </select>
+
+      {customMode ? (
+        <input
+          autoFocus
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Instructor's name"
+          className={FIELD_CLASS}
+        />
+      ) : null}
 
       {allowInviteCfi ? (
         inviting ? (
@@ -182,6 +231,53 @@ function InstructorSelect({
         )
       ) : null}
       {notice ? <p className="text-[13px] text-foreground-faint">{notice}</p> : null}
+    </div>
+  );
+}
+
+/**
+ * Solo is a deliberate selection, not what happens when nothing else is
+ * picked -- see the Participation type doc comment. Defaults to "With an
+ * instructor" so a real dual flight can't silently end up Solo just because
+ * a student left the old instructor dropdown on its default; Solo now takes
+ * an active tap to reach.
+ */
+function ParticipationField({
+  id,
+  participation,
+  onParticipationChange,
+  instructorName,
+  onInstructorNameChange,
+  instructorNames,
+  allowInviteCfi,
+}: {
+  id: string;
+  participation: Participation;
+  onParticipationChange: (value: Participation) => void;
+  instructorName: string;
+  onInstructorNameChange: (value: string) => void;
+  instructorNames: string[];
+  allowInviteCfi?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Segmented
+        options={[
+          { value: "with_instructor", label: "Flew with an instructor" },
+          { value: "solo", label: "Flew solo" },
+        ]}
+        value={participation}
+        onChange={onParticipationChange}
+      />
+      {participation === "with_instructor" ? (
+        <InstructorSelect
+          id={id}
+          value={instructorName}
+          onChange={onInstructorNameChange}
+          instructorNames={instructorNames}
+          allowInviteCfi={allowInviteCfi}
+        />
+      ) : null}
     </div>
   );
 }
@@ -298,12 +394,19 @@ function ConfirmCandidateForm({
   onBack: () => void;
   onCreated: (flightId: string) => void;
 }) {
+  const [participation, setParticipation] = useState<Participation>("with_instructor");
   const [instructorName, setInstructorName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function confirm() {
     if (saving) return;
+    // "With an instructor" always needs a name -- an existing account or a
+    // typed one -- so Solo can never be reached by just leaving this blank.
+    if (participation === "with_instructor" && !instructorName.trim()) {
+      setError("Enter your instructor's name, or switch to “Flew solo” if no instructor was on this flight.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -317,7 +420,7 @@ function ConfirmCandidateForm({
           arrivalAirport: candidate.arrivalAirport,
           flightDate: candidate.scheduledDeparture.slice(0, 10),
           durationMinutes: candidate.durationMinutes ?? 60,
-          instructorName: instructorName || undefined,
+          instructorName: participation === "with_instructor" ? instructorName : undefined,
           providerFlightId: candidate.providerFlightId,
         }),
       });
@@ -328,7 +431,7 @@ function ConfirmCandidateForm({
       }
       trackEvent("flight_created", {
         creation_method: "adsb",
-        has_instructor: Boolean(instructorName),
+        has_instructor: participation === "with_instructor",
         duration_minutes: candidate.durationMinutes ?? 60,
       });
       onCreated(data.flight.id);
@@ -349,11 +452,13 @@ function ConfirmCandidateForm({
           {candidate.tailNumber} · {new Date(candidate.scheduledDeparture).toLocaleDateString()}
         </p>
       </div>
-      <TextField id="instructor" label="Instructor (optional)">
-        <InstructorSelect
+      <TextField id="instructor" label="Instructor">
+        <ParticipationField
           id="instructor"
-          value={instructorName}
-          onChange={setInstructorName}
+          participation={participation}
+          onParticipationChange={setParticipation}
+          instructorName={instructorName}
+          onInstructorNameChange={setInstructorName}
           instructorNames={instructorNames}
           allowInviteCfi={allowInviteCfi}
         />
@@ -381,6 +486,7 @@ function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: stri
     durationMinutes: 75,
     instructorName: "",
   });
+  const [participation, setParticipation] = useState<Participation>("with_instructor");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -391,13 +497,19 @@ function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: stri
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (saving) return;
+    // "With an instructor" always needs a name -- an existing account or a
+    // typed one -- so Solo can never be reached by just leaving this blank.
+    if (participation === "with_instructor" && !form.instructorName.trim()) {
+      setError("Enter your instructor's name, or switch to “Flew solo” if no instructor was on this flight.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const res = await fetch("/api/flights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, instructorName: form.instructorName || undefined }),
+        body: JSON.stringify({ ...form, instructorName: participation === "with_instructor" ? form.instructorName : undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.flight) {
@@ -407,7 +519,7 @@ function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: stri
       }
       trackEvent("flight_created", {
         creation_method: "manual",
-        has_instructor: Boolean(form.instructorName),
+        has_instructor: participation === "with_instructor",
         duration_minutes: form.durationMinutes,
       });
       router.push(`/flights/${data.flight.id}`);
@@ -478,11 +590,13 @@ function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: stri
             />
           </TextField>
           <div className="sm:col-span-2">
-            <TextField id="manual-instructor" label="Instructor (optional)">
-              <InstructorSelect
+            <TextField id="manual-instructor" label="Instructor">
+              <ParticipationField
                 id="manual-instructor"
-                value={form.instructorName}
-                onChange={(v) => set("instructorName", v)}
+                participation={participation}
+                onParticipationChange={setParticipation}
+                instructorName={form.instructorName}
+                onInstructorNameChange={(v) => set("instructorName", v)}
                 instructorNames={instructorNames}
                 allowInviteCfi={allowInviteCfi}
               />
