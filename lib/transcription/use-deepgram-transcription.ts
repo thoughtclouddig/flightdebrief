@@ -13,6 +13,15 @@ const SILENCE_GRACE_SECONDS = 4;
 const SILENCE_WARNING_MS = 6000;
 
 /**
+ * How long stop() waits, after asking Deepgram to flush, before reading
+ * whatever's accumulated in finalChunksRef. Bounded and deterministic on
+ * purpose -- long enough for a final Transcript event to make a normal
+ * round trip over the socket, short enough that "Finish Debrief" doesn't
+ * feel stuck. See stop()'s own comment for why this wait exists at all.
+ */
+const FINALIZE_GRACE_MS = 1500;
+
+/**
  * Live browser mic -> Deepgram streaming STT. Uses Deepgram's documented
  * client-side streaming pattern (NEXT_PUBLIC_DEEPGRAM_API_KEY). For a real
  * deployment beyond a prototype, swap this for a server-minted short-lived
@@ -168,8 +177,37 @@ export function useDeepgramTranscription(apiKey: string): UseTranscription {
     }
   }, [apiKey]);
 
-  const stop = useCallback((): FinishedTranscription => {
+  const stop = useCallback(async (): Promise<FinishedTranscription> => {
+    // Duration is measured now, at the moment the student actually stopped
+    // talking and tapped Finish -- not after the grace period below, which
+    // would otherwise pad every recording's reported length.
     const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt.current) / 1000));
+
+    // The words spoken right before Finish is tapped are exactly the ones
+    // most likely to still be in flight: MediaRecorder buffers audio in
+    // 250ms chunks (recorder.start(250) above), so whatever's mid-chunk
+    // hasn't reached Deepgram yet, and even audio Deepgram already has may
+    // not have crossed its own endpointing threshold to come back as a
+    // final Transcript event. A synchronous read of finalChunksRef here
+    // systematically drops the tail of the debrief -- often the summary the
+    // student just gave. requestData() flushes the recorder's current
+    // buffer immediately; connection.finalize() is the SDK's own documented
+    // mechanism for "flush whatever you're holding and send final results
+    // for it," not a bespoke workaround. Both are fire-and-forget on their
+    // own, which is why this still waits: the grace period below is what
+    // actually gives those trailing Transcript events (handled above, which
+    // push into finalChunksRef) time to arrive before this function reads
+    // that ref.
+    try {
+      if (recorderRef.current && recorderRef.current.state !== "inactive") {
+        recorderRef.current.requestData();
+      }
+      connectionRef.current?.finalize();
+    } catch (err) {
+      console.error("[Deepgram] finalize before stop failed:", err);
+    }
+    await new Promise((resolve) => setTimeout(resolve, FINALIZE_GRACE_MS));
+
     const transcript = finalChunksRef.current.join(" ");
     const words = wordsRef.current;
     teardown();

@@ -86,7 +86,13 @@ export function RadioPracticeSession({
   }
 
   async function stopAndSubmit() {
-    const { transcript } = transcription.stop();
+    // Set before stop(), not after: stop() now waits on transcription
+    // finalization (see use-deepgram-transcription.ts) before it resolves,
+    // and the Stop & Submit button has no disabled guard of its own outside
+    // the "recording" phase -- leaving phase as "recording" during that
+    // wait would leave it tappable with nothing visibly happening.
+    setPhase("submitting");
+    const { transcript } = await transcription.stop();
     await submit(transcript);
   }
 

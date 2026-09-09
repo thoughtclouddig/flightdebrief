@@ -30,8 +30,13 @@ export function DebriefRecorder({ flightId, solo = false }: { flightId: string; 
   }
 
   async function handleFinish() {
-    const { transcript, durationSeconds } = transcription.stop();
+    // Set before stop(), not after: stop() now waits on transcription
+    // finalization (see use-deepgram-transcription.ts's own comment) before
+    // it resolves, and the Finish button is only disabled once phase is
+    // "analyzing" -- leaving phase as "recording" during that wait would
+    // leave the button tappable with nothing visibly happening.
     setPhase("analyzing");
+    const { transcript, durationSeconds } = await transcription.stop();
     setSubmitError(null);
     try {
       const res = await fetch("/api/debrief/analyze", {
