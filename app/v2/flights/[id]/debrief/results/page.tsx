@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { StudentDebriefV2 } from "@/components/debrief/student-debrief-v2";
 import { getRepository } from "@/lib/data";
 import { getAuthorizedFlight } from "@/lib/auth/access";
-import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 /**
  * Real completed-debrief view under /v2 -- identical to the student branch
@@ -45,7 +44,6 @@ export default async function V2DebriefResultsPage(props: PageProps<"/v2/flights
       flight={flight}
       result={debrief.structuredResult}
       tasks={tasks}
-      instructorFirstName={resolveCfiFirstName(flight.instructor)}
       certificateType={certificateType}
       ttsEnabled={ttsEnabled}
       flightId={flight.id}

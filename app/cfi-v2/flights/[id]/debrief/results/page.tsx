@@ -79,7 +79,7 @@ export default async function CfiV2DebriefResultsPage(props: { params: Promise<{
         certificateType={certificateType}
         canEditCue={false}
         handoff={{ keepWorkingOn: nextLessonBrief.keepWorkingOn, beforeFlightItems: nextLessonBrief.beforeFlightItems }}
-        instructorFirstName={instructorFirstName}
+        instructor={flight.instructor}
       />
 
       <DebriefResultSections

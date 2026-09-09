@@ -80,7 +80,6 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
         flight={flight}
         result={result}
         tasks={tasks}
-        instructorFirstName={instructorFirstName}
         certificateType={certificateType}
         ttsEnabled={ttsEnabled}
         flightId={flight.id}
@@ -126,7 +125,7 @@ export default async function DebriefResultsPage(props: PageProps<"/flights/[id]
           keepWorkingOn: nextLessonBrief.keepWorkingOn,
           beforeFlightItems: nextLessonBrief.beforeFlightItems,
         }}
-        instructorFirstName={instructorFirstName}
+        instructor={flight.instructor}
       />
 
       <DebriefResultSections

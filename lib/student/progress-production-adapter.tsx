@@ -8,7 +8,7 @@ import type { Viewer } from "@/lib/viewer";
 import { computeSkillProgression, meterScoreForSkillStatus, toneForSkillStatus } from "@/lib/skill-progress";
 import { acsAreaForSkill } from "@/lib/acs";
 import { allTrainingSkills } from "@/lib/topics";
-import { resolveCfiFirstName } from "@/lib/instructor-attribution";
+import { instructorAttributionLabel } from "@/lib/instructor-attribution";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 
 export interface ProductionProgressProps {
@@ -49,7 +49,9 @@ export async function buildProductionProgressProps(
 
   const brief = await computeNextLessonBrief(repo, studentId);
   const progressions = computeSkillProgression(signals.filter((s) => !s.dismissed));
-  const instructorFirstName = resolveCfiFirstName(brief.lastInstructor) ?? "your instructor";
+  // Null (a genuinely solo last flight) must read as self-assessment, never
+  // "your instructor has rated it" -- see lib/instructor-attribution.ts.
+  const cfi = instructorAttributionLabel(brief.lastInstructor);
 
   const skills: ProgressSkillRow[] = progressions.map((p) => ({
     slug: p.skill,
@@ -96,11 +98,12 @@ export async function buildProductionProgressProps(
       <span className="flex flex-col gap-2.5">
         <span>
           A skill counts as <strong className="font-semibold text-panel-foreground">assessed</strong> once{" "}
-          {instructorFirstName} has rated it in a debrief. Most skills here haven&rsquo;t come up in a lesson yet.
+          {cfi ? `${cfi} has` : "you've"} rated it in a debrief. Most skills here haven&rsquo;t come up in a lesson
+          yet.
         </span>
         <span>
-          There is no percentage and no overall verdict. Signing you off for a checkride is {instructorFirstName}
-          &rsquo;s call.
+          There is no percentage and no overall verdict.{" "}
+          {cfi ? `Signing you off for a checkride is ${cfi}'s call.` : "Checkride sign-off isn't decided here."}
         </span>
       </span>
     ),

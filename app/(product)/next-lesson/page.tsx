@@ -8,7 +8,7 @@ import { PageTitle, Screen, Section, SecondaryButton, VectorMark } from "@/compo
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
-import { resolveCfiFirstName } from "@/lib/instructor-attribution";
+import { instructorAttributionLabel } from "@/lib/instructor-attribution";
 import { LocalDateTime } from "@/components/local-date-time";
 
 export const dynamic = "force-dynamic";
@@ -44,15 +44,14 @@ export default async function NextLessonPage() {
 
   const studyReferences = brief.lastDebrief?.structuredResult.studyReferences ?? [];
   const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
-  const instructorFirstName = resolveCfiFirstName(brief.lastInstructor);
-  const cfi = instructorFirstName ?? "your instructor";
 
   // A solo pilot has no instructor, and saying "your instructor wanted you to
-  // work on" to someone the product told "no CFI needed" contradicts the page
-  // they signed up from. resolveCfiFirstName returns null when no instructor
-  // is attached to the last debrief, which is the same condition -- it just
-  // was not being asked.
-  const hasInstructor = instructorFirstName !== null;
+  // work on" to someone the product told "no CFI needed" contradicts the
+  // page they signed up from. instructorAttributionLabel() takes the raw
+  // instructor record (not just its resolved name) so it can tell "no
+  // instructor at all" apart from "instructor with an unresolvable name" --
+  // only the former should ever produce a null here.
+  const cfi = instructorAttributionLabel(brief.lastInstructor);
   const focusToday = brief.focusAreas.slice(0, 2);
   const viewedUrls = studyReferences.length > 0 ? new Set(await repo.listViewedStudyResourceUrls(viewer.user.id)) : new Set<string>();
   // Same fields the CFI's per-student page shows -- if every one of them is
@@ -73,7 +72,7 @@ export default async function NextLessonPage() {
 
   return (
     <Screen>
-      <PageTitle kicker={`Based on your debrief with ${cfi}`}>Next Flight</PageTitle>
+      <PageTitle kicker={cfi ? `Based on your debrief with ${cfi}` : "Based on your latest debrief"}>Next Flight</PageTitle>
       {ttsEnabled ? <ListenButton baseSrc="/api/next-lesson/audio" label="Listen to your brief" /> : null}
 
       {brief.upcomingReservation ? (
@@ -89,9 +88,9 @@ export default async function NextLessonPage() {
 
       {!hasAnyContent ? (
         <p className="rounded-2xl border border-hairline bg-surface px-5 py-6 text-center text-[15px] text-foreground-soft">
-          {!hasInstructor
-            ? "Nothing to prepare yet -- this fills in once your last debrief is finished."
-            : `${cfi} hasn't set anything to focus on from your last debrief yet.`}
+          {cfi
+            ? `${cfi} hasn't set anything to focus on from your last debrief yet.`
+            : "Nothing to prepare yet -- this fills in once your last debrief is finished."}
         </p>
       ) : null}
 
@@ -121,7 +120,7 @@ export default async function NextLessonPage() {
       ) : null}
 
       {brief.keepWorkingOn.length > 0 ? (
-        <Section title={hasInstructor ? `${cfi} wanted you to work on` : "What to work on"}>
+        <Section title={cfi ? `${cfi} wanted you to work on` : "What to work on"}>
           <ul className="flex flex-col gap-2">
             {brief.keepWorkingOn.map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-[15px] leading-relaxed text-foreground-soft">
@@ -172,7 +171,7 @@ export default async function NextLessonPage() {
        * something to fake here.
        */}
       {brief.suggestedQuestion ? (
-        <Section title="Ask your instructor" flush>
+        <Section title={cfi ? "Ask your instructor" : "Worth thinking about"} flush>
           <div className="rounded-2xl border border-hairline bg-surface px-5 py-4">
             <VectorMark subtitle="Suggested by Vector" />
             <p className="mt-3 text-[17px] text-foreground">&ldquo;{brief.suggestedQuestion}&rdquo;</p>
