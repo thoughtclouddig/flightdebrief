@@ -110,6 +110,20 @@ export interface AnalyzeDebriefInput {
     flightDate: string;
     durationMinutes: number;
     instructorName: string | null;
+    /**
+     * The canonical flight.instructor !== null signal (see lib/instructor-
+     * attribution.ts), passed explicitly rather than left for the prompt to
+     * infer from instructorName being null. A real Staging debrief for a
+     * genuinely solo flight got back "you and your instructor" in its
+     * spoken narration -- traced to buildUserPrompt's old "Instructor on
+     * this flight: (not specified)" framing, which reads as "unnamed" to
+     * the model, not "there was no instructor at all." instructorName
+     * alone can't carry that distinction (null means both "no instructor"
+     * and, in principle, "instructor exists but wasn't captured"); this
+     * field is the one place that ambiguity is resolved before the prompt
+     * is built.
+     */
+    hasInstructor: boolean;
   };
   previousActionItems: string[];
   /**

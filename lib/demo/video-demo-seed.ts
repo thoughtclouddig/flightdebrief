@@ -165,6 +165,7 @@ export async function ensureVideoDemoSeeded(): Promise<void> {
         flightDate,
         durationMinutes: entry.durationMinutes,
         instructorName: DEMO_INSTRUCTOR_NAME,
+        hasInstructor: true,
       },
       previousActionItems,
     });

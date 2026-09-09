@@ -13,6 +13,7 @@ function input(transcript: string): AnalyzeDebriefInput {
       flightDate: "2026-01-01",
       durationMinutes: 60,
       instructorName: "Sarah",
+      hasInstructor: true,
     },
     previousActionItems: [],
   };
@@ -36,5 +37,17 @@ describe("analyzeMock nextFlightCue", () => {
   it("picks a crosswind-specific cue when that's the discussed weakness", () => {
     const result = analyzeMock(input("The airplane felt squirrelly on the crosswind landing today."));
     expect(result.nextFlightCue.toLowerCase()).toContain("wind");
+  });
+});
+
+describe("analyzeMock — solo flight", () => {
+  it("never populates instructorGuidance/instructorAssistance when hasInstructor is false, even if the transcript mentions an instructor from a past flight", () => {
+    const base = input(
+      "My landings were rough today, carrying too much speed. My instructor used to tell me to trim for the speed, and that stuck with me.",
+    );
+    const solo: typeof base = { ...base, flightMeta: { ...base.flightMeta, hasInstructor: false, instructorName: null } };
+    const result = analyzeMock(solo);
+    expect(result.instructorGuidance).toEqual([]);
+    expect(result.instructorAssistance).toEqual([]);
   });
 });

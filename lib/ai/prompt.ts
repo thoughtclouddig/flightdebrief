@@ -12,6 +12,7 @@ Strict rules:
 - Only populate "instructorGuidance" with things explicitly attributed to the instructor in the transcript (e.g. "Danny said...", "my instructor had me..."). "quote" must be ONLY the instructor's own words, with the attribution phrase itself ("Danny said", "he told me", etc.) stripped from both the front AND the back of the string -- the app displays and reads "{instructorName} said: {quote}" on its own, so a quote that still contains "Danny said" anywhere in it gets read or shown as double attribution. If the instructor's name isn't given, use "Instructor". If nothing is attributed to the instructor, return an empty array -- never fabricate a quote.
 - "instructorAssistance" is different from "instructorGuidance": short factual notes on where the instructor had to intervene, prompt, or correct (e.g. "Instructor took the controls during the go-around"), not verbatim quotes. Only include this if it's clear from the transcript that assistance was actually needed -- never speculate.
 - "riskManagementNotes" captures decision-making, situational awareness, workload, weather, traffic, fuel, or aircraft-limitation discussion actually present in the transcript. Do not imply something unsafe happened unless the transcript says so.
+- Some flights are SOLO -- no instructor involved at all. The flight metadata below states this explicitly; do not infer it from whether a name is given. When it says the flight was solo, every field in your response -- especially "narrativeRecap", which is not covered by any of the other instructor-specific rules above -- must read as the student's own solo reflection. Do not write or imply "your instructor," "you and your instructor," "your CFI," "you both," or any other phrase suggesting a second person was present, taught, agreed, disagreed, or observed anything. "instructorGuidance" and "instructorAssistance" must both be empty arrays for a solo flight -- there is no one to attribute anything to.
 - "flightSummary" is one short, plain sentence summarizing the lesson -- not a list, not a paragraph.
 - "narrativeRecap" is the script for a spoken audio recap the student listens to later (e.g. driving home) -- 120-220 words of natural, flowing spoken language, like a knowledgeable training assistant talking them through today's flight after having heard the whole debrief. Vary sentence length and structure; use transitions ("Early on...", "Where it got interesting was...", "By the end..."); do not write it as a list or restate the other fields' bullets verbatim back to back. It must still be built ENTIRELY from what's already captured elsewhere in this same JSON response (whatWeDid, wentWell, needsWork, instructorGuidance, actionItems) -- never introduce a fact, detail, or quote that isn't grounded in one of those fields. Do not open with a greeting or the student's name and do not add a sign-off (the app adds both around this text) -- just the narrative body. If there's too little in the transcript to build a real narrative from, return an empty string rather than padding it out.
 - "needsWork" must each name a specific skill, technique, or procedure to improve (e.g. "Round-out timing on the flare", "Radio callouts on downwind") -- never a vague restatement like "needs more practice" or "keep working on that" with no specifics, and never a narrative recap of something the instructor walked them through (that belongs in "instructorAssistance" instead). If the transcript only vaguely gestures at a weakness with no nameable skill, leave it out rather than including a vague entry.
@@ -41,8 +42,18 @@ export function buildUserPrompt(input: AnalyzeDebriefInput): string {
     ? input.previousActionItems.map((a) => `- ${a}`).join("\n")
     : "(none)";
 
+  // hasInstructor is the explicit signal, never inferred from instructorName
+  // alone -- "(not specified)" reads to the model as "an instructor was
+  // there but unnamed," not "there was no instructor at all," which is
+  // exactly the ambiguity that produced a real "you and your instructor"
+  // narration for a genuinely solo flight. See schema.ts's own doc comment
+  // on this field.
+  const participantLine = flightMeta.hasInstructor
+    ? `Instructor on this flight: ${flightMeta.instructorName ?? "present, but not named in this data"}`
+    : "This was a SOLO flight. No instructor was on board or involved in any way -- do not reference an instructor, CFI, or any second person anywhere in your response, including narrativeRecap. Everything happened from the student's own perspective, alone.";
+
   return `Flight: ${flightMeta.aircraftType} ${flightMeta.tailNumber}, ${flightMeta.departureAirport} to ${flightMeta.arrivalAirport}, ${flightMeta.flightDate}, ${flightMeta.durationMinutes} minutes.
-Instructor on this flight: ${flightMeta.instructorName ?? "(not specified)"}
+${participantLine}
 
 Action items from the previous lesson's debrief:
 ${previous}

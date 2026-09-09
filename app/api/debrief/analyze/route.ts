@@ -142,6 +142,7 @@ export async function POST(request: Request) {
             flightDate: flight.flightDate,
             durationMinutes: flight.durationMinutes,
             instructorName: flight.instructor?.name ?? null,
+            hasInstructor: flight.instructor !== null,
           },
           previousActionItems,
           assessmentDifferences,

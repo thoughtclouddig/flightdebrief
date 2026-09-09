@@ -20,8 +20,12 @@ export function analyzeMock(input: AnalyzeDebriefInput): StructuredDebriefResult
   // heuristics below key off the word "instructor" and a name, both of which
   // a solo pilot can perfectly well say in a debrief ("my instructor used to
   // tell me...") -- and attributing that to a CFI who was not on the flight
-  // puts words in a real person's mouth on the pilot's own record.
-  const soloFlight = !input.flightMeta.instructorName;
+  // puts words in a real person's mouth on the pilot's own record. Reads the
+  // canonical hasInstructor signal (see schema.ts), not instructorName's
+  // truthiness -- the two used to be treated as equivalent, but
+  // instructorName alone can't distinguish "no instructor" from "instructor
+  // exists but wasn't captured."
+  const soloFlight = !input.flightMeta.hasInstructor;
   const instructorGuidance = soloFlight ? [] : extractInstructorGuidance(sentences, instructorName);
   const instructorAssistance = soloFlight ? [] : extractInstructorAssistance(sentences, instructorName);
   const riskManagementNotes = sentences.filter((s) => matches(s, RISK_CUES));
