@@ -87,6 +87,16 @@ export async function POST(request: Request) {
   }
   const guidanceMode = pending.guidanceMode;
 
+  // Counts only, never the transcript itself -- lets a Staging report like
+  // "the live transcript looked complete but got rejected" be checked
+  // against what the server actually received, without reading anyone's
+  // actual words. See use-deepgram-transcription.ts's own stop() diagnostic
+  // for the client-side half of this same trail.
+  const postedWordCount = pending.transcript.trim() ? pending.transcript.trim().split(/\s+/).length : 0;
+  console.log(
+    `[debrief-analyze] transcript received for flight=${flight.id} posted_words=${postedWordCount} audio_duration_s=${pending.audioDurationSeconds ?? "unknown"}`,
+  );
+
   // Runs before the analyzer is ever called -- on a fresh submission or a
   // resumed pending transcript alike, so a previously-rejected recording
   // can't slip through on retry just by resubmitting unchanged. The prompt
