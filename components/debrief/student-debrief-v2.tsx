@@ -5,6 +5,7 @@ import { deriveLessonFocus } from "@/lib/lesson-focus";
 import { matchSkills } from "@/lib/topics";
 import { acsAreaForSkill } from "@/lib/acs";
 import { formatFlightDate } from "@/lib/utils";
+import { instructorAttributionLabel } from "@/lib/instructor-attribution";
 import type { CertificateType, FlightWithRelations, StructuredDebrief } from "@/lib/types";
 
 /**
@@ -19,7 +20,6 @@ export function StudentDebriefV2({
   flight,
   result,
   tasks,
-  instructorFirstName,
   certificateType,
   ttsEnabled,
   flightId,
@@ -29,7 +29,6 @@ export function StudentDebriefV2({
   flight: FlightWithRelations;
   result: StructuredDebrief;
   tasks: { label: string; sortOrder: number }[];
-  instructorFirstName: string | null;
   certificateType: CertificateType | null;
   ttsEnabled: boolean;
   flightId: string;
@@ -37,7 +36,12 @@ export function StudentDebriefV2({
   /** Null where no approved destination for this concept exists yet -- renders as a known, visibly disabled gap rather than escaping to a route this tree doesn't own. */
   nextLessonHref: string | null;
 }) {
-  const cfi = instructorFirstName ?? "your instructor";
+  // Computed from flight.instructor directly (not received as a prop) so
+  // there's one place this decision is made, not one per caller -- a real
+  // Solo flight (flight.instructor === null) must never render "with your
+  // instructor" copy, and instructorAttributionLabel() is what tells "no
+  // instructor" apart from "instructor with an unresolvable name."
+  const cfi = instructorAttributionLabel(flight.instructor);
   const lessonFocus = deriveLessonFocus(tasks);
   const dateLabel = formatFlightDate(flight.flightDate);
 
@@ -50,13 +54,16 @@ export function StudentDebriefV2({
   return (
     <DebriefDetail
       backHref="/debrief"
-      kicker={`${dateLabel} · ${cfi}`}
+      kicker={cfi ? `${dateLabel} · ${cfi}` : dateLabel}
       lessonTitle={lessonFocus ?? `${flight.departureAirport} → ${flight.arrivalAirport}`}
       listenAgain={ttsEnabled ? <ListenAgainRow flightId={flightId} durationSeconds={audioDurationSeconds} /> : null}
       wentWell={result.wentWell}
       workOn={result.needsWork}
       acsArea={acsArea?.name ?? null}
-      instructorFirstName={cfi}
+      // instructorGuidance is only ever non-empty when a real instructor
+      // rated this flight, so this fallback is unreachable for a solo
+      // flight -- kept non-null only to satisfy DebriefDetail's prop type.
+      instructorFirstName={cfi ?? "your instructor"}
       instructorGuidance={result.instructorGuidance}
       moments={[]}
     >

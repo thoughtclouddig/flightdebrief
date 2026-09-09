@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveCfiFirstName } from "./instructor-attribution";
+import { instructorAttributionLabel, resolveCfiFirstName } from "./instructor-attribution";
 
 describe("resolveCfiFirstName", () => {
   it("returns the first token of a full name", () => {
@@ -16,5 +16,19 @@ describe("resolveCfiFirstName", () => {
 
   it("returns null when there's no instructor", () => {
     expect(resolveCfiFirstName(null)).toBeNull();
+  });
+});
+
+describe("instructorAttributionLabel", () => {
+  it("returns null for a genuinely solo flight -- callers must never mention an instructor", () => {
+    expect(instructorAttributionLabel(null)).toBeNull();
+  });
+
+  it("returns the resolved first name when an instructor exists and is named", () => {
+    expect(instructorAttributionLabel({ id: "i1", name: "Danny Franks" })).toBe("Danny");
+  });
+
+  it("falls back to the generic label when an instructor exists but the name is unresolvable -- distinct from the null/solo case", () => {
+    expect(instructorAttributionLabel({ id: "i1", name: "   " })).toBe("your instructor");
   });
 });
