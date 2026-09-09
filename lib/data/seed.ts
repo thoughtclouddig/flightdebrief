@@ -460,6 +460,7 @@ function flightMetaFor(
     flightDate: flight.flightDate,
     durationMinutes: flight.durationMinutes,
     instructorName: instructor.name,
+    hasInstructor: true,
   };
 }
 
@@ -642,7 +643,7 @@ export function buildSeed(): SeedBundle {
       transcript,
       flightMeta: instructor
         ? flightMetaFor(aircraft, instructor, flight)
-        : { ...flightMetaFor(aircraft, { id: "self", name: "Self" }, flight), instructorName: "" },
+        : { ...flightMetaFor(aircraft, { id: "self", name: "Self" }, flight), instructorName: "", hasInstructor: false },
       previousActionItems,
     });
     const debrief: Debrief = {

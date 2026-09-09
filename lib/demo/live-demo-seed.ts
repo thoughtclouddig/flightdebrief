@@ -229,6 +229,7 @@ async function seedHistoricalFlights(
         flightDate,
         durationMinutes: real.durationMinutes,
         instructorName,
+        hasInstructor: instructorName !== null,
       },
       previousActionItems,
     });
