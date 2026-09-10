@@ -258,8 +258,8 @@ function SearchFlow({
       {candidates ? (
         candidates.length === 0 ? (
           <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-            No recent flights found for {tail}. Some aircraft opt out of public ADS-B tracking and won&rsquo;t show
-            up here even if they flew -- try entering the flight manually.
+            No recent flights found for {tail}. Double-check the tail number, or enter the flight manually if it
+            still doesn&rsquo;t turn up.
           </p>
         ) : (
           <div className="flex flex-col gap-3">
