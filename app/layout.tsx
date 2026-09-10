@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
 import Script from "next/script";
+import { BuildEnvBadge } from "@/components/build-env-badge";
 import { ThemeInitializer } from "@/components/theme-initializer";
 import "./globals.css";
 
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-dvh flex flex-col">
         <ThemeInitializer />
         {children}
+        <BuildEnvBadge />
         <Script id="ms-clarity" strategy="afterInteractive">
           {CLARITY_SCRIPT}
         </Script>
