@@ -9,6 +9,7 @@ import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { instructorAttributionLabel } from "@/lib/instructor-attribution";
+import { assessTranscriptAdequacy } from "@/lib/transcript-adequacy";
 import { LocalDateTime } from "@/components/local-date-time";
 
 export const dynamic = "force-dynamic";
@@ -52,13 +53,30 @@ export default async function NextLessonPage() {
   // instructor at all" apart from "instructor with an unresolvable name" --
   // only the former should ever produce a null here.
   const cfi = instructorAttributionLabel(brief.lastInstructor);
-  const focusToday = brief.focusAreas.slice(0, 2);
+
+  // brief.lastWentWell and brief.focusAreas are raw free-text AI output
+  // (structuredResult.wentWell / nextLessonFocus), with no enforcement
+  // beyond the prompt's own "don't invent" instructions -- see
+  // lib/transcript-adequacy.ts's own doc comment for the real incident that
+  // motivated this recheck (a transcript with almost no real content still
+  // produced a confident, fabricated debrief). A debrief analyzed before
+  // that gate existed can still be sitting in the database with fabricated
+  // content in exactly these two fields, so they're re-validated against
+  // the gate at render time rather than trusted just because they're
+  // persisted. Everything else on this page (keepWorkingOn/
+  // beforeFlightItems are real persisted TrainingItem rows;
+  // suggestedQuestion is a deterministic template) is unaffected -- neither
+  // is free AI prose, so an old thin debrief can't have fabricated them.
+  const lastDebriefTrusted = brief.lastDebrief ? assessTranscriptAdequacy(brief.lastDebrief.transcript).adequate : false;
+  const trustedLastWentWell = lastDebriefTrusted ? brief.lastWentWell : [];
+  const focusToday = lastDebriefTrusted ? brief.focusAreas.slice(0, 2) : [];
+
   const viewedUrls = studyReferences.length > 0 ? new Set(await repo.listViewedStudyResourceUrls(viewer.user.id)) : new Set<string>();
   // Same fields the CFI's per-student page shows -- if every one of them is
   // empty, the page below would otherwise just be a blank stretch under the
   // header with no explanation of why there's nothing to show.
   const hasAnyContent =
-    brief.lastWentWell.length > 0 ||
+    trustedLastWentWell.length > 0 ||
     focusToday.length > 0 ||
     brief.keepWorkingOn.length > 0 ||
     brief.beforeFlightItems.length > 0 ||
@@ -94,10 +112,10 @@ export default async function NextLessonPage() {
         </p>
       ) : null}
 
-      {brief.lastWentWell.length > 0 ? (
+      {trustedLastWentWell.length > 0 ? (
         <Section title="Last time">
           <ul className="flex flex-col gap-2">
-            {brief.lastWentWell.map((item, i) => (
+            {trustedLastWentWell.map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-[15px] leading-relaxed text-foreground-soft">
                 <span className="mt-2 size-1.5 shrink-0 rounded-full bg-state-good" />
                 {item}
