@@ -49,26 +49,21 @@ export const dynamic = "force-dynamic";
  * that conflated them into a single, identical, single-instructor org --
  * see lib/demo/live-demo-seed.ts's own doc comments for the composition.
  *
- * cfi-v2 is a Development-only alias for persona=cfi -- same seedCfiV2Demo
- * call and the same real CFI session, kept only because it's already the
- * URL used in prior review notes. In Development, persona=cfi itself now
- * redirects to /cfi-v2 too (see resolveDemoRedirectPath): Development is
- * where the new tree gets reviewed against the real 10/2/2 roster, so
- * there is no canonical /cfi/today left to preserve there. Staging and
- * Production are unaffected -- persona=cfi still resolves to canonical
- * /cfi/today, since isDevelopment() is false in both. Mirrors pilot-real's
- * Development-only gating, and disappears once CFI V2 is ready to cut
- * over.
+ * cfi-v2 is a legacy alias for persona=cfi -- same seedCfiV2Demo call and
+ * the same real CFI session, kept only because it's already the URL used
+ * in prior review notes. persona=cfi itself resolves to /cfi-v2 in every
+ * environment now that CFI V2 has passed release review and is the
+ * approved CFI experience -- canonical /cfi/today is retired as this
+ * entry point's destination. app/cfi-v2/layout.tsx gates on a real
+ * signed-in instructor session only, the same as canonical /cfi/** always
+ * required, not on environment.
  *
- * persona=school mirrors that exact pattern for School V2, now that it has
- * passed Development browser acceptance: in Development, persona=school
- * redirects to /school-v2 instead of canonical /admin/overview, using the
- * same seedSchoolV2Demo call and the same real Taylor Admin session as
- * always. Staging and Production are unaffected for the same reason as
- * CFI -- isDevelopment() is false in both, so persona=school still
- * resolves to canonical /admin/overview there, and /school-v2 itself
- * still 404s outside Development regardless (app/school-v2/layout.tsx's
- * own gate).
+ * persona=school mirrors that exact pattern for School V2, which passed
+ * the same release review: persona=school resolves to /school-v2 in every
+ * environment, using the same seedSchoolV2Demo call and the same real
+ * Taylor Admin session as always. app/school-v2/layout.tsx's own gate is
+ * role/ownership only (admin, or the platform-level superadmin carve-out),
+ * not environment.
  */
 export async function GET(request: NextRequest) {
   const origin = requestOrigin(request);
@@ -106,7 +101,7 @@ export async function GET(request: NextRequest) {
     // pilot-real is the only persona that enables real-data /v2 (validated
     // Development-only above) -- backend/lifecycle QA, not the product demo.
     const v2RealData = persona === "pilot-real";
-    const redirectPath = resolveDemoRedirectPath({ persona, isDev: isDevelopment(), seedRedirectPath: result.redirectPath });
+    const redirectPath = resolveDemoRedirectPath({ persona, seedRedirectPath: result.redirectPath });
     const response = NextResponse.redirect(`${origin}${redirectPath}`);
     response.cookies.set(SESSION_COOKIE, jwt, {
       httpOnly: true,

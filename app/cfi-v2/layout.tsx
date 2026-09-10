@@ -3,30 +3,28 @@ import { notFound, redirect } from "next/navigation";
 import { AppHeader } from "@/components/student/app-header";
 import { CfiV2BottomNav } from "@/components/cfi-v2/bottom-nav";
 import { CfiV2HeaderActions } from "@/components/cfi-v2/header-actions";
-import { isDevelopment } from "@/lib/env";
 import { getViewer } from "@/lib/viewer";
 
 /**
- * CFI V2's clean-room shell -- Development-only, and deliberately its own
- * layout rather than nested under app/v2 (Student's fixture/real-data
- * shell). Nesting there would pull in Student-specific bottom navigation,
- * v2RealDataMode()'s cookie-gated fixture/real-data branch, and
- * PrototypeChrome, none of which apply to a CFI session -- CFI V2 has no
- * fixture mode at all; it always runs on a real, authenticated instructor
- * session, same as canonical /cfi/**, just under a different route tree
- * and presentation.
+ * CFI V2's clean-room shell -- the approved, released CFI experience,
+ * deliberately its own layout rather than nested under app/v2 (Student's
+ * fixture/real-data shell). Nesting there would pull in Student-specific
+ * bottom navigation, v2RealDataMode()'s cookie-gated fixture/real-data
+ * branch, and PrototypeChrome, none of which apply to a CFI session -- CFI
+ * V2 has no fixture mode at all; it always runs on a real, authenticated
+ * instructor session, same as canonical /cfi/**, just under a different
+ * route tree and presentation.
  *
- * Real-data only, Development-only, by design: unlike Student's /v2 (which
- * needs a fixture mode for the public curated demo), a CFI has no public
- * demo persona -- ?persona=cfi already seeds a real org and mints a real
- * session (see app/api/demo/start/route.ts). This layout just needs a
- * signed-in instructor and an environment guard; Staging/Production get an
- * immediate notFound(), matching every other unreleased surface in this
- * repo. Canonical /cfi/** is completely untouched by any of this.
+ * Real-data only, released in every environment: unlike Student's /v2
+ * (which needs a fixture mode for the public curated demo), a CFI has no
+ * public demo persona -- ?persona=cfi already seeds a real org and mints a
+ * real session (see app/api/demo/start/route.ts). This layout only needs a
+ * signed-in instructor -- no environment gate; role/ownership checks below
+ * are the only thing standing between a viewer and this route, same as
+ * every other released surface in this repo. Canonical /cfi/** is
+ * completely untouched by any of this.
  */
 export default async function CfiV2Layout({ children }: { children: ReactNode }) {
-  if (!isDevelopment()) notFound();
-
   let viewer;
   try {
     viewer = await getViewer();
