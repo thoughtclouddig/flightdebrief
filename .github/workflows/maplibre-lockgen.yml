@@ -1,0 +1,105 @@
+name: MapLibre lockfile generation (temporary)
+
+# Disposable, single-purpose workflow. Lives only on temp/maplibre-lockgen --
+# not intended to be merged into main or student-v2-clean-cutover. Generates
+# an updated package.json/package-lock.json for maplibre-gl 4.7.1 -> 6.4.1
+# on a real Linux x64 runner, since no Docker/Linux environment was available
+# locally. Uploads only the two generated manifest files as an artifact;
+# never commits or pushes the result anywhere.
+on:
+  push:
+    branches:
+      - temp/maplibre-lockgen
+
+jobs:
+  generate-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Pin npm to 10.8.2
+        run: npm install -g npm@10.8.2
+
+      - name: Print environment
+        run: |
+          echo "node --version:"
+          node --version
+          echo "npm --version:"
+          npm --version
+          echo "uname -a:"
+          uname -a
+          echo "process.platform:"
+          node -p "process.platform"
+          echo "process.arch:"
+          node -p "process.arch"
+
+      - name: Record tracked source files before install
+        run: git ls-files -- . ':!package.json' ':!package-lock.json' | sort > /tmp/before-files.txt
+
+      - name: Generate lockfile-only update for maplibre-gl@6.4.1
+        run: npm install --package-lock-only --ignore-scripts --save-exact maplibre-gl@6.4.1
+
+      - name: Fail if any application source file changed
+        run: |
+          CHANGED=$(git diff --name-only -- . ':!package.json' ':!package-lock.json')
+          if [ -n "$CHANGED" ]; then
+            echo "::error::Application source files changed, which this workflow must never do:"
+            echo "$CHANGED"
+            exit 1
+          fi
+          git ls-files -- . ':!package.json' ':!package-lock.json' | sort > /tmp/after-files.txt
+          if ! diff -q /tmp/before-files.txt /tmp/after-files.txt > /dev/null; then
+            echo "::error::Tracked file list changed outside package.json/package-lock.json"
+            diff /tmp/before-files.txt /tmp/after-files.txt || true
+            exit 1
+          fi
+          echo "No application source files changed."
+
+      - name: Verify resolved dependency versions
+        run: |
+          set -e
+          get_pkg_version() {
+            node -e "
+              const lock = require('./package-lock.json');
+              const pkg = lock.packages['node_modules/$1'];
+              if (!pkg) { console.error('missing: $1'); process.exit(1); }
+              console.log(pkg.version);
+            "
+          }
+
+          MAPLIBRE=$(get_pkg_version maplibre-gl)
+          NEXT=$(get_pkg_version next)
+          TAILWIND=$(get_pkg_version tailwindcss)
+          POSTCSS=$(get_pkg_version @tailwindcss/postcss)
+
+          echo "maplibre-gl resolved: $MAPLIBRE"
+          echo "next resolved:        $NEXT"
+          echo "tailwindcss resolved: $TAILWIND"
+          echo "@tailwindcss/postcss resolved: $POSTCSS"
+
+          fail=0
+          [ "$MAPLIBRE" = "6.4.1" ] || { echo "::error::maplibre-gl expected 6.4.1, got $MAPLIBRE"; fail=1; }
+          [ "$NEXT" = "16.3.3" ] || { echo "::error::next expected to remain 16.3.3, got $NEXT"; fail=1; }
+          [ "$TAILWIND" = "4.3.3" ] || { echo "::error::tailwindcss expected to remain 4.3.3, got $TAILWIND"; fail=1; }
+          [ "$POSTCSS" = "4.3.3" ] || { echo "::error::@tailwindcss/postcss expected to remain 4.3.3, got $POSTCSS"; fail=1; }
+
+          MAPLIBRE_PKGJSON=$(node -p "require('./package.json').dependencies['maplibre-gl']")
+          [ "$MAPLIBRE_PKGJSON" = "6.4.1" ] || { echo "::error::package.json maplibre-gl expected exact 6.4.1, got $MAPLIBRE_PKGJSON"; fail=1; }
+
+          exit $fail
+
+      - name: Upload generated lockfiles
+        uses: actions/upload-artifact@v4
+        with:
+          name: afterflight-staging-lockfiles
+          path: |
+            package.json
+            package-lock.json
+          retention-days: 7
+          if-no-files-found: error
