@@ -25,11 +25,12 @@ import type { PerformanceLevelCode } from "@/lib/performance-levels";
 import type { Rater } from "@/lib/student/assessment";
 import { ACS_AREAS, INSTRUCTOR, PENDING_FLIGHT, PERCEPTION_GAPS, STRUCTURED } from "@/lib/prototype-fixtures/vector-data";
 import { flightById, formatHours } from "@/lib/prototype-fixtures/flights";
+import { readDemoSkillSelection } from "@/lib/prototype-fixtures/demo-skill-selection";
 
 const FLIGHT = flightById("aug-29")!;
 
-/** The lesson objectives are the unit of assessment, and both people rate this same list. */
-const OBJECTIVES = PERCEPTION_GAPS.map((g) => g.task);
+/** Mia's fixed fixture story -- the fallback when this screen is reached directly, without going through Add Flight first. */
+const DEFAULT_OBJECTIVES = PERCEPTION_GAPS.map((g) => g.task);
 
 type Stage =
   | "objectives"
@@ -80,15 +81,27 @@ export function GuidedDebriefDemo({
   const [stage, setStage] = useState<Stage>("objectives");
   const [studentRatings, setStudentRatings] = useState<Ratings>({});
   const [instructorRatings, setInstructorRatings] = useState<Ratings>({});
+  // Whatever the student picked on Add Flight's "What did you work on?" step
+  // (components/student/flights/add-flight-demo.tsx) carries forward here --
+  // read once, at mount, since sessionStorage can't be touched during SSR and
+  // this demo has no reason to react to it changing mid-session. Falls back
+  // to Mia's existing fixed story when this screen is reached directly.
+  const [objectives] = useState<string[]>(() => {
+    const stored = readDemoSkillSelection();
+    return stored.length > 0 ? stored.map((t) => t.label) : DEFAULT_OBJECTIVES;
+  });
 
   return (
     <Screen>
       {stage === "recording" ? null : <BackLink href={hubHref}>Debriefs</BackLink>}
 
-      {stage === "objectives" ? <Objectives addFlightHref={addFlightHref} onStart={() => setStage("student")} /> : null}
+      {stage === "objectives" ? (
+        <Objectives objectives={objectives} addFlightHref={addFlightHref} onStart={() => setStage("student")} />
+      ) : null}
       {stage === "student" ? (
         <Assess
           rater="student"
+          objectives={objectives}
           ratings={studentRatings}
           onRate={(task, level) => setStudentRatings((r) => ({ ...r, [task]: level }))}
           onDone={() => setStage("handoff")}
@@ -98,13 +111,14 @@ export function GuidedDebriefDemo({
       {stage === "instructor" ? (
         <Assess
           rater="instructor"
+          objectives={objectives}
           ratings={instructorRatings}
           onRate={(task, level) => setInstructorRatings((r) => ({ ...r, [task]: level }))}
           onDone={() => setStage("reveal")}
         />
       ) : null}
       {stage === "reveal" ? (
-        <Reveal student={studentRatings} instructor={instructorRatings} onNext={() => setStage("ready")} />
+        <Reveal objectives={objectives} student={studentRatings} instructor={instructorRatings} onNext={() => setStage("ready")} />
       ) : null}
       {stage === "ready" ? <Ready onStart={() => setStage("recording")} /> : null}
       {stage === "recording" ? <Recording onStop={() => setStage("processing")} /> : null}
@@ -116,7 +130,7 @@ export function GuidedDebriefDemo({
 
 /* ------------------------------------------------------ 1. objectives */
 
-function Objectives({ addFlightHref, onStart }: { addFlightHref: string; onStart: () => void }) {
+function Objectives({ objectives, addFlightHref, onStart }: { objectives: string[]; addFlightHref: string; onStart: () => void }) {
   return (
     <ObjectivesScreen
       lessonTitle={PENDING_FLIGHT.lesson}
@@ -125,7 +139,7 @@ function Objectives({ addFlightHref, onStart }: { addFlightHref: string; onStart
       dateLabel={PENDING_FLIGHT.date}
       aircraftType={FLIGHT.aircraftType}
       tailNumber={FLIGHT.tailNumber}
-      objectives={OBJECTIVES}
+      objectives={objectives}
       hasInstructor
       instructorFirstName={INSTRUCTOR.firstName}
       changeHref={addFlightHref}
@@ -138,18 +152,20 @@ function Objectives({ addFlightHref, onStart }: { addFlightHref: string; onStart
 
 function Assess({
   rater,
+  objectives,
   ratings,
   onRate,
   onDone,
 }: {
   rater: Rater;
+  objectives: string[];
   ratings: Ratings;
   onRate: (task: string, level: PerformanceLevelCode) => void;
   onDone: () => void;
 }) {
   const student = rater === "student";
-  const done = OBJECTIVES.every((o) => ratings[o]);
-  const count = OBJECTIVES.filter((o) => ratings[o]).length;
+  const done = objectives.every((o) => ratings[o]);
+  const count = objectives.filter((o) => ratings[o]).length;
 
   return (
     <>
@@ -164,7 +180,7 @@ function Assess({
       </p>
 
       <div className="flex flex-col gap-3">
-        {OBJECTIVES.map((task) => (
+        {objectives.map((task) => (
           <Card key={task} className="flex flex-col gap-4">
             <p className="text-[17px] font-medium leading-snug text-foreground">{task}</p>
             <PerformanceLevelPicker rater={rater} value={ratings[task] ?? null} onChange={(level) => onRate(task, level)} />
@@ -173,7 +189,7 @@ function Assess({
       </div>
 
       <PrimaryButton onClick={done ? onDone : undefined}>
-        {done ? (student ? "Hand over to " + INSTRUCTOR.firstName : "See the comparison") : `${count} of ${OBJECTIVES.length} rated`}
+        {done ? (student ? "Hand over to " + INSTRUCTOR.firstName : "See the comparison") : `${count} of ${objectives.length} rated`}
       </PrimaryButton>
     </>
   );
@@ -195,15 +211,17 @@ function Handoff({ onContinue }: { onContinue: () => void }) {
 /* ---------------------------------------------------------- 5. reveal */
 
 function Reveal({
+  objectives,
   student,
   instructor,
   onNext,
 }: {
+  objectives: string[];
   student: Ratings;
   instructor: Ratings;
   onNext: () => void;
 }) {
-  const rows = OBJECTIVES.map((task) => ({
+  const rows = objectives.map((task) => ({
     task,
     student: student[task]!,
     instructor: instructor[task]!,

@@ -19,7 +19,11 @@ interface CustomEntry {
 // one source of truth rather than a second copy that can drift.
 // PROCEDURES/AIRSPEED_CONTROL are deliberately absent: they're retained as
 // legacy TrainingCategory values for old signals, and no skill maps to them.
-const CATEGORY_ORDER: TrainingCategory[] = [
+//
+// Exported so the public Student demo's own skill picker (components/
+// student/flights/add-flight-demo.tsx) can mirror this exact ordering
+// without a second, independently-maintained copy.
+export const CATEGORY_ORDER: TrainingCategory[] = [
   "PREFLIGHT",
   "AIRPORT_OPS",
   "TAKEOFFS",

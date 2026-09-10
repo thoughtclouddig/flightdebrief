@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Mic, Plane, Search } from "lucide-react";
+import { Check, ChevronDown, Mic, Plane, Search } from "lucide-react";
 import {
   BackLink,
   Card,
@@ -15,8 +15,19 @@ import {
   Section,
   SecondaryButton,
 } from "@/components/student/ui";
+import { CATEGORY_ORDER } from "@/components/debrief/task-picker-form";
+import { allTrainingSkills, categoryLabel } from "@/lib/topics";
+import { saveDemoSkillSelection } from "@/lib/prototype-fixtures/demo-skill-selection";
 import { cn } from "@/lib/utils";
+import type { TrainingCategory, TrainingSkill } from "@/lib/types";
 import { FLIGHT_DEFAULTS, candidatesForTail, formatHours, type FlightCandidate } from "@/lib/prototype-fixtures/flights";
+
+// Mia's existing fixture story (lib/prototype-fixtures/vector-data.ts's
+// PERCEPTION_GAPS: "Crosswind Landings", "Stabilized Approach", "Short-Field
+// Landing") mapped onto the real catalog's own codes for those exact skills
+// -- so the demo opens on a selection that already matches her established
+// narrative, not an arbitrary or invented default.
+const MIA_DEFAULT_SKILLS: TrainingSkill[] = ["STABILIZED_APPROACH", "SHORT_FIELD_LANDING", "CROSSWIND_LANDING"];
 
 type Stage = "tail" | "pick" | "manual" | "who" | "saved";
 
@@ -241,11 +252,22 @@ function Field({ label, value, last = false }: { label: string; value: string; l
 
 function WhoFlew({ solo, setSolo, onDone }: { solo: boolean; setSolo: (v: boolean) => void; onDone: () => void }) {
   const [instructor, setInstructor] = useState<string>(FLIGHT_DEFAULTS.recentInstructors[0]!);
-  const [lesson, setLesson] = useState<string>(FLIGHT_DEFAULTS.recentLessons[0]!);
+  const [selectedSkills, setSelectedSkills] = useState<Set<TrainingSkill>>(new Set(MIA_DEFAULT_SKILLS));
+
+  function save() {
+    // Hands the real selection off to the debrief demo that follows --
+    // see lib/prototype-fixtures/demo-skill-selection.ts. No real flight or
+    // instructor record exists in this demo, so this is the only thing that
+    // needs to survive the navigation to the next screen.
+    const allSkills = allTrainingSkills();
+    const tasks = allSkills.filter((s) => selectedSkills.has(s.skill)).map((s) => ({ taskCode: s.skill, label: s.label }));
+    saveDemoSkillSelection(tasks);
+    onDone();
+  }
 
   return (
     <>
-      <PageTitle kicker="Two things we can't look up">Who and what</PageTitle>
+      <PageTitle kicker="Just two things to finish this flight">Who and what</PageTitle>
 
       <Section title={<>Who flew with you</>}>
         <div className="flex flex-col">
@@ -264,22 +286,114 @@ function WhoFlew({ solo, setSolo, onDone }: { solo: boolean; setSolo: (v: boolea
         </div>
       </Section>
 
-      <Section title={<>Training</>}>
-        <div className="flex flex-col">
-          {FLIGHT_DEFAULTS.recentLessons.map((l, i) => (
-            <Choice
-              key={l}
-              label={l}
-              selected={lesson === l}
-              onClick={() => setLesson(l)}
-              last={i === FLIGHT_DEFAULTS.recentLessons.length - 1}
-            />
-          ))}
-        </div>
+      <Section title={<>What did you work on?</>}>
+        <SkillPicker selected={selectedSkills} setSelected={setSelectedSkills} />
       </Section>
 
-      <PrimaryButton onClick={onDone}>Save flight</PrimaryButton>
+      <PrimaryButton onClick={save}>Save flight</PrimaryButton>
     </>
+  );
+}
+
+/**
+ * Mirrors components/debrief/task-picker-form.tsx's exact catalog, category
+ * ordering, and accordion/multi-select interaction -- the same real,
+ * ACS-backed skill list the live product uses (allTrainingSkills(),
+ * lib/topics.ts), not a second demo-only catalog. Not the literal same
+ * component: TaskPickerForm's own "Continue" button POSTs to a real
+ * /api/flights/[id]/tasks and does a real Next.js redirect, neither of
+ * which fits this single-screen demo's one shared "Save flight" action
+ * with no real flight to persist against -- so this is a local-state-only
+ * sibling with identical data and visual treatment, not identical wiring.
+ */
+function SkillPicker({
+  selected,
+  setSelected,
+}: {
+  selected: Set<TrainingSkill>;
+  setSelected: (next: Set<TrainingSkill>) => void;
+}) {
+  const allSkills = allTrainingSkills();
+  const [expanded, setExpanded] = useState<Set<TrainingCategory>>(() => {
+    const withSelection = CATEGORY_ORDER.filter((category) => allSkills.some((s) => s.category === category && selected.has(s.skill)));
+    return new Set(withSelection.length > 0 ? withSelection : CATEGORY_ORDER.slice(0, 1));
+  });
+
+  function toggleCategory(category: TrainingCategory) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  }
+
+  function toggleSkill(skill: TrainingSkill) {
+    const next = new Set(selected);
+    if (next.has(skill)) next.delete(skill);
+    else next.add(skill);
+    setSelected(next);
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-end gap-3 text-xs font-medium text-foreground-soft">
+        <button type="button" onClick={() => setExpanded(new Set(CATEGORY_ORDER))} className="hover:text-brand">
+          Expand all
+        </button>
+        <span className="text-foreground-faint">·</span>
+        <button type="button" onClick={() => setExpanded(new Set())} className="hover:text-brand">
+          Collapse all
+        </button>
+      </div>
+
+      {CATEGORY_ORDER.map((category) => {
+        const skillsInCategory = allSkills.filter((s) => s.category === category);
+        if (skillsInCategory.length === 0) return null;
+        const selectedCount = skillsInCategory.filter((s) => selected.has(s.skill)).length;
+        const isExpanded = expanded.has(category);
+        return (
+          <div key={category} className="rounded-lg border border-hairline">
+            <button
+              type="button"
+              onClick={() => toggleCategory(category)}
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+              aria-expanded={isExpanded}
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">{categoryLabel(category)}</span>
+                {selectedCount > 0 ? (
+                  <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-xs font-semibold text-foreground">{selectedCount}</span>
+                ) : null}
+              </span>
+              <ChevronDown className={cn("size-4 shrink-0 text-foreground-faint transition-transform", isExpanded && "rotate-180")} />
+            </button>
+            {isExpanded ? (
+              <div className="grid grid-cols-1 gap-2 border-t border-hairline p-3 sm:grid-cols-2">
+                {skillsInCategory.map(({ skill, label }) => {
+                  const active = selected.has(skill);
+                  return (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => toggleSkill(skill)}
+                      className={cn(
+                        "rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors",
+                        active
+                          ? "border-brand bg-surface-sunken text-foreground"
+                          : "border-hairline bg-transparent text-foreground hover:bg-surface-sunken",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
