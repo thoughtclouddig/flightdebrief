@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Search, UserPlus } from "lucide-react";
+import { Loader2, Plus, Search } from "lucide-react";
 import { Card, PageTitle, PrimaryButton, Screen, SecondaryButton, Segmented } from "@/components/student/ui";
 import { formatDurationShort } from "@/lib/utils";
 import { localIsoDate } from "@/lib/date";
@@ -27,8 +27,8 @@ function formatClockUtc(iso: string): string {
  * spacing) applied to the two real, fully-backed ways a flight actually
  * gets created: ADS-B search and manual entry. Nothing about their logic
  * changed from new-flight-client.tsx -- same state shape, same fetch calls
- * to /api/flights, /api/flights/search and /api/student/invite-cfi, same
- * validation and error handling, read side by side against that file.
+ * to /api/flights and /api/flights/search, same validation and error
+ * handling, read side by side against that file.
  *
  * The `students`/`studentId` CFI-roster-picker path from the shared
  * component is dropped entirely, not simplified -- it was structurally
@@ -36,13 +36,7 @@ function formatClockUtc(iso: string): string {
  * passes `students` when isCfiOrAdmin), so removing it here removes no
  * real student-facing capability.
  */
-export function StudentNewFlightClient({
-  instructorNames,
-  allowInviteCfi,
-}: {
-  instructorNames: string[];
-  allowInviteCfi?: boolean;
-}) {
+export function StudentNewFlightClient({ instructorNames }: { instructorNames: string[] }) {
   const [mode, setMode] = useState<Mode>("search");
 
   return (
@@ -61,11 +55,7 @@ export function StudentNewFlightClient({
         onChange={setMode}
       />
 
-      {mode === "search" ? (
-        <SearchFlow instructorNames={instructorNames} allowInviteCfi={allowInviteCfi} />
-      ) : (
-        <ManualForm instructorNames={instructorNames} allowInviteCfi={allowInviteCfi} />
-      )}
+      {mode === "search" ? <SearchFlow instructorNames={instructorNames} /> : <ManualForm instructorNames={instructorNames} />}
     </Screen>
   );
 }
@@ -90,103 +80,84 @@ function TextField({
 const FIELD_CLASS =
   "h-11 w-full rounded-xl border border-hairline bg-surface px-3 text-[15px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
 
+const SOMEONE_ELSE = "__someone_else__";
+
+/**
+ * "Solo" has a precise aviation meaning -- no instructor involved at all --
+ * distinct from "no linked AfterFlight instructor account." Before this,
+ * the only way to name an instructor here was picking an already-linked
+ * account, so a real dual flight with an unlinked/guest CFI had no way to
+ * be represented as anything but Solo (see app/api/flights/route.ts's
+ * getOrCreateInstructor, which already accepts a bare name with no account
+ * requirement -- this was purely a UI gap, not a backend one).
+ *
+ * Selecting "Someone else" swaps the dropdown for a plain name field --
+ * no email, no account, no invitation step. The entered text flows through
+ * the exact same `instructorName` field as a linked-account selection.
+ */
 function InstructorSelect({
   id,
   value,
   onChange,
   instructorNames,
-  allowInviteCfi,
 }: {
   id: string;
   value: string;
   onChange: (value: string) => void;
   instructorNames: string[];
-  allowInviteCfi?: boolean;
 }) {
-  const router = useRouter();
-  const [inviting, setInviting] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [enteringName, setEnteringName] = useState(false);
 
-  async function submitInvite() {
-    if (!name.trim() || !email.trim() || saving) return;
-    setSaving(true);
-    setNotice(null);
-    try {
-      const res = await fetch("/api/student/invite-cfi", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setNotice(data.error ?? "Invite failed. Please try again.");
-        return;
-      }
-      onChange(name.trim());
-      setInviting(false);
-      setName("");
-      setEmail("");
-      setNotice(data.emailSent ? `Invite sent to ${email}.` : `Added, but the invite email couldn't be sent -- share the login page with them directly.`);
-      router.refresh();
-    } catch {
-      setNotice("Invite failed -- check your connection and try again.");
-    } finally {
-      setSaving(false);
-    }
+  if (enteringName) {
+    return (
+      <div className="flex flex-col gap-2">
+        <input
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Instructor's name"
+          className={FIELD_CLASS}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            setEnteringName(false);
+            onChange("");
+          }}
+          className="w-fit text-[13px] font-medium text-brand hover:underline"
+        >
+          Choose from your instructors instead
+        </button>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className={FIELD_CLASS}>
-        <option value="">No instructor</option>
-        {instructorNames.map((n) => (
-          <option key={n} value={n}>
-            {n}
-          </option>
-        ))}
-      </select>
-
-      {allowInviteCfi ? (
-        inviting ? (
-          <div className="flex flex-col gap-2 rounded-xl border border-dashed border-hairline p-3">
-            <div className="grid gap-2 sm:grid-cols-2">
-              <input placeholder="CFI's name" value={name} onChange={(e) => setName(e.target.value)} className={FIELD_CLASS} />
-              <input
-                type="email"
-                placeholder="CFI's email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={FIELD_CLASS}
-              />
-            </div>
-            <div className="flex gap-2">
-              <SecondaryButton onClick={() => setInviting(false)}>Cancel</SecondaryButton>
-              <SecondaryButton onClick={submitInvite}>
-                {saving ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
-                Send invite
-              </SecondaryButton>
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setInviting(true)}
-            className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-brand hover:underline"
-          >
-            <UserPlus className="size-3.5" aria-hidden />
-            Add your CFI
-          </button>
-        )
-      ) : null}
-      {notice ? <p className="text-[13px] text-foreground-faint">{notice}</p> : null}
-    </div>
+    <select
+      id={id}
+      value={value}
+      onChange={(e) => {
+        if (e.target.value === SOMEONE_ELSE) {
+          setEnteringName(true);
+          onChange("");
+        } else {
+          onChange(e.target.value);
+        }
+      }}
+      className={FIELD_CLASS}
+    >
+      <option value="">No instructor</option>
+      {instructorNames.map((n) => (
+        <option key={n} value={n}>
+          {n}
+        </option>
+      ))}
+      <option value={SOMEONE_ELSE}>Someone else</option>
+    </select>
   );
 }
 
-function SearchFlow({ instructorNames, allowInviteCfi }: { instructorNames: string[]; allowInviteCfi?: boolean }) {
+function SearchFlow({ instructorNames }: { instructorNames: string[] }) {
   const router = useRouter();
   const [tail, setTail] = useState("N123AB");
   const [loading, setLoading] = useState(false);
@@ -216,7 +187,6 @@ function SearchFlow({ instructorNames, allowInviteCfi }: { instructorNames: stri
       <ConfirmCandidateForm
         candidate={selecting}
         instructorNames={instructorNames}
-        allowInviteCfi={allowInviteCfi}
         onBack={() => setSelecting(null)}
         onCreated={(id) => router.push(`/flights/${id}`)}
       />
@@ -288,13 +258,11 @@ function SearchFlow({ instructorNames, allowInviteCfi }: { instructorNames: stri
 function ConfirmCandidateForm({
   candidate,
   instructorNames,
-  allowInviteCfi,
   onBack,
   onCreated,
 }: {
   candidate: FlightCandidate;
   instructorNames: string[];
-  allowInviteCfi?: boolean;
   onBack: () => void;
   onCreated: (flightId: string) => void;
 }) {
@@ -350,13 +318,7 @@ function ConfirmCandidateForm({
         </p>
       </div>
       <TextField id="instructor" label="Instructor (optional)">
-        <InstructorSelect
-          id="instructor"
-          value={instructorName}
-          onChange={setInstructorName}
-          instructorNames={instructorNames}
-          allowInviteCfi={allowInviteCfi}
-        />
+        <InstructorSelect id="instructor" value={instructorName} onChange={setInstructorName} instructorNames={instructorNames} />
       </TextField>
       {error ? <p className="text-[15px] text-danger">{error}</p> : null}
       <div className="flex gap-2">
@@ -370,7 +332,7 @@ function ConfirmCandidateForm({
   );
 }
 
-function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: string[]; allowInviteCfi?: boolean }) {
+function ManualForm({ instructorNames }: { instructorNames: string[] }) {
   const router = useRouter();
   const [form, setForm] = useState({
     tailNumber: "N123AB",
@@ -484,7 +446,6 @@ function ManualForm({ instructorNames, allowInviteCfi }: { instructorNames: stri
                 value={form.instructorName}
                 onChange={(v) => set("instructorName", v)}
                 instructorNames={instructorNames}
-                allowInviteCfi={allowInviteCfi}
               />
             </TextField>
           </div>

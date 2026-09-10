@@ -35,12 +35,7 @@ export default async function NewFlightPage(props: PageProps<"/flights/new">) {
   const initialStudentId = typeof searchParams.studentId === "string" ? searchParams.studentId : undefined;
 
   if (!isCfiOrAdmin) {
-    return (
-      <StudentNewFlightClient
-        instructorNames={instructorNames}
-        allowInviteCfi={viewer.organization.kind === "individual"}
-      />
-    );
+    return <StudentNewFlightClient instructorNames={instructorNames} />;
   }
 
   return (
