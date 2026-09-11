@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo } from "next/font/google";
 import Script from "next/script";
-import { BuildEnvBadge } from "@/components/build-env-badge";
+import { EnvironmentBanner } from "@/components/environment-banner";
 import { ThemeInitializer } from "@/components/theme-initializer";
+import { getAppEnv } from "@/lib/env";
 import "./globals.css";
 
 // Microsoft Clarity (session recording/heatmaps) -- loaded site-wide, not
@@ -26,8 +27,17 @@ const archivo = Archivo({
   subsets: ["latin"],
 });
 
+const BASE_TITLE = "AfterFlight — Get better every flight.";
+
+// [DEV]/[STAGING] prefix on every browser tab, not just this default title:
+// title.template applies to any page's own title string too, so a page that
+// sets its own `title` still gets prefixed without itself knowing about
+// environments. Production sets no prefix and no template -- tabs there
+// look exactly as they always have.
+const ENV_TAG = getAppEnv() === "development" ? "[DEV] " : getAppEnv() === "staging" ? "[STAGING] " : "";
+
 export const metadata: Metadata = {
-  title: "AfterFlight — Get better every flight.",
+  title: ENV_TAG ? { default: `${ENV_TAG}${BASE_TITLE}`, template: `${ENV_TAG}%s` } : BASE_TITLE,
   description: "Record the debrief you're already having. AfterFlight turns it into the plan for your next flight.",
 };
 
@@ -48,9 +58,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="min-h-dvh flex flex-col">
+        <EnvironmentBanner />
         <ThemeInitializer />
         {children}
-        <BuildEnvBadge />
         <Script id="ms-clarity" strategy="afterInteractive">
           {CLARITY_SCRIPT}
         </Script>
