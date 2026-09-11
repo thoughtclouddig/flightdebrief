@@ -73,6 +73,21 @@ function staffEmails(): string[] {
  */
 export const dynamic = "force-dynamic";
 
+/**
+ * Each of these seeds a fresh, real org+session on click via the same
+ * /api/demo/start path the marketing site's "try it live" demo uses (see
+ * that route's own doc comment for exactly what each persona provisions) --
+ * unlike the named personas below, these don't depend on lib/data/seed.ts's
+ * fixture rows already existing in whatever Postgres database this
+ * environment is actually connected to, so they work regardless of whether
+ * this database has ever been seeded with that fixture set.
+ */
+const QUICK_DEMOS = [
+  { persona: "cfi", label: "CFI / School Pro", detail: "Real CFI V2 session, seeded roster" },
+  { persona: "school", label: "School admin", detail: "Real School V2 session, seeded roster" },
+  { persona: "pilot-real", label: "Student, real-data QA", detail: "Development only — real /v2 session, not the curated demo" },
+] as const;
+
 export default function DevLoginPage() {
   if (process.env.REPLIT_DEPLOYMENT) notFound();
   const staff = staffEmails();
@@ -87,6 +102,23 @@ export default function DevLoginPage() {
         </p>
 
         <div className="mt-10 flex flex-col gap-10">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-[#8c97a2]">Quick demo start — one core use case each</p>
+            <ul className="mt-3 flex flex-col gap-2">
+              {QUICK_DEMOS.map(({ persona, label, detail }) => (
+                <li key={persona}>
+                  <Link
+                    href={`/api/demo/start?persona=${persona}`}
+                    className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-brand hover:bg-brand/5"
+                  >
+                    <span className="font-medium text-[#101727]">{label}</span>
+                    <span className="text-sm text-[#414B57]">{detail}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {staff.length > 0 ? (
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[#8c97a2]">AfterFlight — company staff</p>
