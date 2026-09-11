@@ -1,6 +1,7 @@
-import { BookOpen, Mail } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { getViewer } from "@/lib/viewer";
 import { BackLink, Card, PageTitle, QuietRow, Screen, Section } from "@/components/student/ui";
+import { SupportContactForm } from "@/components/cfi-v2/support-contact-form";
 
 export const dynamic = "force-dynamic";
 
@@ -42,16 +43,7 @@ export default async function CfiV2ProfileSupportPage() {
 
       <Section title="Still stuck">
         <div className="flex flex-col">
-          <QuietRow
-            href="mailto:support@getafterflight.com"
-            label={
-              <span className="flex items-center gap-3">
-                <Mail className="size-[18px] shrink-0 text-foreground-faint" aria-hidden />
-                Email support
-              </span>
-            }
-            meta="1 day"
-          />
+          <SupportContactForm context="CFI" />
           <QuietRow
             href="/cfi-v2/profile/guide"
             label={

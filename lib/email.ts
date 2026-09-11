@@ -37,9 +37,16 @@ async function sendViaResend(payload: object): Promise<Response> {
  * failed send never fails the action that triggered it (an invite still
  * exists even if its email bounced).
  */
-async function send(kind: string, to: string, subject: string, text: string, content: EmailContent): Promise<boolean> {
+async function send(kind: string, to: string, subject: string, text: string, content: EmailContent, replyTo?: string): Promise<boolean> {
   try {
-    const response = await sendViaResend({ from: FROM, to: [to], subject, text, html: renderEmail(content) });
+    const response = await sendViaResend({
+      from: FROM,
+      to: [to],
+      subject,
+      text,
+      html: renderEmail(content),
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    });
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
       console.error(`[email] ${kind} to ${to} failed: ${response.status} ${detail}`);
@@ -150,4 +157,47 @@ export async function sendEmailChangeEmail(input: { to: string; url: string }): 
     cta: { label: "Confirm new email", url: input.url },
     footnote: `This link expires in 15 minutes. If you didn't request this, ignore this email — your sign-in address won't change.`,
   });
+}
+
+const SUPPORT_INBOX = "support@getafterflight.com";
+
+/**
+ * The in-app "Contact support" form's send path -- replaces a raw
+ * `mailto:` link, which does nothing for anyone without a mail client
+ * configured (the common case in a sandboxed webview, or anyone using
+ * webmail). Sent TO the support inbox rather than from it; `replyTo` is set
+ * to the submitter's own address so a human at support can just hit reply.
+ */
+export async function sendSupportRequestEmail(input: {
+  fromName: string;
+  fromEmail: string;
+  /** e.g. "CFI" -- which in-app support surface this came from, so support doesn't have to guess. */
+  context: string;
+  message: string;
+}): Promise<boolean> {
+  const subject = `[${input.context} support] ${firstName(input.fromName)}`;
+  const text = [
+    `From: ${input.fromName} <${input.fromEmail}>`,
+    `Context: ${input.context}`,
+    ``,
+    input.message,
+  ].join("\n");
+
+  return send(
+    "support request",
+    SUPPORT_INBOX,
+    subject,
+    text,
+    {
+      preheader: `New ${input.context} support request from ${input.fromName}.`,
+      heading: "New support request",
+      body: [
+        `<strong>From:</strong> ${escapeHtml(input.fromName)} (${escapeHtml(input.fromEmail)})`,
+        `<strong>Context:</strong> ${escapeHtml(input.context)}`,
+        escapeHtml(input.message).replace(/\n/g, "<br />"),
+      ],
+      footnote: `Reply directly to this email to respond to ${escapeHtml(firstName(input.fromName))}.`,
+    },
+    input.fromEmail,
+  );
 }
