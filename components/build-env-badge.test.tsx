@@ -48,4 +48,12 @@ describe("BuildEnvBadge — diagnostic chrome only, never product UI", () => {
     expect(markup).toContain("STAGING");
     expect(markup).not.toMatch(/·\s*null/i);
   });
+
+  it("sits above the fixed bottom nav's own height, not just the safe-area inset alone", () => {
+    vi.mocked(resolveBuildBadge).mockReturnValue({ label: "DEV", sha: "abc123def" });
+
+    const markup = renderToStaticMarkup(<BuildEnvBadge />);
+
+    expect(markup).toMatch(/bottom:calc\(66px \+ env\(safe-area-inset-bottom\)\)/);
+  });
 });
