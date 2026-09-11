@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { resolveEnvironmentBanner } from "@/lib/build-info";
 
 /**
@@ -17,8 +18,19 @@ import { resolveEnvironmentBanner } from "@/lib/build-info";
  * bottom-nav.tsx already uses for its own bottom safe area, so a real
  * notch/dynamic-island grows the total space reserved without stretching
  * the ~18-20px content row itself out of its intended size.
+ *
+ * `await connection()` before reading the environment is load-bearing, not
+ * decoration: this component sits in the root layout, so without it
+ * getAppEnv()'s result can get captured once -- whenever this module is
+ * first evaluated on a given server process -- and reused for every request
+ * that process ever serves afterward, including ones where the real
+ * environment has since resolved differently. connection() defers rendering
+ * to true request time, matching what generateMetadata's own ENV_TAG
+ * (app/layout.tsx) now relies on this same component for -- see that file's
+ * comment for the full incident this fixes.
  */
-export function EnvironmentBanner() {
+export async function EnvironmentBanner() {
+  await connection();
   const banner = resolveEnvironmentBanner();
   if (!banner) return null;
 

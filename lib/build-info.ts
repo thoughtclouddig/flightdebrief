@@ -31,3 +31,19 @@ export function resolveEnvironmentBanner(): EnvironmentBannerInfo | null {
   if (env === "production") return null;
   return { label: env === "development" ? "DEVELOPMENT" : "STAGING", sha: BUILD_SHA };
 }
+
+/**
+ * The `[DEV] `/`[STAGING] ` browser-title prefix (app/layout.tsx's
+ * generateMetadata) -- a separate pure function, not folded into
+ * resolveEnvironmentBanner, so it stays trivially unit-testable without
+ * rendering anything, the same reasoning that function's own doc comment
+ * gives. Kept in this module (not app/layout.tsx itself) because that file
+ * imports next/font/google, which needs the Next.js build pipeline to
+ * resolve and can't be imported directly in a plain Vitest test.
+ */
+export function resolveTitlePrefix(): string {
+  const env = getAppEnv();
+  if (env === "development") return "[DEV] ";
+  if (env === "staging") return "[STAGING] ";
+  return "";
+}

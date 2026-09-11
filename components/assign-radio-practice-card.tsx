@@ -94,42 +94,55 @@ export function AssignRadioPracticeCard({
           </div>
         ) : null}
 
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <select
-            value={scenarioId}
-            onChange={(e) => setScenarioId(e.target.value)}
-            className="h-11 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
-          >
-            {PHASES.map((phase) => (
-              <optgroup key={phase} label={RADIO_SCENARIO_PHASE_LABEL[phase]}>
-                {RADIO_PRACTICE_SCENARIOS.filter((s) => s.phase === phase).map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.title}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          <Button onClick={() => assignScenario(scenarioId)} disabled={assigning === scenarioId}>
-            {assigning === scenarioId ? <Loader2 className="size-4 animate-spin" /> : null}
-            Assign
-          </Button>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="radio-scenario-picker" className="text-xs font-semibold uppercase tracking-[0.08em] text-foreground-faint">
+            Assign a new scenario
+          </label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <select
+              id="radio-scenario-picker"
+              value={scenarioId}
+              onChange={(e) => setScenarioId(e.target.value)}
+              className="h-11 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-white/15 dark:bg-slate-900"
+            >
+              {PHASES.map((phase) => (
+                <optgroup key={phase} label={RADIO_SCENARIO_PHASE_LABEL[phase]}>
+                  {RADIO_PRACTICE_SCENARIOS.filter((s) => s.phase === phase).map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.title}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <Button onClick={() => assignScenario(scenarioId)} disabled={assigning === scenarioId}>
+              {assigning === scenarioId ? <Loader2 className="size-4 animate-spin" /> : null}
+              Assign
+            </Button>
+          </div>
         </div>
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
-        {assignments.length === 0 ? (
-          <p className="text-sm text-foreground-faint">Nothing assigned yet.</p>
-        ) : (
-          <ul className="flex flex-col gap-2.5">
-            {assignments.map((a) => (
-              <AssignmentRow
-                key={a.id}
-                assignment={a}
-                onDeleted={() => setAssignments((prev) => prev.filter((x) => x.id !== a.id))}
-              />
-            ))}
-          </ul>
-        )}
+        {/* Its own labeled block, deliberately separate from the picker above --
+            the select always shows a real scenario title as its current value
+            (it's a form control, not a status display), which read as a
+            contradiction sitting directly above "Nothing assigned yet." */}
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-foreground-faint">Assigned</p>
+          {assignments.length === 0 ? (
+            <p className="text-sm text-foreground-faint">Nothing assigned yet.</p>
+          ) : (
+            <ul className="flex flex-col gap-2.5">
+              {assignments.map((a) => (
+                <AssignmentRow
+                  key={a.id}
+                  assignment={a}
+                  onDeleted={() => setAssignments((prev) => prev.filter((x) => x.id !== a.id))}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

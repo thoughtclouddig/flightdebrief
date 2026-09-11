@@ -209,7 +209,7 @@ export function CfiV2StudentDetailScreen({ detail }: { detail: CfiV2StudentDetai
         )}
       </Section>
 
-      <Link href={`/flights/new?studentId=${student.id}`} className="self-start text-[14px] font-semibold text-brand">
+      <Link href={`/cfi-v2/students/${student.id}/flights/new`} className="self-start text-[14px] font-semibold text-brand">
         Log a flight for {firstName} &rarr;
       </Link>
 

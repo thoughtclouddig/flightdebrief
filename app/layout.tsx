@@ -3,7 +3,7 @@ import { Archivo } from "next/font/google";
 import Script from "next/script";
 import { EnvironmentBanner } from "@/components/environment-banner";
 import { ThemeInitializer } from "@/components/theme-initializer";
-import { getAppEnv } from "@/lib/env";
+import { resolveTitlePrefix } from "@/lib/build-info";
 import "./globals.css";
 
 // Microsoft Clarity (session recording/heatmaps) -- loaded site-wide, not
@@ -28,18 +28,31 @@ const archivo = Archivo({
 });
 
 const BASE_TITLE = "AfterFlight — Get better every flight.";
+const DESCRIPTION = "Record the debrief you're already having. AfterFlight turns it into the plan for your next flight.";
 
 // [DEV]/[STAGING] prefix on every browser tab, not just this default title:
 // title.template applies to any page's own title string too, so a page that
 // sets its own `title` still gets prefixed without itself knowing about
 // environments. Production sets no prefix and no template -- tabs there
 // look exactly as they always have.
-const ENV_TAG = getAppEnv() === "development" ? "[DEV] " : getAppEnv() === "staging" ? "[STAGING] " : "";
-
-export const metadata: Metadata = {
-  title: ENV_TAG ? { default: `${ENV_TAG}${BASE_TITLE}`, template: `${ENV_TAG}%s` } : BASE_TITLE,
-  description: "Record the debrief you're already having. AfterFlight turns it into the plan for your next flight.",
-};
+//
+// A function, not a top-level `const` -- this used to be `const ENV_TAG =
+// getAppEnv() === ...`, evaluated exactly once when this module was first
+// loaded into a given server process, then frozen and reused for every
+// request that process ever served afterward. On a real deployment this
+// produced a live "[DEV] AfterFlight" title on the production domain: this
+// layout's <EnvironmentBanner /> forces the route into per-request dynamic
+// rendering (see that component's own comment), so generateMetadata now runs
+// fresh on every request too, the same way any other dynamic route's
+// metadata does -- getAppEnv() (via resolveTitlePrefix, lib/build-info.ts) is
+// read live instead of captured once.
+export async function generateMetadata(): Promise<Metadata> {
+  const envTag = resolveTitlePrefix();
+  return {
+    title: envTag ? { default: `${envTag}${BASE_TITLE}`, template: `${envTag}%s` } : BASE_TITLE,
+    description: DESCRIPTION,
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
