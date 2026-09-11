@@ -1,53 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import * as seed from "@/lib/data/seed";
-
-const GROUPS = [
-  {
-    org: "Falcon Aviation — School Pro",
-    people: [
-      { user: seed.USER_ANDY, role: "Student" },
-      { user: seed.USER_DANNY, role: "CFI" },
-      { user: seed.USER_MARIA, role: "CFI" },
-      { user: seed.USER_SARAH, role: "Student" },
-      { user: seed.USER_MARCUS, role: "Student" },
-      { user: seed.USER_PRIYA, role: "Student" },
-      { user: seed.USER_TOM, role: "Student" },
-      // The canonical /prototype/vector parity persona -- see lib/data/seed.ts's
-      // own comment on USER_MIA for what her seeded story reproduces.
-      { user: seed.USER_MIA, role: "Student" },
-      { user: seed.USER_JAKE, role: "CFI" },
-      { user: seed.USER_DANA, role: "CFI" },
-      { user: seed.USER_JORDAN, role: "Admin" },
-    ],
-  },
-  {
-    org: "Kevin Ortiz's Flight Training — Independent CFI",
-    people: [
-      { user: seed.USER_KEVIN, role: "Independent CFI" },
-      { user: seed.USER_EMMA, role: "Student" },
-    ],
-  },
-  {
-    org: "Alex Rivera's Flights — Individual",
-    people: [{ user: seed.USER_ALEX, role: "Solo student, no CFI on the account" }],
-  },
-  {
-    org: "Mesa Flight Academy — School Pro (location 2)",
-    people: [
-      { user: seed.USER_NINA, role: "CFI" },
-      { user: seed.USER_CARLOS, role: "Student" },
-      { user: seed.USER_LEAH, role: "Student" },
-    ],
-  },
-  {
-    org: "Prescott Aviation — School Pro (location 3)",
-    people: [
-      { user: seed.USER_OMAR, role: "CFI" },
-      { user: seed.USER_ZOE, role: "Student" },
-    ],
-  },
-];
 
 /**
  * Staff aren't seed personas -- they're whoever SUPERADMIN_EMAILS lists, which
@@ -62,6 +14,27 @@ function staffEmails(): string[] {
 }
 
 /**
+ * The five real-account scenarios this page exists for -- deliberately not
+ * every seed persona in lib/data/seed.ts (most of those aren't real rows in
+ * whatever Postgres database this environment is actually connected to, and
+ * fail at login with "not-invited"). Each of these is a real Gmail
+ * plus-alias the app owner can actually receive mail at, but the link below
+ * goes through the same instant /api/auth/dev-login path as the company-
+ * staff rows further down -- no magic-link email, straight into the account
+ * -- IF this row is a real row in this environment's database. If it isn't
+ * (same "not-invited" failure mode as the seed personas this page used to
+ * list), the fallback is the real magic-link flow at /login, which only
+ * needs the row to exist, not this environment's dev-login guard to be open.
+ */
+const REAL_ACCOUNT_LOGINS = [
+  { role: "Solo student, no CFI", persona: "Alex Rivera", email: "andyrenk+indystudent@gmail.com" },
+  { role: "Regular student", persona: "Andy", email: "andyrenk+student@gmail.com" },
+  { role: "CFI (school)", persona: "Danny Franks, Falcon Aviation", email: "andyrenk+cfi@gmail.com" },
+  { role: "Independent CFI", persona: "Kevin Ortiz", email: "andyrenk+indycfi@gmail.com" },
+  { role: "School admin", persona: "Jordan Reyes, Falcon Aviation", email: "andyrenk+admin@gmail.com" },
+] as const;
+
+/**
  * Rendered per request, not prerendered.
  *
  * The REPLIT_DEPLOYMENT guard below is only a guard if it runs at request
@@ -73,21 +46,6 @@ function staffEmails(): string[] {
  */
 export const dynamic = "force-dynamic";
 
-/**
- * Each of these seeds a fresh, real org+session on click via the same
- * /api/demo/start path the marketing site's "try it live" demo uses (see
- * that route's own doc comment for exactly what each persona provisions) --
- * unlike the named personas below, these don't depend on lib/data/seed.ts's
- * fixture rows already existing in whatever Postgres database this
- * environment is actually connected to, so they work regardless of whether
- * this database has ever been seeded with that fixture set.
- */
-const QUICK_DEMOS = [
-  { persona: "cfi", label: "CFI / School Pro", detail: "Real CFI V2 session, seeded roster" },
-  { persona: "school", label: "School admin", detail: "Real School V2 session, seeded roster" },
-  { persona: "pilot-real", label: "Student, real-data QA", detail: "Development only — real /v2 session, not the curated demo" },
-] as const;
-
 export default function DevLoginPage() {
   if (process.env.REPLIT_DEPLOYMENT) notFound();
   const staff = staffEmails();
@@ -97,23 +55,27 @@ export default function DevLoginPage() {
       <div className="mx-auto max-w-2xl px-6 py-16">
         <h1 className="font-display text-3xl font-bold text-[#101727]">Dev login</h1>
         <p className="mt-2 text-sm text-[#414B57]">
-          Never available in a real deployment (same guard as demo seeding). Click a name to sign in as that seed
-          persona instantly — no magic-link email required.
+          Never available in a real deployment. Click a row for an instant session -- no magic-link email. If this
+          environment&rsquo;s database has never had this row created, it&rsquo;ll bounce to sign-in with the email
+          already filled in instead; the &ldquo;via magic link&rdquo; link does that directly.
         </p>
 
         <div className="mt-10 flex flex-col gap-10">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-[#8c97a2]">Quick demo start — one core use case each</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-[#8c97a2]">Real accounts — one per core use case</p>
             <ul className="mt-3 flex flex-col gap-2">
-              {QUICK_DEMOS.map(({ persona, label, detail }) => (
-                <li key={persona}>
-                  <Link
-                    href={`/api/demo/start?persona=${persona}`}
-                    className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-brand hover:bg-brand/5"
-                  >
-                    <span className="font-medium text-[#101727]">{label}</span>
-                    <span className="text-sm text-[#414B57]">{detail}</span>
+              {REAL_ACCOUNT_LOGINS.map(({ role, persona, email }) => (
+                <li key={email} className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-brand hover:bg-brand/5">
+                  <Link href={`/api/auth/dev-login?email=${encodeURIComponent(email)}`} className="min-w-0 flex-1">
+                    <span className="block font-medium text-[#101727]">{role}</span>
+                    <span className="block text-xs text-[#8c97a2]">{persona}</span>
                   </Link>
+                  <span className="flex shrink-0 flex-col items-end gap-0.5">
+                    <span className="text-sm text-[#414B57]">{email}</span>
+                    <Link href={`/login?email=${encodeURIComponent(email)}`} className="text-xs text-brand hover:underline">
+                      via magic link
+                    </Link>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -140,25 +102,6 @@ export default function DevLoginPage() {
               </ul>
             </div>
           ) : null}
-
-          {GROUPS.map((group) => (
-            <div key={group.org}>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#8c97a2]">{group.org}</p>
-              <ul className="mt-3 flex flex-col gap-2">
-                {group.people.map(({ user, role }) => (
-                  <li key={user.id}>
-                    <Link
-                      href={`/api/auth/dev-login?email=${encodeURIComponent(user.email)}`}
-                      className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-brand hover:bg-brand/5"
-                    >
-                      <span className="font-medium text-[#101727]">{user.name}</span>
-                      <span className="text-sm text-[#414B57]">{role}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
         </div>
       </div>
     </div>

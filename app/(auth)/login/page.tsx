@@ -36,7 +36,11 @@ function LoginContent() {
     ? (ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES["auth-failed"])
     : (bounceReason ? BOUNCE_MESSAGES[bounceReason] ?? null : null);
 
-  const [email, setEmail] = useState("");
+  // Prefills from ?email= (e.g. a dev-only quick-login row) so the only
+  // step left is clicking Send -- never auto-submitted, so a crafted link
+  // can't email itself to an address without a real click from whoever's at
+  // the keyboard.
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
