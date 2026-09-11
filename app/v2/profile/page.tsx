@@ -54,7 +54,10 @@ export default async function V2ProfilePage() {
     const freeUsage = isSchoolOrg
       ? computeSchoolFreeDebriefs(billingScopedFlights)
       : computeStudentFreeFlights(billingScopedFlights);
-    const showFreeUsage = viewer.organization.kind !== "independent_cfi" && !hasActiveSubscription(viewer.organization);
+    const showFreeUsage =
+      viewer.organization.kind !== "independent_cfi" &&
+      viewer.organization.kind !== "school" &&
+      !hasActiveSubscription(viewer.organization);
     const ttsEnabled = Boolean(process.env.DEEPGRAM_API_KEY);
     const canLeaveOrg = viewer.organization.kind !== "individual" && !viewer.organization.demoExpiresAt;
 

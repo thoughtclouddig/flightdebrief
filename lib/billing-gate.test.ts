@@ -42,4 +42,14 @@ describe("isBillingBlocked", () => {
     const result = await isBillingBlocked(repoWithFlights(50), demoOrg);
     expect(result).toBe(false);
   });
+
+  it("never blocks a school org, no matter how many debriefs it's completed -- free forever, same as independent CFI", async () => {
+    const result = await isBillingBlocked(repoWithFlights(500), org({ kind: "school" }));
+    expect(result).toBe(false);
+  });
+
+  it("never blocks an independent CFI org, unchanged by the school decision", async () => {
+    const result = await isBillingBlocked(repoWithFlights(500), org({ kind: "independent_cfi" }));
+    expect(result).toBe(false);
+  });
 });

@@ -56,7 +56,10 @@ export default async function ProgressPage() {
   const freeUsage = isSchoolOrg
     ? computeSchoolFreeDebriefs(billingScopedFlights ?? [])
     : computeStudentFreeFlights(flights);
-  const showFreeUsage = viewer.organization.kind !== "independent_cfi" && !hasActiveSubscription(viewer.organization);
+  const showFreeUsage =
+    viewer.organization.kind !== "independent_cfi" &&
+    viewer.organization.kind !== "school" &&
+    !hasActiveSubscription(viewer.organization);
 
   return (
     <StudentProgress

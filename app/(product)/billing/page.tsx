@@ -1,12 +1,11 @@
 import { CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubscribeButton } from "@/components/billing/subscribe-button";
-import { SchoolProSubscribe } from "@/components/billing/school-pro-subscribe";
 import { ManageBillingButton } from "@/components/billing/manage-billing-button";
 import { getRepository } from "@/lib/data";
 import { getViewer } from "@/lib/viewer";
 import { hasActiveSubscription } from "@/lib/billing-gate";
-import { computeSchoolFreeDebriefs, computeStudentFreeFlights } from "@/lib/entitlements";
+import { computeStudentFreeFlights } from "@/lib/entitlements";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +22,13 @@ export default async function BillingPage({
   const subscribed = hasActiveSubscription(org);
 
   const repo = getRepository();
-  const flights = org.kind !== "independent_cfi" ? await repo.listFlights({ organizationId: org.id }) : [];
-  const usage = org.kind === "school" ? computeSchoolFreeDebriefs(flights) : computeStudentFreeFlights(flights);
+  // Only an individual (solo pilot) org has a free-usage cap to compute at
+  // all now -- independent CFI and school orgs are both free forever (see
+  // isBillingBlocked's own comment on the school decision), so there's
+  // nothing here worth a query for either.
+  const needsUsage = org.kind === "individual";
+  const flights = needsUsage ? await repo.listFlights({ organizationId: org.id }) : [];
+  const usage = computeStudentFreeFlights(flights);
 
   if (org.demoExpiresAt) {
     return (
@@ -65,13 +69,7 @@ export default async function BillingPage({
         </Card>
       ) : null}
 
-      {org.kind === "independent_cfi" ? (
-        <Card>
-          <CardContent className="py-5 text-sm text-foreground-soft">
-            CFI accounts are free forever -- there&rsquo;s nothing to subscribe to here.
-          </CardContent>
-        </Card>
-      ) : subscribed ? (
+      {subscribed ? (
         <Card>
           <CardHeader>
             <CardTitle>Current plan</CardTitle>
@@ -87,38 +85,36 @@ export default async function BillingPage({
             <ManageBillingButton />
           </CardContent>
         </Card>
+      ) : org.kind === "independent_cfi" || org.kind === "school" ? (
+        <Card>
+          <CardContent className="py-5 text-sm text-foreground-soft">
+            {org.kind === "school"
+              ? "Free for your school -- no debrief limit, and nothing to subscribe to here."
+              : "CFI accounts are free forever -- there’s nothing to subscribe to here."}
+          </CardContent>
+        </Card>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>{org.kind === "school" ? "Flight School Pro" : "Pilot Plan"}</CardTitle>
+            <CardTitle>Pilot Plan</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-sm text-foreground-soft">
-              {usage.exhausted
-                ? `You've used all ${usage.cap} free ${org.kind === "school" ? "debriefs" : "flights"}. Subscribe to keep going.`
-                : `${usage.remaining} of ${usage.cap} free ${org.kind === "school" ? "debriefs" : "flights"} left.`}
+              {usage.exhausted ? `You've used all ${usage.cap} free flights. Subscribe to keep going.` : `${usage.remaining} of ${usage.cap} free flights left.`}
             </p>
-            {org.kind === "school" ? (
-              viewer.role === "admin" ? (
-                <SchoolProSubscribe />
-              ) : (
-                <p className="text-sm text-foreground-faint">Ask a school admin to subscribe.</p>
-              )
-            ) : (
-              /* flex-wrap because buttonVariants sets whitespace-nowrap:
-                 side by side at sm, two lg buttons couldn't shrink and the
-                 annual one overflowed the card's padding. Wrapping to a
-                 second line is the correct fallback; shorter labels mean it
-                 usually doesn't have to. */
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                <SubscribeButton billingPeriod="monthly" size="lg">
-                  Monthly -- $19.99/mo
-                </SubscribeButton>
-                <SubscribeButton billingPeriod="annual" size="lg" variant="outline">
-                  Annual -- $169/yr
-                </SubscribeButton>
-              </div>
-            )}
+            {/* flex-wrap because buttonVariants sets whitespace-nowrap: side
+                by side at sm, two lg buttons couldn't shrink and the annual
+                one overflowed the card's padding. Wrapping to a second line
+                is the correct fallback; shorter labels mean it usually
+                doesn't have to. */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <SubscribeButton billingPeriod="monthly" size="lg">
+                Monthly -- $19.99/mo
+              </SubscribeButton>
+              <SubscribeButton billingPeriod="annual" size="lg" variant="outline">
+                Annual -- $169/yr
+              </SubscribeButton>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -1,9 +1,14 @@
 import type { Flight } from "@/lib/types";
 
 /**
- * Free-usage caps for the two usage-based offers (students: 3 free flights;
- * schools: 25 free debriefs). CFIs are free forever and have no cap -- there
- * is intentionally no entitlement function for them.
+ * Free-usage cap for the one remaining usage-based offer: students get 3
+ * free flights. Schools no longer have a cap -- they're free forever, same
+ * as independent CFIs, as the incentive for a Part 61 school to put
+ * AfterFlight in front of its students at all (see isBillingBlocked's own
+ * comment). computeSchoolFreeDebriefs stays below for the handful of
+ * display-only call sites that still read it (harmless once
+ * isBillingBlocked/showFreeUsage stop rendering it for a school org), but
+ * it is no longer what gates anything.
  */
 export interface FreeUsageStatus {
   used: number;

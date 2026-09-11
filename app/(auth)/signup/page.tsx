@@ -20,7 +20,7 @@ const ROLES: { href: string; icon: LucideIcon; badge: string; title: string; cop
   {
     href: "/signup/school",
     icon: Building2,
-    badge: "First 25 Debriefs Free",
+    badge: "Free for your school",
     title: "I'm a flight school",
     copy: "Set up your school, invite your CFIs and students, and put AfterFlight to work in real lessons.",
   },
