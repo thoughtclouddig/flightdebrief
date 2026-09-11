@@ -18,7 +18,9 @@ that hasn't been published.
   set), `/dev/login`, `/api/demo/enter`, `/api/demo/reset`,
   `POST /api/prototype/vector`.
 - Deploy trigger: none.
-- Promotion: commit, push to `origin/main` when ready for staging.
+- Promotion: commit, push to `origin/student-v2-clean-cutover` (Development's
+  own tracked branch) when ready for staging. Not `origin/main` -- see the
+  "Canonical promotion branch" note below.
 
 ## Staging — `flightdebrief-staging.replit.app`
 
@@ -52,7 +54,8 @@ real user sees it. Internal QA only, still fixture-backed Milestone 1B on
   cannot appear in production, which `notFound()`s before the layout's
   `return()` is ever reached.
 - Deploy trigger: manual Publish from this Repl's own Deployments pane, after
-  pulling the target commit from `origin/main` into this workspace.
+  pulling the target commit from `origin/student-v2-clean-cutover` into this
+  workspace. Not `origin/main` -- see "Canonical promotion branch" below.
 - Rollback: this Repl's own Deployments history, one-click to a prior build.
 
 ## Production — `getafterflight.com`
@@ -80,29 +83,43 @@ real user sees it. Internal QA only, still fixture-backed Milestone 1B on
   something a push can trigger silently.
 - Rollback: this Repl's own Deployments history, one-click to a prior build.
 
+## Canonical promotion branch
+
+`origin/student-v2-clean-cutover` (Development's own tracked branch) is the
+one lineage Staging and Production promote from -- not `origin/main`.
+
+The two diverged for a while: `origin/main` accumulated a separate set of
+fixes with no code-level conflicts against Development's own history, and
+each was independently a plausible "canonical" candidate. Reconciled by
+hand-porting only the fixes Development actually needed onto its own branch
+(preserving its already-verified Student V2/CFI V2/School V2 presentation
+exactly) rather than merging the two histories or discarding either
+wholesale. `origin/main` is not deleted and may still carry work in
+progress, but it is not what Staging or Production pull from.
+
 ## Identifying what's actually deployed
 
 Replit deployments are a snapshot of the workspace's file state at publish
 time, not a git-ref checkout — there's no in-app version endpoint today, and
-**publishing does not pull `origin/main` automatically.** The reliable way to
-know what's live in either Repl is `git log --oneline -1` in that Repl's own
-shell, read past any empty `"Published your App"` marker commit to the real
-content commit underneath it.
+**publishing does not pull `origin/student-v2-clean-cutover` automatically.**
+The reliable way to know what's live in either Repl is `git log --oneline -1`
+in that Repl's own shell, read past any empty `"Published your App"` marker
+commit to the real content commit underneath it.
 
 This bit us twice building this contract: a workspace that was never pulled
 before Publish ships whatever was already sitting there, silently, with no
-warning that it doesn't match `origin/main`.
+warning that it doesn't match `origin/student-v2-clean-cutover`.
 
 **Before publishing either environment, in that Repl's own shell:**
 
 1. `git status --porcelain` — must be empty. A dirty working tree publishes
    uncommitted state.
 2. `git log --oneline -1` — know what HEAD actually is before you act on it.
-3. `git fetch origin && git log --oneline --stat origin/main..HEAD` — confirm
-   HEAD matches (or intentionally differs from) the origin revision you mean
-   to publish. Anything real listed here needs a merge (`git pull --no-edit
-   --no-ff origin main`), never a reflexive `reset --hard` — see the trap
-   below.
+3. `git fetch origin && git log --oneline --stat origin/student-v2-clean-cutover..HEAD`
+   — confirm HEAD matches (or intentionally differs from) the origin revision
+   you mean to publish. Anything real listed here needs a merge (`git pull
+   --no-edit --no-ff origin student-v2-clean-cutover`), never a reflexive
+   `reset --hard` — see the trap below.
 4. Confirm environment/database identity: `echo $APP_ENV` and a redacted
    `DATABASE_URL` host check, not a full value pasted anywhere.
 
@@ -112,8 +129,10 @@ Only then Publish.
 
 Each Repl's workspace is its own independent git checkout of the same GitHub
 repo. Publishing does **not** push to GitHub, and pushing to GitHub does
-**not** publish. A workspace can silently drift ahead of `origin/main` (real
-commits made directly in that workspace, e.g. by Replit's own background
-agent) or behind it (never pulled since the last GitHub push) — always check
-`git log --oneline --stat origin/main..HEAD` for real, non-empty local-only
-commits before ever resetting a workspace to match `origin/main`.
+**not** publish. A workspace can silently drift ahead of
+`origin/student-v2-clean-cutover` (real commits made directly in that
+workspace, e.g. by Replit's own background agent) or behind it (never pulled
+since the last GitHub push) — always check `git log --oneline --stat
+origin/student-v2-clean-cutover..HEAD` for real, non-empty local-only
+commits before ever resetting a workspace to match
+`origin/student-v2-clean-cutover`.
