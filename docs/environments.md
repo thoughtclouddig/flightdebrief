@@ -22,7 +22,7 @@ that hasn't been published.
   own tracked branch) when ready for staging. Not `origin/main` -- see the
   "Canonical promotion branch" note below.
 
-## Staging — `flightdebrief-staging.replit.app`
+## Staging — `flightdebrief-stg-v-2.replit.app`
 
 **Purpose:** prove a release candidate behaves like production before any
 real user sees it. Internal QA only, still fixture-backed Milestone 1B on
