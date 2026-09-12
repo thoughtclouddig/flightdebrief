@@ -521,6 +521,8 @@ export interface RadioPracticeAssignment {
   matchedElements: { description: string; matched: boolean }[] | null;
   /** How many times this has been submitted (see "Try Again") -- only the latest transcript/score is kept, this is just the count. */
   attempts: number;
+  /** The TrainingItem this attempt was launched for from Vector, or null for a standalone/picker-started attempt. The durable half of the Vector -> Radio Practice -> Vector return contract -- Vector re-fetches this row by id and reads this field itself, never trusting a client-supplied link. */
+  trainingItemId: string | null;
   completedAt: string | null;
   createdAt: string;
 }

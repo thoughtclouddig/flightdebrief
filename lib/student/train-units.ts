@@ -1,11 +1,12 @@
 import type { Repository } from "@/lib/data/types";
-import type { SkillProgressionStatus, TrainingItem, TrainingSignal, TrainingSkill } from "@/lib/types";
+import type { AssessmentDifference, SkillProgressionStatus, TrainingItem, TrainingSignal, TrainingSkill } from "@/lib/types";
 import { matchSkills, skillLabel as skillLabelFor } from "@/lib/topics";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { computeNextLessonBrief, STATUS_RANK } from "@/lib/training-memory";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightDate } from "@/lib/utils";
 import { buildVectorSession, type VectorSession } from "@/lib/student/vector-coaching";
+import { resolveObservedMechanism, type ObservedMechanism } from "@/lib/student/observed-mechanism";
 
 /**
  * A skill that is a more specific case of a broader one already in
@@ -80,29 +81,36 @@ export function resolveTrainingItemSkill(
  * Looks up one TrainingItem by id, scoped to this student's own flights at
  * the query itself (listTrainingItems({studentId}) JOINs against
  * flights.student_id -- see lib/data/postgres-repository.ts), and resolves
- * its skill. Null whenever the id doesn't exist, doesn't belong to this
- * student, isn't a student-visible "keep_working_on" unit, or resolves to
- * no catalog skill at all -- possession of an id is never sufficient
- * authorization on its own, and every caller (the session page, the
- * evaluate endpoint, the Chair Fly hand-off) needs the exact same check.
+ * its skill plus its observed mechanism, if any (see
+ * lib/student/observed-mechanism.ts). Null whenever the id doesn't exist,
+ * doesn't belong to this student, isn't a student-visible "keep_working_on"
+ * unit, or resolves to no catalog skill at all -- possession of an id is
+ * never sufficient authorization on its own, and every caller (the session
+ * page, the evaluate endpoint, the Radio Practice assign route, the Chair
+ * Fly hand-off) needs the exact same check and the exact same mechanism,
+ * never a second independent resolution.
  */
 export async function resolveOwnedTrainingItem(
   repo: Repository,
   studentId: string,
   itemId: string,
-): Promise<{ item: TrainingItem; skill: TrainingSkill } | null> {
+): Promise<{ item: TrainingItem; skill: TrainingSkill; mechanism: ObservedMechanism | null } | null> {
   const items = await repo.listTrainingItems({ studentId });
   const item = items.find((t) => t.id === itemId);
   if (!item || item.category !== "keep_working_on" || item.visibility === "instructor_only" || item.visibility === "admin_only") {
     return null;
   }
 
-  const [signals, flightTasks] = await Promise.all([
+  const [signals, flightTasks, debrief] = await Promise.all([
     repo.listTrainingSignals({ studentId }),
     repo.listFlightTasks(item.flightId),
+    repo.getDebriefByFlight(item.flightId),
   ]);
   const skill = resolveTrainingItemSkill(item, signals, new Set(flightTasks.map((t) => t.taskCode)));
-  return skill ? { item, skill } : null;
+  if (!skill) return null;
+
+  const mechanism = resolveObservedMechanism(debrief?.structuredResult.assessmentDifferences ?? [], skill);
+  return { item, skill, mechanism };
 }
 
 export interface TrainingUnit {
@@ -113,6 +121,8 @@ export interface TrainingUnit {
   skill: TrainingSkill;
   skillLabel: string;
   evidence: { label: string; text: string };
+  /** The instructor's own explicit observation about this unit's skill, when one exists -- see lib/student/observed-mechanism.ts. Null for the common freeform-debrief case, honestly, not fabricated. */
+  mechanism: ObservedMechanism | null;
   /** Null when this skill has no prior progression row at all -- this debrief is its first appearance. */
   progressionStatus: SkillProgressionStatus | null;
   vectorSession: VectorSession;
@@ -148,11 +158,13 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
     return { startHere: null, alsoTrain: [], more: [] };
   }
 
-  const [signals, flightTasks] = await Promise.all([
+  const [signals, flightTasks, debrief] = await Promise.all([
     repo.listTrainingSignals({ studentId }),
     repo.listFlightTasks(brief.lastFlight.id),
+    repo.getDebriefByFlight(brief.lastFlight.id),
   ]);
   const flightTaskCodes = new Set(flightTasks.map((t) => t.taskCode));
+  const assessmentDifferences: AssessmentDifference[] = debrief?.structuredResult.assessmentDifferences ?? [];
   const cfi = resolveCfiFirstName(brief.lastInstructor);
   const evidenceLabel = `${cfi ?? "Your instructor"} · ${formatFlightDate(brief.lastFlight.flightDate)}`;
 
@@ -179,6 +191,7 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
     skill,
     skillLabel: skillLabelFor(skill),
     evidence: { label: evidenceLabel, text: item.description },
+    mechanism: resolveObservedMechanism(assessmentDifferences, skill),
     progressionStatus: progressions.find((p) => p.skill === skill)?.status ?? null,
     vectorSession: buildVectorSession(item.id),
   }));

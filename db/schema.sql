@@ -575,6 +575,15 @@ CREATE INDEX IF NOT EXISTS radio_practice_assignments_student_idx ON radio_pract
 -- see "passed on attempt 3" instead of only the final result.
 ALTER TABLE radio_practice_assignments ADD COLUMN IF NOT EXISTS attempts integer NOT NULL DEFAULT 0;
 
+-- Links a Radio Practice attempt back to the Vector training unit
+-- (TrainingItem) that launched it, when it was launched from Vector rather
+-- than picked standalone -- the durable half of the Vector -> Radio
+-- Practice -> Vector return contract. Nullable: a student picking Radio
+-- Practice on its own still creates a normal, unlinked assignment.
+-- ON DELETE SET NULL, not CASCADE: the practice attempt and its score are
+-- real history in their own right and should outlive the training item.
+ALTER TABLE radio_practice_assignments ADD COLUMN IF NOT EXISTS training_item_id text REFERENCES training_items(id) ON DELETE SET NULL;
+
 -- Standard card set (item 9 of the debrief spec), global defaults
 -- (organization_id NULL). Schools can later add organization_id-scoped rows
 -- with the same `code` to override title/prompts without a schema change.

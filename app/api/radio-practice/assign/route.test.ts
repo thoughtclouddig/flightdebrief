@@ -35,10 +35,14 @@ function requestBody(body: object): Request {
   return new Request("http://localhost/api/radio-practice/assign", { method: "POST", body: JSON.stringify(body) });
 }
 
-function fakeRepo() {
+function fakeRepo(opts: { items?: Array<Record<string, unknown>> } = {}) {
   return {
     listMembers: vi.fn().mockResolvedValue([{ userId: "student-1" }]),
     createRadioPracticeAssignment: vi.fn().mockImplementation((input) => Promise.resolve({ id: "assignment-1", ...input })),
+    listTrainingItems: vi.fn().mockResolvedValue(opts.items ?? []),
+    listTrainingSignals: vi.fn().mockResolvedValue([]),
+    listFlightTasks: vi.fn().mockResolvedValue([]),
+    getDebriefByFlight: vi.fn().mockResolvedValue(null),
   };
 }
 
@@ -93,5 +97,43 @@ describe("POST /api/radio-practice/assign — student access is not gated on org
     expect(repo.createRadioPracticeAssignment).toHaveBeenCalledWith(
       expect.objectContaining({ studentId: "student-1", assignedBy: "cfi-1" }),
     );
+  });
+});
+
+describe("POST /api/radio-practice/assign — the Vector return-path link is re-verified, never trusted from the client alone", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("links the assignment to a training item this student really owns", async () => {
+    vi.mocked(authorize).mockResolvedValue({ viewer: viewer({ kind: "school" }) } as never);
+    const repo = fakeRepo({
+      items: [{ id: "item-1", flightId: "flight-1", debriefId: "debrief-1", category: "keep_working_on", description: "Radio calls on downwind were rushed.", done: false, completedAt: null, visibility: "shared", createdAt: "2026-01-01T00:00:00.000Z" }],
+    });
+    vi.mocked(getRepository).mockReturnValue(repo as never);
+
+    const res = await POST(requestBody({ scenarioId: "initial-atis", trainingItemId: "item-1" }));
+    expect(res.status).toBe(200);
+    expect(repo.createRadioPracticeAssignment).toHaveBeenCalledWith(expect.objectContaining({ trainingItemId: "item-1" }));
+  });
+
+  it("silently drops a trainingItemId that doesn't resolve to this student's own owned item -- never errors the whole attempt over it", async () => {
+    vi.mocked(authorize).mockResolvedValue({ viewer: viewer({ kind: "school" }) } as never);
+    const repo = fakeRepo({ items: [] }); // no items at all -- "item-1" belongs to nobody this repo view can see
+    vi.mocked(getRepository).mockReturnValue(repo as never);
+
+    const res = await POST(requestBody({ scenarioId: "initial-atis", trainingItemId: "item-1" }));
+    expect(res.status).toBe(200);
+    expect(repo.createRadioPracticeAssignment).toHaveBeenCalledWith(expect.objectContaining({ trainingItemId: null }));
+  });
+
+  it("stores trainingItemId: null for a normal standalone practice request with no linkage at all", async () => {
+    vi.mocked(authorize).mockResolvedValue({ viewer: viewer({ kind: "school" }) } as never);
+    const repo = fakeRepo();
+    vi.mocked(getRepository).mockReturnValue(repo as never);
+
+    const res = await POST(requestBody({ scenarioId: "initial-atis" }));
+    expect(res.status).toBe(200);
+    expect(repo.createRadioPracticeAssignment).toHaveBeenCalledWith(expect.objectContaining({ trainingItemId: null }));
   });
 });

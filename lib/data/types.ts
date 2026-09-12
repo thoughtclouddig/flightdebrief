@@ -329,6 +329,8 @@ export interface Repository {
     studentId: string;
     assignedBy: string | null;
     scenarioId: string;
+    /** Set only when launched from a Vector training unit -- see RadioPracticeAssignment.trainingItemId. */
+    trainingItemId?: string | null;
   }): Promise<RadioPracticeAssignment>;
   listRadioPracticeAssignments(studentId: string): Promise<RadioPracticeAssignment[]>;
   getRadioPracticeAssignment(id: string): Promise<RadioPracticeAssignment | null>;

@@ -254,9 +254,20 @@ export function RadioPracticeSession({
 
       {phase === "done" ? (
         <div className="flex flex-col gap-2">
+          {/* Only when this attempt was launched from a Vector training unit
+              (assignment.trainingItemId, set at assign time -- never a
+              client-supplied query param) -- returns to that exact unit,
+              which re-fetches this real result server-side rather than
+              trusting anything carried in the URL. Standalone Radio
+              Practice (trainingItemId null) never shows this. */}
+          {assignment.trainingItemId ? (
+            <Button onClick={() => router.push(`/train/vector/${assignment.trainingItemId}`)} className="flex-1">
+              Continue with Vector
+            </Button>
+          ) : null}
           <div className="flex gap-2">
             {!result?.correct ? (
-              <Button onClick={tryAgain} className="flex-1">
+              <Button onClick={tryAgain} className="flex-1" variant={assignment.trainingItemId ? "outline" : "default"}>
                 Try Again
               </Button>
             ) : null}
@@ -265,7 +276,7 @@ export function RadioPracticeSession({
             {next ? (
               <Button
                 onClick={() => router.push(`/practice/${next.id}`)}
-                variant={result?.correct ? "default" : "outline"}
+                variant={result?.correct || assignment.trainingItemId ? "outline" : "default"}
                 className="flex-1"
               >
                 Next: {next.title}

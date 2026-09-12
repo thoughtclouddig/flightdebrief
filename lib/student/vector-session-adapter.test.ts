@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildVectorSessionProps } from "./vector-session-adapter";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
-import type { FlightWithRelations, TrainingItem, TrainingSignal } from "@/lib/types";
+import type { Debrief, FlightWithRelations, RadioPracticeAssignment, TrainingItem, TrainingSignal } from "@/lib/types";
 
 const STUDENT_ID = "student-1";
 const HREFS = { chairFlyHref: "/train/chair-fly", radioPracticeHref: "/train/radio-practice" };
@@ -66,15 +66,72 @@ function trainingItem(overrides: Partial<TrainingItem> = {}): TrainingItem {
   };
 }
 
-function fakeRepo(opts: { items?: TrainingItem[]; signals?: TrainingSignal[]; lastFlight?: FlightWithRelations | null }): Repository {
+function debrief(overrides: Partial<Debrief["structuredResult"]> = {}): Debrief {
+  return {
+    id: "debrief-1",
+    flightId: "flight-1",
+    transcript: "transcript",
+    audioDurationSeconds: 60,
+    analyzedWith: "mock",
+    guidanceMode: "guided",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
+    createdAt: "2026-08-20T20:00:00.000Z",
+    structuredResult: {
+      flightSummary: "",
+      narrativeRecap: "",
+      whatWeDid: [],
+      wentWell: [],
+      needsWork: [],
+      instructorGuidance: [],
+      instructorAssistance: [],
+      riskManagementNotes: [],
+      assessmentDifferences: [],
+      actionItems: [],
+      nextLessonFocus: [],
+      studyReferences: [],
+      nextFlightCue: "",
+      nextFlightCueContext: "",
+      ...overrides,
+    },
+  } as Debrief;
+}
+
+function radioAssignment(overrides: Partial<RadioPracticeAssignment> = {}): RadioPracticeAssignment {
+  return {
+    id: "assignment-1",
+    organizationId: "org-1",
+    studentId: STUDENT_ID,
+    assignedBy: null,
+    scenarioId: "initial-atis",
+    status: "assigned",
+    transcript: null,
+    correct: null,
+    matchedElements: null,
+    attempts: 0,
+    trainingItemId: null,
+    completedAt: null,
+    createdAt: "2026-08-20T20:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function fakeRepo(opts: {
+  items?: TrainingItem[];
+  signals?: TrainingSignal[];
+  lastFlight?: FlightWithRelations | null;
+  lastDebrief?: Debrief | null;
+  radioAssignments?: RadioPracticeAssignment[];
+}): Repository {
   const lastFlight = opts.lastFlight === undefined ? flight() : opts.lastFlight;
   return {
     listFlights: async () => (lastFlight ? [lastFlight] : []),
     listTrainingItems: async () => opts.items ?? [],
     listReservations: async () => [],
-    getDebriefByFlight: async () => null,
+    getDebriefByFlight: async () => opts.lastDebrief ?? null,
     listTrainingSignals: async () => opts.signals ?? [],
     listFlightTasks: async () => [],
+    listRadioPracticeAssignments: async () => opts.radioAssignments ?? [],
   } as unknown as Repository;
 }
 
@@ -91,40 +148,91 @@ describe("buildVectorSessionProps", () => {
     expect(props).toBeNull();
   });
 
-  it("surfaces the real Chair Fly engine as available when this item's own skill has an authored scenario -- but does not preselect it as the session's activity", async () => {
+  it("diagnoses via curated Q&A first, even for a skill with a Chair Fly engine, when no mechanism is known yet (freeform debrief)", async () => {
     const repo = fakeRepo({ items: [trainingItem({ description: "Crosswind correction was late on the last two landings." })] });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
-    expect(props?.rehearsal).toEqual({ kind: "chair-fly" });
+    expect(props?.strategy.kind).toBe("check");
   });
 
-  it("surfaces Radio Practice as available for an item resolving to RADIO_COMMUNICATIONS", async () => {
+  it("goes straight to Chair Fly, no preliminary question, when this unit's own mechanism is explicitly known from a real dual-assessment note", async () => {
+    const repo = fakeRepo({
+      items: [trainingItem({ description: "Crosswind correction was late on the last two landings." })],
+      lastDebrief: debrief({
+        assessmentDifferences: [
+          { taskLabel: "Crosswind landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "You're still relaxing the correction once you get into the flare." },
+        ],
+      }),
+    });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.strategy).toEqual({ kind: "chair-fly" });
+  });
+
+  it("diagnoses an ambiguous communications gap via the real Radio Practice activity itself", async () => {
     const repo = fakeRepo({ items: [trainingItem({ description: "Radio calls on downwind were rushed." })] });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
-    expect(props?.rehearsal).toEqual({ kind: "radio-practice" });
+    expect(props?.strategy).toEqual({ kind: "radio-practice", mode: "diagnose" });
+    expect(props?.radioScenarioId).toBeTruthy();
   });
 
   it("never dead-ends the exact browser-acceptance sentence, whichever of its two plausible skills wins text-matching", async () => {
     // This sentence genuinely contains two skill-matching words ("radio"
     // and "emergency") with no FlightTask/TrainingSignal evidence to
     // disambiguate them here -- pure keyword matching can legitimately
-    // land on either TOWER_READBACKS (now a real Radio Practice route,
-    // the fix this test guards) or EMERGENCY_PROCEDURES (real curated
-    // check content). The one thing that must never happen, whichever
-    // wins, is having neither a diagnostic question nor a rehearsal engine
-    // -- the honest dead end this whole fix exists to close.
+    // land on either TOWER_READBACKS or EMERGENCY_PROCEDURES. The one
+    // thing that must never happen, whichever wins, is a strategy outside
+    // the five legitimate kinds resolveVectorStrategy can ever produce --
+    // there is no "nothing prepared" variant at all anymore.
     const repo = fakeRepo({
       items: [trainingItem({ description: "I need to work on talking on the radio more confidently during the emergency scenario." })],
     });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
-    const isDeadEnd = !props?.diagnosticQuestion && !props?.rehearsal;
-    expect(isDeadEnd).toBe(false);
+    expect(props).not.toBeNull();
+    expect(["chair-fly", "radio-practice", "coach", "check", "transfer"]).toContain(props?.strategy.kind);
   });
 
-  it("offers Vector's own grounded diagnostic question for an item with no rehearsal engine", async () => {
+  it("offers Vector's own grounded diagnostic question for an item with no rehearsal engine at all", async () => {
     const repo = fakeRepo({ items: [trainingItem({ description: "Steep turns lost some altitude in the second one." })] });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
-    expect(props?.rehearsal).toBeNull();
-    expect(props?.diagnosticQuestion?.prompt).toBeTruthy();
+    expect(props?.strategy.kind).toBe("check");
+    expect(props?.strategy.kind === "check" && props.strategy.question.prompt).toBeTruthy();
+  });
+
+  it("surfaces an already-completed, linked Radio Practice attempt as real activity evidence -- re-fetched server-side, never trusted from the client", async () => {
+    const repo = fakeRepo({
+      items: [trainingItem({ description: "Radio calls on downwind were rushed." })],
+      radioAssignments: [
+        radioAssignment({
+          id: "assignment-linked",
+          trainingItemId: "item-1",
+          status: "completed",
+          correct: false,
+          matchedElements: [{ description: "altitude restriction readback", matched: false }],
+        }),
+      ],
+    });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.strategy.kind).toBe("transfer");
+    expect(props?.strategy.kind === "transfer" && props.strategy.objective).toContain("altitude restriction readback");
+  });
+
+  it("surfaces an incomplete, linked Radio Practice attempt to resume, instead of creating a duplicate", async () => {
+    const repo = fakeRepo({
+      items: [trainingItem({ description: "Radio calls on downwind were rushed." })],
+      radioAssignments: [radioAssignment({ id: "assignment-pending", trainingItemId: "item-1", status: "assigned" })],
+    });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.pendingRadioPracticeAssignmentId).toBe("assignment-pending");
+    expect(props?.strategy.kind).toBe("radio-practice");
+  });
+
+  it("ignores a Radio Practice assignment linked to a different training item", async () => {
+    const repo = fakeRepo({
+      items: [trainingItem({ description: "Radio calls on downwind were rushed." })],
+      radioAssignments: [radioAssignment({ id: "assignment-other", trainingItemId: "some-other-item", status: "completed", correct: true })],
+    });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.pendingRadioPracticeAssignmentId).toBeNull();
+    expect(props?.strategy).toEqual({ kind: "radio-practice", mode: "diagnose" });
   });
 
   it("flags a physical/stick-and-rudder skill so the session can frame it honestly", async () => {

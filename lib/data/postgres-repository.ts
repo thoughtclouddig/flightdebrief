@@ -910,12 +910,13 @@ export class PostgresRepository implements Repository {
     studentId: string;
     assignedBy: string | null;
     scenarioId: string;
+    trainingItemId?: string | null;
   }): Promise<RadioPracticeAssignment> {
     const db = await this.db();
     const { rows } = await db.query(
-      `INSERT INTO radio_practice_assignments (id, organization_id, student_id, assigned_by, scenario_id)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [randomUUID(), input.organizationId, input.studentId, input.assignedBy, input.scenarioId],
+      `INSERT INTO radio_practice_assignments (id, organization_id, student_id, assigned_by, scenario_id, training_item_id)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [randomUUID(), input.organizationId, input.studentId, input.assignedBy, input.scenarioId, input.trainingItemId ?? null],
     );
     return mapRadioPracticeAssignment(rows[0]);
   }
@@ -2047,6 +2048,7 @@ function mapRadioPracticeAssignment(row: Row): RadioPracticeAssignment {
     correct: (row.correct as boolean | null) ?? null,
     matchedElements: (row.matched_elements as RadioPracticeAssignment["matchedElements"]) ?? null,
     attempts: row.attempts as number,
+    trainingItemId: (row.training_item_id as string | null) ?? null,
     completedAt: row.completed_at ? iso(row.completed_at) : null,
     createdAt: iso(row.created_at),
   };

@@ -56,6 +56,9 @@ function fakeRepo(items: TrainingItem[] = []) {
     listTrainingItems: vi.fn().mockResolvedValue(items),
     listTrainingSignals: vi.fn().mockResolvedValue([]),
     listFlightTasks: vi.fn().mockResolvedValue([]),
+    getDebriefByFlight: vi.fn().mockResolvedValue(null),
+    listFlights: vi.fn().mockResolvedValue([]),
+    listReservations: vi.fn().mockResolvedValue([]),
   };
 }
 
@@ -131,37 +134,21 @@ describe("POST /api/train/vector/[itemId]/evaluate", () => {
   });
 });
 
-describe("strategy -- decided only after this real answer, never preselected from the skill alone", () => {
+describe("strategy -- decided only after this real answer, never preselected from the skill alone, never a score threshold used as a universal modality selector", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(authorize).mockResolvedValue({ viewer: viewer() } as never);
   });
 
-  it("offers one retry, framed by a curated common error, when the answer reveals a genuine gap and none has been spent yet", async () => {
-    vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem()]) as never); // resolves to STEEP_TURNS -- no rehearsal engine, real commonErrors
-    vi.mocked(evaluateVectorAnswer).mockResolvedValue({ matchedConcepts: [], feedback: "You missed the load factor point.", takeaway: "Add back-pressure as bank increases." });
-
-    const res = await POST(requestBody({ answer: "I'm not sure." }), params("item-1"));
-    const body = (await res.json()) as { strategy: { kind: string; hint?: string } };
-
-    expect(body.strategy.kind).toBe("retry");
-    expect(body.strategy.hint).toBeTruthy();
-  });
-
-  it("never offers a second retry -- a still-weak second answer (retried: true) forces a real next move instead of looping", async () => {
-    vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem()]) as never);
-    vi.mocked(evaluateVectorAnswer).mockResolvedValue({ matchedConcepts: [], feedback: "Still missing the load factor point.", takeaway: "Add back-pressure as bank increases." });
-
-    const res = await POST(requestBody({ answer: "I'm still not sure.", retried: true }), params("item-1"));
-    const body = (await res.json()) as { strategy: { kind: string } };
-
-    expect(body.strategy.kind).not.toBe("retry");
-  });
-
-  it("hands off to the real rehearsal engine once diagnosis is done, even when the answer was strong -- physical execution is fixed by rehearsing, not more Q&A", async () => {
+  it("legitimately re-opens Chair Fly once diagnosis is solid, for a skill that has one -- understanding is now established, not assumed", async () => {
     vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem({ description: "Crosswind correction was late on the last two landings." })]) as never); // resolves to CROSSWIND_LANDING -- has an authored Chair Fly scenario
     vi.mocked(evaluateVectorAnswer).mockResolvedValue({
-      matchedConcepts: ["steeper bank increases load factor", "more back-pressure/elevator is needed to maintain altitude at higher bank angles", "not enough back-pressure results in altitude loss"],
+      matchedConcepts: [
+        "aileron controls drift / holds the wing into the wind",
+        "rudder keeps the nose tracking the centerline",
+        "they're two different jobs, not one combined input",
+        "relaxing aileron too early after touchdown lets the wind pick up the wing or drift the airplane",
+      ],
       feedback: "You've got it.",
       takeaway: "Keep leading the rollout.",
     });
@@ -169,10 +156,10 @@ describe("strategy -- decided only after this real answer, never preselected fro
     const res = await POST(requestBody({ answer: "A full, correct answer." }), params("item-1"));
     const body = (await res.json()) as { strategy: { kind: string } };
 
-    expect(body.strategy.kind).toBe("chair-fly");
+    expect(body.strategy).toEqual({ kind: "chair-fly" });
   });
 
-  it("returns done with an explicit flight-transfer objective when there's no rehearsal engine and no real gap left", async () => {
+  it("returns transfer with an explicit flight-transfer objective when there's no rehearsal engine and no real gap left", async () => {
     vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem()]) as never); // STEEP_TURNS -- no rehearsal engine
     vi.mocked(evaluateVectorAnswer).mockResolvedValue({
       matchedConcepts: ["steeper bank increases load factor", "more back-pressure/elevator is needed to maintain altitude at higher bank angles", "not enough back-pressure results in altitude loss"],
@@ -183,7 +170,17 @@ describe("strategy -- decided only after this real answer, never preselected fro
     const res = await POST(requestBody({ answer: "A full, correct answer." }), params("item-1"));
     const body = (await res.json()) as { strategy: { kind: string; objective?: string } };
 
-    expect(body.strategy).toEqual({ kind: "done", objective: "Add back-pressure as bank increases." });
+    expect(body.strategy).toEqual({ kind: "transfer", objective: expect.stringContaining("Add back-pressure as bank increases.") });
+  });
+
+  it("returns transfer, never an infinite retry, for a weak answer with no rehearsal engine either", async () => {
+    vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem()]) as never);
+    vi.mocked(evaluateVectorAnswer).mockResolvedValue({ matchedConcepts: [], feedback: "You missed the load factor point.", takeaway: "Add back-pressure as bank increases." });
+
+    const res = await POST(requestBody({ answer: "I'm not sure." }), params("item-1"));
+    const body = (await res.json()) as { strategy: { kind: string } };
+
+    expect(body.strategy.kind).toBe("transfer");
   });
 });
 

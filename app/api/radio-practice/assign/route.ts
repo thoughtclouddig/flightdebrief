@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import { authorize } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
+import { resolveOwnedTrainingItem } from "@/lib/student/train-units";
 
 interface AssignBody {
   scenarioId: string;
   /** Required for a CFI/admin assigning to a roster student; ignored (self) for a student starting their own practice. */
   studentId?: string;
+  /** Set when Vector is launching this as the training unit's diagnostic/rehearsal activity -- re-verified as this exact student's own item before being trusted, never persisted merely because the client sent it. */
+  trainingItemId?: string;
 }
 
 /**
@@ -53,11 +56,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // Re-verified here, never trusted from the client alone: only an id that
+  // resolves to this exact student's own owned training unit gets linked.
+  // A bogus or someone-else's id just silently doesn't link, rather than
+  // erroring the whole practice attempt over it.
+  const trainingItemId = body.trainingItemId
+    ? ((await resolveOwnedTrainingItem(repo, studentId, body.trainingItemId)) ? body.trainingItemId : null)
+    : null;
+
   const assignment = await repo.createRadioPracticeAssignment({
     organizationId: viewer.organization.id,
     studentId,
     assignedBy,
     scenarioId: scenario.id,
+    trainingItemId,
   });
 
   return NextResponse.json({ assignment });

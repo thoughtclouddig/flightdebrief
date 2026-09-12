@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildTrainingPlan, resolveOwnedTrainingItem, resolveTrainingItemSkill } from "./train-units";
 import type { Repository } from "@/lib/data/types";
-import type { FlightTask, FlightWithRelations, TrainingItem, TrainingSignal } from "@/lib/types";
+import type { Debrief, FlightTask, FlightWithRelations, TrainingItem, TrainingSignal } from "@/lib/types";
 
 const STUDENT_ID = "student-1";
 const CROSSWIND_SENTENCE = "The first two landings were a little squirrelly in the crosswind, but I got the feel for it by the fourth one.";
@@ -99,13 +99,50 @@ function flight(overrides: Partial<FlightWithRelations> = {}): FlightWithRelatio
   } as FlightWithRelations;
 }
 
-function fakeRepo(opts: { items?: TrainingItem[]; signals?: TrainingSignal[]; flightTasks?: FlightTask[]; lastFlight?: FlightWithRelations | null }): Repository {
+function debrief(overrides: Partial<Debrief["structuredResult"]> = {}): Debrief {
+  return {
+    id: "debrief-1",
+    flightId: "flight-1",
+    transcript: "transcript",
+    audioDurationSeconds: 60,
+    analyzedWith: "mock",
+    guidanceMode: "guided",
+    recordingStartedAt: null,
+    recordingEndedAt: null,
+    createdAt: "2026-08-28T20:00:00.000Z",
+    structuredResult: {
+      flightSummary: "",
+      narrativeRecap: "",
+      whatWeDid: [],
+      wentWell: [],
+      needsWork: [],
+      instructorGuidance: [],
+      instructorAssistance: [],
+      riskManagementNotes: [],
+      assessmentDifferences: [],
+      actionItems: [],
+      nextLessonFocus: [],
+      studyReferences: [],
+      nextFlightCue: "",
+      nextFlightCueContext: "",
+      ...overrides,
+    },
+  } as Debrief;
+}
+
+function fakeRepo(opts: {
+  items?: TrainingItem[];
+  signals?: TrainingSignal[];
+  flightTasks?: FlightTask[];
+  lastFlight?: FlightWithRelations | null;
+  lastDebrief?: Debrief | null;
+}): Repository {
   const lastFlight = opts.lastFlight === undefined ? flight() : opts.lastFlight;
   return {
     listFlights: async () => (lastFlight ? [lastFlight] : []),
     listTrainingItems: async () => opts.items ?? [],
     listReservations: async () => [],
-    getDebriefByFlight: async () => null,
+    getDebriefByFlight: async () => opts.lastDebrief ?? null,
     listTrainingSignals: async () => opts.signals ?? [],
     listFlightTasks: async () => opts.flightTasks ?? [],
     listMembershipsForUser: async () => [],
@@ -189,5 +226,28 @@ describe("resolveOwnedTrainingItem — possession of an id is never sufficient a
     const repo = fakeRepo({ items: [trainingItem({ category: "before_next_flight" })] });
     const result = await resolveOwnedTrainingItem(repo, STUDENT_ID, "item-1");
     expect(result).toBeNull();
+  });
+
+  it("carries a real observed mechanism when this unit's skill is the flight's own contested dual-assessment objective", async () => {
+    const repo = fakeRepo({
+      items: [trainingItem()],
+      lastDebrief: debrief({
+        assessmentDifferences: [
+          { taskLabel: "Crosswind landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "You're still relaxing the correction once you get into the flare." },
+        ],
+      }),
+    });
+    const result = await resolveOwnedTrainingItem(repo, STUDENT_ID, "item-1");
+    expect(result?.mechanism).toEqual({
+      quote: "You're still relaxing the correction once you get into the flare.",
+      source: "instructor",
+      category: "SEQUENCING_REHEARSAL",
+    });
+  });
+
+  it("carries no mechanism, honestly, for a freeform debrief -- never guessed from the description text", async () => {
+    const repo = fakeRepo({ items: [trainingItem()], lastDebrief: debrief({ assessmentDifferences: [] }) });
+    const result = await resolveOwnedTrainingItem(repo, STUDENT_ID, "item-1");
+    expect(result?.mechanism).toBeNull();
   });
 });

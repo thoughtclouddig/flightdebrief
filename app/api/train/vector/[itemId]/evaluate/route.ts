@@ -5,21 +5,29 @@ import { curatedTrainingGuidance } from "@/lib/topics";
 import { evaluateVectorAnswer, type VectorCoachEvaluation } from "@/lib/ai/vector-coach";
 import { resolveOwnedTrainingItem } from "@/lib/student/train-units";
 import { resolveVectorStrategy } from "@/lib/student/vector-coaching";
+import { computeNextLessonBrief } from "@/lib/training-memory";
+import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 
 interface EvaluateBody {
   answer?: string;
-  /** True when this is a second answer after Vector offered a retry -- caps adaptation at one round for V1. */
-  retried?: boolean;
 }
 
 /**
- * Evaluates one answer inside Vector's bounded training-session interaction
- * for a single unit (/train/vector/[itemId]). Authenticated via
- * authorize(), and the item itself is looked up through
- * resolveOwnedTrainingItem -- ownership-scoped at the query (a JOIN against
- * flights.student_id), never trusted from the URL alone. Skill, evidence
- * and grounding are all re-derived here server-side from that exact item;
- * the client supplies only the free-text answer.
+ * Evaluates one answer inside Vector's bounded diagnostic Q&A for a single
+ * unit (/train/vector/[itemId]) -- reached only when
+ * lib/student/vector-coaching.ts's resolveVectorStrategy decided "check"
+ * (no mechanism was known, and no performance activity exists for this
+ * skill). Authenticated via authorize(), and the item itself is looked up
+ * through resolveOwnedTrainingItem -- ownership-scoped at the query (a
+ * JOIN against flights.student_id), never trusted from the URL alone.
+ * Skill, evidence and grounding are all re-derived here server-side from
+ * that exact item; the client supplies only the free-text answer.
+ *
+ * This answer becomes real activity evidence for round 2 of
+ * resolveVectorStrategy -- the next move (Chair Fly, when a solid answer
+ * legitimately re-opens it, or an honest transfer objective) is decided
+ * from that evidence, never from matchedConceptCount as a universal
+ * modality selector and never from the skill alone.
  */
 export async function POST(request: Request, { params }: RouteContext<"/api/train/vector/[itemId]/evaluate">) {
   const auth = await authorize();
@@ -41,7 +49,6 @@ export async function POST(request: Request, { params }: RouteContext<"/api/trai
 
   const body = (await request.json().catch(() => ({}))) as EvaluateBody;
   const answer = typeof body.answer === "string" ? body.answer : "";
-  const retried = body.retried === true;
   if (!answer.trim()) {
     return NextResponse.json({ error: "Answer required." }, { status: 400 });
   }
@@ -68,17 +75,20 @@ export async function POST(request: Request, { params }: RouteContext<"/api/trai
   };
   const resolved = evaluation ?? fallback;
 
-  // The strategy decision -- rehearse, one more grounded round, or done --
-  // is made here, AFTER this real answer, never before it. Deterministic:
-  // the only signal is this evaluation's own matched-vs-expected concept
-  // count (itself grounded) plus real capability-availability facts, never
-  // an LLM guess.
+  const brief = await computeNextLessonBrief(repo, viewer.user.id);
+  const cfiName = resolveCfiFirstName(brief.lastInstructor) ?? "your instructor";
+
   const strategy = resolveVectorStrategy({
     skill,
-    diagnosis: { matchedConceptCount: resolved.matchedConcepts.length, expectedConceptCount: guidance.checkQuestion.expectedConcepts.length },
-    retried,
-    commonErrors: guidance.commonErrors,
-    objective: resolved.takeaway,
+    mechanism: null,
+    activityEvidence: {
+      kind: "check",
+      matchedConceptCount: resolved.matchedConcepts.length,
+      expectedConceptCount: guidance.checkQuestion.expectedConcepts.length,
+      takeaway: resolved.takeaway,
+    },
+    cfiName,
+    fallbackEvidenceText: item.description,
   });
 
   return NextResponse.json({ evaluation: resolved, citation: guidance.citation, strategy });
