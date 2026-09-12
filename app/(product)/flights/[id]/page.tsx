@@ -23,10 +23,13 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
   const repo = getRepository();
   const isInstructorViewer = viewer.role === "instructor" || viewer.role === "admin";
 
-  // Guided/light modes require the CFI to pick this flight's tasks before
-  // anyone can start the debrief -- see app/(product)/flights/[id]/debrief/page.tsx.
-  // Reflect that here instead of showing a live-looking button that immediately
-  // bounces the student to a "not quite yet" screen.
+  // tasksPending only still matters for the legacy instructor-facing render
+  // below ("Pick Today's Tasks" vs a disabled CFI-picks-tasks button) --
+  // never for the student view. Since Milestone 2A
+  // (app/(product)/flights/[id]/debrief/page.tsx's own resolver), a student
+  // with zero tasks is sent to /debrief/confirm to pick their own objectives,
+  // solo or instructional; there is no "waiting on your CFI" state for a
+  // student to ever land in.
   let tasksPending = false;
   let hasPendingDebrief = false;
   let guidanceMode: "freeform" | "guided" | "light" = "freeform";
@@ -73,7 +76,6 @@ export default async function FlightDetailPage(props: PageProps<"/flights/[id]">
     return (
       <StudentFlightDetail
         flight={flight}
-        tasksPending={tasksPending}
         hasPendingDebrief={hasPendingDebrief}
         guidanceMode={guidanceMode}
         skillProgressions={skillProgressions}

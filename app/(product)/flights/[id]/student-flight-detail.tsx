@@ -29,14 +29,12 @@ function toneForStatus(status: SkillProgressionStatus) {
  */
 export function StudentFlightDetail({
   flight,
-  tasksPending,
   hasPendingDebrief,
   guidanceMode,
   skillProgressions,
   certificateType,
 }: {
   flight: FlightWithRelations;
-  tasksPending: boolean;
   hasPendingDebrief: boolean;
   guidanceMode: "freeform" | "guided" | "light";
   skillProgressions: SkillProgression[];
@@ -61,19 +59,16 @@ export function StudentFlightDetail({
         </p>
       </div>
 
-      {/* Same real gating results/[id]/page.tsx has always used -- guided/
-          light orgs require the CFI to pick tasks first, a saved-but-
-          unanalyzed recording resumes instead of re-recording, and a solo/
-          freeform flight is the only case where the student's own tap
-          starts the recording. */}
+      {/* A saved-but-unanalyzed recording resumes instead of re-recording;
+          otherwise every flight (solo or instructional, freeform or guided/
+          light) goes into /debrief, whose own resolver picks the right next
+          step -- including sending a student with no tasks yet to /confirm
+          to pick their own objectives. There is no "waiting on your CFI"
+          state for a student to land in here. */}
       {flight.debriefStatus === "complete" ? (
         <PrimaryButton href={`/flights/${flight.id}/debrief/results`}>View debrief</PrimaryButton>
       ) : hasPendingDebrief ? (
         <ResumeDebriefButton flightId={flight.id} resultsHref={`/flights/${flight.id}/debrief/results`} />
-      ) : tasksPending ? (
-        <p className="rounded-2xl border border-hairline bg-surface-sunken px-5 py-4 text-center text-[15px] text-foreground-soft">
-          Waiting on your CFI to pick today&rsquo;s tasks.
-        </p>
       ) : (
         <PrimaryButton href={`/flights/${flight.id}/debrief`}>
           <Mic className="size-[18px]" aria-hidden />
