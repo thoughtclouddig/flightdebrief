@@ -1,4 +1,4 @@
-import { generatePatternTrack } from "@/lib/geo";
+import { generatePatternTrack, hashString } from "@/lib/geo";
 import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import { localIsoDate } from "@/lib/date";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
@@ -1103,6 +1103,28 @@ function link(
   };
 }
 
+/**
+ * Content-derived, not position-derived: an item's id depends only on
+ * (debriefId, category, description), never on where it lands in the
+ * filtered array. A position-derived id (the `${debriefId}-keep-${n++}`
+ * scheme this replaces) breaks the moment the filter's output length ever
+ * changes between two seed runs -- dropping an earlier item shifts every
+ * later item's index, so a surviving item gets treated as "new" (different
+ * id, ON CONFLICT DO NOTHING doesn't recognize it as already-seeded) and
+ * gets inserted a second time alongside the original. That's exactly how
+ * the narrative-recap quality-filter fix caused duplicate TrainingItem rows
+ * on the very next reseed -- fewer needsWork items survived, so the
+ * "keep-1" radio item became "keep-0" and was inserted as if new.
+ *
+ * hashString (lib/geo.ts, already a seed.ts dependency) is a plain
+ * deterministic string hash -- no new dependency, good enough for a
+ * handful of items per debrief. Scoped to (debriefId, category) so
+ * identical wording in two different debriefs/categories never collides.
+ */
+function stableTrainingItemId(debriefId: string, category: string, description: string): string {
+  return `${debriefId}-${category}-${hashString(description)}`;
+}
+
 function toTrainingItems(
   flightId: string,
   debriefId: string,
@@ -1110,7 +1132,6 @@ function toTrainingItems(
   createdAt: string,
 ): TrainingItem[] {
   const items: TrainingItem[] = [];
-  let n = 0;
   // Same quality gate a real live debrief goes through
   // (app/api/debrief/analyze/route.ts) -- without it, seeded TrainingItem
   // rows built straight from the mock analyzer's raw output could contain
@@ -1119,7 +1140,7 @@ function toTrainingItems(
   // held to a lower bar than what a real analyzed debrief would ever show.
   for (const desc of filterTrainingItemDescriptions(result.needsWork)) {
     items.push({
-      id: `${debriefId}-keep-${n++}`,
+      id: stableTrainingItemId(debriefId, "keep", desc),
       flightId,
       debriefId,
       category: "keep_working_on",
@@ -1132,7 +1153,7 @@ function toTrainingItems(
   }
   for (const desc of filterTrainingItemDescriptions(result.actionItems)) {
     items.push({
-      id: `${debriefId}-before-${n++}`,
+      id: stableTrainingItemId(debriefId, "before", desc),
       flightId,
       debriefId,
       category: "before_next_flight",

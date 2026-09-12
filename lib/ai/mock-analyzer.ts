@@ -1,4 +1,5 @@
 import { detectTopics, suggestStudyReferences } from "@/lib/topics";
+import { filterTrainingItemDescriptions } from "@/lib/training-item-quality";
 import type { AnalyzeDebriefInput, StructuredDebriefResult } from "./schema";
 
 /**
@@ -162,15 +163,37 @@ function extractInstructorGuidance(sentences: string[], instructorName: string) 
   return guidance.slice(0, 4);
 }
 
+/**
+ * RAW AI TEXT -> quality/actionability validation -> transformation, never
+ * the other way around. needsWork goes through the same canonical gate
+ * (lib/training-item-quality.ts) real analyzed debriefs and seeded ones both
+ * use for TrainingItem rows -- BEFORE toActionItem() ever sees a sentence,
+ * not after. That ordering is load-bearing: toActionItem() used to run
+ * first and fall back to `Work on: ${the raw sentence}` for anything it
+ * couldn't rewrite, which both (a) invented an "action item" out of a
+ * sentence that was really just narration ("Danny walked me through an
+ * engine-out simulation...") and (b) prefixed it in a way that made the
+ * same narrative-recap shape unrecognizable to the quality gate the next
+ * time it ran (app/api/debrief/analyze/route.ts's own
+ * filterTrainingItemDescriptions call on `actionItems`), since that gate's
+ * patterns are anchored to the start of the sentence. Validating first
+ * closes both problems at once: toActionItem() now only ever runs on
+ * sentences that already passed the same bar a real TrainingItem has to
+ * clear, and it returns null (never a raw echo) when it has no genuine
+ * rewrite -- preserving the evidence honestly, via needsWork/keep_working_on,
+ * rather than manufacturing homework the debrief never actually recommended.
+ */
 function buildActionItems(needsWork: string[], topics: string[], previous: string[]) {
-  const derived = needsWork.map(toActionItem);
+  const actionableNeedsWork = filterTrainingItemDescriptions(needsWork);
+  const derived = actionableNeedsWork.map(toActionItem).filter((item): item is string => item !== null);
   const carried = previous.filter((item) =>
     needsWork.some((n) => overlapsTopically(n, item)),
   );
   return [...carried, ...derived];
 }
 
-function toActionItem(sentence: string) {
+/** Null when no genuine rewrite exists -- see buildActionItems' own doc comment for why nothing here ever falls back to echoing the raw sentence. */
+function toActionItem(sentence: string): string | null {
   const lower = sentence.toLowerCase();
   if (lower.includes("speed")) return "Review target approach speeds";
   if (lower.includes("float")) return "Practice holding target airspeed on final";
@@ -181,7 +204,7 @@ function toActionItem(sentence: string) {
   if (lower.includes("crosswind") || lower.includes("squirrelly")) return "Practice crosswind correction technique on final";
   if (lower.includes("bounc")) return "Practice smooth control inputs through the landing flare";
   if (lower.includes("behind") || lower.includes("late")) return "Practice staying ahead of the aircraft during the approach";
-  return `Work on: ${capitalize(sentence.replace(/^(i|we)\s+/i, "").replace(/,?\s*but\s+.*$/i, "").trim())}`;
+  return null;
 }
 
 /**
