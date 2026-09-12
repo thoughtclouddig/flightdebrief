@@ -2,7 +2,7 @@ import type { TrainingSkill } from "@/lib/types";
 import { categoryForSkill, curatedTrainingGuidance, skillLabel } from "@/lib/topics";
 import { hasAuthoredScenario } from "@/lib/prototype/chair-fly";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
-import type { ObservedMechanism } from "@/lib/student/observed-mechanism";
+import type { ObservedMechanism } from "@/lib/ai/evidence-mechanism";
 
 /**
  * Skills Radio Practice can actually route a student into -- a real
@@ -55,14 +55,19 @@ export function rehearsalEngineFor(skill: TrainingSkill | "general"): RehearsalE
  * output of a real engine. Chair Fly never appears here: it produces no
  * result, by explicit design (see lib/prototype/chair-fly.ts), so it can
  * only ever be a destination, never a source of this evidence.
+ *
+ * `attempts` on the radio-practice variant is the assignment's own real
+ * retry counter (RadioPracticeAssignment.attempts) -- the bound for the
+ * one retry offered below, never an artificial score threshold.
  */
 export type ActivityEvidence =
-  | { kind: "radio-practice"; correct: boolean; matchedElements: { description: string; matched: boolean }[] }
+  | { kind: "radio-practice"; correct: boolean; matchedElements: { description: string; matched: boolean }[]; attempts: number }
   | { kind: "check"; matchedConceptCount: number; expectedConceptCount: number; takeaway: string };
 
 export type VectorStrategy =
   | { kind: "chair-fly" }
   | { kind: "radio-practice"; mode: "train" | "diagnose" }
+  | { kind: "radio-practice"; mode: "retry"; missedElement: string }
   | { kind: "coach"; message: string }
   | { kind: "check"; question: { prompt: string } }
   | { kind: "transfer"; objective: string };
@@ -78,29 +83,44 @@ function transferObjective(cfiName: string, focus: string): string {
  *
  * ROUND 2 -- `activityEvidence` present: a diagnostic activity already ran
  * this session (Radio Practice or Vector's own bounded Q&A). Decide from
- * its real, structured result, not from the skill or from mechanism.
- *   - Radio Practice: correct -> transfer (the scenario is handled,
- *     carry that confidence into the radio); not correct -> transfer
- *     framed by the specific required element the student actually
- *     missed (real, structured -- never a generic "try harder").
- *   - Vector's own Q&A: a solid answer (matched all expected concepts)
- *     legitimately re-opens Chair Fly for a skill that has one --
- *     understanding is now established, not assumed, so rehearsal is a
- *     grounded next step, not a capability-exists shortcut. Otherwise,
- *     transfer using the evaluator's own takeaway.
+ * its real, structured result, never from the skill.
+ *   - Radio Practice, correct -> transfer (the scenario is handled, carry
+ *     that confidence into an actual radio call).
+ *   - Radio Practice, not correct, first attempt (attempts <= 1) -> a
+ *     bounded retry: grounded coaching from the specific required element
+ *     actually missed (real, structured -- never a generic "try harder"),
+ *     and one more try at the same assignment. This is real diagnostic
+ *     value, not discarded.
+ *   - Radio Practice, still not correct after that retry -> transfer,
+ *     framed by whichever element is still missed.
+ *   - Vector's own bounded Q&A -> ALWAYS transfers, using the evaluator's
+ *     own takeaway, regardless of how well the answer went. A knowledge
+ *     question proves only what it tested -- it can never legitimately
+ *     reopen Chair Fly, because it supplies no evidence at all about a
+ *     sequencing/rehearsal/psychomotor need. (This was the exact defect
+ *     found in the prior pass: "skill has Chair Fly + Q&A answer strong ->
+ *     Chair Fly" is capability-driven routing wearing a diagnosis costume.)
  *
  * ROUND 1, mechanism known (`mechanism` present, no activity has run yet):
- * the mechanism's category (lib/student/observed-mechanism.ts) -- derived
- * from real capability facts, never from the mechanism's own words --
- * decides the one appropriate move directly, no generic preliminary
- * question:
- *   - SEQUENCING_REHEARSAL -> Chair Fly.
+ * the mechanism's category -- derived entirely from the instructor's own
+ * words by lib/ai/evidence-mechanism.ts's bounded extractor, never from
+ * skill code or TOPIC_LIBRARY capability metadata -- decides the
+ * candidate move, no generic preliminary question. But the category is
+ * only ever a candidate: each case still verifies the real capability
+ * actually exists for this skill before committing to it (a mechanism
+ * extracted purely from words has no reason to agree with which engines
+ * happen to be authored), falling through to transfer otherwise:
+ *   - SEQUENCING_REHEARSAL -> Chair Fly, only if this skill actually has
+ *     an authored scenario.
  *   - COMMUNICATION_PERFORMANCE -> Radio Practice, framed as the
- *     rehearsal itself (mode: "train"), not a diagnostic.
+ *     rehearsal itself (mode: "train"), only if this skill actually has
+ *     one.
  *   - UNDERSTANDING_KNOWLEDGE -> direct coaching from the quote plus
- *     curated explanation, no quiz.
- *   - Otherwise (no ground capability legitimately fits) -> transfer,
- *     objective built from the quote itself.
+ *     curated explanation, no quiz (always available -- coaching from a
+ *     known quote needs no engine).
+ *   - RECOGNITION / FLIGHT_EXECUTION_TRANSFER / a category whose engine
+ *     doesn't actually exist -> transfer, objective built from the quote
+ *     itself.
  *
  * ROUND 1, mechanism unknown: pick a legitimate diagnostic path -- Radio
  * Practice, performed, when this is a real communications skill (the
@@ -125,28 +145,33 @@ export function resolveVectorStrategy(params: {
       if (activityEvidence.correct) {
         return { kind: "transfer", objective: transferObjective(cfiName, "carrying that same confidence into an actual radio call") };
       }
-      const missed = activityEvidence.matchedElements.find((e) => !e.matched)?.description;
-      return { kind: "transfer", objective: transferObjective(cfiName, missed ?? "the same call, on your next real radio contact") };
+      const missed = activityEvidence.matchedElements.find((e) => !e.matched)?.description ?? "the same call, on your next real radio contact";
+      if (activityEvidence.attempts <= 1) {
+        return { kind: "radio-practice", mode: "retry", missedElement: missed };
+      }
+      return { kind: "transfer", objective: transferObjective(cfiName, missed) };
     }
 
-    const solid = activityEvidence.expectedConceptCount > 0 && activityEvidence.matchedConceptCount >= activityEvidence.expectedConceptCount;
-    if (solid && rehearsalEngineFor(skill)?.kind === "chair-fly") return { kind: "chair-fly" };
+    // Vector's own bounded Q&A never reopens Chair Fly -- it proves only
+    // whether the concepts it asked about were understood, never a
+    // sequencing/rehearsal/psychomotor need.
     return { kind: "transfer", objective: transferObjective(cfiName, activityEvidence.takeaway) };
   }
 
   if (mechanism) {
     switch (mechanism.category) {
       case "SEQUENCING_REHEARSAL":
-        return { kind: "chair-fly" };
+        if (rehearsalEngineFor(skill)?.kind === "chair-fly") return { kind: "chair-fly" };
+        break;
       case "COMMUNICATION_PERFORMANCE":
-        return { kind: "radio-practice", mode: "train" };
+        if (rehearsalEngineFor(skill)?.kind === "radio-practice") return { kind: "radio-practice", mode: "train" };
+        break;
       case "UNDERSTANDING_KNOWLEDGE": {
         const explanation = skill !== "general" ? curatedTrainingGuidance(skill)?.checkQuestion?.explanation : null;
         return { kind: "coach", message: explanation ? `${mechanism.quote} ${explanation}` : mechanism.quote };
       }
-      default:
-        return { kind: "transfer", objective: transferObjective(cfiName, mechanism.quote) };
     }
+    return { kind: "transfer", objective: transferObjective(cfiName, mechanism.quote) };
   }
 
   if (rehearsalEngineFor(skill)?.kind === "radio-practice") {

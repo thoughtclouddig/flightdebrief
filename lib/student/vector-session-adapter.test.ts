@@ -1,8 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildVectorSessionProps } from "./vector-session-adapter";
+import { extractEvidenceMechanism } from "@/lib/ai/evidence-mechanism";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
 import type { Debrief, FlightWithRelations, RadioPracticeAssignment, TrainingItem, TrainingSignal } from "@/lib/types";
+
+vi.mock("@/lib/ai/evidence-mechanism", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/ai/evidence-mechanism")>();
+  return { ...actual, extractEvidenceMechanism: vi.fn() };
+});
 
 const STUDENT_ID = "student-1";
 const HREFS = { chairFlyHref: "/train/chair-fly", radioPracticeHref: "/train/radio-practice" };
@@ -136,6 +142,10 @@ function fakeRepo(opts: {
 }
 
 describe("buildVectorSessionProps", () => {
+  beforeEach(() => {
+    vi.mocked(extractEvidenceMechanism).mockReset().mockResolvedValue(null);
+  });
+
   it("resolves this exact item's own real evidence -- never a fixture", async () => {
     const repo = fakeRepo({ items: [trainingItem({ description: "Steep turns lost some altitude in the second one." })] });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
@@ -154,14 +164,17 @@ describe("buildVectorSessionProps", () => {
     expect(props?.strategy.kind).toBe("check");
   });
 
-  it("goes straight to Chair Fly, no preliminary question, when this unit's own mechanism is explicitly known from a real dual-assessment note", async () => {
+  it("goes straight to Chair Fly, no preliminary question, when this unit's own mechanism is explicitly known", async () => {
+    vi.mocked(extractEvidenceMechanism).mockResolvedValue({
+      instructorQuote: { quote: "You're still relaxing the correction once you get into the flare.", instructorName: "Jake" },
+      observedMechanism: { quote: "You're still relaxing the correction once you get into the flare.", category: "SEQUENCING_REHEARSAL" },
+    });
     const repo = fakeRepo({
       items: [trainingItem({ description: "Crosswind correction was late on the last two landings." })],
-      lastDebrief: debrief({
-        assessmentDifferences: [
-          { taskLabel: "Crosswind landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "You're still relaxing the correction once you get into the flare." },
-        ],
-      }),
+      // A real candidate quote must exist for resolveEvidenceInterpretation
+      // to call out to the (mocked) extractor at all -- it short-circuits
+      // to null on an empty candidate list without ever calling it.
+      lastDebrief: debrief({ instructorGuidance: [{ instructorName: "Jake", quote: "You're still relaxing the correction once you get into the flare." }] }),
     });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
     expect(props?.strategy).toEqual({ kind: "chair-fly" });
@@ -197,7 +210,7 @@ describe("buildVectorSessionProps", () => {
     expect(props?.strategy.kind === "check" && props.strategy.question.prompt).toBeTruthy();
   });
 
-  it("surfaces an already-completed, linked Radio Practice attempt as real activity evidence -- re-fetched server-side, never trusted from the client", async () => {
+  it("surfaces an already-completed, linked Radio Practice attempt as real activity evidence -- a first incorrect attempt offers one bounded retry, never discarding the specific missed element", async () => {
     const repo = fakeRepo({
       items: [trainingItem({ description: "Radio calls on downwind were rushed." })],
       radioAssignments: [
@@ -207,6 +220,25 @@ describe("buildVectorSessionProps", () => {
           status: "completed",
           correct: false,
           matchedElements: [{ description: "altitude restriction readback", matched: false }],
+          attempts: 1,
+        }),
+      ],
+    });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.strategy).toEqual({ kind: "radio-practice", mode: "retry", missedElement: "altitude restriction readback" });
+  });
+
+  it("transfers, framed by the still-missed element, once a real retry has already happened -- re-fetched server-side, never trusted from the client", async () => {
+    const repo = fakeRepo({
+      items: [trainingItem({ description: "Radio calls on downwind were rushed." })],
+      radioAssignments: [
+        radioAssignment({
+          id: "assignment-linked",
+          trainingItemId: "item-1",
+          status: "completed",
+          correct: false,
+          matchedElements: [{ description: "altitude restriction readback", matched: false }],
+          attempts: 2,
         }),
       ],
     });
@@ -221,7 +253,7 @@ describe("buildVectorSessionProps", () => {
       radioAssignments: [radioAssignment({ id: "assignment-pending", trainingItemId: "item-1", status: "assigned" })],
     });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
-    expect(props?.pendingRadioPracticeAssignmentId).toBe("assignment-pending");
+    expect(props?.radioPracticeAssignmentId).toBe("assignment-pending");
     expect(props?.strategy.kind).toBe("radio-practice");
   });
 
@@ -231,7 +263,7 @@ describe("buildVectorSessionProps", () => {
       radioAssignments: [radioAssignment({ id: "assignment-other", trainingItemId: "some-other-item", status: "completed", correct: true })],
     });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
-    expect(props?.pendingRadioPracticeAssignmentId).toBeNull();
+    expect(props?.radioPracticeAssignmentId).toBeNull();
     expect(props?.strategy).toEqual({ kind: "radio-practice", mode: "diagnose" });
   });
 

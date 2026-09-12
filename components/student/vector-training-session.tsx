@@ -21,7 +21,8 @@ import type { VectorStrategy } from "@/lib/student/vector-coaching";
 interface EvaluateResponse {
   evaluation: VectorCoachEvaluation;
   citation: { source: string; url: string } | null;
-  strategy: Extract<VectorStrategy, { kind: "chair-fly" | "transfer" }>;
+  /** Vector's own Q&A always transfers once evaluated -- a bounded knowledge check proves only what it tested, never a sequencing/rehearsal need, so it can never reopen Chair Fly. */
+  strategy: Extract<VectorStrategy, { kind: "transfer" }>;
 }
 
 type CheckStage =
@@ -42,7 +43,8 @@ type CheckStage =
  * whichever one move that produced -- rehearse (Chair Fly, non-scored, or
  * Radio Practice, a real performance activity), coach directly from a
  * known mechanism, run the one bounded diagnostic question when nothing
- * else legitimately applies, or state the honest transfer objective. A
+ * else legitimately applies, offer one grounded retry after a real missed
+ * Radio Practice element, or state the honest transfer objective. A
  * legitimate training unit never renders a dead end.
  */
 export function VectorTrainingSession({
@@ -52,7 +54,7 @@ export function VectorTrainingSession({
   strategy,
   itemId,
   radioScenarioId,
-  pendingRadioPracticeAssignmentId,
+  radioPracticeAssignmentId,
   hrefs,
   evaluateHref,
   trainHref = "/train",
@@ -84,8 +86,11 @@ export function VectorTrainingSession({
   }
 
   async function launchRadioPractice() {
-    if (pendingRadioPracticeAssignmentId) {
-      router.push(`/practice/${pendingRadioPracticeAssignmentId}`);
+    if (radioPracticeAssignmentId) {
+      // Covers both resuming an incomplete attempt and retrying a completed
+      // one -- /practice/[id] already shows its own "Try Again" affordance
+      // for a completed, not-yet-correct assignment.
+      router.push(`/practice/${radioPracticeAssignmentId}`);
       return;
     }
     if (!radioScenarioId || launching) return;
@@ -141,7 +146,7 @@ export function VectorTrainingSession({
         </Panel>
       ) : null}
 
-      {strategy.kind === "radio-practice" ? (
+      {strategy.kind === "radio-practice" && (strategy.mode === "train" || strategy.mode === "diagnose") ? (
         <Panel>
           <PanelEyebrow>{radioCopy.eyebrow}</PanelEyebrow>
           <PanelHeadline>{radioCopy.headline}</PanelHeadline>
@@ -154,10 +159,30 @@ export function VectorTrainingSession({
                   <Loader2 className="size-4 animate-spin" aria-hidden />
                   Starting
                 </span>
-              ) : pendingRadioPracticeAssignmentId ? (
+              ) : radioPracticeAssignmentId ? (
                 "Continue Radio Practice"
               ) : (
                 "Start Radio Practice"
+              )}
+            </PanelButton>
+          </div>
+        </Panel>
+      ) : null}
+
+      {strategy.kind === "radio-practice" && strategy.mode === "retry" ? (
+        <Panel>
+          <PanelEyebrow>Here&rsquo;s what to work on</PanelEyebrow>
+          <p className="mt-2 text-[15px] leading-relaxed text-panel-foreground">You missed: {strategy.missedElement}.</p>
+          {launchError ? <p className="mt-3 text-[13px] text-panel-foreground-soft">{launchError}</p> : null}
+          <div className="mt-5">
+            <PanelButton onClick={launchRadioPractice} disabled={launching}>
+              {launching ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                  Starting
+                </span>
+              ) : (
+                "Try that again"
               )}
             </PanelButton>
           </div>
@@ -224,25 +249,10 @@ export function VectorTrainingSession({
               <PanelEyebrow>Feedback</PanelEyebrow>
               <p className="mt-2 text-[15px] leading-relaxed text-panel-foreground">{checkStage.result.evaluation.feedback}</p>
 
-              {checkStage.result.strategy.kind === "chair-fly" ? (
-                <div className="mt-5">
-                  <PanelEyebrow>Let&rsquo;s rehearse this</PanelEyebrow>
-                  <PanelHeadline>Fly it in your head first</PanelHeadline>
-                  <p className="mt-3 text-[15px] leading-relaxed text-panel-foreground-soft">
-                    I&rsquo;ll set the scene and stop at each decision point -- you fly it in your head before you fly it for real.
-                  </p>
-                  <div className="mt-5">
-                    <PanelButton href={hrefs.chairFlyHref}>Rehearse with Vector</PanelButton>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-5">
-                  <PanelEyebrow>Take this into your next flight</PanelEyebrow>
-                  <p className="mt-2 text-[15px] leading-relaxed text-panel-foreground-soft">
-                    {checkStage.result.strategy.kind === "transfer" ? checkStage.result.strategy.objective : ""}
-                  </p>
-                </div>
-              )}
+              <div className="mt-5">
+                <PanelEyebrow>Take this into your next flight</PanelEyebrow>
+                <p className="mt-2 text-[15px] leading-relaxed text-panel-foreground-soft">{checkStage.result.strategy.objective}</p>
+              </div>
 
               {checkStage.result.citation ? (
                 <p className="mt-3 text-[13px] leading-relaxed text-panel-foreground-soft">

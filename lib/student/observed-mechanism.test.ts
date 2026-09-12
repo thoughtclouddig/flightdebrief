@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { resolveMechanismCategory, resolveObservedMechanism } from "./observed-mechanism";
-import type { AssessmentDifference } from "@/lib/types";
+import { afterEach, describe, expect, it } from "vitest";
+import { collectInstructorQuoteCandidates, resolveEvidenceInterpretation } from "./observed-mechanism";
+import type { AssessmentDifference, InstructorGuidance } from "@/lib/types";
 
 function difference(overrides: Partial<AssessmentDifference> = {}): AssessmentDifference {
   return {
@@ -12,58 +12,61 @@ function difference(overrides: Partial<AssessmentDifference> = {}): AssessmentDi
   };
 }
 
-describe("resolveMechanismCategory — deterministic, from real capability facts only", () => {
-  it("buckets a skill with an authored Chair Fly scenario as sequencing/rehearsal", () => {
-    expect(resolveMechanismCategory("CROSSWIND_LANDING")).toBe("SEQUENCING_REHEARSAL");
+function guidance(overrides: Partial<InstructorGuidance> = {}): InstructorGuidance {
+  return { instructorName: "Danny", quote: "Your radio work needs more confidence.", ...overrides };
+}
+
+describe("collectInstructorQuoteCandidates — assembly only, never a relevance or mechanism judgment", () => {
+  it("includes the dual-assessment note, attributed to the CFI, when this unit's skill is the contested objective", () => {
+    const candidates = collectInstructorQuoteCandidates([difference()], [], "CROSSWIND_LANDING", "Jake");
+    expect(candidates).toEqual([{ quote: "You're still relaxing the correction once you get into the flare.", instructorName: "Jake" }]);
   });
 
-  it("buckets a skill with a real Radio Practice scenario as communication performance", () => {
-    expect(resolveMechanismCategory("RADIO_COMMUNICATIONS")).toBe("COMMUNICATION_PERFORMANCE");
+  it("omits the dual-assessment note when it belongs to a different skill than this unit", () => {
+    const candidates = collectInstructorQuoteCandidates([difference({ taskLabel: "Steep turns" })], [], "CROSSWIND_LANDING", "Jake");
+    expect(candidates).toEqual([]);
   });
 
-  it("buckets a skill with only curated Q&A content as understanding/knowledge", () => {
-    expect(resolveMechanismCategory("STEEP_TURNS")).toBe("UNDERSTANDING_KNOWLEDGE");
+  it("omits the dual-assessment note when it's empty -- nothing was actually written", () => {
+    const candidates = collectInstructorQuoteCandidates([difference({ note: "" })], [], "CROSSWIND_LANDING", "Jake");
+    expect(candidates).toEqual([]);
   });
 
-  it("buckets a skill with no ground capability at all as flight-execution/transfer", () => {
-    expect(resolveMechanismCategory("PREFLIGHT_INSPECTION")).toBe("FLIGHT_EXECUTION_TRANSFER");
+  it("includes every real instructorGuidance quote from the same debrief, verbatim, regardless of which skill it turns out to be about", () => {
+    const candidates = collectInstructorQuoteCandidates([], [guidance(), guidance({ instructorName: "Danny", quote: "Nice job on the crosswind landings today." })], "RADIO_COMMUNICATIONS", "Danny");
+    expect(candidates).toHaveLength(2);
+    // Both included -- collectInstructorQuoteCandidates does not filter by
+    // relevance to the skill; that judgment belongs to the bounded
+    // extractor alone (lib/ai/evidence-mechanism.ts), not to this assembly step.
+    expect(candidates.map((c) => c.quote)).toContain("Nice job on the crosswind landings today.");
   });
 
-  it("never assigns RECOGNITION -- no deterministic source exists for it in V1", () => {
-    const allSkills: string[] = ["CROSSWIND_LANDING", "RADIO_COMMUNICATIONS", "STEEP_TURNS", "PREFLIGHT_INSPECTION", "TOWER_READBACKS", "EMERGENCY_PROCEDURES"];
-    for (const skill of allSkills) {
-      expect(resolveMechanismCategory(skill as never)).not.toBe("RECOGNITION");
-    }
+  it("combines both sources when both are present", () => {
+    const candidates = collectInstructorQuoteCandidates([difference()], [guidance()], "CROSSWIND_LANDING", "Jake");
+    expect(candidates).toHaveLength(2);
+  });
+
+  it("returns an empty list, honestly, when neither source has anything", () => {
+    const candidates = collectInstructorQuoteCandidates([], [], "CROSSWIND_LANDING", "Jake");
+    expect(candidates).toEqual([]);
   });
 });
 
-describe("resolveObservedMechanism — the quote is the fact, never inferred from free text", () => {
-  it("preserves the exact instructor quote when this unit's skill is the last debrief's own contested objective", () => {
-    const mechanism = resolveObservedMechanism([difference()], "CROSSWIND_LANDING");
-    expect(mechanism).toEqual({
-      quote: "You're still relaxing the correction once you get into the flare.",
-      source: "instructor",
-      category: "SEQUENCING_REHEARSAL",
-    });
+describe("resolveEvidenceInterpretation — degrades to null, never to a skill-derived guess", () => {
+  const original = process.env.ANTHROPIC_API_KEY;
+  afterEach(() => {
+    process.env.ANTHROPIC_API_KEY = original;
   });
 
-  it("returns null when the contested objective belongs to a different skill than this unit", () => {
-    const mechanism = resolveObservedMechanism([difference({ taskLabel: "Steep turns" })], "CROSSWIND_LANDING");
-    expect(mechanism).toBeNull();
+  it("returns null for an empty candidate list without ever calling out", async () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    const result = await resolveEvidenceInterpretation([], "Crosswind landings");
+    expect(result).toBeNull();
   });
 
-  it("returns null, honestly, for a freeform debrief -- assessmentDifferences is always [] there, never guessed from the description text", () => {
-    const mechanism = resolveObservedMechanism([], "CROSSWIND_LANDING");
-    expect(mechanism).toBeNull();
-  });
-
-  it("returns null when the contested note is empty -- no mechanism was actually written down", () => {
-    const mechanism = resolveObservedMechanism([difference({ note: "" })], "CROSSWIND_LANDING");
-    expect(mechanism).toBeNull();
-  });
-
-  it("never fabricates a mechanism for a skill with no matching contested objective at all", () => {
-    const mechanism = resolveObservedMechanism([difference({ taskLabel: "Something else entirely" })], "STEEP_TURNS");
-    expect(mechanism).toBeNull();
+  it("returns null, not an exception, when there's no API key even with real candidates", async () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    const result = await resolveEvidenceInterpretation([{ quote: "test", instructorName: "Jake" }], "Crosswind landings");
+    expect(result).toBeNull();
   });
 });

@@ -140,7 +140,7 @@ describe("strategy -- decided only after this real answer, never preselected fro
     vi.mocked(authorize).mockResolvedValue({ viewer: viewer() } as never);
   });
 
-  it("legitimately re-opens Chair Fly once diagnosis is solid, for a skill that has one -- understanding is now established, not assumed", async () => {
+  it("never reopens Chair Fly from a strong Q&A answer, even for a skill that has an authored scenario -- a bounded knowledge question proves only what it tested, never a sequencing/rehearsal need", async () => {
     vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem({ description: "Crosswind correction was late on the last two landings." })]) as never); // resolves to CROSSWIND_LANDING -- has an authored Chair Fly scenario
     vi.mocked(evaluateVectorAnswer).mockResolvedValue({
       matchedConcepts: [
@@ -154,9 +154,9 @@ describe("strategy -- decided only after this real answer, never preselected fro
     });
 
     const res = await POST(requestBody({ answer: "A full, correct answer." }), params("item-1"));
-    const body = (await res.json()) as { strategy: { kind: string } };
+    const body = (await res.json()) as { strategy: { kind: string; objective?: string } };
 
-    expect(body.strategy).toEqual({ kind: "chair-fly" });
+    expect(body.strategy).toEqual({ kind: "transfer", objective: expect.stringContaining("Keep leading the rollout.") });
   });
 
   it("returns transfer with an explicit flight-transfer objective when there's no rehearsal engine and no real gap left", async () => {

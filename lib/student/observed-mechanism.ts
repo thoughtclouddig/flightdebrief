@@ -1,74 +1,60 @@
-import type { AssessmentDifference, TrainingSkill } from "@/lib/types";
-import { allTrainingSkills, curatedTrainingGuidance } from "@/lib/topics";
+import type { AssessmentDifference, InstructorGuidance, TrainingSkill } from "@/lib/types";
+import { allTrainingSkills } from "@/lib/topics";
 import { contestedObjective } from "@/lib/chair-fly";
-import { rehearsalEngineFor } from "@/lib/student/vector-coaching";
+import { extractEvidenceMechanism, type EvidenceInterpretation, type InstructorQuoteCandidate, type MechanismCategory, type ObservedMechanism } from "@/lib/ai/evidence-mechanism";
+
+export type { EvidenceInterpretation, InstructorQuoteCandidate, MechanismCategory, ObservedMechanism };
 
 /**
- * The kind of instructional need an observed mechanism represents -- kept
- * deliberately small (five buckets), not a general learning-science
- * taxonomy. RECOGNITION has no deterministic source in V1 (nothing in the
- * data model can currently support it honestly) and is never assigned --
- * it exists in the type as a documented, intentional gap, not a promise.
- */
-export type MechanismCategory =
-  | "UNDERSTANDING_KNOWLEDGE"
-  | "RECOGNITION"
-  | "SEQUENCING_REHEARSAL"
-  | "COMMUNICATION_PERFORMANCE"
-  | "FLIGHT_EXECUTION_TRANSFER";
-
-export interface ObservedMechanism {
-  /** The instructor's own words, verbatim -- the authoritative fact. Never a paraphrase. */
-  quote: string;
-  source: "instructor" | "student";
-  /** Derived interpretation, not a replacement for `quote` -- see resolveMechanismCategory. */
-  category: MechanismCategory;
-}
-
-/**
- * Deterministic instructional-need bucket for a skill that already has a
- * real observed mechanism -- computed only from already-real, already-
- * curated facts (which capability actually exists for this skill), never
- * from the mechanism's own words. This is NOT "mechanism exists -> engine
- * exists -> use it": the category is consulted by the strategy layer
- * alongside mechanism presence, and can still resolve to
- * FLIGHT_EXECUTION_TRANSFER even when a mechanism is known, if nothing
- * legitimate exists to act on it with.
- */
-export function resolveMechanismCategory(skill: TrainingSkill): MechanismCategory {
-  const engine = rehearsalEngineFor(skill);
-  if (engine?.kind === "chair-fly") return "SEQUENCING_REHEARSAL";
-  if (engine?.kind === "radio-practice") return "COMMUNICATION_PERFORMANCE";
-  if (curatedTrainingGuidance(skill)?.checkQuestion) return "UNDERSTANDING_KNOWLEDGE";
-  return "FLIGHT_EXECUTION_TRANSFER";
-}
-
-/**
- * The only source of an explicitly observed mechanism for V1: a real,
- * attributed CFI note from a guided dual-assessment debrief, when this
- * exact unit's skill is the objective that note was written about --
- * exactly the same real per-task comparison
- * lib/student/chair-fly-production-adapter.ts's buildChairFlyDrillForUnit
- * already uses (case A), reused here rather than reinvented.
+ * Every real, verbatim, attributed instructor-quote candidate that could
+ * plausibly bear on this unit's skill -- the dual-assessment note (when
+ * this unit is the last debrief's contested objective) plus every
+ * instructorGuidance quote from the same debrief (lib/ai/prompt.ts's own
+ * prompt requires these be preserved verbatim, never summarized).
  *
- * Deliberately NOT derived from free-text judgment over an arbitrary
- * TrainingItem description -- that would require either an unsafe keyword
- * heuristic or a new classifier reaching straight from raw prose to an
- * instructional conclusion, both rejected. A freeform debrief's
- * assessmentDifferences is always [] (see lib/chair-fly.ts's own doc
- * comment), so this is honestly null for the common freeform case, not
- * because nothing was said, but because nothing here can honestly tell
- * "explicit mechanism" from "general area" in raw prose without guessing.
+ * This only ASSEMBLES candidates -- it does not judge relevance or
+ * mechanism-specificity itself. A quote merely mentioning this skill's
+ * name is not enough to call it relevant (a keyword match answers "what
+ * skill words are present," not "is this quote actually about this training
+ * gap"), and relevance is a real judgment call, not something TOPIC_LIBRARY
+ * metadata can decide -- see lib/ai/evidence-mechanism.ts's bounded
+ * extractor, which is the only thing that decides relevance and mechanism.
  */
-export function resolveObservedMechanism(
+export function collectInstructorQuoteCandidates(
   assessmentDifferences: AssessmentDifference[],
+  instructorGuidance: InstructorGuidance[],
   skill: TrainingSkill,
-): ObservedMechanism | null {
+  cfiName: string,
+): InstructorQuoteCandidate[] {
+  const candidates: InstructorQuoteCandidate[] = [];
+
   const contested = contestedObjective(assessmentDifferences);
-  if (!contested || !contested.note.trim()) return null;
+  if (contested?.note.trim()) {
+    const contestedSkill = allTrainingSkills().find((t) => t.label.toLowerCase() === contested.taskLabel.toLowerCase())?.skill;
+    if (contestedSkill === skill) candidates.push({ quote: contested.note, instructorName: cfiName });
+  }
 
-  const contestedSkill = allTrainingSkills().find((t) => t.label.toLowerCase() === contested.taskLabel.toLowerCase())?.skill;
-  if (contestedSkill !== skill) return null;
+  for (const guidance of instructorGuidance) {
+    if (guidance.quote.trim()) candidates.push({ quote: guidance.quote, instructorName: guidance.instructorName });
+  }
 
-  return { quote: contested.note, source: "instructor", category: resolveMechanismCategory(skill) };
+  return candidates;
+}
+
+/**
+ * Interprets this unit's candidate instructor quotes -- which one (if any)
+ * is relevant to `skillLabel`, and whether that quote explicitly states a
+ * mechanism. Delegates entirely to lib/ai/evidence-mechanism.ts's bounded
+ * extractor; this wrapper only adds one more defensive degrade-to-nothing
+ * layer on top, matching the product rule that any failure here must
+ * never fall back to a skill-derived guess.
+ */
+export async function resolveEvidenceInterpretation(candidates: InstructorQuoteCandidate[], skillLabel: string): Promise<EvidenceInterpretation | null> {
+  if (candidates.length === 0) return null;
+  try {
+    return await extractEvidenceMechanism(candidates, skillLabel);
+  } catch (err) {
+    console.error("[observed-mechanism] interpretation failed, degrading to no interpretation:", err);
+    return null;
+  }
 }

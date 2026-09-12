@@ -1,12 +1,12 @@
 import type { Repository } from "@/lib/data/types";
-import type { AssessmentDifference, SkillProgressionStatus, TrainingItem, TrainingSignal, TrainingSkill } from "@/lib/types";
+import type { AssessmentDifference, InstructorGuidance, SkillProgressionStatus, TrainingItem, TrainingSignal, TrainingSkill } from "@/lib/types";
 import { matchSkills, skillLabel as skillLabelFor } from "@/lib/topics";
 import { computeSkillProgression } from "@/lib/skill-progress";
 import { computeNextLessonBrief, STATUS_RANK } from "@/lib/training-memory";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightDate } from "@/lib/utils";
 import { buildVectorSession, type VectorSession } from "@/lib/student/vector-coaching";
-import { resolveObservedMechanism, type ObservedMechanism } from "@/lib/student/observed-mechanism";
+import { collectInstructorQuoteCandidates, resolveEvidenceInterpretation, type InstructorQuoteCandidate, type ObservedMechanism } from "@/lib/student/observed-mechanism";
 
 /**
  * A skill that is a more specific case of a broader one already in
@@ -81,36 +81,61 @@ export function resolveTrainingItemSkill(
  * Looks up one TrainingItem by id, scoped to this student's own flights at
  * the query itself (listTrainingItems({studentId}) JOINs against
  * flights.student_id -- see lib/data/postgres-repository.ts), and resolves
- * its skill plus its observed mechanism, if any (see
- * lib/student/observed-mechanism.ts). Null whenever the id doesn't exist,
- * doesn't belong to this student, isn't a student-visible "keep_working_on"
- * unit, or resolves to no catalog skill at all -- possession of an id is
- * never sufficient authorization on its own, and every caller (the session
- * page, the evaluate endpoint, the Radio Practice assign route, the Chair
- * Fly hand-off) needs the exact same check and the exact same mechanism,
- * never a second independent resolution.
+ * its skill. Null whenever the id doesn't exist, doesn't belong to this
+ * student, isn't a student-visible "keep_working_on" unit, or resolves to
+ * no catalog skill at all -- possession of an id is never sufficient
+ * authorization on its own, and every caller (the session page, the
+ * evaluate endpoint, the Radio Practice assign route, the Chair Fly
+ * hand-off) needs the exact same check.
+ *
+ * Deliberately does NOT resolve evidence interpretation (instructor quote /
+ * observed mechanism) here -- that costs a real model call
+ * (lib/ai/evidence-mechanism.ts), and most callers of this function (the
+ * evaluate route, the Radio Practice assign route) only need ownership and
+ * skill, never mechanism. Callers that do need it call
+ * resolveTrainingUnitEvidence below, once, with the debrief they already
+ * have in hand.
  */
 export async function resolveOwnedTrainingItem(
   repo: Repository,
   studentId: string,
   itemId: string,
-): Promise<{ item: TrainingItem; skill: TrainingSkill; mechanism: ObservedMechanism | null } | null> {
+): Promise<{ item: TrainingItem; skill: TrainingSkill } | null> {
   const items = await repo.listTrainingItems({ studentId });
   const item = items.find((t) => t.id === itemId);
   if (!item || item.category !== "keep_working_on" || item.visibility === "instructor_only" || item.visibility === "admin_only") {
     return null;
   }
 
-  const [signals, flightTasks, debrief] = await Promise.all([
+  const [signals, flightTasks] = await Promise.all([
     repo.listTrainingSignals({ studentId }),
     repo.listFlightTasks(item.flightId),
-    repo.getDebriefByFlight(item.flightId),
   ]);
   const skill = resolveTrainingItemSkill(item, signals, new Set(flightTasks.map((t) => t.taskCode)));
-  if (!skill) return null;
+  return skill ? { item, skill } : null;
+}
 
-  const mechanism = resolveObservedMechanism(debrief?.structuredResult.assessmentDifferences ?? [], skill);
-  return { item, skill, mechanism };
+/**
+ * The one shared path to a training unit's real evidence interpretation --
+ * used by both Train's card list (buildTrainingPlan) and the Vector session
+ * adapter, so the two can never disagree about the same unit. Assembles
+ * every real candidate instructor quote (collectInstructorQuoteCandidates)
+ * and hands them to the bounded extractor
+ * (lib/student/observed-mechanism.ts's resolveEvidenceInterpretation).
+ */
+export async function resolveTrainingUnitEvidence(
+  assessmentDifferences: AssessmentDifference[],
+  instructorGuidance: InstructorGuidance[],
+  skill: TrainingSkill,
+  skillLabel: string,
+  cfiName: string,
+): Promise<{ instructorQuote: InstructorQuoteCandidate | null; mechanism: ObservedMechanism | null }> {
+  const candidates = collectInstructorQuoteCandidates(assessmentDifferences, instructorGuidance, skill, cfiName);
+  const interpretation = await resolveEvidenceInterpretation(candidates, skillLabel);
+  return {
+    instructorQuote: interpretation?.instructorQuote ?? null,
+    mechanism: interpretation?.observedMechanism ?? null,
+  };
 }
 
 export interface TrainingUnit {
@@ -121,7 +146,9 @@ export interface TrainingUnit {
   skill: TrainingSkill;
   skillLabel: string;
   evidence: { label: string; text: string };
-  /** The instructor's own explicit observation about this unit's skill, when one exists -- see lib/student/observed-mechanism.ts. Null for the common freeform-debrief case, honestly, not fabricated. */
+  /** The one real instructor quote judged relevant to this unit, if any -- valuable evidence in its own right, distinct from observedMechanism (a quote can be relevant without stating a mechanism). */
+  instructorQuote: InstructorQuoteCandidate | null;
+  /** Only non-null when that same quote explicitly states a concrete mechanism -- see lib/student/observed-mechanism.ts. Never fabricated from the skill code or from a general topic-naming comment. */
   mechanism: ObservedMechanism | null;
   /** Null when this skill has no prior progression row at all -- this debrief is its first appearance. */
   progressionStatus: SkillProgressionStatus | null;
@@ -165,7 +192,9 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
   ]);
   const flightTaskCodes = new Set(flightTasks.map((t) => t.taskCode));
   const assessmentDifferences: AssessmentDifference[] = debrief?.structuredResult.assessmentDifferences ?? [];
+  const instructorGuidance: InstructorGuidance[] = debrief?.structuredResult.instructorGuidance ?? [];
   const cfi = resolveCfiFirstName(brief.lastInstructor);
+  const cfiName = cfi ?? "your instructor";
   const evidenceLabel = `${cfi ?? "Your instructor"} · ${formatFlightDate(brief.lastFlight.flightDate)}`;
 
   const bySkill = new Map<TrainingSkill, TrainingItem>();
@@ -184,17 +213,24 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
     return progression ? STATUS_RANK[progression.status] : STATUS_RANK["Needs Coaching"];
   }
 
-  const units: TrainingUnit[] = [...bySkill.entries()].map(([skill, item]) => ({
-    id: item.id,
-    flightId: item.flightId,
-    debriefId: item.debriefId,
-    skill,
-    skillLabel: skillLabelFor(skill),
-    evidence: { label: evidenceLabel, text: item.description },
-    mechanism: resolveObservedMechanism(assessmentDifferences, skill),
-    progressionStatus: progressions.find((p) => p.skill === skill)?.status ?? null,
-    vectorSession: buildVectorSession(item.id),
-  }));
+  const units: TrainingUnit[] = await Promise.all(
+    [...bySkill.entries()].map(async ([skill, item]) => {
+      const skillLabel = skillLabelFor(skill);
+      const { instructorQuote, mechanism } = await resolveTrainingUnitEvidence(assessmentDifferences, instructorGuidance, skill, skillLabel, cfiName);
+      return {
+        id: item.id,
+        flightId: item.flightId,
+        debriefId: item.debriefId,
+        skill,
+        skillLabel,
+        evidence: { label: evidenceLabel, text: item.description },
+        instructorQuote,
+        mechanism,
+        progressionStatus: progressions.find((p) => p.skill === skill)?.status ?? null,
+        vectorSession: buildVectorSession(item.id),
+      };
+    }),
+  );
 
   units.sort((a, b) => rankFor(a.skill) - rankFor(b.skill));
 

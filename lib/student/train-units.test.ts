@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { buildTrainingPlan, resolveOwnedTrainingItem, resolveTrainingItemSkill } from "./train-units";
+import { afterEach, describe, expect, it } from "vitest";
+import { buildTrainingPlan, resolveOwnedTrainingItem, resolveTrainingItemSkill, resolveTrainingUnitEvidence } from "./train-units";
 import type { Repository } from "@/lib/data/types";
 import type { Debrief, FlightTask, FlightWithRelations, TrainingItem, TrainingSignal } from "@/lib/types";
 
@@ -97,37 +97,6 @@ function flight(overrides: Partial<FlightWithRelations> = {}): FlightWithRelatio
     instructor: { id: "cfi-1", name: "Danny Franks" },
     ...overrides,
   } as FlightWithRelations;
-}
-
-function debrief(overrides: Partial<Debrief["structuredResult"]> = {}): Debrief {
-  return {
-    id: "debrief-1",
-    flightId: "flight-1",
-    transcript: "transcript",
-    audioDurationSeconds: 60,
-    analyzedWith: "mock",
-    guidanceMode: "guided",
-    recordingStartedAt: null,
-    recordingEndedAt: null,
-    createdAt: "2026-08-28T20:00:00.000Z",
-    structuredResult: {
-      flightSummary: "",
-      narrativeRecap: "",
-      whatWeDid: [],
-      wentWell: [],
-      needsWork: [],
-      instructorGuidance: [],
-      instructorAssistance: [],
-      riskManagementNotes: [],
-      assessmentDifferences: [],
-      actionItems: [],
-      nextLessonFocus: [],
-      studyReferences: [],
-      nextFlightCue: "",
-      nextFlightCueContext: "",
-      ...overrides,
-    },
-  } as Debrief;
 }
 
 function fakeRepo(opts: {
@@ -228,26 +197,33 @@ describe("resolveOwnedTrainingItem — possession of an id is never sufficient a
     expect(result).toBeNull();
   });
 
-  it("carries a real observed mechanism when this unit's skill is the flight's own contested dual-assessment objective", async () => {
-    const repo = fakeRepo({
-      items: [trainingItem()],
-      lastDebrief: debrief({
-        assessmentDifferences: [
-          { taskLabel: "Crosswind landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "You're still relaxing the correction once you get into the flare." },
-        ],
-      }),
-    });
+  it("no longer resolves evidence interpretation itself -- that's a separate, explicit call (resolveTrainingUnitEvidence), never bundled into ownership resolution", async () => {
+    const repo = fakeRepo({ items: [trainingItem()] });
     const result = await resolveOwnedTrainingItem(repo, STUDENT_ID, "item-1");
-    expect(result?.mechanism).toEqual({
-      quote: "You're still relaxing the correction once you get into the flare.",
-      source: "instructor",
-      category: "SEQUENCING_REHEARSAL",
-    });
+    expect(result).toEqual({ item: trainingItem(), skill: "CROSSWIND_LANDING" });
+  });
+});
+
+describe("resolveTrainingUnitEvidence — the one shared evidence path for both Train's card list and the Vector session", () => {
+  const original = process.env.ANTHROPIC_API_KEY;
+  afterEach(() => {
+    process.env.ANTHROPIC_API_KEY = original;
   });
 
-  it("carries no mechanism, honestly, for a freeform debrief -- never guessed from the description text", async () => {
-    const repo = fakeRepo({ items: [trainingItem()], lastDebrief: debrief({ assessmentDifferences: [] }) });
-    const result = await resolveOwnedTrainingItem(repo, STUDENT_ID, "item-1");
-    expect(result?.mechanism).toBeNull();
+  it("degrades to no instructor quote and no mechanism, honestly, without an API key -- never a skill-derived guess", async () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    const result = await resolveTrainingUnitEvidence(
+      [{ taskLabel: "Crosswind landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "You're still relaxing the correction once you get into the flare." }],
+      [],
+      "CROSSWIND_LANDING",
+      "Crosswind landings",
+      "Jake",
+    );
+    expect(result).toEqual({ instructorQuote: null, mechanism: null });
+  });
+
+  it("returns no evidence, honestly, when there are no candidate quotes at all", async () => {
+    const result = await resolveTrainingUnitEvidence([], [], "STEEP_TURNS", "Steep turns", "Jake");
+    expect(result).toEqual({ instructorQuote: null, mechanism: null });
   });
 });

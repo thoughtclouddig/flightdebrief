@@ -5,7 +5,7 @@ import { isPhysicalSkill } from "@/lib/training-skill-kind";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightDate } from "@/lib/utils";
 import { computeNextLessonBrief } from "@/lib/training-memory";
-import { resolveOwnedTrainingItem } from "@/lib/student/train-units";
+import { resolveOwnedTrainingItem, resolveTrainingUnitEvidence } from "@/lib/student/train-units";
 import { resolveVectorStrategy, type ActivityEvidence, type VectorStrategy } from "@/lib/student/vector-coaching";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 
@@ -18,8 +18,8 @@ export interface VectorSessionProps {
   itemId: string;
   /** Deterministic scenario pick for this skill, when strategy routes to Radio Practice and no attempt is linked to this unit yet. */
   radioScenarioId: string | null;
-  /** An already-linked, not-yet-completed Radio Practice attempt for this unit -- the client resumes it rather than creating a duplicate. */
-  pendingRadioPracticeAssignmentId: string | null;
+  /** The id of ANY Radio Practice assignment already linked to this unit, regardless of status -- resumes an incomplete attempt, or reopens a completed one for its own "Try Again" flow when strategy is a retry. Null when none exists yet. */
+  radioPracticeAssignmentId: string | null;
   hrefs: { chairFlyHref: string; radioPracticeHref: string };
 }
 
@@ -32,7 +32,8 @@ export interface VectorSessionProps {
  *
  * Re-fetches this unit's own Radio Practice attempts (never trusting a
  * client-supplied result): a completed one linked to this itemId becomes
- * real activity evidence for round 2 of resolveVectorStrategy; an
+ * real activity evidence for round 2 of resolveVectorStrategy, including
+ * its real attempts count (the bound for the one retry offered there); an
  * incomplete one is resumed rather than duplicated.
  *
  * Returns null when resolveOwnedTrainingItem can't establish that this item
@@ -48,29 +49,37 @@ export async function buildVectorSessionProps(
   const studentId = viewer.user.id;
   const owned = await resolveOwnedTrainingItem(repo, studentId, itemId);
   if (!owned) return null;
-  const { item, skill, mechanism } = owned;
+  const { item, skill } = owned;
 
-  const brief = await computeNextLessonBrief(repo, studentId);
+  const [brief, debrief, assignments] = await Promise.all([
+    computeNextLessonBrief(repo, studentId),
+    repo.getDebriefByFlight(item.flightId),
+    repo.listRadioPracticeAssignments(studentId),
+  ]);
   const cfi = resolveCfiFirstName(brief.lastInstructor);
+  const cfiName = cfi ?? "your instructor";
   const flight = brief.lastFlight?.id === item.flightId ? brief.lastFlight : null;
   const evidenceLabel = `${cfi ?? "Your instructor"} · ${flight ? formatFlightDate(flight.flightDate) : ""}`.trim();
 
-  const assignments = await repo.listRadioPracticeAssignments(studentId);
   const linked = assignments.find((a) => a.trainingItemId === itemId) ?? null;
+  const activityEvidence: ActivityEvidence | null =
+    linked?.status === "completed"
+      ? { kind: "radio-practice", correct: linked.correct ?? false, matchedElements: linked.matchedElements ?? [], attempts: linked.attempts }
+      : null;
 
-  let activityEvidence: ActivityEvidence | null = null;
-  let pendingRadioPracticeAssignmentId: string | null = null;
-  if (linked?.status === "completed") {
-    activityEvidence = { kind: "radio-practice", correct: linked.correct ?? false, matchedElements: linked.matchedElements ?? [] };
-  } else if (linked) {
-    pendingRadioPracticeAssignmentId = linked.id;
-  }
+  const { mechanism } = await resolveTrainingUnitEvidence(
+    debrief?.structuredResult.assessmentDifferences ?? [],
+    debrief?.structuredResult.instructorGuidance ?? [],
+    skill,
+    skillLabel(skill),
+    cfiName,
+  );
 
   const strategy = resolveVectorStrategy({
     skill,
     mechanism,
     activityEvidence,
-    cfiName: cfi ?? "your instructor",
+    cfiName,
     fallbackEvidenceText: item.description,
   });
 
@@ -81,7 +90,7 @@ export async function buildVectorSessionProps(
     strategy,
     itemId,
     radioScenarioId: RADIO_PRACTICE_SCENARIOS.find((s) => s.skill === skill)?.id ?? null,
-    pendingRadioPracticeAssignmentId,
+    radioPracticeAssignmentId: linked?.id ?? null,
     hrefs,
   };
 }

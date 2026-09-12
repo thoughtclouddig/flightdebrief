@@ -21,7 +21,7 @@ function render(strategy: VectorStrategy, overrides: Partial<Parameters<typeof V
       strategy={strategy}
       itemId="item-1"
       radioScenarioId={null}
-      pendingRadioPracticeAssignmentId={null}
+      radioPracticeAssignmentId={null}
       hrefs={HREFS}
       evaluateHref="/api/train/vector/item-1/evaluate"
       {...overrides}
@@ -53,9 +53,16 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
   });
 
   it("offers to resume an already-linked, incomplete Radio Practice attempt instead of implying a fresh one", () => {
-    const markup = render({ kind: "radio-practice", mode: "diagnose" }, { pendingRadioPracticeAssignmentId: "assignment-pending" });
+    const markup = render({ kind: "radio-practice", mode: "diagnose" }, { radioPracticeAssignmentId: "assignment-pending" });
     expect(markup).toContain("Continue Radio Practice");
     expect(markup).not.toContain("Start Radio Practice");
+  });
+
+  it("renders one bounded retry after a first incorrect Radio Practice attempt, grounded in the specific missed element -- never inventing radio phraseology", () => {
+    const markup = render({ kind: "radio-practice", mode: "retry", missedElement: "altitude restriction readback" });
+    expect(markup).toContain("altitude restriction readback");
+    expect(markup).toContain("Try that again");
+    expect(markup).not.toContain("<textarea");
   });
 
   it("renders direct coaching from a known mechanism, no quiz, no rehearsal hand-off", () => {
