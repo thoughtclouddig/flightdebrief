@@ -3,6 +3,7 @@ import { analyzeMock } from "@/lib/ai/mock-analyzer";
 import { localIsoDate } from "@/lib/date";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
 import { computeAssessmentDifferences } from "@/lib/debrief-cards/differences";
+import { filterTrainingItemDescriptions } from "@/lib/training-item-quality";
 import type { PerformanceLevelCode } from "@/lib/performance-levels";
 import type {
   Aircraft,
@@ -1110,7 +1111,13 @@ function toTrainingItems(
 ): TrainingItem[] {
   const items: TrainingItem[] = [];
   let n = 0;
-  for (const desc of result.needsWork) {
+  // Same quality gate a real live debrief goes through
+  // (app/api/debrief/analyze/route.ts) -- without it, seeded TrainingItem
+  // rows built straight from the mock analyzer's raw output could contain
+  // narrative recaps ("Danny walked me through an engine-out simulation
+  // and had me pick a field...") this filter exists specifically to drop,
+  // held to a lower bar than what a real analyzed debrief would ever show.
+  for (const desc of filterTrainingItemDescriptions(result.needsWork)) {
     items.push({
       id: `${debriefId}-keep-${n++}`,
       flightId,
@@ -1123,7 +1130,7 @@ function toTrainingItems(
       createdAt,
     });
   }
-  for (const desc of result.actionItems) {
+  for (const desc of filterTrainingItemDescriptions(result.actionItems)) {
     items.push({
       id: `${debriefId}-before-${n++}`,
       flightId,
