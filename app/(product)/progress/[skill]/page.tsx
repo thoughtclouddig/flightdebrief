@@ -16,8 +16,12 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sk
   const repo = getRepository();
   const viewer = await getViewer();
 
-  const props = await buildProductionSkillDetailProps(repo, viewer, skillParam);
+  const props = await buildProductionSkillDetailProps(repo, viewer, skillParam, {
+    trainHref: "/train",
+    chairFlyHref: "/train/chair-fly",
+    radioPracticeHref: "/train/radio-practice",
+  });
   if (!props) notFound();
 
-  return <SkillDetailScreen {...props} backHref="/progress" trainHref="/train" lessonHistoryHref="/debrief" />;
+  return <SkillDetailScreen {...props} backHref="/progress" lessonHistoryHref="/debrief" />;
 }

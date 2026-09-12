@@ -4,6 +4,8 @@ import type { Viewer } from "@/lib/viewer";
 import { computeSkillProgression, meterScoreForSkillStatus, toneForSkillStatus } from "@/lib/skill-progress";
 import { computeNextLessonBrief } from "@/lib/training-memory";
 import { acsAreaForSkill } from "@/lib/acs";
+import { hasAuthoredScenario } from "@/lib/prototype/chair-fly";
+import { skillLabel } from "@/lib/topics";
 import { formatFlightDate } from "@/lib/utils";
 import type { TrainingSkill } from "@/lib/types";
 import type { SkillState } from "@/lib/student/state-tone";
@@ -20,6 +22,8 @@ export interface ProductionSkillDetailProps {
   recurring: { lessons: number; instructors: number } | null;
   trendPoints: { label: string; score: number; max: number; state: SkillState }[];
   vectorRead: null;
+  /** Where "Train this with Vector" actually goes -- see this function's own doc comment. */
+  trainHref: string;
 }
 
 /**
@@ -33,14 +37,27 @@ export interface ProductionSkillDetailProps {
  *
  * "Vector's read" and "How you both saw it" stay null -- see the shared
  * component's own doc comment for why those two are real capability gaps,
- * not omissions of convenience. backHref/trainHref/lessonHistoryHref aren't
- * this adapter's concern -- three plain strings with no per-item mapping,
- * so each caller supplies them directly when rendering SkillDetailScreen.
+ * not omissions of convenience.
+ *
+ * trainHref used to be a plain string every caller hardcoded to "/train" --
+ * "Train this with Vector" on Emergency Procedures and "Train this with
+ * Vector" on Landings went to the exact same generic hub page, showing
+ * whatever Vector's OVERALL top recommendation happened to be, unrelated to
+ * the skill the student was just looking at. Now resolved here, same
+ * skill-to-activity matching Next Flight uses: this skill's own Radio
+ * Practice entry point when it's a radio-communications skill, the one real
+ * authored Chair Fly scenario when this skill's label matches it, otherwise
+ * the honest generic Train hub -- never a fabricated skill-specific link
+ * where no real activity exists. hrefs.radioPracticeHref/chairFlyHref are
+ * optional because /v2 has neither a real /practice/[id] nor its own Chair
+ * Fly production route wired to this adapter yet -- omitting them there
+ * just falls through to hrefs.trainHref, same as before this fix.
  */
 export async function buildProductionSkillDetailProps(
   repo: Repository,
   viewer: Viewer,
   skillParam: string,
+  hrefs: { trainHref: string; chairFlyHref?: string; radioPracticeHref?: string },
 ): Promise<ProductionSkillDetailProps | null> {
   const studentId = viewer.user.id;
 
@@ -72,6 +89,13 @@ export async function buildProductionSkillDetailProps(
   const acsArea = acsAreaForSkill(progression.skill, certificateType);
   const recurringTheme = brief.recurringThemes.find((t) => t.skill === progression.skill) ?? null;
 
+  const trainHref =
+    progression.skill === "RADIO_COMMUNICATIONS" && hrefs.radioPracticeHref
+      ? hrefs.radioPracticeHref
+      : hrefs.chairFlyHref && hasAuthoredScenario(skillLabel(progression.skill))
+        ? hrefs.chairFlyHref
+        : hrefs.trainHref;
+
   return {
     label: progression.label,
     score: meterScoreForSkillStatus(progression.status),
@@ -93,5 +117,6 @@ export async function buildProductionSkillDetailProps(
         : null,
     trendPoints,
     vectorRead: null,
+    trainHref,
   };
 }

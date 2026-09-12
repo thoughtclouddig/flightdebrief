@@ -33,9 +33,9 @@ export default async function V2SkillDetail({ params }: { params: Promise<{ skil
     } catch {
       redirect(`/login?from=%2Fv2%2Fprogress%2F${slug}&reason=no-session`);
     }
-    const props = await buildProductionSkillDetailProps(getRepository(), viewer, slug);
+    const props = await buildProductionSkillDetailProps(getRepository(), viewer, slug, { trainHref: "/v2/train" });
     if (!props) notFound();
-    return <SkillDetailScreen {...props} backHref="/v2/progress" trainHref="/v2/train" lessonHistoryHref="/v2/debrief" />;
+    return <SkillDetailScreen {...props} backHref="/v2/progress" lessonHistoryHref="/v2/debrief" />;
   }
 
   const skill = skillBySlug(slug);
