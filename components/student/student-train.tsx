@@ -4,14 +4,11 @@ import { useState, type ReactNode } from "react";
 import { ChevronRight, Radio } from "lucide-react";
 import Link from "next/link";
 import {
-  AcsBadge,
   Card,
-  Evidence,
-  InfoTip,
   Panel,
   PanelButton,
-  PanelEyebrow,
   PanelHeadline,
+  PanelEyebrow,
   PageTitle,
   PrimaryButton,
   Screen,
@@ -19,9 +16,10 @@ import {
   SecondaryButton,
   SkillMeter,
   StateLabel,
-  VectorMark,
 } from "@/components/student/ui";
-import { stateTone, type SkillState } from "@/lib/student/state-tone";
+import { TrainingContextHeader } from "@/components/student/training-context-header";
+import { TrainingUnitCard, TrainingUnitCompactRow } from "@/components/student/training-unit-card";
+import type { SkillState } from "@/lib/student/state-tone";
 import type { VectorSession } from "@/lib/student/vector-coaching";
 
 /**
@@ -152,86 +150,65 @@ export function StudentTrain({
     );
   }
 
+  // Vector is introduced INSIDE the recommendation it is making, and the
+  // card's own action row is built here rather than in TrainingUnitCard --
+  // the card is purely presentational, so it never decides between a real
+  // vectorSession link and the prototype's local-state menu buttons.
+  const startHereActions = vectorSession ? (
+    <PanelButton href={vectorSession.href}>{vectorSession.buttonLabel}</PanelButton>
+  ) : primaryAction || (secondaryActions && secondaryActions.length > 0) ? (
+    <>
+      {primaryAction ? (
+        <>
+          <PanelButton href={primaryAction.href} onClick={primaryAction.onClick}>
+            {primaryAction.label}
+          </PanelButton>
+          {primaryAction.caption ? <p className="px-1 text-[14px] text-panel-foreground-soft">{primaryAction.caption}</p> : null}
+        </>
+      ) : null}
+      {secondaryActions && secondaryActions.length > 0 ? (
+        <div className="mt-1.5 flex gap-2.5">
+          {secondaryActions.map((a) => (
+            <SecondaryButton key={a.label} href={a.href} onClick={a.onClick} onPanel disabled={a.disabled}>
+              {a.label}
+            </SecondaryButton>
+          ))}
+        </div>
+      ) : null}
+    </>
+  ) : null;
+
   return (
     <Screen>
       <PageTitle>Train</PageTitle>
+      <TrainingContextHeader>{recommended.contextLine}</TrainingContextHeader>
 
       <Section title={sectionTitle} flush>
-        <Panel>
-          {/* Vector is introduced INSIDE the recommendation it is making.
-              Standing alone above the card it had nothing to align to and
-              read as a page header; here it reads as the byline on a specific
-              piece of advice, which is what it actually is. */}
-          <div className="flex items-start justify-between gap-2 border-b border-panel-hairline pb-5">
-            <VectorMark subtitle="Your AI flight trainer" onPanel />
-            <InfoTip label={vectorInfo.tipLabel} onPanel>
-              {vectorInfo.tipContent}
-            </InfoTip>
-          </div>
-
-          {recommended.contextLine ? (
-            <p className="mt-5 text-[15px] leading-relaxed text-panel-foreground-soft">{recommended.contextLine}</p>
-          ) : null}
-
-          <div className="mt-6">
-            <PanelEyebrow className={stateTone(recommended.tone, true).text}>
-              {recommended.startHereEyebrow ?? recommended.toneLabel}
-            </PanelEyebrow>
-          </div>
-          <PanelHeadline>{recommended.skillLabel}</PanelHeadline>
-          {recommended.acsArea ? (
-            <div className="mt-2">
-              <AcsBadge area={recommended.acsArea.name} code={recommended.acsArea.code} onPanel />
-            </div>
-          ) : null}
-
-          {/* Why THIS one. The two ratings side by side is the whole
-              argument for spending time on a skill the student thinks is
-              already fine, so it goes above the evidence rather than being
-              left to infer from it. */}
-          {recommended.comparisonLine ? (
-            <p className="mt-4 text-[15px] leading-relaxed text-panel-foreground-soft">{recommended.comparisonLine}</p>
-          ) : null}
-
-          {/* The reason, in the instructor's own words. A recommendation
-              without its evidence is just a suggestion. */}
-          <div className="mt-5">
-            <Evidence label={recommended.evidence.label} tone="instructor" text={recommended.evidence.text} onPanel />
-          </div>
-
-          {vectorSession ? (
-            <div className="mt-6 flex flex-col gap-2.5">
-              <PanelButton href={vectorSession.href}>{vectorSession.buttonLabel}</PanelButton>
-            </div>
-          ) : primaryAction || (secondaryActions && secondaryActions.length > 0) ? (
-            <div className="mt-6 flex flex-col gap-2.5">
-              {primaryAction ? (
-                <>
-                  <PanelButton href={primaryAction.href} onClick={primaryAction.onClick}>
-                    {primaryAction.label}
-                  </PanelButton>
-                  {primaryAction.caption ? <p className="px-1 text-[14px] text-panel-foreground-soft">{primaryAction.caption}</p> : null}
-                </>
-              ) : null}
-              {secondaryActions && secondaryActions.length > 0 ? (
-                <div className="mt-1.5 flex gap-2.5">
-                  {secondaryActions.map((a) => (
-                    <SecondaryButton key={a.label} href={a.href} onClick={a.onClick} onPanel disabled={a.disabled}>
-                      {a.label}
-                    </SecondaryButton>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-        </Panel>
+        <TrainingUnitCard
+          tone={recommended.tone}
+          eyebrow={recommended.startHereEyebrow ?? recommended.toneLabel}
+          skillLabel={recommended.skillLabel}
+          acsArea={recommended.acsArea}
+          comparisonLine={recommended.comparisonLine}
+          evidence={recommended.evidence}
+          vectorInfo={vectorInfo}
+          actions={startHereActions}
+        />
       </Section>
 
       {alsoTrain && alsoTrain.length > 0 ? (
         <Section title="Also train">
-          <div className="flex flex-col gap-3">
+          {/* Up to 2 units: a single column below xl, a 2-up grid once
+              there's genuinely room for both side by side rather than one
+              stretched to full width. */}
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
             {alsoTrain.map((unit) => (
-              <CompactTrainCard key={unit.vectorSession.href} unit={unit} />
+              <TrainingUnitCompactRow
+                key={unit.vectorSession.href}
+                skillLabel={unit.skillLabel}
+                evidence={unit.evidence}
+                action={<PrimaryButton href={unit.vectorSession.href}>{unit.vectorSession.buttonLabel}</PrimaryButton>}
+              />
             ))}
           </div>
         </Section>
@@ -239,9 +216,14 @@ export function StudentTrain({
 
       {moreTrain && moreTrain.length > 0 ? (
         moreRevealed ? (
-          <div className="flex flex-col gap-3 px-1.5">
+          <div className="grid grid-cols-1 gap-3 px-1.5 xl:grid-cols-2">
             {moreTrain.map((unit) => (
-              <CompactTrainCard key={unit.vectorSession.href} unit={unit} />
+              <TrainingUnitCompactRow
+                key={unit.vectorSession.href}
+                skillLabel={unit.skillLabel}
+                evidence={unit.evidence}
+                action={<PrimaryButton href={unit.vectorSession.href}>{unit.vectorSession.buttonLabel}</PrimaryButton>}
+              />
             ))}
           </div>
         ) : (
@@ -311,20 +293,5 @@ export function StudentTrain({
         </Section>
       ) : null}
     </Screen>
-  );
-}
-
-/** WHAT / WHY / WHAT DO I DO, nothing more -- the training experience itself lives at vectorSession.href, never inside the card. */
-function CompactTrainCard({ unit }: { unit: StudentTrainCompactUnit }) {
-  return (
-    <Card>
-      <p className="text-[17px] font-medium text-foreground">{unit.skillLabel}</p>
-      <div className="mt-2">
-        <Evidence label={unit.evidence.label} tone="instructor" text={unit.evidence.text} />
-      </div>
-      <div className="mt-4">
-        <PrimaryButton href={unit.vectorSession.href}>{unit.vectorSession.buttonLabel}</PrimaryButton>
-      </div>
-    </Card>
   );
 }

@@ -162,6 +162,8 @@ export interface TrainingPlan {
   alsoTrain: TrainingUnit[];
   /** Valid, distinct, current-debrief units beyond the visible cap -- never silently dropped, always reachable via progressive disclosure. */
   more: TrainingUnit[];
+  /** The flight this plan is drawn from, for Train's page-level "starting where you left off" line -- null alongside startHere when there's nothing to train on yet. */
+  context: { flightDate: string; cfiName: string } | null;
 }
 
 const VISIBLE_CAP = 3;
@@ -182,7 +184,7 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
   const brief = await computeNextLessonBrief(repo, studentId);
   const items = brief.keepWorkingOnTrainingItems;
   if (!brief.lastFlight || items.length === 0) {
-    return { startHere: null, alsoTrain: [], more: [] };
+    return { startHere: null, alsoTrain: [], more: [], context: null };
   }
 
   const [signals, flightTasks] = await Promise.all([
@@ -234,5 +236,6 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
     startHere: units[0] ?? null,
     alsoTrain: units.slice(1, VISIBLE_CAP),
     more: units.slice(VISIBLE_CAP),
+    context: { flightDate: formatFlightDate(brief.lastFlight.flightDate), cfiName: cfi ?? "your instructor" },
   };
 }

@@ -57,7 +57,15 @@ export function BottomNav({
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-surface/85 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-lg items-stretch">
+      {/* Tracks app/(product)/layout.tsx's own responsive max-w exactly, so
+          the tab bar's edges stay aligned with the content above it at
+          every width instead of staying phone-width once the column grows. */}
+      {/* md+: tabs stop stretching to fill the now-wider bar (flex-1 across
+          1152px reads as four islands with dead space between them) and
+          become a fixed-width group the bar centers instead -- still the
+          same bottom-fixed, four-icon nav, just sized to itself rather than
+          to the column. */}
+      <div className="mx-auto flex max-w-lg items-stretch md:max-w-3xl md:justify-center xl:max-w-6xl">
         {tabs.map((t) => {
           // Exact match for Home (its own href is a prefix of every other
           // tab's -- both the prototype's "/prototype/vector" and
@@ -71,7 +79,7 @@ export function BottomNav({
               <span
                 key={t.href}
                 aria-disabled="true"
-                className="flex min-h-[56px] flex-1 cursor-not-allowed flex-col items-center justify-center gap-1 text-[11px] font-semibold tracking-tight text-foreground-soft opacity-40"
+                className="flex min-h-[56px] flex-1 cursor-not-allowed flex-col items-center justify-center gap-1 text-[11px] font-semibold tracking-tight text-foreground-soft opacity-40 md:w-28 md:flex-none"
               >
                 <Icon className="size-[25px]" strokeWidth={2} aria-hidden />
                 {t.label}
@@ -84,7 +92,7 @@ export function BottomNav({
               href={t.href}
               /* 56px tall: a real tap target, not a link. */
               className={cn(
-                "flex min-h-[56px] flex-1 cursor-pointer flex-col items-center justify-center gap-1 text-[11px] font-semibold tracking-tight transition-colors",
+                "flex min-h-[56px] flex-1 cursor-pointer flex-col items-center justify-center gap-1 text-[11px] font-semibold tracking-tight transition-colors md:w-28 md:flex-none",
                 active ? "text-brand" : "text-foreground-soft",
               )}
             >

@@ -43,6 +43,21 @@ export async function buildProductionTrainProps(
   ]);
   const certificateType = memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
 
+  /**
+   * The real instructor quote, verbatim and attributed, whenever the
+   * bounded evidence extractor found one for this unit -- never the
+   * generic "{cfi} · {date}" label over the raw debrief sentence when a
+   * real quote exists. Falls back to unit.evidence (the same debrief
+   * sentence Train has always shown) only when no quote was resolved,
+   * exactly the extractor's own honest-null degradation.
+   */
+  function resolveEvidence(unit: TrainingUnit): { label: string; text: string } {
+    if (unit.instructorQuote) {
+      return { label: unit.instructorQuote.instructorName, text: unit.instructorQuote.quote };
+    }
+    return unit.evidence;
+  }
+
   function toCard(unit: TrainingUnit): StudentTrainRecommended {
     const acsArea = acsAreaForSkill(unit.skill, certificateType);
     const tone = unit.progressionStatus ? toneForSkillStatus(unit.progressionStatus) : "Improving";
@@ -52,14 +67,14 @@ export async function buildProductionTrainProps(
       startHereEyebrow: "Start here",
       skillLabel: unit.skillLabel,
       acsArea: acsArea ? { name: acsArea.name } : null,
-      contextLine: "",
+      contextLine: plan.context ? `Starting where your last flight ended — ${plan.context.flightDate} with ${plan.context.cfiName}.` : "",
       comparisonLine: null,
-      evidence: unit.evidence,
+      evidence: resolveEvidence(unit),
     };
   }
 
   function toCompact(unit: TrainingUnit): StudentTrainCompactUnit {
-    return { skillLabel: unit.skillLabel, evidence: unit.evidence, vectorSession: unit.vectorSession };
+    return { skillLabel: unit.skillLabel, evidence: resolveEvidence(unit), vectorSession: unit.vectorSession };
   }
 
   const recommended = plan.startHere ? toCard(plan.startHere) : null;

@@ -173,7 +173,7 @@ describe("buildTrainingPlan", () => {
   it("returns an empty plan, honestly, when there's nothing to train on", async () => {
     const repo = fakeRepo({ items: [] });
     const plan = await buildTrainingPlan(repo, STUDENT_ID);
-    expect(plan).toEqual({ startHere: null, alsoTrain: [], more: [] });
+    expect(plan).toEqual({ startHere: null, alsoTrain: [], more: [], context: null });
   });
 
   it("reads instructorQuote/observedMechanism straight off each persisted TrainingItem -- never calls the evidence extractor at Train render time", async () => {

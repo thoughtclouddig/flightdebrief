@@ -50,7 +50,13 @@ export default async function ProductLayout({ children }: { children: ReactNode 
     const homeHref = viewer.organization.demoExpiresAt ? "/demo" : "/home";
     return (
       <div className="min-h-dvh bg-surface-sunken">
-        <div className="mx-auto min-h-dvh max-w-lg bg-surface-sunken pb-24">
+        {/* max-w grows with the viewport (mobile 512px -> tablet 768px ->
+            large desktop 1152px) so wider Student pages -- Train's own
+            responsive cards among them -- have real room to use instead of
+            being capped at a phone-width column at every size. BottomNav
+            below tracks the same scale so its tab bar stays aligned with
+            the content edges above it. */}
+        <div className="mx-auto min-h-dvh max-w-lg bg-surface-sunken pb-24 md:max-w-3xl xl:max-w-6xl">
           {viewer.organization.demoExpiresAt ? (
             <LiveDemoBanner expiresAt={viewer.organization.demoExpiresAt} hint={demoHint} />
           ) : null}
