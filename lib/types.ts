@@ -268,6 +268,10 @@ export interface TrainingItem {
   done: boolean;
   completedAt: string | null;
   visibility: TrainingItemVisibility;
+  /** The one real, verbatim instructor quote (from this same debrief's instructorGuidance/assessmentDifferences) judged relevant to this item's training gap -- computed once when this item was created (lib/ai/evidence-mechanism.ts), never recomputed at Train/Vector render time. Null when nothing was judged relevant. */
+  instructorQuote: { quote: string; instructorName: string } | null;
+  /** Only non-null when that same quote explicitly states a concrete mechanism -- never fabricated from skill code or from a general topic-naming comment. See lib/ai/evidence-mechanism.ts's MechanismCategory for the fixed category set. */
+  observedMechanism: { quote: string; category: "UNDERSTANDING_KNOWLEDGE" | "RECOGNITION" | "SEQUENCING_REHEARSAL" | "COMMUNICATION_PERFORMANCE" | "FLIGHT_EXECUTION_TRANSFER" } | null;
   createdAt: string;
 }
 

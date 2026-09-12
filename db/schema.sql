@@ -213,6 +213,17 @@ CREATE TABLE IF NOT EXISTS training_items (
 );
 CREATE INDEX IF NOT EXISTS training_items_flight_idx ON training_items (flight_id);
 
+-- Evidence interpretation (lib/ai/evidence-mechanism.ts), computed ONCE when
+-- this item is created (app/api/debrief/analyze/route.ts) from that same
+-- debrief's real instructorGuidance/assessmentDifferences -- never
+-- recomputed at Train or Vector render time, so the two can never disagree
+-- about the same item. instructor_quote is the real, verbatim, attributed
+-- quote judged relevant; observed_mechanism is only non-null when that same
+-- quote explicitly states a concrete mechanism. Both null is honest and
+-- common (a general comment is still real evidence, just not mechanism-grade).
+ALTER TABLE training_items ADD COLUMN IF NOT EXISTS instructor_quote jsonb;
+ALTER TABLE training_items ADD COLUMN IF NOT EXISTS observed_mechanism jsonb;
+
 -- CFI-authored standing notes about a student, independent of any specific
 -- flight or debrief (unlike training_items, whose flight_id/debrief_id are
 -- NOT NULL by design). A CFI can add one any time -- mid-flight, between

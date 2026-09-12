@@ -15,9 +15,11 @@ import { synthesizeSpeech } from "@/lib/deepgram-tts";
 import { toPilotSpeak } from "@/lib/narration";
 import { setCachedAudio, audioCacheKey } from "@/lib/audio-cache";
 import { DEFAULT_TTS_VOICE } from "@/lib/tts-voices";
-import type { DebriefGuidanceMode, StructuredDebrief } from "@/lib/types";
+import type { DebriefGuidanceMode, StructuredDebrief, TrainingItem } from "@/lib/types";
 import { buildDiarizedTurns } from "@/lib/transcription/diarized-turns";
 import { filterTrainingItemDescriptions } from "@/lib/training-item-quality";
+import { resolveTrainingItemSkill, resolveTrainingUnitEvidence } from "@/lib/student/train-units";
+import { skillLabel } from "@/lib/topics";
 import type { TranscriptWord } from "@/lib/transcription/types";
 import { DEMO_FLIGHT_ID } from "@/lib/demo/video-demo-data";
 import { DEMO_CURATED_RESULT } from "@/lib/demo/video-demo-seed";
@@ -203,8 +205,45 @@ export async function POST(request: Request) {
   // The prompt asks for specific, nameable skills and no narrative recaps,
   // but a prompt is a request, not a constraint -- and anything that slips
   // through is permanent on the student's list. See lib/training-item-quality.ts.
+  const keepWorkingOnDescriptions = filterTrainingItemDescriptions(structured.needsWork);
+  const beforeNextFlightDescriptions = filterTrainingItemDescriptions(structured.actionItems);
+
+  // Evidence interpretation (lib/ai/evidence-mechanism.ts) is computed here,
+  // ONCE, and persisted onto each keep_working_on item -- Train and Vector
+  // both only ever read it back (see lib/student/train-units.ts and
+  // lib/student/vector-session-adapter.ts's own doc comments), never
+  // recompute it, so the same item can never show a different
+  // interpretation depending on where the student is looking at it from.
+  // before_next_flight items never become Vector training units, so they
+  // get no interpretation at all -- honestly, not computed and discarded.
+  // A failed extraction (no API key, a bad response) degrades to null on
+  // both fields (resolveTrainingUnitEvidence never throws) -- the item is
+  // still created either way, just without a mechanism claim it can't support.
+  const cfiName = resolveCfiFirstName(flight.instructor) ?? "your instructor";
+  const flightTasks = await repo.listFlightTasks(flight.id);
+  const flightTaskCodes = new Set(flightTasks.map((t) => t.taskCode));
+  const keepWorkingOnEvidence = await Promise.all(
+    keepWorkingOnDescriptions.map(async (description) => {
+      // No TrainingSignal rows exist yet for this debrief (they're created
+      // below, after this) -- signals: [] falls straight to the same
+      // matchSkills() fallback classifyTrainingSignals already ran against
+      // this identical string, so this resolves to the same skill Train/
+      // Vector will later re-derive from the persisted signal row.
+      const skill = resolveTrainingItemSkill({ description } as TrainingItem, [], flightTaskCodes);
+      if (!skill) return { instructorQuote: null, observedMechanism: null };
+      const { instructorQuote, mechanism } = await resolveTrainingUnitEvidence(
+        structured.assessmentDifferences,
+        structured.instructorGuidance,
+        skill,
+        skillLabel(skill),
+        cfiName,
+      );
+      return { instructorQuote, observedMechanism: mechanism };
+    }),
+  );
+
   await repo.createTrainingItems([
-    ...filterTrainingItemDescriptions(structured.needsWork).map((description) => ({
+    ...keepWorkingOnDescriptions.map((description, i) => ({
       flightId: flight.id,
       debriefId: debrief.id,
       category: "keep_working_on" as const,
@@ -212,8 +251,10 @@ export async function POST(request: Request) {
       done: false,
       completedAt: null,
       visibility: "shared" as const,
+      instructorQuote: keepWorkingOnEvidence[i]!.instructorQuote,
+      observedMechanism: keepWorkingOnEvidence[i]!.observedMechanism,
     })),
-    ...filterTrainingItemDescriptions(structured.actionItems).map((description) => ({
+    ...beforeNextFlightDescriptions.map((description) => ({
       flightId: flight.id,
       debriefId: debrief.id,
       category: "before_next_flight" as const,
@@ -221,6 +262,8 @@ export async function POST(request: Request) {
       done: false,
       completedAt: null,
       visibility: "shared" as const,
+      instructorQuote: null,
+      observedMechanism: null,
     })),
   ]);
 

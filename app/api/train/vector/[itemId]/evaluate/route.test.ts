@@ -42,6 +42,8 @@ function trainingItem(overrides: Partial<TrainingItem> = {}): TrainingItem {
     done: false,
     completedAt: null,
     visibility: "shared",
+    instructorQuote: null,
+    observedMechanism: null,
     createdAt: "2026-08-20T20:00:00.000Z",
     ...overrides,
   };

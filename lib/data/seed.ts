@@ -1148,6 +1148,14 @@ function toTrainingItems(
       done: false,
       completedAt: null,
       visibility: "shared",
+      // buildSeed() must stay synchronous and deterministic (see
+      // lib/data/seed.test.ts's own equality check across two calls) -- it
+      // cannot make a real model call. Seeded items start with no
+      // interpretation; scripts/backfill-training-item-evidence.mjs computes
+      // and persists it for real, once, against the actual database, the
+      // same Development-only path any other seeded-data script uses.
+      instructorQuote: null,
+      observedMechanism: null,
       createdAt,
     });
   }
@@ -1161,6 +1169,8 @@ function toTrainingItems(
       done: false,
       completedAt: null,
       visibility: "shared",
+      instructorQuote: null,
+      observedMechanism: null,
       createdAt,
     });
   }

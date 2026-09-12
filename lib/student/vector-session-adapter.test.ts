@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildVectorSessionProps } from "./vector-session-adapter";
+import { buildTrainingPlan } from "./train-units";
 import { extractEvidenceMechanism } from "@/lib/ai/evidence-mechanism";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
@@ -67,6 +68,8 @@ function trainingItem(overrides: Partial<TrainingItem> = {}): TrainingItem {
     done: false,
     completedAt: null,
     visibility: "shared",
+    instructorQuote: null,
+    observedMechanism: null,
     createdAt: "2026-08-20T20:00:00.000Z",
     ...overrides,
   };
@@ -164,20 +167,33 @@ describe("buildVectorSessionProps", () => {
     expect(props?.strategy.kind).toBe("check");
   });
 
-  it("goes straight to Chair Fly, no preliminary question, when this unit's own mechanism is explicitly known", async () => {
-    vi.mocked(extractEvidenceMechanism).mockResolvedValue({
-      instructorQuote: { quote: "You're still relaxing the correction once you get into the flare.", instructorName: "Jake" },
-      observedMechanism: { quote: "You're still relaxing the correction once you get into the flare.", category: "SEQUENCING_REHEARSAL" },
-    });
+  it("goes straight to Chair Fly, no preliminary question, when this unit's own mechanism is explicitly known -- read straight off the persisted item, never recomputed", async () => {
     const repo = fakeRepo({
-      items: [trainingItem({ description: "Crosswind correction was late on the last two landings." })],
-      // A real candidate quote must exist for resolveEvidenceInterpretation
-      // to call out to the (mocked) extractor at all -- it short-circuits
-      // to null on an empty candidate list without ever calling it.
-      lastDebrief: debrief({ instructorGuidance: [{ instructorName: "Jake", quote: "You're still relaxing the correction once you get into the flare." }] }),
+      items: [
+        trainingItem({
+          description: "Crosswind correction was late on the last two landings.",
+          instructorQuote: { quote: "You're still relaxing the correction once you get into the flare.", instructorName: "Jake" },
+          observedMechanism: { quote: "You're still relaxing the correction once you get into the flare.", category: "SEQUENCING_REHEARSAL" },
+        }),
+      ],
     });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
     expect(props?.strategy).toEqual({ kind: "chair-fly" });
+    expect(extractEvidenceMechanism).not.toHaveBeenCalled();
+  });
+
+  it("never invokes the evidence extractor at render time at all -- even when the debrief carries real instructorGuidance that would produce a mechanism if it ran", async () => {
+    // The mock has no configured return value here (would be `undefined` if
+    // ever awaited) -- if buildVectorSessionProps still called it, this
+    // would blow up destructuring the result. It doesn't, because Vector
+    // only ever reads item.instructorQuote/observedMechanism now.
+    const repo = fakeRepo({
+      items: [trainingItem({ description: "Crosswind correction was late on the last two landings." })],
+      lastDebrief: debrief({ instructorGuidance: [{ instructorName: "Jake", quote: "You're still relaxing the correction once you get into the flare." }] }),
+    });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props).not.toBeNull();
+    expect(extractEvidenceMechanism).not.toHaveBeenCalled();
   });
 
   it("diagnoses an ambiguous communications gap via the real Radio Practice activity itself", async () => {
@@ -283,5 +299,25 @@ describe("buildVectorSessionProps", () => {
     const repo = fakeRepo({ items: [trainingItem({ visibility: "instructor_only" })] });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
     expect(props).toBeNull();
+  });
+
+  it("surfaces the exact same instructorQuote/mechanism as Train's own card list for the identical TrainingItem -- neither one recomputes it independently", async () => {
+    const item = trainingItem({
+      description: "Crosswind correction was late on the last two landings.",
+      instructorQuote: { quote: "You're still relaxing the correction once you get into the flare.", instructorName: "Jake" },
+      observedMechanism: { quote: "You're still relaxing the correction once you get into the flare.", category: "SEQUENCING_REHEARSAL" },
+    });
+    const repo = fakeRepo({ items: [item] });
+
+    const vectorProps = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    const plan = await buildTrainingPlan(repo, STUDENT_ID);
+
+    expect(vectorProps?.strategy).toEqual({ kind: "chair-fly" });
+    expect(plan.startHere?.instructorQuote).toEqual(item.instructorQuote);
+    expect(plan.startHere?.mechanism).toEqual(item.observedMechanism);
+    // Both ultimately trace back to the identical row -- Vector's strategy
+    // (chair-fly) is exactly what Train's own persisted mechanism implies,
+    // never a second, independently-arrived-at judgment.
+    expect(extractEvidenceMechanism).not.toHaveBeenCalled();
   });
 });

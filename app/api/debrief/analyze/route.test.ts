@@ -5,6 +5,7 @@ import { analyzeDebrief } from "@/lib/ai";
 import { buildDebriefNarration } from "@/lib/debrief-narration";
 import { isBillingBlocked } from "@/lib/billing-gate";
 import { classifyTrainingSignals } from "@/lib/taxonomy";
+import { resolveTrainingUnitEvidence } from "@/lib/student/train-units";
 import { POST } from "./route";
 import type { Viewer } from "@/lib/viewer";
 import type { FlightWithRelations, StructuredDebrief } from "@/lib/types";
@@ -20,6 +21,13 @@ vi.mock("@/lib/billing-gate", () => ({ isBillingBlocked: vi.fn().mockResolvedVal
 vi.mock("@/lib/taxonomy", () => ({ classifyTrainingSignals: vi.fn(() => []) }));
 vi.mock("@/lib/milestones", () => ({ evaluateAndAwardMilestones: vi.fn() }));
 vi.mock("@/lib/action-items-autoresolve", () => ({ autoResolveActionItems: vi.fn() }));
+vi.mock("@/lib/student/train-units", async (importOriginal) => {
+  // resolveTrainingItemSkill stays real -- it's pure/deterministic and the
+  // tests below want the actual skill resolution. Only the model-calling
+  // resolveTrainingUnitEvidence is mocked.
+  const actual = await importOriginal<typeof import("@/lib/student/train-units")>();
+  return { ...actual, resolveTrainingUnitEvidence: vi.fn() };
+});
 
 const FLIGHT: FlightWithRelations = {
   id: "flight-1",
@@ -102,6 +110,7 @@ function fakeRepo(overrides: Record<string, unknown> = {}) {
     createDebrief: vi.fn().mockResolvedValue({ id: "debrief-1" }),
     listFlights: vi.fn().mockResolvedValue([]),
     listTrainingItems: vi.fn().mockResolvedValue([]),
+    listFlightTasks: vi.fn().mockResolvedValue([]),
     createTrainingItems: vi.fn(),
     createTrainingSignals: vi.fn(),
     getUser: vi.fn().mockResolvedValue({ name: "Mia" }),
@@ -116,6 +125,7 @@ describe("POST /api/debrief/analyze — insufficient transcript content", () => 
     vi.mocked(authorize).mockResolvedValue({ viewer });
     vi.mocked(isBillingBlocked).mockResolvedValue(false);
     vi.mocked(classifyTrainingSignals).mockReturnValue([]);
+    vi.mocked(resolveTrainingUnitEvidence).mockResolvedValue({ instructorQuote: null, mechanism: null });
   });
 
   it("rejects an inadequate transcript with a 422 and an honest message, and never calls the analyzer", async () => {
@@ -195,5 +205,52 @@ describe("POST /api/debrief/analyze — insufficient transcript content", () => 
     expect(json.debrief).toEqual({ id: "debrief-1" });
     expect(analyzeDebrief).toHaveBeenCalledTimes(1);
     expect(repo.createDebrief).toHaveBeenCalledTimes(1);
+  });
+
+  it("computes and persists real evidence interpretation on the keep_working_on item at creation time -- never at Train/Vector render time", async () => {
+    const repo = fakeRepo();
+    vi.mocked(getRepository).mockReturnValue(repo as never);
+    vi.mocked(analyzeDebrief).mockResolvedValue({ structured: STRUCTURED_RESULT, analyzedWith: "claude" });
+    vi.mocked(resolveTrainingUnitEvidence).mockResolvedValue({
+      instructorQuote: { quote: "Round-out timing on the flare", instructorName: "Danny" },
+      mechanism: { quote: "Round-out timing on the flare", category: "SEQUENCING_REHEARSAL" },
+    });
+
+    await POST(request({ flightId: "flight-1", transcript: SUBSTANTIVE_TRANSCRIPT }));
+
+    expect(repo.createTrainingItems).toHaveBeenCalledWith([
+      expect.objectContaining({
+        category: "keep_working_on",
+        description: "Round-out timing on the flare",
+        instructorQuote: { quote: "Round-out timing on the flare", instructorName: "Danny" },
+        observedMechanism: { quote: "Round-out timing on the flare", category: "SEQUENCING_REHEARSAL" },
+      }),
+      expect.objectContaining({
+        category: "before_next_flight",
+        // before_next_flight items never become Vector training units --
+        // no interpretation is computed for them at all.
+        instructorQuote: null,
+        observedMechanism: null,
+      }),
+    ]);
+  });
+
+  it("degrades to conservative null evidence, never blocking item creation, when interpretation fails", async () => {
+    const repo = fakeRepo();
+    vi.mocked(getRepository).mockReturnValue(repo as never);
+    vi.mocked(analyzeDebrief).mockResolvedValue({ structured: STRUCTURED_RESULT, analyzedWith: "claude" });
+    // resolveTrainingUnitEvidence's own real contract never throws -- but
+    // this proves the route survives even if it somehow did, and that a
+    // failed interpretation is persisted honestly as null, never a
+    // skill-derived guess.
+    vi.mocked(resolveTrainingUnitEvidence).mockResolvedValue({ instructorQuote: null, mechanism: null });
+
+    const res = await POST(request({ flightId: "flight-1", transcript: SUBSTANTIVE_TRANSCRIPT }));
+
+    expect(res.status).toBe(200);
+    expect(repo.createTrainingItems).toHaveBeenCalledWith([
+      expect.objectContaining({ category: "keep_working_on", instructorQuote: null, observedMechanism: null }),
+      expect.objectContaining({ category: "before_next_flight", instructorQuote: null, observedMechanism: null }),
+    ]);
   });
 });

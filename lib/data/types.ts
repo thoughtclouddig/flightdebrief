@@ -263,6 +263,11 @@ export interface Repository {
   setTrainingItemDone(id: string, done: boolean): Promise<void>;
   /** CFI editing an AI-generated item's wording, or one they added themselves. */
   updateTrainingItemDescription(id: string, description: string): Promise<void>;
+  /** Backfill-only: writes a real evidence interpretation onto an item created before these columns existed. Normal creation (app/api/debrief/analyze/route.ts) already persists this at createTrainingItems time; Train/Vector only ever read it. */
+  updateTrainingItemEvidence(
+    id: string,
+    evidence: { instructorQuote: TrainingItem["instructorQuote"]; observedMechanism: TrainingItem["observedMechanism"] },
+  ): Promise<void>;
   deleteTrainingItem(id: string): Promise<void>;
 
   // --- CFI-authored standing student notes (independent of any flight/debrief) ---

@@ -400,6 +400,10 @@ async function seedDerivedContent(records: HistoricalFlightRecord[]): Promise<vo
       done: false,
       completedAt: null,
       visibility: "shared" as const,
+      // This demo-history seed is for CFI/School Insights fixtures, not the
+      // Vector training flow -- no evidence interpretation is computed here.
+      instructorQuote: null,
+      observedMechanism: null,
     })),
     ...record.structured.actionItems.map((description) => ({
       flightId: record.flightId,
@@ -409,6 +413,8 @@ async function seedDerivedContent(records: HistoricalFlightRecord[]): Promise<vo
       done: false,
       completedAt: null,
       visibility: "shared" as const,
+      instructorQuote: null,
+      observedMechanism: null,
     })),
   ]);
   const trainingSignals = records.flatMap((record) =>
@@ -466,6 +472,8 @@ async function seedRecurringInsightSignal(records: HistoricalFlightRecord[]): Pr
     done: false,
     completedAt: null,
     visibility: "shared" as const,
+    instructorQuote: null,
+    observedMechanism: null,
   }));
   const trainingSignals = target.map((record) => ({
     organizationId: record.organizationId,

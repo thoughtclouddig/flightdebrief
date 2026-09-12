@@ -1,7 +1,13 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildTrainingPlan, resolveOwnedTrainingItem, resolveTrainingItemSkill, resolveTrainingUnitEvidence } from "./train-units";
+import { extractEvidenceMechanism } from "@/lib/ai/evidence-mechanism";
 import type { Repository } from "@/lib/data/types";
 import type { Debrief, FlightTask, FlightWithRelations, TrainingItem, TrainingSignal } from "@/lib/types";
+
+vi.mock("@/lib/ai/evidence-mechanism", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/ai/evidence-mechanism")>();
+  return { ...actual, extractEvidenceMechanism: vi.fn() };
+});
 
 const STUDENT_ID = "student-1";
 const CROSSWIND_SENTENCE = "The first two landings were a little squirrelly in the crosswind, but I got the feel for it by the fourth one.";
@@ -16,6 +22,8 @@ function trainingItem(overrides: Partial<TrainingItem> = {}): TrainingItem {
     done: false,
     completedAt: null,
     visibility: "shared",
+    instructorQuote: null,
+    observedMechanism: null,
     createdAt: "2026-08-28T20:00:00.000Z",
     ...overrides,
   };
@@ -166,6 +174,19 @@ describe("buildTrainingPlan", () => {
     const repo = fakeRepo({ items: [] });
     const plan = await buildTrainingPlan(repo, STUDENT_ID);
     expect(plan).toEqual({ startHere: null, alsoTrain: [], more: [] });
+  });
+
+  it("reads instructorQuote/observedMechanism straight off each persisted TrainingItem -- never calls the evidence extractor at Train render time", async () => {
+    const item = trainingItem({
+      instructorQuote: { quote: "You're still relaxing the correction once you get into the flare.", instructorName: "Jake" },
+      observedMechanism: { quote: "You're still relaxing the correction once you get into the flare.", category: "SEQUENCING_REHEARSAL" },
+    });
+    const repo = fakeRepo({ items: [item] });
+    const plan = await buildTrainingPlan(repo, STUDENT_ID);
+
+    expect(plan.startHere?.instructorQuote).toEqual(item.instructorQuote);
+    expect(plan.startHere?.mechanism).toEqual(item.observedMechanism);
+    expect(extractEvidenceMechanism).not.toHaveBeenCalled();
   });
 });
 

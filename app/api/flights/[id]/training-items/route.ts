@@ -50,6 +50,11 @@ export async function POST(request: Request, { params }: RouteContext<"/api/flig
       done: false,
       completedAt: null,
       visibility: "shared",
+      // Manually typed, not extracted from a transcript -- there's no
+      // instructorGuidance quote to interpret for it, so both stay honestly
+      // null rather than fabricated.
+      instructorQuote: null,
+      observedMechanism: null,
     },
   ]);
 

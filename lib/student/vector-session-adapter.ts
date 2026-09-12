@@ -5,7 +5,7 @@ import { isPhysicalSkill } from "@/lib/training-skill-kind";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightDate } from "@/lib/utils";
 import { computeNextLessonBrief } from "@/lib/training-memory";
-import { resolveOwnedTrainingItem, resolveTrainingUnitEvidence } from "@/lib/student/train-units";
+import { resolveOwnedTrainingItem } from "@/lib/student/train-units";
 import { resolveVectorStrategy, type ActivityEvidence, type VectorStrategy } from "@/lib/student/vector-coaching";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 
@@ -36,6 +36,12 @@ export interface VectorSessionProps {
  * its real attempts count (the bound for the one retry offered there); an
  * incomplete one is resumed rather than duplicated.
  *
+ * Reads this item's instructorQuote/observedMechanism straight off the row
+ * -- both were computed once, when the item was created
+ * (app/api/debrief/analyze/route.ts), and never recomputed here. This is
+ * what guarantees Train's card list and this exact session can never
+ * disagree about the same TrainingItem: neither one ever calls the model.
+ *
  * Returns null when resolveOwnedTrainingItem can't establish that this item
  * belongs to this student as a real, skill-resolvable unit -- the caller
  * (the page) treats null as notFound().
@@ -51,9 +57,8 @@ export async function buildVectorSessionProps(
   if (!owned) return null;
   const { item, skill } = owned;
 
-  const [brief, debrief, assignments] = await Promise.all([
+  const [brief, assignments] = await Promise.all([
     computeNextLessonBrief(repo, studentId),
-    repo.getDebriefByFlight(item.flightId),
     repo.listRadioPracticeAssignments(studentId),
   ]);
   const cfi = resolveCfiFirstName(brief.lastInstructor);
@@ -67,17 +72,9 @@ export async function buildVectorSessionProps(
       ? { kind: "radio-practice", correct: linked.correct ?? false, matchedElements: linked.matchedElements ?? [], attempts: linked.attempts }
       : null;
 
-  const { mechanism } = await resolveTrainingUnitEvidence(
-    debrief?.structuredResult.assessmentDifferences ?? [],
-    debrief?.structuredResult.instructorGuidance ?? [],
-    skill,
-    skillLabel(skill),
-    cfiName,
-  );
-
   const strategy = resolveVectorStrategy({
     skill,
-    mechanism,
+    mechanism: item.observedMechanism,
     activityEvidence,
     cfiName,
     fallbackEvidenceText: item.description,

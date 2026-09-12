@@ -455,10 +455,12 @@ export class PostgresRepository implements Repository {
       item.done,
       item.completedAt,
       item.visibility,
+      item.instructorQuote ? JSON.stringify(item.instructorQuote) : null,
+      item.observedMechanism ? JSON.stringify(item.observedMechanism) : null,
     ]);
     const { rows } = await db.query(
-      `INSERT INTO training_items (id, flight_id, debrief_id, category, description, done, completed_at, visibility)
-       VALUES ${buildValuesPlaceholders(values.length, 8)} RETURNING *`,
+      `INSERT INTO training_items (id, flight_id, debrief_id, category, description, done, completed_at, visibility, instructor_quote, observed_mechanism)
+       VALUES ${buildValuesPlaceholders(values.length, 10)} RETURNING *`,
       values.flat(),
     );
     return rows.map(mapTrainingItem);
@@ -469,6 +471,25 @@ export class PostgresRepository implements Repository {
     await db.query(
       "UPDATE training_items SET done = $2, completed_at = CASE WHEN $2 THEN now() ELSE NULL END WHERE id = $1",
       [id, done],
+    );
+  }
+
+  /**
+   * Writes a real evidence interpretation onto an already-existing
+   * TrainingItem -- used only by scripts/backfill-training-item-evidence.mjs
+   * for seeded Development data created before these columns existed. Normal
+   * product flows never call this: createTrainingItems already persists the
+   * interpretation at creation time (app/api/debrief/analyze/route.ts), and
+   * Train/Vector only ever read it, never recompute or overwrite it.
+   */
+  async updateTrainingItemEvidence(
+    id: string,
+    evidence: { instructorQuote: TrainingItem["instructorQuote"]; observedMechanism: TrainingItem["observedMechanism"] },
+  ): Promise<void> {
+    const db = await this.db();
+    await db.query(
+      "UPDATE training_items SET instructor_quote = $2, observed_mechanism = $3 WHERE id = $1",
+      [id, evidence.instructorQuote ? JSON.stringify(evidence.instructorQuote) : null, evidence.observedMechanism ? JSON.stringify(evidence.observedMechanism) : null],
     );
   }
 
@@ -2156,6 +2177,8 @@ function mapTrainingItem(row: Row): TrainingItem {
     done: row.done as boolean,
     completedAt: row.completed_at ? iso(row.completed_at) : null,
     visibility: (row.visibility as TrainingItem["visibility"]) ?? "shared",
+    instructorQuote: (row.instructor_quote as TrainingItem["instructorQuote"]) ?? null,
+    observedMechanism: (row.observed_mechanism as TrainingItem["observedMechanism"]) ?? null,
     createdAt: iso(row.created_at),
   };
 }

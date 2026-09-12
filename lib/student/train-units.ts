@@ -185,16 +185,12 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
     return { startHere: null, alsoTrain: [], more: [] };
   }
 
-  const [signals, flightTasks, debrief] = await Promise.all([
+  const [signals, flightTasks] = await Promise.all([
     repo.listTrainingSignals({ studentId }),
     repo.listFlightTasks(brief.lastFlight.id),
-    repo.getDebriefByFlight(brief.lastFlight.id),
   ]);
   const flightTaskCodes = new Set(flightTasks.map((t) => t.taskCode));
-  const assessmentDifferences: AssessmentDifference[] = debrief?.structuredResult.assessmentDifferences ?? [];
-  const instructorGuidance: InstructorGuidance[] = debrief?.structuredResult.instructorGuidance ?? [];
   const cfi = resolveCfiFirstName(brief.lastInstructor);
-  const cfiName = cfi ?? "your instructor";
   const evidenceLabel = `${cfi ?? "Your instructor"} · ${formatFlightDate(brief.lastFlight.flightDate)}`;
 
   const bySkill = new Map<TrainingSkill, TrainingItem>();
@@ -213,24 +209,24 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
     return progression ? STATUS_RANK[progression.status] : STATUS_RANK["Needs Coaching"];
   }
 
-  const units: TrainingUnit[] = await Promise.all(
-    [...bySkill.entries()].map(async ([skill, item]) => {
-      const skillLabel = skillLabelFor(skill);
-      const { instructorQuote, mechanism } = await resolveTrainingUnitEvidence(assessmentDifferences, instructorGuidance, skill, skillLabel, cfiName);
-      return {
-        id: item.id,
-        flightId: item.flightId,
-        debriefId: item.debriefId,
-        skill,
-        skillLabel,
-        evidence: { label: evidenceLabel, text: item.description },
-        instructorQuote,
-        mechanism,
-        progressionStatus: progressions.find((p) => p.skill === skill)?.status ?? null,
-        vectorSession: buildVectorSession(item.id),
-      };
-    }),
-  );
+  // Read-only: instructorQuote/observedMechanism were already computed once,
+  // when this TrainingItem was created (app/api/debrief/analyze/route.ts),
+  // and persisted onto the row itself. Train never recomputes them -- doing
+  // so here would mean this exact same item could disagree with what the
+  // Vector session (lib/student/vector-session-adapter.ts) shows for it,
+  // since each would be an independent model call.
+  const units: TrainingUnit[] = [...bySkill.entries()].map(([skill, item]) => ({
+    id: item.id,
+    flightId: item.flightId,
+    debriefId: item.debriefId,
+    skill,
+    skillLabel: skillLabelFor(skill),
+    evidence: { label: evidenceLabel, text: item.description },
+    instructorQuote: item.instructorQuote,
+    mechanism: item.observedMechanism,
+    progressionStatus: progressions.find((p) => p.skill === skill)?.status ?? null,
+    vectorSession: buildVectorSession(item.id),
+  }));
 
   units.sort((a, b) => rankFor(a.skill) - rankFor(b.skill));
 
