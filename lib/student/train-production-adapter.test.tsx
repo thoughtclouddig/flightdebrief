@@ -149,7 +149,7 @@ describe("buildProductionTrainProps", () => {
     expect(props.recommended?.skillLabel).toBe("Crosswind landings");
   });
 
-  it("only offers Chair Fly when the contested objective has a real authored scenario", async () => {
+  it("always links Train's one button to /train/vector/<skill> -- whether or not an authored Chair Fly scenario exists is decided one layer in, not here", async () => {
     const repoWithoutAuthoredScenario = fakeRepo({
       lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Steep turns", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
       signals: [trainingSignal({ skill: "STEEP_TURNS" })],
@@ -158,10 +158,7 @@ describe("buildProductionTrainProps", () => {
       chairFlyHref: "/train/chair-fly",
       skillHref: (s) => `/progress/${s}`,
     });
-    expect(withoutScenario.vectorSession?.action).toBeNull();
-    // Not a dead end -- an unsupported interactive skill still gets a real
-    // Vector session (grounded coaching), just not the Chair Fly engine.
-    expect(withoutScenario.vectorSession?.coaching).not.toBeNull();
+    expect(withoutScenario.vectorSession).toEqual({ buttonLabel: "Train with Vector", href: "/train/vector/STEEP_TURNS" });
 
     const repoWithAuthoredScenario = fakeRepo({
       lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Crosswind Landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
@@ -171,11 +168,7 @@ describe("buildProductionTrainProps", () => {
       chairFlyHref: "/train/chair-fly",
       skillHref: (s) => `/progress/${s}`,
     });
-    expect(withScenario.vectorSession?.action).toEqual({
-      kind: "chair-fly",
-      href: "/train/chair-fly",
-      caption: "About 4 minutes",
-    });
+    expect(withScenario.vectorSession).toEqual({ buttonLabel: "Train with Vector", href: "/train/vector/CROSSWIND_LANDING" });
   });
 
   it("returns radioPractice: null when the caller omits radioPracticeHref (today: /v2's real-data branch, no /v2/practice/[id] yet)", async () => {
@@ -262,7 +255,7 @@ describe("buildProductionTrainProps", () => {
 });
 
 describe("StudentTrain rendering with real production props", () => {
-  it("never shows a dead Chair Fly button when no authored scenario exists, and the recommendation still renders as a real, actionable Vector session", async () => {
+  it("always renders one real, clickable Vector control -- never a dead end, whether or not an authored Chair Fly scenario exists", async () => {
     const { StudentTrain } = await import("@/components/student/student-train");
     const repo = fakeRepo({
       lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Steep turns", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
@@ -273,12 +266,9 @@ describe("StudentTrain rendering with real production props", () => {
       skillHref: (s) => `/progress/${s}`,
     });
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
-    expect(markup).not.toContain("Start chair flying");
     expect(markup).toContain("Steep turns");
-    // Not a dead end -- Vector still offers one real, clickable control even
-    // with no interactive engine behind it (a button, since there's no href
-    // to route to -- the reveal happens client-side).
     expect(markup).toContain("Train with Vector");
+    expect(markup).toContain('href="/train/vector/STEEP_TURNS"');
   });
 
   it("never renders a Still Working On section, no matter how many open skills exist", async () => {
@@ -328,47 +318,13 @@ describe("StudentTrain rendering with real production props", () => {
       skillHref: (s) => `/progress/${s}`,
       radioPracticeHref: "/train/radio-practice",
     });
-    expect(props.vectorSession?.action).toEqual({ kind: "radio-practice", href: "/train/radio-practice" });
+    expect(props.vectorSession).toEqual({ buttonLabel: "Train with Vector", href: "/train/vector/RADIO_COMMUNICATIONS" });
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
-    // The primary button itself links to radio practice; the generic
-    // "Other training" card offering the exact same href must not also
-    // appear.
-    const hrefCount = (markup.match(/href="\/train\/radio-practice"/g) ?? []).length;
-    expect(hrefCount).toBe(1);
-  });
-
-  it("keeps the FAA source/url provenance intact through the Vector router, unchanged from lib/topics.ts's own citation", async () => {
-    const { citationForSkill } = await import("@/lib/topics");
-    const repo = fakeRepo({
-      lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Steep turns", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
-      signals: [trainingSignal({ skill: "STEEP_TURNS" })],
-    });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-    });
-    expect(props.vectorSession?.coaching?.citation).toEqual(citationForSkill("STEEP_TURNS"));
-  });
-
-  it("never presents general curated guidance as if it were this student's own evidence", async () => {
-    const repo = fakeRepo({
-      lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Steep turns", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
-      signals: [trainingSignal({ skill: "STEEP_TURNS", statement: "Entered the turn 200 feet high." })],
-    });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-    });
-    // The student-specific evidence and Vector's general coaching text must
-    // never be the same string -- they come from entirely separate fields
-    // (recommended.evidence vs vectorSession.coaching) and must stay
-    // distinguishable to a reader.
-    const coachingStrings = [
-      ...(props.vectorSession?.coaching?.preparationPoints ?? []),
-      ...(props.vectorSession?.coaching?.commonErrors ?? []),
-    ];
-    expect(coachingStrings.length).toBeGreaterThan(0);
-    expect(coachingStrings).not.toContain(props.recommended?.evidence.text);
+    // Vector's own recommendation already points at radio communications
+    // (radioPractice.contextNote is set) -- the generic "Other training"
+    // card offering the same practice must not also appear.
+    expect(markup).not.toContain('href="/train/radio-practice"');
+    expect(markup).not.toContain("Other training");
   });
 
   it("renders the CFI-recommended scenario with real provenance and 'Start practice' copy -- never 'assign'", async () => {

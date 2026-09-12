@@ -1,102 +1,77 @@
-import type { AssessmentDifference, TrainingSkill } from "@/lib/types";
-import { citationForSkill, curatedTrainingGuidance } from "@/lib/topics";
-import { isPhysicalSkill } from "@/lib/training-skill-kind";
+import type { AssessmentDifference, TrainingSignal, TrainingSkill } from "@/lib/types";
+import { curatedTrainingGuidance, type CuratedTrainingGuidance } from "@/lib/topics";
 import { hasAuthoredScenario } from "@/lib/prototype/chair-fly";
 
 /**
- * Vector Train's deterministic router. Train has exactly one thing to
- * recommend (lib/training-memory.ts's computeRecommendedFocus) and this
- * module decides how the student can act on it: an existing real engine
- * (Chair Fly, Radio Practice) when one applies, otherwise grounded coaching
- * revealed inline. Nothing here calls an LLM -- every field is assembled
- * from curated TOPIC_LIBRARY content and fixed classification, so Vector
- * can never generate instructional text at request time. The student never
- * sees this distinction; there is only ever one button, "Train with
- * Vector," and this module decides what it does.
+ * Vector Train's routing layer.
+ *
+ * Train itself never branches on capability -- "Train with Vector" always
+ * means the same thing: enter a Vector training session. The branching
+ * (existing Chair Fly engine, existing Radio Practice engine, or Vector's
+ * own bounded knowledge-check interaction) happens one layer in, inside
+ * /train/vector/[skill] itself (see resolveVectorCapability below), so the
+ * student's mental model stays "Train with Vector -> Vector trains me," not
+ * "choose among unrelated tools."
  */
 
-const MAX_PREPARATION_POINTS = 4;
-const MAX_COMMON_ERRORS = 3;
-
-const PHYSICAL_SKILL_NOTE =
-  "This is prep to bring into the aircraft with your instructor -- not a substitute for in-aircraft instruction.";
-
-export interface VectorCoaching {
-  /** Null when no TOPIC_LIBRARY entry matches the resolved skill at all -- the "no curated content yet" case, distinct from an entry that simply has no preparationPoints/commonErrors. */
-  topic: string | null;
-  /** 2-4 general, hedged preparation points -- never phrased as an observation of this specific student. Empty when nothing is curated yet. */
-  preparationPoints: string[];
-  /** 0-3 general "a common mistake is..." watch-outs -- same rule as preparationPoints. */
-  commonErrors: string[];
-  citation: { source: string; url: string } | null;
-  /** Set only for a physical/stick-and-rudder skill with no interactive engine -- the framing sentence that stops this reveal from ever reading as "Vector can teach you to land." */
-  physicalSkillNote: string | null;
-}
-
-export type VectorAction =
-  | { kind: "chair-fly"; href: string; caption: string }
-  | { kind: "radio-practice"; href: string };
-
 export interface VectorSession {
-  /** Always this literal string -- one consistent mental model, regardless of which branch below fired. The student never has to know the difference between a routed action and a coach-only reveal. */
   buttonLabel: "Train with Vector";
-  /** Null means the button reveals coaching inline (student-train.tsx owns that local reveal state); non-null means it's a real link into an existing engine. */
-  action: VectorAction | null;
-  /** Null only when the resolved skill has no TOPIC_LIBRARY match at all -- the honest "nothing curated for this yet" case. Never fabricated to fill the gap. */
-  coaching: VectorCoaching | null;
+  href: string;
 }
 
-export function buildVectorSession(params: {
-  resolvedSkill: TrainingSkill | null;
+/**
+ * Train's one button, always a real link -- never a dead end, never a
+ * local-state reveal. "general" is the honest fallback for the rare case
+ * where a recommendation has a label but no matching TrainingSkill code at
+ * all (see lib/training-memory.ts's resolvedSkill doc comment); the session
+ * route itself degrades gracefully for that case rather than Train needing
+ * to know about it.
+ */
+export function buildVectorSession(resolvedSkill: TrainingSkill | null): VectorSession {
+  return { buttonLabel: "Train with Vector", href: `/train/vector/${resolvedSkill ?? "general"}` };
+}
+
+export type VectorCapability =
+  | { kind: "chair-fly" }
+  | { kind: "radio-practice" }
+  | { kind: "check"; guidance: CuratedTrainingGuidance | null };
+
+/**
+ * What /train/vector/[skill] actually does once the student is there.
+ *
+ * Chair Fly requires a real contested objective, not just a matching skill
+ * code -- lib/student/chair-fly-production-adapter.ts's drill is built from
+ * the contested comparison itself (student's rating vs instructor's), so
+ * there is no honest drill to offer without one. This mirrors that adapter's
+ * own gate exactly.
+ */
+export function resolveVectorCapability(params: {
+  skill: TrainingSkill | "general";
   contested: AssessmentDifference | null;
-  hrefs: { chairFlyHref: string; radioPracticeHref?: string };
-  nextLessonDay?: string | null;
-}): VectorSession {
-  const { resolvedSkill, contested, hrefs, nextLessonDay } = params;
-
-  // Chair Fly outranks Radio Practice: an authored drill for the exact
-  // contested objective is the most specific thing Vector can offer, the
-  // same priority train-production-adapter.tsx used before this router
-  // existed.
-  if (contested && hasAuthoredScenario(contested.taskLabel)) {
-    return {
-      buttonLabel: "Train with Vector",
-      action: {
-        kind: "chair-fly",
-        href: hrefs.chairFlyHref,
-        caption: nextLessonDay ? `About 4 minutes · rehearse it before ${nextLessonDay}` : "About 4 minutes",
-      },
-      coaching: coachingFor(resolvedSkill, false),
-    };
+}): VectorCapability {
+  if (params.contested && hasAuthoredScenario(params.contested.taskLabel)) {
+    return { kind: "chair-fly" };
   }
-
-  if (resolvedSkill === "RADIO_COMMUNICATIONS" && hrefs.radioPracticeHref) {
-    return {
-      buttonLabel: "Train with Vector",
-      action: { kind: "radio-practice", href: hrefs.radioPracticeHref },
-      coaching: coachingFor(resolvedSkill, false),
-    };
+  if (params.skill === "RADIO_COMMUNICATIONS") {
+    return { kind: "radio-practice" };
   }
-
-  // Neither existing engine applies -- Vector still isn't a dead end. The
-  // button reveals grounded coaching inline instead of routing anywhere.
-  return {
-    buttonLabel: "Train with Vector",
-    action: null,
-    coaching: coachingFor(resolvedSkill, true),
-  };
+  return { kind: "check", guidance: params.skill === "general" ? null : curatedTrainingGuidance(params.skill) };
 }
 
-function coachingFor(skill: TrainingSkill | null, includePhysicalNote: boolean): VectorCoaching | null {
-  if (!skill) return null;
-  const curated = curatedTrainingGuidance(skill);
-  const citation = curated?.citation ?? citationForSkill(skill);
-  if (!curated && !citation) return null;
-  return {
-    topic: curated?.topic ?? null,
-    preparationPoints: (curated?.preparationPoints ?? []).slice(0, MAX_PREPARATION_POINTS),
-    commonErrors: (curated?.commonErrors ?? []).slice(0, MAX_COMMON_ERRORS),
-    citation,
-    physicalSkillNote: includePhysicalNote && isPhysicalSkill(skill) ? PHYSICAL_SKILL_NOTE : null,
-  };
+/**
+ * The most recent real instructor-sourced evidence for one skill, across
+ * this student's own training signals -- never a fixture, never another
+ * student's. "general" (no resolved skill) has nothing to key evidence off
+ * of, so it's always null there.
+ */
+export function evidenceForSkill(
+  signals: TrainingSignal[],
+  skill: TrainingSkill | "general",
+): { text: string; flightDate: string } | null {
+  if (skill === "general") return null;
+  const matches = signals
+    .filter((s) => s.skill === skill && !s.dismissed && s.source !== "STUDENT" && s.statement)
+    .sort((a, b) => b.flightDate.localeCompare(a.flightDate));
+  const latest = matches[0];
+  return latest ? { text: latest.statement, flightDate: latest.flightDate } : null;
 }

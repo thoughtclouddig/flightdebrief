@@ -72,6 +72,20 @@ const TOPIC_LIBRARY: {
   preparationPoints?: string[];
   /** Same rule as preparationPoints: general, not a specific student's error. */
   commonErrors?: string[];
+  /**
+   * Vector's one grounded knowledge-check question for this skill --
+   * lib/ai/vector-coach.ts's evaluator is given expectedConcepts and
+   * explanation as the ONLY material it may credit or reference; it is
+   * never permitted to invent additional requirements. Reviewed here in
+   * advance, same as preparationPoints/commonErrors -- never generated.
+   * Optional for the same reason those are: only the topics that actually
+   * surface as Vector recommendations need one yet.
+   */
+  checkQuestion?: {
+    prompt: string;
+    expectedConcepts: string[];
+    explanation: string;
+  };
 }[] = [
   // --- ACS Area I & II: Preflight Preparation / Preflight Procedures -------
   {
@@ -206,6 +220,16 @@ const TOPIC_LIBRARY: {
       "Carrying extra airspeed into the flare, which causes floating and a longer landing.",
       "Fixating on the runway instead of using peripheral vision to judge flare height.",
     ],
+    checkQuestion: {
+      prompt: "As your airplane slows down through the flare, what should be happening to your control inputs, and why?",
+      expectedConcepts: [
+        "control inputs need to keep increasing as airspeed decreases",
+        "the airplane is still flying until touchdown",
+        "holding a fixed correction stops being enough as speed bleeds off",
+      ],
+      explanation:
+        "Controls get less effective as airspeed drops, so holding the same input does less each moment -- you have to keep feeding in more correction through the flare, all the way to touchdown, rather than setting it once and holding it.",
+    },
   },
   {
     topic: "Short-field landings",
@@ -223,6 +247,16 @@ const TOPIC_LIBRARY: {
       "Carrying extra airspeed \"for safety,\" which uses up the runway the technique is meant to save.",
       "Braking hard before the nosewheel is down, which can reduce braking effectiveness.",
     ],
+    checkQuestion: {
+      prompt: "Why does a short-field approach use a steeper, slower profile instead of a normal approach?",
+      expectedConcepts: [
+        "touchdown happens near minimum controllable airspeed",
+        "less speed to dissipate means less runway used after touchdown",
+        "a steeper approach clears an obstacle without carrying extra speed",
+      ],
+      explanation:
+        "The whole point is to touch down slow and stop close to the aim point -- extra airspeed \"for safety\" uses up exactly the runway the technique exists to save.",
+    },
   },
   {
     topic: "Soft-field landings",
@@ -248,6 +282,17 @@ const TOPIC_LIBRARY: {
       "Relaxing the crosswind correction too early once the mains touch down.",
       "Letting the nose drift off centerline while focused only on the wing-low correction.",
     ],
+    checkQuestion: {
+      prompt: "In a crosswind landing, what job is aileron doing versus rudder, and what happens if you relax the aileron correction right after the mains touch down?",
+      expectedConcepts: [
+        "aileron controls drift / holds the wing into the wind",
+        "rudder keeps the nose tracking the centerline",
+        "they're two different jobs, not one combined input",
+        "relaxing aileron too early after touchdown lets the wind pick up the wing or drift the airplane",
+      ],
+      explanation:
+        "Aileron holds the wing into the wind so you don't drift; rudder keeps the nose on the centerline. They're solving two different problems, and the crosswind is still blowing after touchdown, so the correction has to stay in -- not end at the mains.",
+    },
   },
   {
     topic: "Forward slip to landing",
@@ -283,6 +328,16 @@ const TOPIC_LIBRARY: {
       "Losing altitude as bank steepens, from not adding enough back-pressure.",
       "Rolling out late and overshooting the entry heading.",
     ],
+    checkQuestion: {
+      prompt: "As you roll into a steep turn, why do you need to add back-pressure, and what happens if you don't add enough?",
+      expectedConcepts: [
+        "steeper bank increases load factor",
+        "more back-pressure/elevator is needed to maintain altitude at higher bank angles",
+        "not enough back-pressure results in altitude loss",
+      ],
+      explanation:
+        "Steepening the bank increases the load factor, so the wing needs more lift -- and more back-pressure -- to hold altitude. Without enough of it, the airplane descends as the bank increases.",
+    },
   },
   {
     topic: "Rectangular course",
@@ -381,6 +436,16 @@ const TOPIC_LIBRARY: {
       "Being slow to add power when airspeed starts to decay below the target.",
       "Correcting a dropping wing with aileron instead of rudder, risking a cross-control condition.",
     ],
+    checkQuestion: {
+      prompt: "In slow flight, if a wing starts to drop, why should you correct it with rudder rather than aileron?",
+      expectedConcepts: [
+        "aileron at this low airspeed/high angle of attack can increase the down-going wing's angle of attack further",
+        "risk of aggravating the stall or crossing the controls",
+        "rudder corrects the yaw without adding to the wing's angle of attack",
+      ],
+      explanation:
+        "At this end of the speed range, an aileron input can push the down-going wing's angle of attack even higher, risking a deeper stall on that wing. Rudder corrects the yaw without that risk, which is why it's the primary correction here.",
+    },
   },
   {
     topic: "Power-off stalls",
@@ -514,6 +579,17 @@ const TOPIC_LIBRARY: {
       "Fixating on restarting the engine at the expense of flying the airplane and picking a spot.",
       "Reaching for the checklist before establishing best-glide airspeed.",
     ],
+    checkQuestion: {
+      prompt: "Right after an engine failure, what's the correct order of priorities, and why?",
+      expectedConcepts: [
+        "fly the airplane first / establish best-glide airspeed",
+        "then pick a landing spot",
+        "then run the checklist / attempt a restart",
+        "restart attempts should not come before flying the airplane or picking a spot",
+      ],
+      explanation:
+        "Fly the airplane first -- establish best-glide airspeed -- then pick your spot, then work the checklist. Fixating on restarting the engine before those two is the most common way this goes wrong.",
+    },
   },
 
   // --- ACS Area X & XI: Night Operations / Postflight ----------------------
@@ -639,6 +715,8 @@ export interface CuratedTrainingGuidance {
   commonErrors: string[];
   /** Null when no verified FAA link exists for this topic -- same honesty rule TOPIC_LIBRARY's own source/url already follow. */
   citation: { source: string; url: string } | null;
+  /** Null when no reviewed knowledge-check question exists yet for this topic. */
+  checkQuestion: { prompt: string; expectedConcepts: string[]; explanation: string } | null;
 }
 
 /**
@@ -656,6 +734,7 @@ export function curatedTrainingGuidance(skill: TrainingSkill | (string & {})): C
     preparationPoints: entry.preparationPoints ?? [],
     commonErrors: entry.commonErrors ?? [],
     citation: entry.source && entry.url ? { source: entry.source, url: entry.url } : null,
+    checkQuestion: entry.checkQuestion ?? null,
   };
 }
 

@@ -88,16 +88,7 @@ export async function buildProductionTrainProps(
       }
     : null;
 
-  const nextLessonDay = brief.upcomingReservation
-    ? new Date(brief.upcomingReservation.scheduledStart).toLocaleDateString("en-US", { weekday: "long" })
-    : null;
-
-  const vectorSession = buildVectorSession({
-    resolvedSkill,
-    contested,
-    hrefs: { chairFlyHref: hrefs.chairFlyHref, radioPracticeHref: hrefs.radioPracticeHref },
-    nextLessonDay,
-  });
+  const vectorSession = buildVectorSession(resolvedSkill);
 
   const radioPractice = hrefs.radioPracticeHref
     ? await buildRadioPracticeProps(repo, studentId, hrefs.radioPracticeHref, resolvedSkill === "RADIO_COMMUNICATIONS")
@@ -110,25 +101,10 @@ export async function buildProductionTrainProps(
       tipContent: (
         <span className="flex flex-col gap-2.5">
           <span>
-            <strong className="font-semibold text-foreground">A recommendation</strong> &mdash; the one thing worth
-            rehearsing before your next flight, drawn from your own debriefs.
+            Vector is your AI flight trainer. It uses your debriefs, instructor feedback, and progress to focus your
+            between-flight training on what will help most next.
           </span>
-          {vectorSession.action?.kind === "chair-fly" ? (
-            <span>
-              <strong className="font-semibold text-foreground">Chair flying</strong> &mdash; fly the scenario in
-              your head. Vector stops at each decision point and asks what you&rsquo;d do.
-            </span>
-          ) : vectorSession.action?.kind === "radio-practice" ? (
-            <span>
-              <strong className="font-semibold text-foreground">Radio Practice</strong> &mdash; realistic ATC
-              scenarios, graded on what you actually said.
-            </span>
-          ) : (
-            <span>
-              <strong className="font-semibold text-foreground">Grounded coaching</strong> &mdash; what to prepare and
-              watch for, drawn from FAA reference material, not invented on the spot.
-            </span>
-          )}
+          <span>Training is grounded in your actual flight evidence and trusted aviation sources.</span>
         </span>
       ),
     },
