@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { suggestStudyReferences } from "@/lib/topics";
+import { matchSkills, suggestStudyReferences } from "@/lib/topics";
+
+describe("matchSkills", () => {
+  it("never misclassifies a generic radio-communication statement as tower-specific -- TOWER_READBACKS requires actual tower/clearance content, not just the word 'radio'", () => {
+    const skills = matchSkills("I need to work on talking on the radio more confidently during the emergency scenario.");
+    expect(skills.map((s) => s.skill)).not.toContain("TOWER_READBACKS");
+  });
+
+  it("still classifies a real tower-clearance issue as TOWER_READBACKS", () => {
+    const skills = matchSkills("Missed one instruction from tower and had to ask for a repeat.");
+    expect(skills.map((s) => s.skill)).toContain("TOWER_READBACKS");
+  });
+});
 
 describe("suggestStudyReferences", () => {
   it("attaches the literal sentence that triggered each match as `why`", () => {

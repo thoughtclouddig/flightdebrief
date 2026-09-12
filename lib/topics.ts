@@ -621,7 +621,12 @@ const TOPIC_LIBRARY: {
   },
   {
     topic: "Tower communications",
-    keywords: ["radio", "tower", "clearance", "amended"],
+    // "radio" alone used to be in this list -- far too broad, it matched any
+    // sentence mentioning a radio at all (e.g. "talking on the radio more
+    // confidently"), misclassifying plain radio-communication issues as
+    // tower-specific ones. "tower"/"clearance"/"amended" already capture the
+    // genuinely tower-specific case without it.
+    keywords: ["tower", "clearance", "amended"],
     source: "Aeronautical Information Manual (AIM), Ch. 4 — Air Traffic Control",
     url: AIM_CH4_URL,
     category: "COMMUNICATIONS",
