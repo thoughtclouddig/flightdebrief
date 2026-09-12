@@ -201,7 +201,7 @@ describe("buildProductionTrainProps", () => {
         trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." }),
         trainingItem({ id: "b", description: "Radio calls on downwind were rushed and hard to understand." }),
         trainingItem({ id: "c", description: "Steep turns lost some altitude in the second one." }),
-        trainingItem({ id: "d", description: "Forgot to trim for best glide during the emergency scenario." }),
+        trainingItem({ id: "d", description: "Rushed the checklist flow during the emergency procedure." }),
       ],
     });
     const props = await buildProductionTrainProps(repo, viewer(), HREFS);
@@ -268,7 +268,7 @@ describe("StudentTrain rendering with real production props", () => {
         trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." }),
         trainingItem({ id: "b", description: "Radio calls on downwind were rushed and hard to understand." }),
         trainingItem({ id: "c", description: "Steep turns lost some altitude in the second one." }),
-        trainingItem({ id: "d", description: "Forgot to trim for best glide during the emergency scenario." }),
+        trainingItem({ id: "d", description: "Rushed the checklist flow during the emergency procedure." }),
       ],
     });
     const props = await buildProductionTrainProps(repo, viewer(), HREFS);

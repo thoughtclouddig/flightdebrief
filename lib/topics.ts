@@ -565,7 +565,13 @@ const TOPIC_LIBRARY: {
   },
   {
     topic: "Emergency procedures",
-    keywords: ["emergency"],
+    // The bare word "emergency" used to be here -- just as broad as
+    // TOWER_READBACKS's old bare "radio" keyword, and the same class of
+    // bug: "I need to work on talking on the radio more confidently during
+    // the emergency scenario" is about radio confidence, not emergency
+    // procedures, but "emergency" alone matched it anyway. These phrases
+    // only match when the sentence is actually about the procedure itself.
+    keywords: ["emergency procedure", "checklist flow", "memory item"],
     source: "Airplane Flying Handbook, Ch. 18 — Emergency Procedures",
     url: AFH_CH18_URL,
     category: "EMERGENCY",
@@ -613,7 +619,11 @@ const TOPIC_LIBRARY: {
   // --- Cross-cutting: communications and ADM ------------------------------
   {
     topic: "Radio communications",
-    keywords: ["radio communication", "radio call", "frequency change", "read back", "readback"],
+    // "talking on the radio" catches the natural, non-jargon way a student
+    // actually phrases this ("I need to work on talking on the radio more
+    // confidently...") -- the other keywords are all ATC-jargon phrases
+    // that miss ordinary language entirely.
+    keywords: ["radio communication", "radio call", "frequency change", "read back", "readback", "talking on the radio"],
     source: "Aeronautical Information Manual (AIM), Ch. 4 — Air Traffic Control",
     url: AIM_CH4_URL,
     category: "COMMUNICATIONS",

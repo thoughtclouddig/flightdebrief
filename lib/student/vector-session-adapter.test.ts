@@ -134,7 +134,7 @@ describe("buildVectorSessionProps", () => {
   });
 
   it("never flags a knowledge/judgment skill as physical", async () => {
-    const repo = fakeRepo({ items: [trainingItem({ description: "Forgot to trim for best glide during the emergency." })] });
+    const repo = fakeRepo({ items: [trainingItem({ description: "Rushed the checklist flow during the emergency procedure." })] });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
     expect(props?.isPhysicalSkill).toBe(false);
   });
