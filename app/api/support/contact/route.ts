@@ -10,7 +10,7 @@ interface ContactBody {
 /**
  * Backs the in-app "Contact support" form (replaces a raw `mailto:` link,
  * which does nothing without a mail client configured -- see
- * components/cfi-v2/support-contact-form.tsx). Sender identity comes from
+ * components/support-contact-form.tsx). Sender identity comes from
  * the authenticated viewer, not a form field -- there's nothing to spoof
  * and nothing for the submitter to get wrong.
  */

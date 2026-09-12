@@ -1,7 +1,7 @@
 import { BookOpen } from "lucide-react";
 import { getViewer } from "@/lib/viewer";
 import { BackLink, Card, PageTitle, QuietRow, Screen, Section } from "@/components/student/ui";
-import { SupportContactForm } from "@/components/cfi-v2/support-contact-form";
+import { SupportContactForm } from "@/components/support-contact-form";
 
 export const dynamic = "force-dynamic";
 

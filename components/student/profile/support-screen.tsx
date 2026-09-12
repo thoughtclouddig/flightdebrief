@@ -1,6 +1,7 @@
-import { BookOpen, Mail, MessageSquare } from "lucide-react";
+import { BookOpen, MessageSquare } from "lucide-react";
 import { BackLink, Card, PageTitle, QuietRow, Screen, Section } from "@/components/student/ui";
-import { SUPPORT_EMAIL } from "@/components/support-link";
+import { SupportContactForm } from "@/components/support-contact-form";
+import { SUPPORT_EMAIL } from "@/lib/support-email";
 
 /**
  * Support -- shared between app/prototype/vector/profile/support/page.tsx
@@ -44,16 +45,7 @@ export function SupportScreen({ backHref, guideHref, trainHref }: { backHref: st
 
       <Section title={<>Still stuck</>}>
         <div className="flex flex-col">
-          <QuietRow
-            href={`mailto:${SUPPORT_EMAIL}`}
-            label={
-              <span className="flex items-center gap-3">
-                <Mail className="size-[18px] shrink-0 text-foreground-faint" aria-hidden />
-                Email support
-              </span>
-            }
-            meta="1 day"
-          />
+          <SupportContactForm context="Student" />
           <QuietRow
             href={guideHref}
             label={

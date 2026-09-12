@@ -304,7 +304,6 @@ export function Nav({
             <GuideControl steps={guideSteps} variant="desktop" />
             <SupportLink
               name={viewer.user.name}
-              email={viewer.user.email}
               organizationName={viewer.organization.name}
               role={viewer.role}
             />
@@ -320,7 +319,6 @@ export function Nav({
           <GuideControl steps={guideSteps} variant="mobile" />
           <SupportLink
             name={viewer.user.name}
-            email={viewer.user.email}
             organizationName={viewer.organization.name}
             role={viewer.role}
             compact
