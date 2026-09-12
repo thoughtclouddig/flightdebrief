@@ -5,7 +5,7 @@ import { computeSkillProgression } from "@/lib/skill-progress";
 import { computeNextLessonBrief, STATUS_RANK } from "@/lib/training-memory";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightDate } from "@/lib/utils";
-import { buildVectorSession, resolveVectorCapability, type VectorCapability, type VectorSession } from "@/lib/student/vector-coaching";
+import { buildVectorSession, type VectorSession } from "@/lib/student/vector-coaching";
 
 /**
  * A skill that is a more specific case of a broader one already in
@@ -113,7 +113,6 @@ export interface TrainingUnit {
   skill: TrainingSkill;
   skillLabel: string;
   evidence: { label: string; text: string };
-  capability: VectorCapability;
   /** Null when this skill has no prior progression row at all -- this debrief is its first appearance. */
   progressionStatus: SkillProgressionStatus | null;
   vectorSession: VectorSession;
@@ -180,7 +179,6 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
     skill,
     skillLabel: skillLabelFor(skill),
     evidence: { label: evidenceLabel, text: item.description },
-    capability: resolveVectorCapability({ skill }),
     progressionStatus: progressions.find((p) => p.skill === skill)?.status ?? null,
     vectorSession: buildVectorSession(item.id),
   }));

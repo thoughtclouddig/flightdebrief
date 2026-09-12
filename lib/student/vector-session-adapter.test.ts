@@ -91,16 +91,16 @@ describe("buildVectorSessionProps", () => {
     expect(props).toBeNull();
   });
 
-  it("hands off to the real Chair Fly engine when this item's own skill has an authored scenario", async () => {
+  it("surfaces the real Chair Fly engine as available when this item's own skill has an authored scenario -- but does not preselect it as the session's activity", async () => {
     const repo = fakeRepo({ items: [trainingItem({ description: "Crosswind correction was late on the last two landings." })] });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
-    expect(props?.capability).toEqual({ kind: "chair-fly" });
+    expect(props?.rehearsal).toEqual({ kind: "chair-fly" });
   });
 
-  it("hands off to Radio Practice for an item resolving to RADIO_COMMUNICATIONS", async () => {
+  it("surfaces Radio Practice as available for an item resolving to RADIO_COMMUNICATIONS", async () => {
     const repo = fakeRepo({ items: [trainingItem({ description: "Radio calls on downwind were rushed." })] });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
-    expect(props?.capability).toEqual({ kind: "radio-practice" });
+    expect(props?.rehearsal).toEqual({ kind: "radio-practice" });
   });
 
   it("never dead-ends the exact browser-acceptance sentence, whichever of its two plausible skills wins text-matching", async () => {
@@ -110,21 +110,21 @@ describe("buildVectorSessionProps", () => {
     // land on either TOWER_READBACKS (now a real Radio Practice route,
     // the fix this test guards) or EMERGENCY_PROCEDURES (real curated
     // check content). The one thing that must never happen, whichever
-    // wins, is the empty "nothing prepared" dead end this whole fix
-    // exists to close.
+    // wins, is having neither a diagnostic question nor a rehearsal engine
+    // -- the honest dead end this whole fix exists to close.
     const repo = fakeRepo({
       items: [trainingItem({ description: "I need to work on talking on the radio more confidently during the emergency scenario." })],
     });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
-    const isDeadEnd = props?.capability.kind === "check" && props.capability.guidance === null;
+    const isDeadEnd = !props?.diagnosticQuestion && !props?.rehearsal;
     expect(isDeadEnd).toBe(false);
   });
 
-  it("runs Vector's own grounded check for an item with no interactive engine, with real curated guidance attached", async () => {
+  it("offers Vector's own grounded diagnostic question for an item with no rehearsal engine", async () => {
     const repo = fakeRepo({ items: [trainingItem({ description: "Steep turns lost some altitude in the second one." })] });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
-    expect(props?.capability.kind).toBe("check");
-    expect(props?.capability.kind === "check" && props.capability.guidance?.checkQuestion).toBeTruthy();
+    expect(props?.rehearsal).toBeNull();
+    expect(props?.diagnosticQuestion?.prompt).toBeTruthy();
   });
 
   it("flags a physical/stick-and-rudder skill so the session can frame it honestly", async () => {

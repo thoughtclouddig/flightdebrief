@@ -1,5 +1,5 @@
 import type { TrainingSkill } from "@/lib/types";
-import { categoryForSkill, curatedTrainingGuidance, skillLabel, type CuratedTrainingGuidance } from "@/lib/topics";
+import { categoryForSkill, skillLabel } from "@/lib/topics";
 import { hasAuthoredScenario } from "@/lib/prototype/chair-fly";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 
@@ -16,12 +16,7 @@ const RADIO_PRACTICE_SKILLS: ReadonlySet<TrainingSkill> = new Set(RADIO_PRACTICE
  *
  * Train itself never branches on capability -- "Train with Vector" always
  * means the same thing: enter a Vector training session for one specific
- * training unit (lib/student/train-units.ts). The branching (existing Chair
- * Fly engine, existing Radio Practice engine, or Vector's own bounded
- * knowledge-check interaction) happens one layer in, inside
- * /train/vector/[itemId] itself (see resolveVectorCapability below), so the
- * student's mental model stays "Train with Vector -> Vector trains me," not
- * "choose among unrelated tools."
+ * training unit (lib/student/train-units.ts).
  */
 
 export interface VectorSession {
@@ -34,41 +29,77 @@ export function buildVectorSession(itemId: string): VectorSession {
   return { buttonLabel: "Train with Vector", href: `/train/vector/${itemId}` };
 }
 
-export type VectorCapability =
-  | { kind: "chair-fly" }
-  | { kind: "radio-practice" }
-  | { kind: "check"; guidance: CuratedTrainingGuidance | null };
+export type RehearsalEngine = { kind: "chair-fly" } | { kind: "radio-practice" };
 
 /**
- * What /train/vector/[itemId] actually does once the student is there.
- *
- * Chair Fly is keyed purely on the unit's own resolved skill -- no
- * contested/dual-assessment requirement. A freeform debrief never produces
- * a contested comparison, and gating Chair Fly on one meant it could never
- * fire for the far more common freeform case even when the evidence
- * squarely supports a real authored scenario.
- * lib/student/chair-fly-production-adapter.ts builds the actual drill from
- * whichever framing is available (a real perception-gap comparison when
- * one exists, this unit's own debrief evidence otherwise) -- that choice
- * doesn't change whether Chair Fly is offered at all.
- *
- * Radio Practice requires BOTH of two independently real, already-curated
- * facts, never a single hardcoded skill literal: the skill's own
- * TOPIC_LIBRARY category is "COMMUNICATIONS" (so a skill like GO_AROUND or
- * EMERGENCY_PROCEDURES -- physical/procedural skills a couple of radio
- * scenarios happen to touch -- never gets routed here wholesale on that
- * coincidence alone), AND the scenario bank actually has a scenario tagged
- * with it (RADIO_PRACTICE_SKILLS, above). Failing either check falls to
- * `check`, never a false "Train with Vector" promise -- a skill this
- * doesn't recognize as an interactive engine still gets Vector's own
- * grounded coaching when curated, or an honest "nothing prepared" when not.
+ * A real interactive engine available for this skill, independent of
+ * whether Vector's own diagnostic question exists for it. Availability is
+ * never decided by a single hardcoded skill literal: Chair Fly checks the
+ * scenario bank itself (hasAuthoredScenario); Radio Practice requires BOTH
+ * the skill's own TOPIC_LIBRARY category being COMMUNICATIONS (so a
+ * physical/procedural skill a radio scenario merely happens to touch, like
+ * GO_AROUND or EMERGENCY_PROCEDURES, is never routed here wholesale) AND a
+ * real scenario tagged with it (RADIO_PRACTICE_SKILLS, above).
  */
-export function resolveVectorCapability(params: { skill: TrainingSkill | "general" }): VectorCapability {
-  if (params.skill !== "general" && hasAuthoredScenario(skillLabel(params.skill))) {
-    return { kind: "chair-fly" };
+export function rehearsalEngineFor(skill: TrainingSkill | "general"): RehearsalEngine | null {
+  if (skill === "general") return null;
+  if (hasAuthoredScenario(skillLabel(skill))) return { kind: "chair-fly" };
+  if (categoryForSkill(skill) === "COMMUNICATIONS" && RADIO_PRACTICE_SKILLS.has(skill)) return { kind: "radio-practice" };
+  return null;
+}
+
+export interface VectorDiagnosis {
+  /** How many of the question's expectedConcepts this answer actually conveyed, per evaluateVectorAnswer. */
+  matchedConceptCount: number;
+  expectedConceptCount: number;
+}
+
+export type VectorStrategy =
+  | { kind: "chair-fly" }
+  | { kind: "radio-practice" }
+  | { kind: "retry"; hint: string }
+  | { kind: "done"; objective: string };
+
+/**
+ * The one appropriate next move, decided AFTER Vector's diagnostic
+ * interaction (or immediately, honestly, when no diagnostic question
+ * exists to run) -- never a capability preselected from the skill alone
+ * before the student has said anything.
+ *
+ * Deterministic, not LLM-guessed: the only signal is the diagnosis's own
+ * matched-vs-expected concept count (itself grounded, from
+ * evaluateVectorAnswer) plus the two independently-real capability-
+ * availability facts. This is the seam for richer adaptation later
+ * (multiple diagnostic rounds, ADM scenario variation) -- extending it
+ * doesn't require a new architecture, just a richer decision here.
+ *
+ * - A real conceptual gap (fewer than half the expected concepts matched)
+ *   with real retry material and no retry spent yet -> one more grounded
+ *   round, framed by a curated common error, never a new authored
+ *   question.
+ * - Otherwise, if a rehearsal engine exists for this skill, that's the
+ *   appropriate activity regardless of how well the concept question went
+ *   -- physical/procedural execution is fixed by rehearsing it, not by
+ *   further Q&A.
+ * - Otherwise, the legitimate terminal outcome: no more ground training
+ *   needed for this item, carry one explicit objective into the next
+ *   flight.
+ */
+export function resolveVectorStrategy(params: {
+  skill: TrainingSkill | "general";
+  diagnosis: VectorDiagnosis | null;
+  retried: boolean;
+  commonErrors: string[];
+  objective: string;
+}): VectorStrategy {
+  const { diagnosis, retried, commonErrors, objective } = params;
+  const engine = rehearsalEngineFor(params.skill);
+
+  if (diagnosis && !retried && commonErrors.length > 0) {
+    const gap = diagnosis.expectedConceptCount > 0 && diagnosis.matchedConceptCount * 2 < diagnosis.expectedConceptCount;
+    if (gap) return { kind: "retry", hint: commonErrors[0] };
   }
-  if (params.skill !== "general" && categoryForSkill(params.skill) === "COMMUNICATIONS" && RADIO_PRACTICE_SKILLS.has(params.skill)) {
-    return { kind: "radio-practice" };
-  }
-  return { kind: "check", guidance: params.skill === "general" ? null : curatedTrainingGuidance(params.skill) };
+
+  if (engine) return engine;
+  return { kind: "done", objective };
 }

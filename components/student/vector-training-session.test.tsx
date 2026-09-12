@@ -7,13 +7,14 @@ const HREFS = { chairFlyHref: "/train/chair-fly", radioPracticeHref: "/train/rad
 const EVIDENCE = { label: "Danny · Aug 20", text: "Lost thirty feet in the turn." };
 
 describe("VectorTrainingSession — one bounded interaction, never a growing chat", () => {
-  it("hands off to the real Chair Fly engine with a real link -- no question, no textarea", () => {
+  it("hands off to the real Chair Fly engine with a real link -- no question, no textarea, when there's nothing curated to diagnose with", () => {
     const markup = renderToStaticMarkup(
       <VectorTrainingSession
         skillLabel="Crosswind landings"
         isPhysicalSkill
         evidence={EVIDENCE}
-        capability={{ kind: "chair-fly" }}
+        diagnosticQuestion={null}
+        rehearsal={{ kind: "chair-fly" }}
         hrefs={HREFS}
         evaluateHref="/api/train/vector/item-1/evaluate"
       />,
@@ -29,7 +30,8 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
         skillLabel="Radio communications"
         isPhysicalSkill={false}
         evidence={EVIDENCE}
-        capability={{ kind: "radio-practice" }}
+        diagnosticQuestion={null}
+        rehearsal={{ kind: "radio-practice" }}
         hrefs={HREFS}
         evaluateHref="/api/train/vector/item-1/evaluate"
       />,
@@ -39,14 +41,15 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
     expect(markup).not.toContain("<textarea");
   });
 
-  it("presents the one reviewed question and nothing else before an answer is submitted -- bounded, not an open chat", () => {
+  it("presents the one reviewed diagnostic question and nothing else before an answer is submitted -- bounded, not an open chat", () => {
     const guidance = curatedTrainingGuidance("STEEP_TURNS")!;
     const markup = renderToStaticMarkup(
       <VectorTrainingSession
         skillLabel="Steep turns"
         isPhysicalSkill
         evidence={EVIDENCE}
-        capability={{ kind: "check", guidance }}
+        diagnosticQuestion={{ prompt: guidance.checkQuestion!.prompt, explanation: guidance.checkQuestion!.explanation }}
+        rehearsal={null}
         hrefs={HREFS}
         evaluateHref="/api/train/vector/item-1/evaluate"
       />,
@@ -55,8 +58,10 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
     expect(markup).toContain("<textarea");
     expect(markup).toContain("Get feedback");
     // Nothing from a not-yet-submitted evaluation appears -- there is no
-    // second exchange, no transcript, no premature feedback.
+    // second exchange, no transcript, no premature feedback, no premature
+    // rehearsal hand-off or "no more ground training needed" objective.
     expect(markup).not.toContain("Take this into your next flight");
+    expect(markup).not.toContain("Rehearse with Vector");
   });
 
   it("keeps the student's real evidence structurally separate from Vector's own reviewed question", () => {
@@ -66,7 +71,8 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
         skillLabel="Steep turns"
         isPhysicalSkill
         evidence={EVIDENCE}
-        capability={{ kind: "check", guidance }}
+        diagnosticQuestion={{ prompt: guidance.checkQuestion!.prompt, explanation: guidance.checkQuestion!.explanation }}
+        rehearsal={null}
         hrefs={HREFS}
         evaluateHref="/api/train/vector/item-1/evaluate"
       />,
@@ -81,13 +87,14 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
     expect(questionIndex).toBeGreaterThan(evidenceIndex);
   });
 
-  it("degrades honestly, never fabricating a question, when there's no curated content for this skill", () => {
+  it("degrades honestly, never fabricating a question or an engine, when there's no curated content and no rehearsal engine for this skill", () => {
     const markup = renderToStaticMarkup(
       <VectorTrainingSession
         skillLabel="this focus"
         isPhysicalSkill={false}
         evidence={{ label: "Danny · Aug 20", text: "Generally a good flight today." }}
-        capability={{ kind: "check", guidance: null }}
+        diagnosticQuestion={null}
+        rehearsal={null}
         hrefs={HREFS}
         evaluateHref="/api/train/vector/item-1/evaluate"
       />,

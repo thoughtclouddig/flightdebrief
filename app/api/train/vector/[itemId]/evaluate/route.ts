@@ -4,9 +4,12 @@ import { getRepository } from "@/lib/data";
 import { curatedTrainingGuidance } from "@/lib/topics";
 import { evaluateVectorAnswer, type VectorCoachEvaluation } from "@/lib/ai/vector-coach";
 import { resolveOwnedTrainingItem } from "@/lib/student/train-units";
+import { resolveVectorStrategy } from "@/lib/student/vector-coaching";
 
 interface EvaluateBody {
   answer?: string;
+  /** True when this is a second answer after Vector offered a retry -- caps adaptation at one round for V1. */
+  retried?: boolean;
 }
 
 /**
@@ -38,6 +41,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/trai
 
   const body = (await request.json().catch(() => ({}))) as EvaluateBody;
   const answer = typeof body.answer === "string" ? body.answer : "";
+  const retried = body.retried === true;
   if (!answer.trim()) {
     return NextResponse.json({ error: "Answer required." }, { status: 400 });
   }
@@ -62,6 +66,20 @@ export async function POST(request: Request, { params }: RouteContext<"/api/trai
     feedback: guidance.checkQuestion.explanation,
     takeaway: guidance.checkQuestion.explanation,
   };
+  const resolved = evaluation ?? fallback;
 
-  return NextResponse.json({ evaluation: evaluation ?? fallback, citation: guidance.citation });
+  // The strategy decision -- rehearse, one more grounded round, or done --
+  // is made here, AFTER this real answer, never before it. Deterministic:
+  // the only signal is this evaluation's own matched-vs-expected concept
+  // count (itself grounded) plus real capability-availability facts, never
+  // an LLM guess.
+  const strategy = resolveVectorStrategy({
+    skill,
+    diagnosis: { matchedConceptCount: resolved.matchedConcepts.length, expectedConceptCount: guidance.checkQuestion.expectedConcepts.length },
+    retried,
+    commonErrors: guidance.commonErrors,
+    objective: resolved.takeaway,
+  });
+
+  return NextResponse.json({ evaluation: resolved, citation: guidance.citation, strategy });
 }

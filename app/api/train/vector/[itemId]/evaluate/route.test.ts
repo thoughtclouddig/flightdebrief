@@ -3,12 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextResponse } from "next/server";
 import { authorize } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
+import { evaluateVectorAnswer } from "@/lib/ai/vector-coach";
 import { POST } from "./route";
 import type { Viewer } from "@/lib/viewer";
 import type { TrainingItem } from "@/lib/types";
 
 vi.mock("@/lib/auth/guard", () => ({ authorize: vi.fn() }));
 vi.mock("@/lib/data", () => ({ getRepository: vi.fn() }));
+vi.mock("@/lib/ai/vector-coach", () => ({ evaluateVectorAnswer: vi.fn() }));
 
 function viewer(studentId = "student-1"): Viewer {
   return {
@@ -126,6 +128,62 @@ describe("POST /api/train/vector/[itemId]/evaluate", () => {
     expect(body.evaluation.feedback).toMatch(/load factor/i);
     expect(body.evaluation.takeaway).toBe(body.evaluation.feedback);
     expect(body.citation).toEqual({ source: expect.stringContaining("Airplane Flying Handbook"), url: expect.any(String) });
+  });
+});
+
+describe("strategy -- decided only after this real answer, never preselected from the skill alone", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(authorize).mockResolvedValue({ viewer: viewer() } as never);
+  });
+
+  it("offers one retry, framed by a curated common error, when the answer reveals a genuine gap and none has been spent yet", async () => {
+    vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem()]) as never); // resolves to STEEP_TURNS -- no rehearsal engine, real commonErrors
+    vi.mocked(evaluateVectorAnswer).mockResolvedValue({ matchedConcepts: [], feedback: "You missed the load factor point.", takeaway: "Add back-pressure as bank increases." });
+
+    const res = await POST(requestBody({ answer: "I'm not sure." }), params("item-1"));
+    const body = (await res.json()) as { strategy: { kind: string; hint?: string } };
+
+    expect(body.strategy.kind).toBe("retry");
+    expect(body.strategy.hint).toBeTruthy();
+  });
+
+  it("never offers a second retry -- a still-weak second answer (retried: true) forces a real next move instead of looping", async () => {
+    vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem()]) as never);
+    vi.mocked(evaluateVectorAnswer).mockResolvedValue({ matchedConcepts: [], feedback: "Still missing the load factor point.", takeaway: "Add back-pressure as bank increases." });
+
+    const res = await POST(requestBody({ answer: "I'm still not sure.", retried: true }), params("item-1"));
+    const body = (await res.json()) as { strategy: { kind: string } };
+
+    expect(body.strategy.kind).not.toBe("retry");
+  });
+
+  it("hands off to the real rehearsal engine once diagnosis is done, even when the answer was strong -- physical execution is fixed by rehearsing, not more Q&A", async () => {
+    vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem({ description: "Crosswind correction was late on the last two landings." })]) as never); // resolves to CROSSWIND_LANDING -- has an authored Chair Fly scenario
+    vi.mocked(evaluateVectorAnswer).mockResolvedValue({
+      matchedConcepts: ["steeper bank increases load factor", "more back-pressure/elevator is needed to maintain altitude at higher bank angles", "not enough back-pressure results in altitude loss"],
+      feedback: "You've got it.",
+      takeaway: "Keep leading the rollout.",
+    });
+
+    const res = await POST(requestBody({ answer: "A full, correct answer." }), params("item-1"));
+    const body = (await res.json()) as { strategy: { kind: string } };
+
+    expect(body.strategy.kind).toBe("chair-fly");
+  });
+
+  it("returns done with an explicit flight-transfer objective when there's no rehearsal engine and no real gap left", async () => {
+    vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem()]) as never); // STEEP_TURNS -- no rehearsal engine
+    vi.mocked(evaluateVectorAnswer).mockResolvedValue({
+      matchedConcepts: ["steeper bank increases load factor", "more back-pressure/elevator is needed to maintain altitude at higher bank angles", "not enough back-pressure results in altitude loss"],
+      feedback: "You've got it.",
+      takeaway: "Add back-pressure as bank increases.",
+    });
+
+    const res = await POST(requestBody({ answer: "A full, correct answer." }), params("item-1"));
+    const body = (await res.json()) as { strategy: { kind: string; objective?: string } };
+
+    expect(body.strategy).toEqual({ kind: "done", objective: "Add back-pressure as bank increases." });
   });
 });
 

@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { buildVectorSession, resolveVectorCapability } from "./vector-coaching";
-import { curatedTrainingGuidance } from "@/lib/topics";
+import { buildVectorSession, rehearsalEngineFor, resolveVectorStrategy } from "./vector-coaching";
 
 describe("buildVectorSession — every card's one button, always a real link", () => {
   it("links to /train/vector/<itemId>", () => {
@@ -14,54 +13,114 @@ describe("buildVectorSession — every card's one button, always a real link", (
   });
 });
 
-describe("resolveVectorCapability — what /train/vector/[itemId] actually does", () => {
-  it("hands off to the real Chair Fly engine whenever the skill itself has an authored scenario -- no dual-assessment requirement", () => {
-    expect(resolveVectorCapability({ skill: "CROSSWIND_LANDING" })).toEqual({ kind: "chair-fly" });
+describe("rehearsalEngineFor — real capability availability, independent of diagnosis", () => {
+  it("finds the real Chair Fly engine whenever the skill itself has an authored scenario", () => {
+    expect(rehearsalEngineFor("CROSSWIND_LANDING")).toEqual({ kind: "chair-fly" });
   });
 
-  it("hands off to the real Radio Practice engine for radio communications", () => {
-    expect(resolveVectorCapability({ skill: "RADIO_COMMUNICATIONS" })).toEqual({ kind: "radio-practice" });
+  it("finds the real Radio Practice engine for radio communications", () => {
+    expect(rehearsalEngineFor("RADIO_COMMUNICATIONS")).toEqual({ kind: "radio-practice" });
   });
 
-  it("hands off to the real Radio Practice engine for tower communications -- a real scenario covers it, a bare 'RADIO_COMMUNICATIONS' literal check would have missed this", () => {
-    expect(resolveVectorCapability({ skill: "TOWER_READBACKS" })).toEqual({ kind: "radio-practice" });
+  it("finds Radio Practice for tower communications -- a real scenario covers it, a bare 'RADIO_COMMUNICATIONS' literal check would have missed this", () => {
+    expect(rehearsalEngineFor("TOWER_READBACKS")).toEqual({ kind: "radio-practice" });
   });
 
-  it("never routes a physical/procedural skill to Radio Practice just because one scenario happens to touch it -- category must be COMMUNICATIONS too", () => {
+  it("never finds a physical/procedural skill's Radio Practice-tagged scenario as a Radio Practice engine -- category must be COMMUNICATIONS too", () => {
     // GO_AROUND has a real Radio Practice scenario tagged against it, but its
     // own TOPIC_LIBRARY category is LANDINGS, not COMMUNICATIONS -- a "keep
     // working on" item about a go-around is almost always about the flying,
     // not the radio call inside it.
-    const result = resolveVectorCapability({ skill: "GO_AROUND" });
-    expect(result.kind).not.toBe("radio-practice");
+    expect(rehearsalEngineFor("GO_AROUND")).not.toEqual({ kind: "radio-practice" });
   });
 
-  it("never routes a COMMUNICATIONS-category skill to Radio Practice when the scenario bank has no real scenario for it", () => {
+  it("never claims Radio Practice for a COMMUNICATIONS-category skill the scenario bank has no real scenario for", () => {
     // ATC_LIGHT_SIGNALS is a real COMMUNICATIONS-category skill with no
-    // authored Radio Practice scenario -- promising an engine that doesn't
+    // authored Radio Practice scenario -- claiming an engine that doesn't
     // exist would be its own false "Train with Vector" dead end.
-    const result = resolveVectorCapability({ skill: "ATC_LIGHT_SIGNALS" });
-    expect(result.kind).not.toBe("radio-practice");
+    expect(rehearsalEngineFor("ATC_LIGHT_SIGNALS")).toBeNull();
   });
 
-  it("never offers Chair Fly for a skill with no authored scenario -- falls back to the grounded check instead", () => {
-    const result = resolveVectorCapability({ skill: "STEEP_TURNS" });
-    expect(result.kind).toBe("check");
+  it("returns null for a skill with no authored engine at all", () => {
+    expect(rehearsalEngineFor("STEEP_TURNS")).toBeNull();
   });
 
-  it("runs Vector's own grounded check, with real curated guidance, for a skill with no interactive engine", () => {
-    const result = resolveVectorCapability({ skill: "STEEP_TURNS" });
-    expect(result).toEqual({ kind: "check", guidance: curatedTrainingGuidance("STEEP_TURNS") });
-    expect(result.kind === "check" && result.guidance?.checkQuestion).toBeTruthy();
+  it("returns null for the honest 'general' fallback (no resolved skill)", () => {
+    expect(rehearsalEngineFor("general")).toBeNull();
+  });
+});
+
+describe("resolveVectorStrategy — the one appropriate next move, decided after diagnosis, never before", () => {
+  it("offers one retry when the diagnostic answer reveals a real gap and retry material exists and none has been spent yet", () => {
+    const result = resolveVectorStrategy({
+      skill: "STEEP_TURNS",
+      diagnosis: { matchedConceptCount: 0, expectedConceptCount: 3 },
+      retried: false,
+      commonErrors: ["Losing altitude as bank steepens, from not adding enough back-pressure."],
+      objective: "Add back-pressure as bank increases.",
+    });
+    expect(result).toEqual({ kind: "retry", hint: "Losing altitude as bank steepens, from not adding enough back-pressure." });
   });
 
-  it("degrades to a null-guidance check, never invented, for a skill with no curated content at all", () => {
-    expect(curatedTrainingGuidance("PREFLIGHT_INSPECTION")).toBeNull();
-    expect(resolveVectorCapability({ skill: "PREFLIGHT_INSPECTION" })).toEqual({ kind: "check", guidance: null });
+  it("never offers a second retry -- a skill already retried goes straight to a real next move even with a weak answer", () => {
+    const result = resolveVectorStrategy({
+      skill: "STEEP_TURNS",
+      diagnosis: { matchedConceptCount: 0, expectedConceptCount: 3 },
+      retried: true,
+      commonErrors: ["Losing altitude as bank steepens, from not adding enough back-pressure."],
+      objective: "Add back-pressure as bank increases.",
+    });
+    expect(result.kind).not.toBe("retry");
+    expect(result.kind).toBe("done");
   });
 
-  it("degrades to a null-guidance check for the honest 'general' fallback (no resolved skill)", () => {
-    expect(resolveVectorCapability({ skill: "general" })).toEqual({ kind: "check", guidance: null });
+  it("never retries when there's no curated commonErrors material to frame a second round with", () => {
+    const result = resolveVectorStrategy({
+      skill: "STEEP_TURNS",
+      diagnosis: { matchedConceptCount: 0, expectedConceptCount: 3 },
+      retried: false,
+      commonErrors: [],
+      objective: "Add back-pressure as bank increases.",
+    });
+    expect(result.kind).not.toBe("retry");
+  });
+
+  it("hands off to the real rehearsal engine once diagnosis is done, even when the answer was strong -- physical execution is fixed by rehearsing it, not more Q&A", () => {
+    const result = resolveVectorStrategy({
+      skill: "CROSSWIND_LANDING",
+      diagnosis: { matchedConceptCount: 3, expectedConceptCount: 3 },
+      retried: false,
+      commonErrors: ["Late correction on short final."],
+      objective: "Carry the correction through the flare.",
+    });
+    expect(result).toEqual({ kind: "chair-fly" });
+  });
+
+  it("hands off to Radio Practice the same way for a COMMUNICATIONS skill with a real scenario", () => {
+    const result = resolveVectorStrategy({
+      skill: "RADIO_COMMUNICATIONS",
+      diagnosis: null,
+      retried: false,
+      commonErrors: [],
+      objective: "Read back the full clearance.",
+    });
+    expect(result).toEqual({ kind: "radio-practice" });
+  });
+
+  it("returns done with the given objective -- the legitimate 'no more ground training needed' outcome -- when there's no rehearsal engine and no real gap left", () => {
+    const result = resolveVectorStrategy({
+      skill: "STEEP_TURNS",
+      diagnosis: { matchedConceptCount: 3, expectedConceptCount: 3 },
+      retried: false,
+      commonErrors: ["Losing altitude as bank steepens, from not adding enough back-pressure."],
+      objective: "Add back-pressure as bank increases.",
+    });
+    expect(result).toEqual({ kind: "done", objective: "Add back-pressure as bank increases." });
+  });
+
+  it("returns done, never invents a retry, for the honest 'general' fallback with no diagnosis at all", () => {
+    const result = resolveVectorStrategy({ skill: "general", diagnosis: null, retried: false, commonErrors: [], objective: "" });
+    expect(result).toEqual({ kind: "done", objective: "" });
   });
 });
 

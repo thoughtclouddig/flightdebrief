@@ -63,9 +63,10 @@ export async function buildProductionChairFlyDrill(repo: Repository, viewer: Vie
  *      disagreement that didn't happen.
  *
  * Null when the unit's skill has no authored scenario at all -- the caller
- * (lib/student/vector-coaching.ts's resolveVectorCapability) already
- * checked this before ever offering Chair Fly, so null here would only mean
- * the two have drifted out of sync.
+ * (lib/student/vector-coaching.ts's rehearsalEngineFor, consulted by
+ * resolveVectorStrategy after diagnosis) already checked this before ever
+ * offering Chair Fly, so null here would only mean the two have drifted out
+ * of sync.
  */
 export async function buildChairFlyDrillForUnit(
   repo: Repository,
