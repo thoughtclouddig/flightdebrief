@@ -366,7 +366,7 @@ const SCENARIOS: Record<string, { scenario: string; steps: ChairFlyStep[] }> = {
  * match here would silently hide a real, authored scenario over a casing
  * difference alone.
  */
-function findScenario(task: string): { scenario: string; steps: ChairFlyStep[] } | undefined {
+export function findScenario(task: string): { scenario: string; steps: ChairFlyStep[] } | undefined {
   const lower = task.toLowerCase();
   const key = Object.keys(SCENARIOS).find((k) => k.toLowerCase() === lower);
   return key ? SCENARIOS[key] : undefined;

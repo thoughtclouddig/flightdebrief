@@ -4,6 +4,7 @@ import { VectorTrainingSession } from "./vector-training-session";
 import { curatedTrainingGuidance } from "@/lib/topics";
 
 const HREFS = { chairFlyHref: "/train/chair-fly", radioPracticeHref: "/train/radio-practice" };
+const EVIDENCE = { label: "Danny · Aug 20", text: "Lost thirty feet in the turn." };
 
 describe("VectorTrainingSession — one bounded interaction, never a growing chat", () => {
   it("hands off to the real Chair Fly engine with a real link -- no question, no textarea", () => {
@@ -11,11 +12,10 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
       <VectorTrainingSession
         skillLabel="Crosswind landings"
         isPhysicalSkill
-        evidence={null}
+        evidence={EVIDENCE}
         capability={{ kind: "chair-fly" }}
-        hasChairFlyOption
         hrefs={HREFS}
-        evaluateHref="/api/train/vector/CROSSWIND_LANDING/evaluate"
+        evaluateHref="/api/train/vector/item-1/evaluate"
       />,
     );
     expect(markup).toContain('href="/train/chair-fly"');
@@ -28,11 +28,10 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
       <VectorTrainingSession
         skillLabel="Radio communications"
         isPhysicalSkill={false}
-        evidence={null}
+        evidence={EVIDENCE}
         capability={{ kind: "radio-practice" }}
-        hasChairFlyOption={false}
         hrefs={HREFS}
-        evaluateHref="/api/train/vector/RADIO_COMMUNICATIONS/evaluate"
+        evaluateHref="/api/train/vector/item-1/evaluate"
       />,
     );
     expect(markup).toContain('href="/train/radio-practice"');
@@ -46,11 +45,10 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
       <VectorTrainingSession
         skillLabel="Steep turns"
         isPhysicalSkill
-        evidence={{ label: "Danny · Aug 20", text: "Lost thirty feet in the turn." }}
+        evidence={EVIDENCE}
         capability={{ kind: "check", guidance }}
-        hasChairFlyOption={false}
         hrefs={HREFS}
-        evaluateHref="/api/train/vector/STEEP_TURNS/evaluate"
+        evaluateHref="/api/train/vector/item-1/evaluate"
       />,
     ).replace(/&#x27;/g, "'");
     expect(markup).toContain(guidance.checkQuestion!.prompt);
@@ -67,11 +65,10 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
       <VectorTrainingSession
         skillLabel="Steep turns"
         isPhysicalSkill
-        evidence={{ label: "Danny · Aug 20", text: "Lost thirty feet in the turn." }}
+        evidence={EVIDENCE}
         capability={{ kind: "check", guidance }}
-        hasChairFlyOption={false}
         hrefs={HREFS}
-        evaluateHref="/api/train/vector/STEEP_TURNS/evaluate"
+        evaluateHref="/api/train/vector/item-1/evaluate"
       />,
     ).replace(/&#x27;/g, "'");
     expect(markup).toContain("Lost thirty feet in the turn.");
@@ -89,11 +86,10 @@ describe("VectorTrainingSession — one bounded interaction, never a growing cha
       <VectorTrainingSession
         skillLabel="this focus"
         isPhysicalSkill={false}
-        evidence={null}
+        evidence={{ label: "Danny · Aug 20", text: "Generally a good flight today." }}
         capability={{ kind: "check", guidance: null }}
-        hasChairFlyOption={false}
         hrefs={HREFS}
-        evaluateHref="/api/train/vector/general/evaluate"
+        evaluateHref="/api/train/vector/item-1/evaluate"
       />,
     );
     expect(markup).toContain("Nothing prepared for this yet");

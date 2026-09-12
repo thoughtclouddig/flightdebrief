@@ -3,9 +3,10 @@ import { describe, expect, it } from "vitest";
 import { buildProductionTrainProps } from "./train-production-adapter";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
-import type { Debrief, FlightWithRelations, Organization, RadioPracticeAssignment, TrainingSignal, User } from "@/lib/types";
+import type { FlightWithRelations, Organization, RadioPracticeAssignment, TrainingItem, User } from "@/lib/types";
 
 const STUDENT_ID = "student-1";
+const HREFS = { chairFlyHref: "/train/chair-fly", skillHref: (s: string) => `/progress/${s}` };
 
 function organization(overrides: Partial<Organization> = {}): Organization {
   return {
@@ -67,71 +68,34 @@ function flight(overrides: Partial<FlightWithRelations> = {}): FlightWithRelatio
   };
 }
 
-function debrief(overrides: Partial<Debrief["structuredResult"]> = {}): Debrief {
+function trainingItem(overrides: Partial<TrainingItem> = {}): TrainingItem {
   return {
-    id: "debrief-1",
-    flightId: "flight-1",
-    transcript: "transcript",
-    audioDurationSeconds: 60,
-    analyzedWith: "mock",
-    guidanceMode: "freeform",
-    recordingStartedAt: null,
-    recordingEndedAt: null,
-    createdAt: "2026-08-20T20:00:00.000Z",
-    structuredResult: {
-      flightSummary: "",
-      narrativeRecap: "",
-      whatWeDid: [],
-      wentWell: [],
-      needsWork: [],
-      instructorGuidance: [],
-      instructorAssistance: [],
-      riskManagementNotes: [],
-      assessmentDifferences: [],
-      actionItems: [],
-      nextLessonFocus: [],
-      studyReferences: [],
-      nextFlightCue: "",
-      nextFlightCueContext: "",
-      ...overrides,
-    },
-  } as Debrief;
-}
-
-function trainingSignal(overrides: Partial<TrainingSignal> = {}): TrainingSignal {
-  return {
-    id: "signal-1",
-    organizationId: "org-1",
-    studentId: STUDENT_ID,
-    instructorId: "cfi-1",
-    aircraftId: null,
+    id: "item-1",
     flightId: "flight-1",
     debriefId: "debrief-1",
-    flightDate: "2026-08-20",
-    category: "LANDINGS",
-    skill: "CROSSWIND_LANDING",
-    status: "NEEDS_COACHING",
-    source: "INSTRUCTOR",
-    statement: "Drifting right in the flare.",
-    dismissed: false,
+    category: "keep_working_on",
+    description: "Crosswind correction was late on the last two landings.",
+    done: false,
+    completedAt: null,
+    visibility: "shared",
+    createdAt: "2026-08-20T20:00:00.000Z",
     ...overrides,
-  } as TrainingSignal;
+  };
 }
 
 function fakeRepo(opts: {
   lastFlight?: FlightWithRelations | null;
-  lastDebrief?: Debrief | null;
-  signals?: TrainingSignal[];
+  items?: TrainingItem[];
   radioAssignments?: RadioPracticeAssignment[];
   cfiUser?: User | null;
 }): Repository {
   const lastFlight = opts.lastFlight === undefined ? flight() : opts.lastFlight;
   return {
     listFlights: async () => (lastFlight ? [lastFlight] : []),
-    listTrainingItems: async () => [],
+    listTrainingItems: async () => opts.items ?? [],
     listReservations: async () => [],
-    getDebriefByFlight: async () => opts.lastDebrief ?? null,
-    listTrainingSignals: async () => opts.signals ?? [],
+    getDebriefByFlight: async () => null,
+    listTrainingSignals: async () => [],
     listMembershipsForUser: async () => [],
     listFlightTasks: async () => [],
     listRadioPracticeAssignments: async () => opts.radioAssignments ?? [],
@@ -140,49 +104,33 @@ function fakeRepo(opts: {
 }
 
 describe("buildProductionTrainProps", () => {
-  it("recommends the weakest open skill when there's no contested objective or recurring theme, using the shared computeRecommendedFocus ranking", async () => {
-    const repo = fakeRepo({ signals: [trainingSignal()] });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-    });
+  it("recommends this debrief's own Needs Work item, resolved to its most specific skill", async () => {
+    const repo = fakeRepo({ items: [trainingItem()] });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
     expect(props.recommended?.skillLabel).toBe("Crosswind landings");
   });
 
-  it("always links Train's one button to /train/vector/<skill> -- whether or not an authored Chair Fly scenario exists is decided one layer in, not here", async () => {
-    const repoWithoutAuthoredScenario = fakeRepo({
-      lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Steep turns", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
-      signals: [trainingSignal({ skill: "STEEP_TURNS" })],
-    });
-    const withoutScenario = await buildProductionTrainProps(repoWithoutAuthoredScenario, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-    });
-    expect(withoutScenario.vectorSession).toEqual({ buttonLabel: "Train with Vector", href: "/train/vector/STEEP_TURNS" });
+  it("always links Train's one button to /train/vector/<itemId> -- whether or not an authored Chair Fly scenario exists is decided one layer in, not here", async () => {
+    const withoutScenario = await buildProductionTrainProps(
+      fakeRepo({ items: [trainingItem({ id: "item-steep", description: "Steep turns lost some altitude in the second one." })] }),
+      viewer(),
+      HREFS,
+    );
+    expect(withoutScenario.vectorSession).toEqual({ buttonLabel: "Train with Vector", href: "/train/vector/item-steep" });
 
-    const repoWithAuthoredScenario = fakeRepo({
-      lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Crosswind Landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
-      signals: [trainingSignal()],
-    });
-    const withScenario = await buildProductionTrainProps(repoWithAuthoredScenario, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-    });
-    expect(withScenario.vectorSession).toEqual({ buttonLabel: "Train with Vector", href: "/train/vector/CROSSWIND_LANDING" });
+    const withScenario = await buildProductionTrainProps(fakeRepo({ items: [trainingItem({ id: "item-crosswind" })] }), viewer(), HREFS);
+    expect(withScenario.vectorSession).toEqual({ buttonLabel: "Train with Vector", href: "/train/vector/item-crosswind" });
   });
 
   it("returns radioPractice: null when the caller omits radioPracticeHref (today: /v2's real-data branch, no /v2/practice/[id] yet)", async () => {
-    const repo = fakeRepo({ signals: [trainingSignal()] });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-    });
+    const repo = fakeRepo({ items: [trainingItem()] });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
     expect(props.radioPractice).toBeNull();
   });
 
   it("surfaces a pending CFI-assigned scenario with real provenance when radioPracticeHref is given", async () => {
     const repo = fakeRepo({
-      signals: [trainingSignal()],
+      items: [trainingItem()],
       radioAssignments: [
         {
           id: "assignment-1",
@@ -201,11 +149,7 @@ describe("buildProductionTrainProps", () => {
       ],
       cfiUser: { id: "cfi-1", name: "Danny Franks", email: "danny@example.com", authUserId: "danny@example.com", avatarUrl: null, createdAt: "2026-01-01T00:00:00.000Z" },
     });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-      radioPracticeHref: "/train/radio-practice",
-    });
+    const props = await buildProductionTrainProps(repo, viewer(), { ...HREFS, radioPracticeHref: "/train/radio-practice" });
     expect(props.radioPractice?.cfiRecommendation).toEqual({
       instructorFirstName: "Danny",
       scenarioTitle: expect.any(String),
@@ -214,115 +158,136 @@ describe("buildProductionTrainProps", () => {
     expect(props.radioPractice?.startHref).toBe("/train/radio-practice");
   });
 
-  it("notes the Vector connection when the recommended skill is radio communications, without inventing a second recommendation", async () => {
-    const repo = fakeRepo({
-      signals: [
-        trainingSignal({ id: "a", skill: "RADIO_COMMUNICATIONS", flightId: "flight-1" }),
-        trainingSignal({ id: "b", skill: "RADIO_COMMUNICATIONS", flightId: "flight-2", flightDate: "2026-08-21" }),
-      ],
-    });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-      radioPracticeHref: "/train/radio-practice",
-    });
+  it("notes the Vector connection when the top unit resolves to radio communications, without inventing a second recommendation", async () => {
+    const repo = fakeRepo({ items: [trainingItem({ description: "Radio calls on downwind were rushed and hard to understand." })] });
+    const props = await buildProductionTrainProps(repo, viewer(), { ...HREFS, radioPracticeHref: "/train/radio-practice" });
     expect(props.recommended?.skillLabel).toBe("Radio communications");
     expect(props.radioPractice?.contextNote).toMatch(/radio communications/i);
   });
 
   it("never renders Review/Quiz/Ask disabled placeholder rows -- omitted entirely, not shown disabled", async () => {
-    const repo = fakeRepo({ signals: [trainingSignal()] });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-    });
+    const repo = fakeRepo({ items: [trainingItem()] });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
     expect(props.secondaryActions).toBeUndefined();
   });
 
-  it("never returns a Still Working On list -- Vector's one recommendation is the whole point of production Train", async () => {
+  it("never returns a Still Working On list -- Vector's current-debrief plan is the whole point of production Train", async () => {
     const repo = fakeRepo({
-      signals: [
-        trainingSignal({ id: "a", skill: "CROSSWIND_LANDING" }),
-        trainingSignal({ id: "b", skill: "STEEP_TURNS", flightId: "flight-2" }),
+      items: [
+        trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." }),
+        trainingItem({ id: "b", description: "Steep turns lost some altitude in the second one." }),
       ],
     });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-    });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
     expect(props.stillWorkingOn).toBeUndefined();
+  });
+
+  it("surfaces up to two more current-debrief units as compact 'also train' cards", async () => {
+    const repo = fakeRepo({
+      items: [
+        trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." }),
+        trainingItem({ id: "b", description: "Radio calls on downwind were rushed and hard to understand." }),
+        trainingItem({ id: "c", description: "Steep turns lost some altitude in the second one." }),
+      ],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
+    expect(props.alsoTrain).toHaveLength(2);
+    expect(props.moreTrain).toEqual([]);
+  });
+
+  it("keeps every valid distinct current-debrief need reachable beyond the visible cap, via moreTrain", async () => {
+    const repo = fakeRepo({
+      items: [
+        trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." }),
+        trainingItem({ id: "b", description: "Radio calls on downwind were rushed and hard to understand." }),
+        trainingItem({ id: "c", description: "Steep turns lost some altitude in the second one." }),
+        trainingItem({ id: "d", description: "Forgot to trim for best glide during the emergency scenario." }),
+      ],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
+    expect(1 + props.alsoTrain!.length).toBe(3);
+    expect(props.moreTrain).toHaveLength(1);
   });
 });
 
 describe("StudentTrain rendering with real production props", () => {
   it("always renders one real, clickable Vector control -- never a dead end, whether or not an authored Chair Fly scenario exists", async () => {
     const { StudentTrain } = await import("@/components/student/student-train");
-    const repo = fakeRepo({
-      lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Steep turns", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
-      signals: [trainingSignal({ skill: "STEEP_TURNS" })],
-    });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-    });
+    const repo = fakeRepo({ items: [trainingItem({ id: "item-steep", description: "Steep turns lost some altitude in the second one." })] });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
     expect(markup).toContain("Steep turns");
     expect(markup).toContain("Train with Vector");
-    expect(markup).toContain('href="/train/vector/STEEP_TURNS"');
+    expect(markup).toContain('href="/train/vector/item-steep"');
   });
 
-  it("never renders a Still Working On section, no matter how many open skills exist", async () => {
+  it("never renders a Still Working On section, no matter how many open units exist", async () => {
     const { StudentTrain } = await import("@/components/student/student-train");
     const repo = fakeRepo({
-      signals: [
-        trainingSignal({ id: "a", skill: "CROSSWIND_LANDING" }),
-        trainingSignal({ id: "b", skill: "STEEP_TURNS", flightId: "flight-2" }),
-        trainingSignal({ id: "c", skill: "SLOW_FLIGHT", flightId: "flight-3" }),
+      items: [
+        trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." }),
+        trainingItem({ id: "b", description: "Steep turns lost some altitude in the second one." }),
+        trainingItem({ id: "c", description: "Slow flight -- corrected a dropping wing with aileron instead of rudder." }),
       ],
     });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-    });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
     expect(markup).not.toContain("Still working on");
   });
 
-  it("shows exactly one primary Vector control -- no second, equal-weight action competes with it", async () => {
+  it("shows exactly one Start Here card and labels it plainly, not algorithmically", async () => {
     const { StudentTrain } = await import("@/components/student/student-train");
-    const repo = fakeRepo({
-      lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Crosswind Landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
-      signals: [trainingSignal()],
-    });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-      radioPracticeHref: "/train/radio-practice",
-    });
+    const repo = fakeRepo({ items: [trainingItem()] });
+    const props = await buildProductionTrainProps(repo, viewer(), { ...HREFS, radioPracticeHref: "/train/radio-practice" });
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
+    expect(markup).toContain("Start here");
+    expect(markup).not.toContain("Top priority");
     const buttonCount = (markup.match(/Train with Vector/g) ?? []).length;
     expect(buttonCount).toBe(1);
-    // Radio Practice still appears, but only as the secondary "Other
-    // training" entry -- never a second copy of the primary control.
-    expect(markup).toContain("Other training");
+  });
+
+  it("renders each Also Train unit as its own compact card, each with its own working Vector link", async () => {
+    const { StudentTrain } = await import("@/components/student/student-train");
+    const repo = fakeRepo({
+      items: [
+        trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." }),
+        trainingItem({ id: "b", description: "Radio calls on downwind were rushed and hard to understand." }),
+      ],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
+    const markup = renderToStaticMarkup(<StudentTrain {...props} />);
+    expect(markup).toContain("Also train");
+    expect(markup).toContain("Radio communications");
+    expect(markup).toContain('href="/train/vector/b"');
+  });
+
+  it("keeps additional current-debrief units behind progressive disclosure, never silently dropped", async () => {
+    const { StudentTrain } = await import("@/components/student/student-train");
+    const repo = fakeRepo({
+      items: [
+        trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." }),
+        trainingItem({ id: "b", description: "Radio calls on downwind were rushed and hard to understand." }),
+        trainingItem({ id: "c", description: "Steep turns lost some altitude in the second one." }),
+        trainingItem({ id: "d", description: "Forgot to trim for best glide during the emergency scenario." }),
+      ],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
+    // Not silently dropped at the data layer -- the fourth unit is a real
+    // unit with its own working link, just not immediately visible.
+    expect(props.moreTrain?.[0]?.vectorSession.href).toBe("/train/vector/d");
+    const markup = renderToStaticMarkup(<StudentTrain {...props} />);
+    expect(markup).toContain("1 more from this debrief");
   });
 
   it("never duplicates the generic Radio Practice card when Vector's own primary action already routes to Radio Practice", async () => {
     const { StudentTrain } = await import("@/components/student/student-train");
     const repo = fakeRepo({
-      signals: [trainingSignal({ skill: "RADIO_COMMUNICATIONS" })],
+      items: [trainingItem({ description: "Radio calls on downwind were rushed and hard to understand." })],
       radioAssignments: [],
     });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-      radioPracticeHref: "/train/radio-practice",
-    });
-    expect(props.vectorSession).toEqual({ buttonLabel: "Train with Vector", href: "/train/vector/RADIO_COMMUNICATIONS" });
+    const props = await buildProductionTrainProps(repo, viewer(), { ...HREFS, radioPracticeHref: "/train/radio-practice" });
+    expect(props.recommended?.skillLabel).toBe("Radio communications");
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
-    // Vector's own recommendation already points at radio communications
-    // (radioPractice.contextNote is set) -- the generic "Other training"
-    // card offering the same practice must not also appear.
     expect(markup).not.toContain('href="/train/radio-practice"');
     expect(markup).not.toContain("Other training");
   });
@@ -330,7 +295,7 @@ describe("StudentTrain rendering with real production props", () => {
   it("renders the CFI-recommended scenario with real provenance and 'Start practice' copy -- never 'assign'", async () => {
     const { StudentTrain } = await import("@/components/student/student-train");
     const repo = fakeRepo({
-      signals: [trainingSignal()],
+      items: [trainingItem()],
       radioAssignments: [
         {
           id: "assignment-1",
@@ -349,29 +314,18 @@ describe("StudentTrain rendering with real production props", () => {
       ],
       cfiUser: { id: "cfi-1", name: "Danny Franks", email: "danny@example.com", authUserId: "danny@example.com", avatarUrl: null, createdAt: "2026-01-01T00:00:00.000Z" },
     });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-      radioPracticeHref: "/train/radio-practice",
-    });
+    const props = await buildProductionTrainProps(repo, viewer(), { ...HREFS, radioPracticeHref: "/train/radio-practice" });
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
     expect(markup).toContain("Danny recommends");
     expect(markup).toContain("Start practice");
-    // Strip href values first -- /practice/assignment-1's id legitimately
-    // contains "assign" as an implementation detail; the check is about
-    // visible text, not the assignment id in a URL nobody reads.
     const visibleText = markup.replace(/href="[^"]*"/g, "");
     expect(visibleText.toLowerCase()).not.toMatch(/assign/);
   });
 
   it("always shows the generic Radio Practice entry point, reachable with no CFI recommendation at all", async () => {
     const { StudentTrain } = await import("@/components/student/student-train");
-    const repo = fakeRepo({ signals: [trainingSignal()], radioAssignments: [] });
-    const props = await buildProductionTrainProps(repo, viewer(), {
-      chairFlyHref: "/train/chair-fly",
-      skillHref: (s) => `/progress/${s}`,
-      radioPracticeHref: "/train/radio-practice",
-    });
+    const repo = fakeRepo({ items: [trainingItem()], radioAssignments: [] });
+    const props = await buildProductionTrainProps(repo, viewer(), { ...HREFS, radioPracticeHref: "/train/radio-practice" });
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
     expect(markup).toContain("Radio Practice");
     expect(markup).toContain('href="/train/radio-practice"');

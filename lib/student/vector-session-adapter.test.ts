@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildVectorSessionProps } from "./vector-session-adapter";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
-import type { Debrief, FlightWithRelations, TrainingSignal } from "@/lib/types";
+import type { FlightWithRelations, TrainingItem, TrainingSignal } from "@/lib/types";
 
 const STUDENT_ID = "student-1";
 const HREFS = { chairFlyHref: "/train/chair-fly", radioPracticeHref: "/train/radio-practice" };
@@ -51,129 +51,80 @@ function flight(overrides: Partial<FlightWithRelations> = {}): FlightWithRelatio
   } as FlightWithRelations;
 }
 
-function debrief(overrides: Partial<Debrief["structuredResult"]> = {}): Debrief {
+function trainingItem(overrides: Partial<TrainingItem> = {}): TrainingItem {
   return {
-    id: "debrief-1",
-    flightId: "flight-1",
-    transcript: "transcript",
-    audioDurationSeconds: 60,
-    analyzedWith: "mock",
-    guidanceMode: "freeform",
-    recordingStartedAt: null,
-    recordingEndedAt: null,
-    createdAt: "2026-08-20T20:00:00.000Z",
-    structuredResult: {
-      flightSummary: "",
-      narrativeRecap: "",
-      whatWeDid: [],
-      wentWell: [],
-      needsWork: [],
-      instructorGuidance: [],
-      instructorAssistance: [],
-      riskManagementNotes: [],
-      assessmentDifferences: [],
-      actionItems: [],
-      nextLessonFocus: [],
-      studyReferences: [],
-      nextFlightCue: "",
-      nextFlightCueContext: "",
-      ...overrides,
-    },
-  } as Debrief;
-}
-
-function trainingSignal(overrides: Partial<TrainingSignal> = {}): TrainingSignal {
-  return {
-    id: "signal-1",
-    organizationId: "org-1",
-    studentId: STUDENT_ID,
-    instructorId: "cfi-1",
-    aircraftId: null,
+    id: "item-1",
     flightId: "flight-1",
     debriefId: "debrief-1",
-    flightDate: "2026-08-20",
-    category: "MANEUVERS",
-    skill: "STEEP_TURNS",
-    status: "NEEDS_COACHING",
-    source: "INSTRUCTOR",
-    statement: "Lost thirty feet in the turn.",
-    dismissed: false,
+    category: "keep_working_on",
+    description: "Lost thirty feet in the turn.",
+    done: false,
+    completedAt: null,
+    visibility: "shared",
+    createdAt: "2026-08-20T20:00:00.000Z",
     ...overrides,
-  } as TrainingSignal;
+  };
 }
 
-function fakeRepo(opts: { lastFlight?: FlightWithRelations | null; lastDebrief?: Debrief | null; signals?: TrainingSignal[] }): Repository {
+function fakeRepo(opts: { items?: TrainingItem[]; signals?: TrainingSignal[]; lastFlight?: FlightWithRelations | null }): Repository {
   const lastFlight = opts.lastFlight === undefined ? flight() : opts.lastFlight;
   return {
     listFlights: async () => (lastFlight ? [lastFlight] : []),
-    listTrainingItems: async () => [],
+    listTrainingItems: async () => opts.items ?? [],
     listReservations: async () => [],
-    getDebriefByFlight: async () => opts.lastDebrief ?? null,
+    getDebriefByFlight: async () => null,
     listTrainingSignals: async () => opts.signals ?? [],
+    listFlightTasks: async () => [],
   } as unknown as Repository;
 }
 
 describe("buildVectorSessionProps", () => {
-  it("resolves real, current-student evidence for the requested skill -- never a fixture", async () => {
-    const repo = fakeRepo({ signals: [trainingSignal({ statement: "Real evidence for this student." })] });
-    const props = await buildVectorSessionProps(repo, viewer(), "STEEP_TURNS", HREFS);
-    expect(props.evidence?.text).toBe("Real evidence for this student.");
+  it("resolves this exact item's own real evidence -- never a fixture", async () => {
+    const repo = fakeRepo({ items: [trainingItem({ description: "Steep turns lost some altitude in the second one." })] });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.evidence.text).toBe("Steep turns lost some altitude in the second one.");
   });
 
-  it("never surfaces evidence for a different skill than the one requested", async () => {
-    const repo = fakeRepo({ signals: [trainingSignal({ skill: "CROSSWIND_LANDING", statement: "Wrong skill entirely." })] });
-    const props = await buildVectorSessionProps(repo, viewer(), "STEEP_TURNS", HREFS);
-    expect(props.evidence).toBeNull();
+  it("returns null -- not a fixture, not another item's evidence -- for an id that doesn't resolve to an owned, skill-resolvable item", async () => {
+    const repo = fakeRepo({ items: [] });
+    const props = await buildVectorSessionProps(repo, viewer(), "nonexistent-item", HREFS);
+    expect(props).toBeNull();
   });
 
-  it("hands off to Chair Fly only when the contested objective actually resolves to the requested skill", async () => {
-    const repo = fakeRepo({
-      lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Crosswind Landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
-    });
-    const matching = await buildVectorSessionProps(repo, viewer(), "CROSSWIND_LANDING", HREFS);
-    expect(matching.capability).toEqual({ kind: "chair-fly" });
-
-    // A stale/bookmarked URL for a DIFFERENT skill must not borrow this
-    // contested objective's Chair Fly drill.
-    const mismatched = await buildVectorSessionProps(repo, viewer(), "STEEP_TURNS", HREFS);
-    expect(mismatched.capability.kind).not.toBe("chair-fly");
+  it("hands off to the real Chair Fly engine when this item's own skill has an authored scenario", async () => {
+    const repo = fakeRepo({ items: [trainingItem({ description: "Crosswind correction was late on the last two landings." })] });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.capability).toEqual({ kind: "chair-fly" });
   });
 
-  it("hands off to Radio Practice for RADIO_COMMUNICATIONS", async () => {
-    const repo = fakeRepo({});
-    const props = await buildVectorSessionProps(repo, viewer(), "RADIO_COMMUNICATIONS", HREFS);
-    expect(props.capability).toEqual({ kind: "radio-practice" });
+  it("hands off to Radio Practice for an item resolving to RADIO_COMMUNICATIONS", async () => {
+    const repo = fakeRepo({ items: [trainingItem({ description: "Radio calls on downwind were rushed." })] });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.capability).toEqual({ kind: "radio-practice" });
   });
 
-  it("runs Vector's own grounded check for a skill with no interactive engine, with real curated guidance attached", async () => {
-    const repo = fakeRepo({});
-    const props = await buildVectorSessionProps(repo, viewer(), "STEEP_TURNS", HREFS);
-    expect(props.capability.kind).toBe("check");
-    expect(props.capability.kind === "check" && props.capability.guidance?.checkQuestion).toBeTruthy();
-  });
-
-  it("offers Chair Fly as a bonus next step whenever an authored scenario exists for the skill, even outside the check branch's own entry gate", async () => {
-    const repo = fakeRepo({});
-    const props = await buildVectorSessionProps(repo, viewer(), "CROSSWIND_LANDING", HREFS);
-    expect(props.hasChairFlyOption).toBe(true);
+  it("runs Vector's own grounded check for an item with no interactive engine, with real curated guidance attached", async () => {
+    const repo = fakeRepo({ items: [trainingItem({ description: "Steep turns lost some altitude in the second one." })] });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.capability.kind).toBe("check");
+    expect(props?.capability.kind === "check" && props.capability.guidance?.checkQuestion).toBeTruthy();
   });
 
   it("flags a physical/stick-and-rudder skill so the session can frame it honestly", async () => {
-    const repo = fakeRepo({});
-    const physical = await buildVectorSessionProps(repo, viewer(), "STEEP_TURNS", HREFS);
-    expect(physical.isPhysicalSkill).toBe(true);
-
-    const knowledge = await buildVectorSessionProps(repo, viewer(), "EMERGENCY_PROCEDURES", HREFS);
-    expect(knowledge.isPhysicalSkill).toBe(false);
+    const repo = fakeRepo({ items: [trainingItem({ description: "Steep turns lost some altitude in the second one." })] });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.isPhysicalSkill).toBe(true);
   });
 
-  it("degrades honestly for the 'general' fallback -- no evidence, no chair-fly option, null guidance", async () => {
-    const repo = fakeRepo({});
-    const props = await buildVectorSessionProps(repo, viewer(), "general", HREFS);
-    expect(props.evidence).toBeNull();
-    expect(props.hasChairFlyOption).toBe(false);
-    expect(props.isPhysicalSkill).toBe(false);
-    expect(props.capability).toEqual({ kind: "check", guidance: null });
-    expect(props.skillLabel).toBe("this focus");
+  it("never flags a knowledge/judgment skill as physical", async () => {
+    const repo = fakeRepo({ items: [trainingItem({ description: "Forgot to trim for best glide during the emergency." })] });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props?.isPhysicalSkill).toBe(false);
+  });
+
+  it("returns null for a CFI-only item -- possession of the id is never sufficient authorization", async () => {
+    const repo = fakeRepo({ items: [trainingItem({ visibility: "instructor_only" })] });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    expect(props).toBeNull();
   });
 });

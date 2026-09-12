@@ -5,7 +5,7 @@ import { authorize } from "@/lib/auth/guard";
 import { getRepository } from "@/lib/data";
 import { POST } from "./route";
 import type { Viewer } from "@/lib/viewer";
-import type { TrainingSignal } from "@/lib/types";
+import type { TrainingItem } from "@/lib/types";
 
 vi.mock("@/lib/auth/guard", () => ({ authorize: vi.fn() }));
 vi.mock("@/lib/data", () => ({ getRepository: vi.fn() }));
@@ -30,39 +30,38 @@ function viewer(studentId = "student-1"): Viewer {
   } as unknown as Viewer;
 }
 
-function signal(overrides: Partial<TrainingSignal> = {}): TrainingSignal {
+function trainingItem(overrides: Partial<TrainingItem> = {}): TrainingItem {
   return {
-    id: "signal-1",
-    organizationId: "org-1",
-    studentId: "student-1",
-    instructorId: "cfi-1",
-    aircraftId: null,
+    id: "item-1",
     flightId: "flight-1",
     debriefId: "debrief-1",
-    flightDate: "2026-08-20",
-    category: "MANEUVERS",
-    skill: "STEEP_TURNS",
-    status: "NEEDS_COACHING",
-    source: "INSTRUCTOR",
-    statement: "Lost thirty feet in the turn.",
-    dismissed: false,
+    category: "keep_working_on",
+    description: "Steep turns lost some altitude in the second one.",
+    done: false,
+    completedAt: null,
+    visibility: "shared",
+    createdAt: "2026-08-20T20:00:00.000Z",
     ...overrides,
-  } as TrainingSignal;
+  };
 }
 
 function requestBody(body: object): Request {
-  return new Request("http://localhost/api/train/vector/STEEP_TURNS/evaluate", { method: "POST", body: JSON.stringify(body) });
+  return new Request("http://localhost/api/train/vector/item-1/evaluate", { method: "POST", body: JSON.stringify(body) });
 }
 
-function fakeRepo(signals: TrainingSignal[] = []) {
-  return { listTrainingSignals: vi.fn().mockResolvedValue(signals) };
+function fakeRepo(items: TrainingItem[] = []) {
+  return {
+    listTrainingItems: vi.fn().mockResolvedValue(items),
+    listTrainingSignals: vi.fn().mockResolvedValue([]),
+    listFlightTasks: vi.fn().mockResolvedValue([]),
+  };
 }
 
-function params(skill: string) {
-  return { params: Promise.resolve({ skill }) };
+function params(itemId: string) {
+  return { params: Promise.resolve({ itemId }) };
 }
 
-describe("POST /api/train/vector/[skill]/evaluate", () => {
+describe("POST /api/train/vector/[itemId]/evaluate", () => {
   const originalKey = process.env.ANTHROPIC_API_KEY;
 
   beforeEach(() => {
@@ -77,39 +76,49 @@ describe("POST /api/train/vector/[skill]/evaluate", () => {
     const authResponse = NextResponse.json({ error: "Not signed in" }, { status: 401 });
     vi.mocked(authorize).mockResolvedValue({ response: authResponse } as never);
 
-    const res = await POST(requestBody({ answer: "Because load factor increases." }), params("STEEP_TURNS"));
+    const res = await POST(requestBody({ answer: "Because load factor increases." }), params("item-1"));
     expect(res.status).toBe(401);
     expect(getRepository).not.toHaveBeenCalled();
   });
 
-  it("404s for a skill with no reviewed check question -- never invents one to fill the gap", async () => {
+  it("404s for an item id that doesn't belong to this student -- ownership is enforced at the query, not trusted from the URL", async () => {
     vi.mocked(authorize).mockResolvedValue({ viewer: viewer() } as never);
-    const res = await POST(requestBody({ answer: "Some answer." }), params("PREFLIGHT_INSPECTION"));
+    vi.mocked(getRepository).mockReturnValue(fakeRepo([]) as never);
+
+    const res = await POST(requestBody({ answer: "Some answer." }), params("someone-elses-item"));
+    expect(res.status).toBe(404);
+  });
+
+  it("404s for an item resolving to a skill with no reviewed check question -- never invents one to fill the gap", async () => {
+    vi.mocked(authorize).mockResolvedValue({ viewer: viewer() } as never);
+    vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem({ description: "Generally a good flight today." })]) as never);
+
+    const res = await POST(requestBody({ answer: "Some answer." }), params("item-1"));
     expect(res.status).toBe(404);
   });
 
   it("400s on an empty answer", async () => {
     vi.mocked(authorize).mockResolvedValue({ viewer: viewer() } as never);
-    vi.mocked(getRepository).mockReturnValue(fakeRepo() as never);
-    const res = await POST(requestBody({ answer: "   " }), params("STEEP_TURNS"));
+    vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem()]) as never);
+    const res = await POST(requestBody({ answer: "   " }), params("item-1"));
     expect(res.status).toBe(400);
   });
 
-  it("scopes evidence to the signed-in student's own id, never a hardcoded or fixture student", async () => {
-    const repo = fakeRepo([signal()]);
+  it("scopes the item lookup to the signed-in student's own id, never a hardcoded or fixture student", async () => {
+    const repo = fakeRepo([trainingItem()]);
     vi.mocked(authorize).mockResolvedValue({ viewer: viewer("student-42") } as never);
     vi.mocked(getRepository).mockReturnValue(repo as never);
 
-    await POST(requestBody({ answer: "Because load factor increases with bank." }), params("STEEP_TURNS"));
+    await POST(requestBody({ answer: "Because load factor increases with bank." }), params("item-1"));
 
-    expect(repo.listTrainingSignals).toHaveBeenCalledWith({ studentId: "student-42" });
+    expect(repo.listTrainingItems).toHaveBeenCalledWith({ studentId: "student-42" });
   });
 
   it("degrades gracefully to the reviewed explanation, never an invented one, when there is no API key", async () => {
     vi.mocked(authorize).mockResolvedValue({ viewer: viewer() } as never);
-    vi.mocked(getRepository).mockReturnValue(fakeRepo([signal()]) as never);
+    vi.mocked(getRepository).mockReturnValue(fakeRepo([trainingItem()]) as never);
 
-    const res = await POST(requestBody({ answer: "Because load factor increases with bank." }), params("STEEP_TURNS"));
+    const res = await POST(requestBody({ answer: "Because load factor increases with bank." }), params("item-1"));
     const body = (await res.json()) as { evaluation: { feedback: string; takeaway: string; matchedConcepts: string[] }; citation: unknown };
 
     expect(res.status).toBe(200);

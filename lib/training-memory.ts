@@ -161,7 +161,8 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
   };
 }
 
-const STATUS_RANK: Record<SkillProgression["status"], number> = {
+/** Lower ranks first, urgent to settled -- exported so lib/student/train-units.ts can prioritize among several current-debrief units with the exact same urgency ordering Next Flight/Progress already use. */
+export const STATUS_RANK: Record<SkillProgression["status"], number> = {
   "Needs Coaching": 0,
   Introduced: 1,
   Developing: 2,

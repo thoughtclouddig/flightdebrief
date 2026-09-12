@@ -35,7 +35,6 @@ export function VectorTrainingSession({
   isPhysicalSkill,
   evidence,
   capability,
-  hasChairFlyOption,
   hrefs,
   evaluateHref,
   trainHref = "/train",
@@ -73,11 +72,9 @@ export function VectorTrainingSession({
         <VectorMark subtitle="Your AI flight trainer" />
       </div>
 
-      {evidence ? (
-        <div className="px-1.5">
-          <Evidence label={evidence.label} tone="instructor" text={evidence.text} />
-        </div>
-      ) : null}
+      <div className="px-1.5">
+        <Evidence label={evidence.label} tone="instructor" text={evidence.text} />
+      </div>
 
       {capability.kind === "chair-fly" ? (
         <Panel>
@@ -169,7 +166,6 @@ export function VectorTrainingSession({
                 ) : null}
 
                 <div className="mt-6 flex flex-col gap-2.5">
-                  {hasChairFlyOption ? <PanelButton href={hrefs.chairFlyHref}>Rehearse with Vector</PanelButton> : null}
                   <SecondaryButton href={trainHref} onPanel>
                     Done
                   </SecondaryButton>

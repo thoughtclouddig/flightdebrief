@@ -1,15 +1,16 @@
-import type { AssessmentDifference, TrainingSignal, TrainingSkill } from "@/lib/types";
-import { curatedTrainingGuidance, type CuratedTrainingGuidance } from "@/lib/topics";
+import type { TrainingSkill } from "@/lib/types";
+import { curatedTrainingGuidance, skillLabel, type CuratedTrainingGuidance } from "@/lib/topics";
 import { hasAuthoredScenario } from "@/lib/prototype/chair-fly";
 
 /**
  * Vector Train's routing layer.
  *
  * Train itself never branches on capability -- "Train with Vector" always
- * means the same thing: enter a Vector training session. The branching
- * (existing Chair Fly engine, existing Radio Practice engine, or Vector's
- * own bounded knowledge-check interaction) happens one layer in, inside
- * /train/vector/[skill] itself (see resolveVectorCapability below), so the
+ * means the same thing: enter a Vector training session for one specific
+ * training unit (lib/student/train-units.ts). The branching (existing Chair
+ * Fly engine, existing Radio Practice engine, or Vector's own bounded
+ * knowledge-check interaction) happens one layer in, inside
+ * /train/vector/[itemId] itself (see resolveVectorCapability below), so the
  * student's mental model stays "Train with Vector -> Vector trains me," not
  * "choose among unrelated tools."
  */
@@ -19,16 +20,9 @@ export interface VectorSession {
   href: string;
 }
 
-/**
- * Train's one button, always a real link -- never a dead end, never a
- * local-state reveal. "general" is the honest fallback for the rare case
- * where a recommendation has a label but no matching TrainingSkill code at
- * all (see lib/training-memory.ts's resolvedSkill doc comment); the session
- * route itself degrades gracefully for that case rather than Train needing
- * to know about it.
- */
-export function buildVectorSession(resolvedSkill: TrainingSkill | null): VectorSession {
-  return { buttonLabel: "Train with Vector", href: `/train/vector/${resolvedSkill ?? "general"}` };
+/** Every Train card's one button, always a real link keyed by that unit's own TrainingItem id -- never a dead end, never a local-state reveal. */
+export function buildVectorSession(itemId: string): VectorSession {
+  return { buttonLabel: "Train with Vector", href: `/train/vector/${itemId}` };
 }
 
 export type VectorCapability =
@@ -37,41 +31,24 @@ export type VectorCapability =
   | { kind: "check"; guidance: CuratedTrainingGuidance | null };
 
 /**
- * What /train/vector/[skill] actually does once the student is there.
+ * What /train/vector/[itemId] actually does once the student is there.
  *
- * Chair Fly requires a real contested objective, not just a matching skill
- * code -- lib/student/chair-fly-production-adapter.ts's drill is built from
- * the contested comparison itself (student's rating vs instructor's), so
- * there is no honest drill to offer without one. This mirrors that adapter's
- * own gate exactly.
+ * Keyed purely on the unit's own resolved skill -- no contested/dual-
+ * assessment requirement. A freeform debrief never produces a contested
+ * comparison, and gating Chair Fly on one meant it could never fire for the
+ * far more common freeform case even when the evidence squarely supports a
+ * real authored scenario. lib/student/chair-fly-production-adapter.ts
+ * builds the actual drill from whichever framing is available (a real
+ * perception-gap comparison when one exists, this unit's own debrief
+ * evidence otherwise) -- that choice doesn't change whether Chair Fly is
+ * offered at all.
  */
-export function resolveVectorCapability(params: {
-  skill: TrainingSkill | "general";
-  contested: AssessmentDifference | null;
-}): VectorCapability {
-  if (params.contested && hasAuthoredScenario(params.contested.taskLabel)) {
+export function resolveVectorCapability(params: { skill: TrainingSkill | "general" }): VectorCapability {
+  if (params.skill !== "general" && hasAuthoredScenario(skillLabel(params.skill))) {
     return { kind: "chair-fly" };
   }
   if (params.skill === "RADIO_COMMUNICATIONS") {
     return { kind: "radio-practice" };
   }
   return { kind: "check", guidance: params.skill === "general" ? null : curatedTrainingGuidance(params.skill) };
-}
-
-/**
- * The most recent real instructor-sourced evidence for one skill, across
- * this student's own training signals -- never a fixture, never another
- * student's. "general" (no resolved skill) has nothing to key evidence off
- * of, so it's always null there.
- */
-export function evidenceForSkill(
-  signals: TrainingSignal[],
-  skill: TrainingSkill | "general",
-): { text: string; flightDate: string } | null {
-  if (skill === "general") return null;
-  const matches = signals
-    .filter((s) => s.skill === skill && !s.dismissed && s.source !== "STUDENT" && s.statement)
-    .sort((a, b) => b.flightDate.localeCompare(a.flightDate));
-  const latest = matches[0];
-  return latest ? { text: latest.statement, flightDate: latest.flightDate } : null;
 }

@@ -1,34 +1,31 @@
-import type { StudentTrainProps, StudentTrainRadioPractice, StudentTrainRecommended } from "@/components/student/student-train";
+import type {
+  StudentTrainCompactUnit,
+  StudentTrainProps,
+  StudentTrainRadioPractice,
+  StudentTrainRecommended,
+} from "@/components/student/student-train";
 import { acsAreaForSkill } from "@/lib/acs";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
-import { computeNextLessonBrief, computeRecommendedFocus } from "@/lib/training-memory";
 import { toneForSkillStatus } from "@/lib/skill-progress";
-import { buildVectorSession } from "@/lib/student/vector-coaching";
-import { resolveCfiFirstName } from "@/lib/instructor-attribution";
+import { buildTrainingPlan, type TrainingUnit } from "@/lib/student/train-units";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
-import { performanceLevelLabelFor } from "@/lib/performance-levels";
-import { deriveLessonFocus } from "@/lib/lesson-focus";
-import { formatFlightDate } from "@/lib/utils";
 
 /**
  * Real Train -- feeds components/student/student-train.tsx (the approved V2
- * presentation) from real training signals/themes. Extracted verbatim from
- * app/(product)/train/page.tsx's own prior inline logic (no behavior change),
- * shared with app/v2/train/page.tsx's own real-data branch.
- *
- * The recommendation ranking itself (contested objective -> recurring theme
- * -> weakest open skill) now lives in lib/training-memory.ts's
- * computeRecommendedFocus, shared verbatim with Next Flight -- this adapter
- * only adds the display formatting (tone, ACS area, comparison sentence)
- * computeRecommendedFocus deliberately leaves out.
+ * presentation) from this student's own current training plan
+ * (lib/student/train-units.ts): each quality-filtered Needs Work item from
+ * the latest completed debrief becomes its own Vector training unit. The
+ * first (Vector's own pick, using the same urgency ranking Next Flight/
+ * Progress already use) renders as the rich "Start here" card; up to two
+ * more render as compact "Also train" cards; anything beyond that stays
+ * reachable through progressive disclosure rather than being dropped.
  *
  * radioPracticeHref is optional: when the caller omits it (today, only
  * app/v2/train/page.tsx's real-data branch, which has no /v2/practice/[id]
  * counterpart yet), the returned radioPractice prop is null and Train
  * simply doesn't show the section -- an honest omission, not a broken
- * cross-namespace link. chairFlyHref/skillHref stay required since both
- * namespaces already have real routes for them.
+ * cross-namespace link.
  *
  * Review/Quiz/Ask stay disabled everywhere -- no production version exists
  * at all, not a per-mode decision.
@@ -40,58 +37,38 @@ export async function buildProductionTrainProps(
 ): Promise<StudentTrainProps> {
   const studentId = viewer.user.id;
 
-  const [brief, memberships] = await Promise.all([
-    computeNextLessonBrief(repo, studentId),
+  const [memberships, plan] = await Promise.all([
     repo.listMembershipsForUser(studentId),
+    buildTrainingPlan(repo, studentId),
   ]);
-  const certificateType =
-    memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
-  const cfi = resolveCfiFirstName(brief.lastInstructor);
+  const certificateType = memberships.find((m) => m.organizationId === viewer.organization.id)?.certificateType ?? null;
 
-  const [lastFlightTasks, focus] = await Promise.all([
-    brief.lastFlight ? repo.listFlightTasks(brief.lastFlight.id) : Promise.resolve([]),
-    computeRecommendedFocus(repo, brief),
-  ]);
-  const { skillProgression: recommendedSkill, label: recommendedLabel, contested, theme, resolvedSkill } = focus;
-  const lessonFocus = deriveLessonFocus(lastFlightTasks);
-  const latestLesson = theme?.lessons[theme.lessons.length - 1] ?? null;
-  const recommendedAcsArea = recommendedSkill ? acsAreaForSkill(recommendedSkill.skill, certificateType) : null;
+  function toCard(unit: TrainingUnit): StudentTrainRecommended {
+    const acsArea = acsAreaForSkill(unit.skill, certificateType);
+    const tone = unit.progressionStatus ? toneForSkillStatus(unit.progressionStatus) : "Improving";
+    return {
+      tone,
+      toneLabel: tone,
+      startHereEyebrow: "Start here",
+      skillLabel: unit.skillLabel,
+      acsArea: acsArea ? { name: acsArea.name } : null,
+      contextLine: "",
+      comparisonLine: null,
+      evidence: unit.evidence,
+    };
+  }
 
-  const recommended: StudentTrainRecommended | null = recommendedLabel
-    ? {
-        tone: recommendedSkill ? toneForSkillStatus(recommendedSkill.status) : "Improving",
-        toneLabel: recommendedSkill ? toneForSkillStatus(recommendedSkill.status) : contested ? "Improving" : "Still building",
-        skillLabel: recommendedLabel,
-        acsArea: recommendedAcsArea ? { name: recommendedAcsArea.name } : null,
-        contextLine: !brief.lastFlight
-          ? ""
-          : lessonFocus
-            ? `Starting where your last flight ended — ${lessonFocus}${cfi ? ` with ${cfi}` : ""}.`
-            : cfi
-              ? `Starting where your last flight ended, with ${cfi}.`
-              : "Starting where your last flight ended.",
-        comparisonLine: contested ? (
-          <>
-            You called this <span className="font-semibold text-panel-foreground">{performanceLevelLabelFor(contested.studentLevel, "student")}</span>.{" "}
-            {cfi ?? "Your instructor"} called it{" "}
-            <span className="font-semibold text-panel-foreground">{performanceLevelLabelFor(contested.instructorLevel, "instructor")}</span>.
-          </>
-        ) : theme && theme.instructorCount >= 2
-            ? `Come up in ${theme.count} of your last ${theme.consideredFlights} debriefs -- across ${theme.instructorCount} instructors.`
-            : null,
-        evidence:
-          contested && brief.lastInstructorNote
-            ? { label: `${cfi ?? "Your instructor"} · ${formatFlightDate(brief.lastFlight!.flightDate)}`, text: brief.lastInstructorNote.quote }
-            : latestLesson
-              ? { label: `${latestLesson.instructorName ?? "Your debrief"} · ${formatFlightDate(latestLesson.flightDate)}`, text: latestLesson.statement }
-              : { label: "Your debrief", text: "" },
-      }
-    : null;
+  function toCompact(unit: TrainingUnit): StudentTrainCompactUnit {
+    return { skillLabel: unit.skillLabel, evidence: unit.evidence, vectorSession: unit.vectorSession };
+  }
 
-  const vectorSession = buildVectorSession(resolvedSkill);
+  const recommended = plan.startHere ? toCard(plan.startHere) : null;
+  const vectorSession = plan.startHere?.vectorSession ?? null;
+  const alsoTrain = plan.alsoTrain.map(toCompact);
+  const moreTrain = plan.more.map(toCompact);
 
   const radioPractice = hrefs.radioPracticeHref
-    ? await buildRadioPracticeProps(repo, studentId, hrefs.radioPracticeHref, resolvedSkill === "RADIO_COMMUNICATIONS")
+    ? await buildRadioPracticeProps(repo, studentId, hrefs.radioPracticeHref, plan.startHere?.skill === "RADIO_COMMUNICATIONS")
     : null;
 
   return {
@@ -110,6 +87,9 @@ export async function buildProductionTrainProps(
     },
     vectorSession,
     radioPractice,
+    sectionTitle: "From your last debrief",
+    alsoTrain,
+    moreTrain,
   };
 }
 
@@ -141,8 +121,8 @@ async function buildRadioPracticeProps(
     startHref,
     cfiRecommendation,
     // Never a second recommendation system -- this is the same
-    // computeRecommendedFocus result Train's own top panel already shows,
-    // just a one-line pointer toward the one entry point that can act on it.
+    // training-plan result Train's own top panel already shows, just a
+    // one-line pointer toward the one entry point that can act on it.
     contextNote: vectorRecommended ? "Vector noticed radio communications came up in your last debrief." : null,
   };
 }

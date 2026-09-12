@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ChevronRight, Radio } from "lucide-react";
 import Link from "next/link";
 import {
@@ -47,12 +47,26 @@ export interface StudentTrainRecommended {
   tone: SkillState;
   /** Eyebrow text -- the prototype uses the literal skill state word; production's recommendation can come from a cross-flight theme, which isn't one graded skill, so it uses different honest wording. */
   toneLabel: string;
+  /** When set, replaces toneLabel as the eyebrow -- production's "Start here" label for the top current-debrief training unit. Vector picking one unit among several is real ranking; naming it "Top Priority" or similar reads as an algorithm's verdict. "Start here" reads as a trainer's suggestion. */
+  startHereEyebrow?: string;
   skillLabel: string;
   acsArea: { name: string; code?: string } | null;
   contextLine: string;
   /** "You called this X. {instructor} called it Y." -- only meaningful when a real contested-objective comparison exists. Prototype-only for now; production has no wiring for this comparison yet. */
   comparisonLine?: ReactNode | null;
   evidence: { label: string; text: string };
+}
+
+/**
+ * One of the current debrief's other training units -- deliberately thin:
+ * WHAT (skillLabel), WHY (one evidence line), WHAT DO I DO (one button).
+ * The training experience itself never lives in the card; it happens after
+ * opening the unit at vectorSession.href.
+ */
+export interface StudentTrainCompactUnit {
+  skillLabel: string;
+  evidence: { label: string; text: string };
+  vectorSession: VectorSession;
 }
 
 export interface StudentTrainAction {
@@ -104,6 +118,12 @@ export interface StudentTrainProps {
   afterHeader?: ReactNode;
   /** Prototype/fixture-only "Still working on" list. Omitted entirely in production -- Vector's one recommendation is the whole point; a full skill inventory undercuts it. */
   stillWorkingOn?: StudentTrainSkillRow[];
+  /** Defaults to "Today Vector recommends" (the fixtures' own heading, unchanged) -- production overrides it to "From your last debrief" once alsoTrain/moreTrain are in play. */
+  sectionTitle?: string;
+  /** Other current-debrief training units, immediately visible -- production only, up to 2. */
+  alsoTrain?: StudentTrainCompactUnit[];
+  /** Current-debrief units beyond the immediately-visible set -- never silently dropped, revealed via progressive disclosure. */
+  moreTrain?: StudentTrainCompactUnit[];
 }
 
 export function StudentTrain({
@@ -116,7 +136,11 @@ export function StudentTrain({
   radioPractice,
   afterHeader,
   stillWorkingOn,
+  sectionTitle = "Today Vector recommends",
+  alsoTrain,
+  moreTrain,
 }: StudentTrainProps) {
+  const [moreRevealed, setMoreRevealed] = useState(false);
   if (!recommended) {
     return (
       <Screen>
@@ -132,7 +156,7 @@ export function StudentTrain({
     <Screen>
       <PageTitle>Train</PageTitle>
 
-      <Section title="Today Vector recommends" flush>
+      <Section title={sectionTitle} flush>
         <Panel>
           {/* Vector is introduced INSIDE the recommendation it is making.
               Standing alone above the card it had nothing to align to and
@@ -145,10 +169,14 @@ export function StudentTrain({
             </InfoTip>
           </div>
 
-          <p className="mt-5 text-[15px] leading-relaxed text-panel-foreground-soft">{recommended.contextLine}</p>
+          {recommended.contextLine ? (
+            <p className="mt-5 text-[15px] leading-relaxed text-panel-foreground-soft">{recommended.contextLine}</p>
+          ) : null}
 
           <div className="mt-6">
-            <PanelEyebrow className={stateTone(recommended.tone, true).text}>{recommended.toneLabel}</PanelEyebrow>
+            <PanelEyebrow className={stateTone(recommended.tone, true).text}>
+              {recommended.startHereEyebrow ?? recommended.toneLabel}
+            </PanelEyebrow>
           </div>
           <PanelHeadline>{recommended.skillLabel}</PanelHeadline>
           {recommended.acsArea ? (
@@ -198,6 +226,34 @@ export function StudentTrain({
           ) : null}
         </Panel>
       </Section>
+
+      {alsoTrain && alsoTrain.length > 0 ? (
+        <Section title="Also train">
+          <div className="flex flex-col gap-3">
+            {alsoTrain.map((unit) => (
+              <CompactTrainCard key={unit.vectorSession.href} unit={unit} />
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      {moreTrain && moreTrain.length > 0 ? (
+        moreRevealed ? (
+          <div className="flex flex-col gap-3 px-1.5">
+            {moreTrain.map((unit) => (
+              <CompactTrainCard key={unit.vectorSession.href} unit={unit} />
+            ))}
+          </div>
+        ) : (
+          <button
+            onClick={() => setMoreRevealed(true)}
+            className="flex items-center gap-1 self-start px-1.5 text-[15px] font-medium text-brand"
+          >
+            {moreTrain.length} more from this debrief
+            <ChevronRight className="size-4" aria-hidden />
+          </button>
+        )
+      ) : null}
 
       {radioPractice && !(radioPractice.cfiRecommendation === null && radioPractice.contextNote !== null) ? (
         <Section title="Other training">
@@ -255,5 +311,20 @@ export function StudentTrain({
         </Section>
       ) : null}
     </Screen>
+  );
+}
+
+/** WHAT / WHY / WHAT DO I DO, nothing more -- the training experience itself lives at vectorSession.href, never inside the card. */
+function CompactTrainCard({ unit }: { unit: StudentTrainCompactUnit }) {
+  return (
+    <Card>
+      <p className="text-[17px] font-medium text-foreground">{unit.skillLabel}</p>
+      <div className="mt-2">
+        <Evidence label={unit.evidence.label} tone="instructor" text={unit.evidence.text} />
+      </div>
+      <div className="mt-4">
+        <PrimaryButton href={unit.vectorSession.href}>{unit.vectorSession.buttonLabel}</PrimaryButton>
+      </div>
+    </Card>
   );
 }

@@ -57,12 +57,21 @@ export function ChairFlySession({ drill, homeHref = "/prototype/vector" }: { dri
 
         <Panel>
           <PanelEyebrow icon={<Armchair className="size-3.5" aria-hidden />}>Why this drill</PanelEyebrow>
-          {/* The reason IS the perception gap. A student who thinks the thing
-              went fine will never choose to rehearse it, so the drill has to
-              arrive with the disagreement attached. */}
+          {/* The reason IS the perception gap, when there is one -- a student
+              who thinks the thing went fine will never choose to rehearse
+              it, so the drill has to arrive with the disagreement attached.
+              A freeform debrief has no per-task rating to compare, so
+              reason.line (this unit's own evidence, framed as a reason to
+              rehearse) carries the same job instead. */}
           <PanelHeadline>
-            You called it {drill.reason.studentLabel}. {drill.reason.instructorName} called it{" "}
-            {drill.reason.instructorLabel}.
+            {drill.reason.studentLabel && drill.reason.instructorLabel ? (
+              <>
+                You called it {drill.reason.studentLabel}. {drill.reason.instructorName} called it{" "}
+                {drill.reason.instructorLabel}.
+              </>
+            ) : (
+              drill.reason.line
+            )}
           </PanelHeadline>
           <PanelMeta>
             {drill.scenario} · about {drill.estimatedMinutes} minutes
