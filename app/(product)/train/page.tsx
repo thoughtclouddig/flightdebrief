@@ -20,6 +20,7 @@ export default async function TrainPage() {
   const props = await buildProductionTrainProps(repo, viewer, {
     chairFlyHref: "/train/chair-fly",
     skillHref: (skill) => `/progress/${skill}`,
+    radioPracticeHref: "/train/radio-practice",
   });
 
   return <StudentTrain {...props} />;

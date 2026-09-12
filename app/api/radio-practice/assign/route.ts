@@ -5,16 +5,20 @@ import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 
 interface AssignBody {
   scenarioId: string;
-  /** Required for a CFI/admin assigning to a roster student; ignored (self) for a solo student assigning their own practice. */
+  /** Required for a CFI/admin assigning to a roster student; ignored (self) for a student starting their own practice. */
   studentId?: string;
 }
 
 /**
  * Assigns a radio-practice scenario (see lib/radio-practice-scenarios.ts)
  * to a student. Two paths: a CFI/admin assigning to one of their own
- * roster students, or a solo student (individual org, no CFI on the
- * roster) self-assigning -- same "individual org gets a self-serve path"
- * precedent as app/api/student/invite-cfi.
+ * roster students, or a student starting their own practice (any org kind,
+ * CFI or no CFI) -- Radio Practice is a student capability; a CFI's
+ * assignment adds provenance/priority (assignedBy set), it never gates
+ * whether the student can reach it at all. The student-facing UI never
+ * calls this "assigning yourself" -- that framing is a backend detail of
+ * this route, not the student's mental model (see
+ * components/student/radio-practice-picker.tsx).
  */
 export async function POST(request: Request) {
   const auth = await authorize();
@@ -42,11 +46,11 @@ export async function POST(request: Request) {
     }
     studentId = body.studentId;
     assignedBy = viewer.user.id;
-  } else if (viewer.role === "student" && viewer.organization.kind === "individual") {
+  } else if (viewer.role === "student") {
     studentId = viewer.user.id;
     assignedBy = null;
   } else {
-    return NextResponse.json({ error: "Ask your CFI to assign practice." }, { status: 403 });
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const assignment = await repo.createRadioPracticeAssignment({

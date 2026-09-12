@@ -36,3 +36,51 @@ describe("Next Flight page — never implies an instructor when brief.lastInstru
     expect(SOURCE).toMatch(/\{cfi\s*\n?\s*\?\s*`\$\{cfi\} hasn't set anything/);
   });
 });
+
+/**
+ * DEV QA -- Next Flight preparation rewrite. "Focus for next flight" uses
+ * the same computeRecommendedFocus ranking Train uses (not raw, un-ranked
+ * brief.focusAreas); "Prepare before you fly" routes each real before-flight
+ * item at a real activity (Radio Practice, Chair Fly) or shows plain
+ * evidence text, never a checkbox standing in for proof of preparation;
+ * curated FAA studyReferences attach as quiet citations, never their own
+ * standalone reading-list section.
+ */
+describe("Next Flight page — preparation is evidence/activity-routed, not a checklist or reading list", () => {
+  it("uses the shared computeRecommendedFocus ranking for the top focus, not raw un-ranked focusAreas", () => {
+    expect(SOURCE).toMatch(/computeRecommendedFocus\(repo, brief\)/);
+    expect(SOURCE).toMatch(/title="Focus for next flight"/);
+    expect(SOURCE).not.toMatch(/title="Focus today"/);
+    expect(SOURCE).not.toMatch(/focusToday/);
+  });
+
+  it("never renders TrainingItemChecklist -- no checkbox stands in for proof of preparation", () => {
+    expect(SOURCE).not.toMatch(/TrainingItemChecklist/);
+  });
+
+  it("routes a radio-communications before-flight item at real Radio Practice via the shared skill taxonomy", () => {
+    expect(SOURCE).toMatch(/matchSkills\(item\)/);
+    expect(SOURCE).toMatch(/RADIO_COMMUNICATIONS/);
+    expect(SOURCE).toMatch(/\/train\/radio-practice/);
+  });
+
+  it("only offers Chair Fly from the top focus when a real authored scenario exists (hasAuthoredScenario), never unconditionally", () => {
+    expect(SOURCE).toMatch(/hasAuthoredScenario\(focus\.contested\.taskLabel\)/);
+  });
+
+  it("the 'Prepare before you fly' title replaces the removed 'Before today's flight' checklist section", () => {
+    expect(SOURCE).toMatch(/title="Prepare before you fly"/);
+    expect(SOURCE).not.toMatch(/Before today's flight/);
+    expect(SOURCE).not.toMatch(/Check off what you.{1,3}ve reviewed/);
+  });
+
+  it("never renders a standalone 'Recommended study' reading-list section", () => {
+    expect(SOURCE).not.toMatch(/title="Recommended study"/);
+  });
+
+  it("curated FAA study references remain available, attached as citations rather than their own section", () => {
+    expect(SOURCE).toMatch(/referenceFor\(item\)/);
+    expect(SOURCE).toMatch(/Based on \{ref\.topic\}/);
+    expect(SOURCE).toMatch(/StudyResourceLink url=\{ref\.url\} label="View source"/);
+  });
+});

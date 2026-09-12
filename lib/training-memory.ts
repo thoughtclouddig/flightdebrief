@@ -1,8 +1,11 @@
-import { skillLabel } from "@/lib/topics";
+import { allTrainingSkills, skillLabel } from "@/lib/topics";
 import { debriefStageLabel } from "@/lib/debrief-progress";
 import type { DebriefProgress } from "@/lib/debrief-progress";
+import { computeSkillProgression, type SkillProgression } from "@/lib/skill-progress";
+import { contestedObjective } from "@/lib/chair-fly";
 import type { Repository } from "@/lib/data/types";
 import type {
+  AssessmentDifference,
   Debrief,
   DebriefStatus,
   FlightWithRelations,
@@ -156,6 +159,60 @@ export async function computeNextLessonBrief(repo: Repository, studentId: string
     upcomingReservationInstructor,
     suggestedQuestion,
   };
+}
+
+const STATUS_RANK: Record<SkillProgression["status"], number> = {
+  "Needs Coaching": 0,
+  Introduced: 1,
+  Developing: 2,
+  Improving: 3,
+  Demonstrated: 4,
+};
+
+export interface RecommendedFocus {
+  /** The resolved skill-progression row behind the recommendation, when the recommendation maps to a tracked skill code. Null for a contested objective whose task label doesn't match any tracked skill. */
+  skillProgression: SkillProgression | null;
+  /** Display label -- contested task label, recurring theme name, or the skill's own label, in that priority order. Null when there's no evidence at all yet (e.g. before a first debrief). */
+  label: string | null;
+  /** Non-null only for a guided-mode debrief with a real per-task rating gap between student and instructor -- see contestedObjective's own doc comment. */
+  contested: AssessmentDifference | null;
+  /** Non-null only when the same skill has been flagged NEEDS_COACHING across >=2 distinct flights. */
+  theme: RecurringTheme | null;
+  /** Every not-yet-demonstrated skill, for callers (Train's "Still working on") that need the full list rather than just the top pick -- computed here regardless, so exposing it avoids a second listTrainingSignals round trip for the same data. */
+  openSkills: SkillProgression[];
+}
+
+/**
+ * The one thing worth focusing on right now, ranked contested objective ->
+ * recurring theme -> weakest open skill -- extracted from Train's own prior
+ * inline logic (lib/student/train-production-adapter.tsx) so any caller can
+ * ask the same question instead of inventing a second ranking. Next Flight
+ * used to show brief.focusAreas instead -- a single debrief's own
+ * un-recurrence-tested focus list, never ranked against anything else -- the
+ * same category of honesty problem Progress's focusAreas chips had.
+ *
+ * Returns only the resolved evidence, never JSX or copy -- each caller
+ * (Train, Next Flight) formats its own tone/ACS-area/comparison-sentence
+ * presentation from these same three fields, so the two screens can never
+ * disagree about what the recommendation IS, only how much of it to show.
+ */
+export async function computeRecommendedFocus(repo: Repository, brief: NextLessonBrief): Promise<RecommendedFocus> {
+  const signals = await repo.listTrainingSignals({ studentId: brief.studentId });
+  const progressions = computeSkillProgression(signals.filter((s) => !s.dismissed));
+  const open = progressions.filter((p) => p.status !== "Demonstrated");
+
+  const contested = contestedObjective(brief.lastDebrief?.structuredResult.assessmentDifferences ?? []);
+  const contestedSkillCode = contested
+    ? allTrainingSkills().find((t) => t.label.toLowerCase() === contested.taskLabel.toLowerCase())?.skill
+    : undefined;
+  const contestedProgression = contestedSkillCode ? (progressions.find((p) => p.skill === contestedSkillCode) ?? null) : null;
+
+  const theme = brief.recurringThemes[0] ?? null;
+  const weakest = [...open].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status])[0] ?? null;
+  const skillProgression = contestedProgression ?? (theme ? (progressions.find((p) => p.skill === theme.skill) ?? null) : weakest);
+  const label = contested?.taskLabel ?? theme?.theme ?? skillProgression?.label ?? null;
+
+  return { skillProgression, label, contested, theme, openSkills: open };
 }
 
 /**

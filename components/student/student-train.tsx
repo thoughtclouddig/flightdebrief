@@ -1,10 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Radio } from "lucide-react";
 import Link from "next/link";
 import {
   AcsBadge,
+  Card,
   Evidence,
   InfoTip,
   Panel,
@@ -12,6 +13,7 @@ import {
   PanelEyebrow,
   PanelHeadline,
   PageTitle,
+  PrimaryButton,
   Screen,
   Section,
   SecondaryButton,
@@ -35,9 +37,10 @@ import { stateTone, type SkillState } from "@/lib/student/state-tone";
  * nothing for a production caller to genuinely share for that part. This
  * component is only ever the "menu" state.
  *
- * Production still shows the Review/Quiz/Ask row (see StudentTrainAction's
- * `disabled`) as a visibly non-interactive marker rather than omitting it or
- * linking into the prototype -- a known gap stays visible as a known gap.
+ * Production omits secondaryActions (Review/Quiz/Ask) entirely rather than
+ * showing them as a disabled row -- DEV QA product decision: a control that
+ * will never become enabled reads as broken, not "coming soon." The known
+ * gap is tracked elsewhere, not surfaced as dead UI here.
  */
 export interface StudentTrainRecommended {
   tone: SkillState;
@@ -69,6 +72,15 @@ export interface StudentTrainSkillRow {
   href: string;
 }
 
+export interface StudentTrainRadioPractice {
+  /** Always available -- into the scenario picker, never gated on a CFI. */
+  startHref: string;
+  /** Set only when a CFI has an assignment still pending (not yet completed) -- stronger provenance/priority framing, same underlying engine as the generic entry point. */
+  cfiRecommendation: { instructorFirstName: string; scenarioTitle: string; href: string } | null;
+  /** One line of context when the same recommendation Train's top panel is already showing points at radio communications -- never a second recommendation system, just a pointer at the one real entry point that can act on it. */
+  contextNote: string | null;
+}
+
 export interface StudentTrainProps {
   recommended: StudentTrainRecommended | null;
   emptyMessage?: string;
@@ -77,12 +89,23 @@ export interface StudentTrainProps {
   primaryAction?: StudentTrainAction | null;
   /** Review/Quiz/Ask -- prototype-only, omitted in production. */
   secondaryActions?: StudentTrainAction[];
+  /** Student-initiated Radio Practice -- null hides the section entirely (today: only the /v2 real-data branch, which has no /v2/practice/[id] counterpart yet). */
+  radioPractice?: StudentTrainRadioPractice | null;
   /** Production's real content (Recommended Study, Vector guidance) occupies the position primaryAction/secondaryActions would have -- passed in rather than hidden elsewhere. */
   afterHeader?: ReactNode;
   stillWorkingOn: StudentTrainSkillRow[];
 }
 
-export function StudentTrain({ recommended, emptyMessage, vectorInfo, primaryAction, secondaryActions, afterHeader, stillWorkingOn }: StudentTrainProps) {
+export function StudentTrain({
+  recommended,
+  emptyMessage,
+  vectorInfo,
+  primaryAction,
+  secondaryActions,
+  radioPractice,
+  afterHeader,
+  stillWorkingOn,
+}: StudentTrainProps) {
   if (!recommended) {
     return (
       <Screen>
@@ -160,6 +183,36 @@ export function StudentTrain({ recommended, emptyMessage, vectorInfo, primaryAct
           ) : null}
         </Panel>
       </Section>
+
+      {radioPractice ? (
+        <Section title="Practice with Vector">
+          <div className="flex flex-col gap-3">
+            {radioPractice.cfiRecommendation ? (
+              <Panel>
+                <PanelEyebrow icon={<Radio className="size-3.5" aria-hidden />}>
+                  {radioPractice.cfiRecommendation.instructorFirstName} recommends
+                </PanelEyebrow>
+                <PanelHeadline>{radioPractice.cfiRecommendation.scenarioTitle}</PanelHeadline>
+                <div className="mt-5">
+                  <PanelButton href={radioPractice.cfiRecommendation.href}>Start practice</PanelButton>
+                </div>
+              </Panel>
+            ) : null}
+            <Card>
+              <p className="flex items-center gap-1.5 text-[17px] font-medium text-foreground">
+                <Radio className="size-4 text-foreground-faint" aria-hidden />
+                Radio Practice
+              </p>
+              <p className="mt-1.5 text-[15px] leading-relaxed text-foreground-soft">
+                {radioPractice.contextNote ?? "Practice realistic ATC scenarios and get feedback on your responses."}
+              </p>
+              <div className="mt-4">
+                <PrimaryButton href={radioPractice.startHref}>Start practice</PrimaryButton>
+              </div>
+            </Card>
+          </div>
+        </Section>
+      ) : null}
 
       {afterHeader}
 
