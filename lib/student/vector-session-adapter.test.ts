@@ -103,6 +103,23 @@ describe("buildVectorSessionProps", () => {
     expect(props?.capability).toEqual({ kind: "radio-practice" });
   });
 
+  it("never dead-ends the exact browser-acceptance sentence, whichever of its two plausible skills wins text-matching", async () => {
+    // This sentence genuinely contains two skill-matching words ("radio"
+    // and "emergency") with no FlightTask/TrainingSignal evidence to
+    // disambiguate them here -- pure keyword matching can legitimately
+    // land on either TOWER_READBACKS (now a real Radio Practice route,
+    // the fix this test guards) or EMERGENCY_PROCEDURES (real curated
+    // check content). The one thing that must never happen, whichever
+    // wins, is the empty "nothing prepared" dead end this whole fix
+    // exists to close.
+    const repo = fakeRepo({
+      items: [trainingItem({ description: "I need to work on talking on the radio more confidently during the emergency scenario." })],
+    });
+    const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);
+    const isDeadEnd = props?.capability.kind === "check" && props.capability.guidance === null;
+    expect(isDeadEnd).toBe(false);
+  });
+
   it("runs Vector's own grounded check for an item with no interactive engine, with real curated guidance attached", async () => {
     const repo = fakeRepo({ items: [trainingItem({ description: "Steep turns lost some altitude in the second one." })] });
     const props = await buildVectorSessionProps(repo, viewer(), "item-1", HREFS);

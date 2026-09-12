@@ -23,6 +23,27 @@ describe("resolveVectorCapability — what /train/vector/[itemId] actually does"
     expect(resolveVectorCapability({ skill: "RADIO_COMMUNICATIONS" })).toEqual({ kind: "radio-practice" });
   });
 
+  it("hands off to the real Radio Practice engine for tower communications -- a real scenario covers it, a bare 'RADIO_COMMUNICATIONS' literal check would have missed this", () => {
+    expect(resolveVectorCapability({ skill: "TOWER_READBACKS" })).toEqual({ kind: "radio-practice" });
+  });
+
+  it("never routes a physical/procedural skill to Radio Practice just because one scenario happens to touch it -- category must be COMMUNICATIONS too", () => {
+    // GO_AROUND has a real Radio Practice scenario tagged against it, but its
+    // own TOPIC_LIBRARY category is LANDINGS, not COMMUNICATIONS -- a "keep
+    // working on" item about a go-around is almost always about the flying,
+    // not the radio call inside it.
+    const result = resolveVectorCapability({ skill: "GO_AROUND" });
+    expect(result.kind).not.toBe("radio-practice");
+  });
+
+  it("never routes a COMMUNICATIONS-category skill to Radio Practice when the scenario bank has no real scenario for it", () => {
+    // ATC_LIGHT_SIGNALS is a real COMMUNICATIONS-category skill with no
+    // authored Radio Practice scenario -- promising an engine that doesn't
+    // exist would be its own false "Train with Vector" dead end.
+    const result = resolveVectorCapability({ skill: "ATC_LIGHT_SIGNALS" });
+    expect(result.kind).not.toBe("radio-practice");
+  });
+
   it("never offers Chair Fly for a skill with no authored scenario -- falls back to the grounded check instead", () => {
     const result = resolveVectorCapability({ skill: "STEEP_TURNS" });
     expect(result.kind).toBe("check");

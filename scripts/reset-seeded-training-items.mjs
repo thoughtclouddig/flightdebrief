@@ -1,14 +1,19 @@
-// One-off DEV cleanup: deletes every training_items row belonging to a
-// SEEDED flight (never a real, app-created one -- see below), so the next
-// reseed inserts a clean set under lib/data/seed.ts's new content-derived
-// id scheme (stableTrainingItemId) instead of piling up alongside whatever
-// is already there under the old, now-abandoned position-derived ids
-// (`${debriefId}-keep-${n}`). Changing the id scheme alone does not clean
-// up rows already inserted under the old scheme -- those ids don't match
-// anything the fixed seed code will ever generate, so ON CONFLICT DO
-// NOTHING can't reconcile them; the old rows (originals AND any accidental
-// duplicates from a reseed that ran between the quality-filter fix and the
-// id-scheme fix) just sit there forever unless explicitly removed.
+// One-off DEV cleanup: deletes every training_items AND training_signals row
+// belonging to a SEEDED flight (never a real, app-created one -- see below),
+// so the next reseed inserts a clean set under lib/data/seed.ts's current
+// content-derived id scheme (stableTrainingItemId) and re-classifies every
+// signal with the current matchSkills()/TOPIC_LIBRARY rules, instead of
+// piling up alongside whatever is already there.
+//
+// training_signals matters just as much as training_items: TrainingSignal
+// rows are classified once, at seed time, by whatever keyword rules existed
+// then. A later TOPIC_LIBRARY keyword fix (e.g. narrowing an overly broad
+// keyword) only changes what NEW classification runs produce -- it does not
+// retroactively correct rows already sitting in the table, and
+// lib/student/train-units.ts's resolveTrainingItemSkill() deliberately
+// trusts an existing signal for the exact same sentence over recomputing
+// from scratch. Skipping this table here means the earlier keyword fix
+// would silently keep serving the OLD, wrong classification forever.
 //
 // Safe by construction, not by convention: buildSeed()'s flight ids are
 // small, fixed, human-readable strings ("flight-2", "flight-marcus-1", ...).
@@ -16,7 +21,7 @@
 // a randomUUID() id (see app/api/flights/route.ts's repo.getOrCreateAircraft
 // / flight creation path) -- structurally incapable of colliding with a
 // seed flight id. This can never delete a real student's real training
-// item, seeded or not.
+// item or signal, seeded or not.
 //
 // Usage:
 //   npx tsx scripts/reset-seeded-training-items.mjs           # dry run
@@ -31,32 +36,36 @@ const db = getDb();
 const seed = buildSeed();
 const seedFlightIds = seed.flights.map((f) => f.id);
 
-const { rows } = await db.query(
-  "SELECT id, flight_id, category, description FROM training_items WHERE flight_id = ANY($1::text[])",
-  [seedFlightIds],
-);
+const [{ rows: items }, { rows: signals }] = await Promise.all([
+  db.query("SELECT id FROM training_items WHERE flight_id = ANY($1::text[])", [seedFlightIds]),
+  db.query("SELECT id FROM training_signals WHERE flight_id = ANY($1::text[])", [seedFlightIds]),
+]);
 
-if (rows.length === 0) {
-  console.log("[reset-seeded-training-items] No seeded training_items found -- nothing to clean up.");
+if (items.length === 0 && signals.length === 0) {
+  console.log("[reset-seeded-training-items] No seeded training_items or training_signals found -- nothing to clean up.");
   process.exit(0);
 }
 
-const flightCount = new Set(rows.map((r) => r.flight_id)).size;
-console.log(`[reset-seeded-training-items] ${rows.length} seeded training_item row(s) found across ${flightCount} flight(s).`);
+console.log(
+  `[reset-seeded-training-items] ${items.length} seeded training_item row(s) and ${signals.length} seeded training_signal row(s) found.`,
+);
 
 if (!apply) {
   console.log(
     "\nDry run only. Re-run with --apply to delete these rows, then run:\n" +
       "  FORCE_RESEED=1 npx tsx scripts/force-lazy-seed.mjs\n" +
-      "to reinsert a clean, deduplicated set with stable ids.",
+      "to reinsert a clean, deduplicated, correctly-classified set.",
   );
   process.exit(0);
 }
 
-await db.query("DELETE FROM training_items WHERE flight_id = ANY($1::text[])", [seedFlightIds]);
+await Promise.all([
+  db.query("DELETE FROM training_items WHERE flight_id = ANY($1::text[])", [seedFlightIds]),
+  db.query("DELETE FROM training_signals WHERE flight_id = ANY($1::text[])", [seedFlightIds]),
+]);
 console.log(
-  `[reset-seeded-training-items] Deleted ${rows.length} row(s). Now run:\n` +
+  `[reset-seeded-training-items] Deleted ${items.length} training_item row(s) and ${signals.length} training_signal row(s). Now run:\n` +
     "  FORCE_RESEED=1 npx tsx scripts/force-lazy-seed.mjs\n" +
-    "to reinsert a clean, deduplicated set with stable ids.",
+    "to reinsert a clean, deduplicated, correctly-classified set.",
 );
 process.exit(0);
