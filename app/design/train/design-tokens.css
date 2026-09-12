@@ -1,0 +1,92 @@
+/**
+ * Standalone theme tokens for the /design/train visual mockup only.
+ *
+ * Deliberately its OWN variable namespace (--dm-*), not the real app's
+ * --background/--surface/--brand tokens from app/globals.css -- this route
+ * exists to propose a target, including a possible accent adjustment
+ * (#ef6b1e vs. the shipped --brand's #f07621), and reusing the live tokens
+ * would make that impossible to judge independently. The navy scale below
+ * intentionally reuses the SAME hex values as the real dark theme
+ * (#101727/#171f33/#1b283d, see app/globals.css's own dark block) so dark
+ * mode still reads as "AfterFlight at night," not an invented palette.
+ *
+ * Scoped under .design-canvas rather than :root: this file is imported only
+ * by app/design/train/layout.tsx, but scoping defensively means it can never
+ * bleed into anything else even if that ever changes. data-theme is set by
+ * DesignThemeSwitch's own local state -- never document.documentElement,
+ * never the real "afterflight-theme" localStorage key.
+ */
+
+.design-canvas {
+  --dm-bg: #ffffff;
+  --dm-surface: #ffffff;
+  --dm-surface-elevated: #ffffff;
+  --dm-surface-muted: #eceef2;
+  --dm-evidence-bg: #f6f1e8;
+  --dm-evidence-rule: #ef6b1e99;
+  --dm-text: #10192b;
+  --dm-text-soft: #4c5670;
+  --dm-text-faint: #7c879c;
+  --dm-border: #dfe2e8;
+  --dm-accent: #ef6b1e;
+  --dm-accent-hover: #d65e15;
+  --dm-accent-soft: #fbe2ce;
+  --dm-on-accent: #ffffff;
+  --dm-shadow: 0 20px 45px -20px rgb(16 25 43 / 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  .design-canvas:not([data-theme="light"]) {
+    --dm-bg: #101727;
+    --dm-surface: #171f33;
+    --dm-surface-elevated: #1b283d;
+    --dm-surface-muted: #1b243a;
+    --dm-evidence-bg: #22314a;
+    --dm-evidence-rule: #ef6b1ea6;
+    --dm-text: #eef0f3;
+    --dm-text-soft: #b3bcc9;
+    --dm-text-faint: #9da7b8;
+    --dm-border: #2a3247;
+    --dm-accent: #ef6b1e;
+    --dm-accent-hover: #ff8f3d;
+    --dm-accent-soft: #3a2312;
+    --dm-on-accent: #ffffff;
+    --dm-shadow: 0 20px 45px -20px rgb(0 0 0 / 0.55);
+  }
+}
+
+.design-canvas[data-theme="dark"] {
+  --dm-bg: #101727;
+  --dm-surface: #171f33;
+  --dm-surface-elevated: #1b283d;
+  --dm-surface-muted: #1b243a;
+  --dm-evidence-bg: #22314a;
+  --dm-evidence-rule: #ef6b1ea6;
+  --dm-text: #eef0f3;
+  --dm-text-soft: #b3bcc9;
+  --dm-text-faint: #9da7b8;
+  --dm-border: #2a3247;
+  --dm-accent: #ef6b1e;
+  --dm-accent-hover: #ff8f3d;
+  --dm-accent-soft: #3a2312;
+  --dm-on-accent: #ffffff;
+  --dm-shadow: 0 20px 45px -20px rgb(0 0 0 / 0.55);
+}
+
+.design-canvas[data-theme="light"] {
+  --dm-bg: #ffffff;
+  --dm-surface: #ffffff;
+  --dm-surface-elevated: #ffffff;
+  --dm-surface-muted: #eceef2;
+  --dm-evidence-bg: #f6f1e8;
+  --dm-evidence-rule: #ef6b1e99;
+  --dm-text: #10192b;
+  --dm-text-soft: #4c5670;
+  --dm-text-faint: #7c879c;
+  --dm-border: #dfe2e8;
+  --dm-accent: #ef6b1e;
+  --dm-accent-hover: #d65e15;
+  --dm-accent-soft: #fbe2ce;
+  --dm-on-accent: #ffffff;
+  --dm-shadow: 0 20px 45px -20px rgb(16 25 43 / 0.18);
+}
