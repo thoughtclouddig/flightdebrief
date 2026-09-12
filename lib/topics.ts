@@ -47,6 +47,31 @@ const TOPIC_LIBRARY: {
   url: string | null;
   category: TrainingCategory;
   skill: TrainingSkill;
+  /**
+   * Vector Train coaching content -- deliberately optional, deliberately
+   * separate from `source`/`url`. Those two are citation metadata (which
+   * resource grounds this topic); these are the actual instructional
+   * substance Vector assembles a coaching card from. A citation alone is
+   * not enough grounding for generated coaching text -- see
+   * lib/student/vector-coaching.ts's own doc comment for why. Populated for
+   * only the handful of topics that actually surface as recommendations in
+   * practice; an entry without these stays a real, valid TOPIC_LIBRARY row
+   * (citations/skill-matching still work), Vector's coaching just falls
+   * back to evidence + citation for it instead of full preparation content.
+   *
+   * Every string here must read as GENERAL aviation guidance, never as an
+   * observation about a specific student ("a common mistake is..." not
+   * "you...") -- Vector's coaching pairs this with real per-student
+   * evidence elsewhere on the card, and the two must never be
+   * indistinguishable from each other.
+   *
+   * Human-reviewed against the cited FAA source before being treated as
+   * approved production content -- never generated, never assumed correct
+   * merely because it reads plausibly.
+   */
+  preparationPoints?: string[];
+  /** Same rule as preparationPoints: general, not a specific student's error. */
+  commonErrors?: string[];
 }[] = [
   // --- ACS Area I & II: Preflight Preparation / Preflight Procedures -------
   {
@@ -172,6 +197,15 @@ const TOPIC_LIBRARY: {
     url: AFH_CH9_URL,
     category: "LANDINGS",
     skill: "STABILIZED_APPROACH",
+    preparationPoints: [
+      "Get configured and on-speed early on final, rather than fixing airspeed right at the runway.",
+      "Pick an aim point on the runway and hold it in the same spot in the windscreen all the way down.",
+      "Keep making small corrections through the flare -- the airplane is still flying until the wheels are down.",
+    ],
+    commonErrors: [
+      "Carrying extra airspeed into the flare, which causes floating and a longer landing.",
+      "Fixating on the runway instead of using peripheral vision to judge flare height.",
+    ],
   },
   {
     topic: "Short-field landings",
@@ -180,6 +214,15 @@ const TOPIC_LIBRARY: {
     url: AFH_CH9_URL,
     category: "LANDINGS",
     skill: "SHORT_FIELD_LANDING",
+    preparationPoints: [
+      "Plan a steeper, slower approach than normal so touchdown happens near minimum controllable airspeed.",
+      "Identify the exact aim point before starting the approach, and fly it precisely.",
+      "Be ready to apply maximum braking immediately after touchdown, once the nosewheel is firmly down.",
+    ],
+    commonErrors: [
+      "Carrying extra airspeed \"for safety,\" which uses up the runway the technique is meant to save.",
+      "Braking hard before the nosewheel is down, which can reduce braking effectiveness.",
+    ],
   },
   {
     topic: "Soft-field landings",
@@ -196,6 +239,15 @@ const TOPIC_LIBRARY: {
     url: AFH_CH9_URL,
     category: "LANDINGS",
     skill: "CROSSWIND_LANDING",
+    preparationPoints: [
+      "Establish the crosswind correction (wing low, opposite rudder) well before the flare, not during it.",
+      "Keep increasing the aileron correction as airspeed decreases through the flare.",
+      "Track the centerline with rudder, and control drift with aileron -- they're doing two different jobs.",
+    ],
+    commonErrors: [
+      "Relaxing the crosswind correction too early once the mains touch down.",
+      "Letting the nose drift off centerline while focused only on the wing-low correction.",
+    ],
   },
   {
     topic: "Forward slip to landing",
@@ -222,6 +274,15 @@ const TOPIC_LIBRARY: {
     url: AFH_CH10_URL,
     category: "MANEUVERS",
     skill: "STEEP_TURNS",
+    preparationPoints: [
+      "Pick a visual reference point on the horizon to hold altitude and bank angle against.",
+      "Add back-pressure (and a touch of power) as bank increases, to hold altitude through the added load factor.",
+      "Roll out with enough lead -- roughly half the bank angle -- to stop precisely on the entry heading.",
+    ],
+    commonErrors: [
+      "Losing altitude as bank steepens, from not adding enough back-pressure.",
+      "Rolling out late and overshooting the entry heading.",
+    ],
   },
   {
     topic: "Rectangular course",
@@ -311,6 +372,15 @@ const TOPIC_LIBRARY: {
     url: AFH_CH5_URL,
     category: "SLOW_FLIGHT_STALLS",
     skill: "SLOW_FLIGHT",
+    preparationPoints: [
+      "Slow down gradually while trimming for the target airspeed, rather than fighting the controls.",
+      "Use pitch primarily for airspeed and power primarily for altitude at this end of the speed range.",
+      "Anticipate the larger control inputs coordination takes at low airspeed.",
+    ],
+    commonErrors: [
+      "Being slow to add power when airspeed starts to decay below the target.",
+      "Correcting a dropping wing with aileron instead of rudder, risking a cross-control condition.",
+    ],
   },
   {
     topic: "Power-off stalls",
@@ -435,6 +505,15 @@ const TOPIC_LIBRARY: {
     url: AFH_CH18_URL,
     category: "EMERGENCY",
     skill: "EMERGENCY_PROCEDURES",
+    preparationPoints: [
+      "Know the immediate memory items for an engine failure cold, before ever needing the checklist.",
+      "Practice the flow: fly the airplane first, then pick a landing spot, then run the checklist.",
+      "Think through the likely off-airport landing options in your own local area before needing one.",
+    ],
+    commonErrors: [
+      "Fixating on restarting the engine at the expense of flying the airplane and picking a spot.",
+      "Reaching for the checklist before establishing best-glide airspeed.",
+    ],
   },
 
   // --- ACS Area X & XI: Night Operations / Postflight ----------------------
@@ -552,6 +631,44 @@ export function allTrainingSkills(): { skill: TrainingSkill; label: string; cate
 /** Human-readable label for a normalized skill code, e.g. "STABILIZED_APPROACH" -> "Landings". Falls back to the code itself for a code outside the fixed catalog (e.g. a CFI-authored custom FlightTask). */
 export function skillLabel(skill: TrainingSkill | (string & {})): string {
   return TOPIC_LIBRARY.find((t) => t.skill === skill)?.topic ?? skill;
+}
+
+export interface CuratedTrainingGuidance {
+  topic: string;
+  preparationPoints: string[];
+  commonErrors: string[];
+  /** Null when no verified FAA link exists for this topic -- same honesty rule TOPIC_LIBRARY's own source/url already follow. */
+  citation: { source: string; url: string } | null;
+}
+
+/**
+ * Vector Train's coaching-content lookup -- returns null for any skill
+ * without curated preparationPoints/commonErrors, rather than falling back
+ * to just the citation. A caller (lib/student/vector-coaching.ts) that gets
+ * null here degrades to evidence + citation only, honestly, instead of
+ * treating a bare source string as if it were coaching substance.
+ */
+export function curatedTrainingGuidance(skill: TrainingSkill | (string & {})): CuratedTrainingGuidance | null {
+  const entry = TOPIC_LIBRARY.find((t) => t.skill === skill);
+  if (!entry || (!entry.preparationPoints?.length && !entry.commonErrors?.length)) return null;
+  return {
+    topic: entry.topic,
+    preparationPoints: entry.preparationPoints ?? [],
+    commonErrors: entry.commonErrors ?? [],
+    citation: entry.source && entry.url ? { source: entry.source, url: entry.url } : null,
+  };
+}
+
+/**
+ * The bare FAA citation for a skill, with no preparationPoints/commonErrors
+ * requirement -- the honest fallback for curatedTrainingGuidance() returning
+ * null. A skill can have a verified citation long before anyone has authored
+ * coaching prose for it; this lets Vector still ground its recommendation in
+ * a real source instead of offering nothing.
+ */
+export function citationForSkill(skill: TrainingSkill | (string & {})): { source: string; url: string } | null {
+  const entry = TOPIC_LIBRARY.find((t) => t.skill === skill);
+  return entry?.source && entry.url ? { source: entry.source, url: entry.url } : null;
 }
 
 /** The TrainingCategory a given skill rolls up to -- backs FlightScore's per-category grouping (see lib/flight-score.ts). Falls back to PROCEDURES for a code outside the fixed catalog. */

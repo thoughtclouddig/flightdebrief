@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ChevronRight, Radio } from "lucide-react";
 import Link from "next/link";
 import {
@@ -22,6 +22,7 @@ import {
   VectorMark,
 } from "@/components/student/ui";
 import { stateTone, type SkillState } from "@/lib/student/state-tone";
+import type { VectorCoaching, VectorSession } from "@/lib/student/vector-coaching";
 
 /**
  * Train's "what should I practice right now" content, shared between
@@ -85,7 +86,15 @@ export interface StudentTrainProps {
   recommended: StudentTrainRecommended | null;
   emptyMessage?: string;
   vectorInfo: { tipLabel: string; tipContent: ReactNode };
-  /** Chair Flying (prototype, when a real drill matched) or the 5-minute-review fallback -- omitted entirely in production, where neither has real backing. */
+  /**
+   * Production's one true action: a real engine (Chair Fly, Radio Practice)
+   * or a coach-only inline reveal, decided by lib/student/vector-coaching.ts
+   * -- never both this and primaryAction/secondaryActions. When present,
+   * this entirely replaces the primaryAction/secondaryActions rendering
+   * below with a single "Train with Vector" control.
+   */
+  vectorSession?: VectorSession | null;
+  /** Prototype-only menu actions (Chair Flying / 5-minute review, Review/Quiz/Ask) -- rendered only when vectorSession is absent. Production always passes vectorSession instead. */
   primaryAction?: StudentTrainAction | null;
   /** Review/Quiz/Ask -- prototype-only, omitted in production. */
   secondaryActions?: StudentTrainAction[];
@@ -93,19 +102,22 @@ export interface StudentTrainProps {
   radioPractice?: StudentTrainRadioPractice | null;
   /** Production's real content (Recommended Study, Vector guidance) occupies the position primaryAction/secondaryActions would have -- passed in rather than hidden elsewhere. */
   afterHeader?: ReactNode;
-  stillWorkingOn: StudentTrainSkillRow[];
+  /** Prototype/fixture-only "Still working on" list. Omitted entirely in production -- Vector's one recommendation is the whole point; a full skill inventory undercuts it. */
+  stillWorkingOn?: StudentTrainSkillRow[];
 }
 
 export function StudentTrain({
   recommended,
   emptyMessage,
   vectorInfo,
+  vectorSession,
   primaryAction,
   secondaryActions,
   radioPractice,
   afterHeader,
   stillWorkingOn,
 }: StudentTrainProps) {
+  const [coachingRevealed, setCoachingRevealed] = useState(false);
   if (!recommended) {
     return (
       <Screen>
@@ -160,7 +172,21 @@ export function StudentTrain({
             <Evidence label={recommended.evidence.label} tone="instructor" text={recommended.evidence.text} onPanel />
           </div>
 
-          {primaryAction || (secondaryActions && secondaryActions.length > 0) ? (
+          {vectorSession ? (
+            <div className="mt-6 flex flex-col gap-2.5">
+              {vectorSession.action ? (
+                <>
+                  <PanelButton href={vectorSession.action.href}>{vectorSession.buttonLabel}</PanelButton>
+                  {vectorSession.action.kind === "chair-fly" ? (
+                    <p className="px-1 text-[14px] text-panel-foreground-soft">{vectorSession.action.caption}</p>
+                  ) : null}
+                </>
+              ) : (
+                <PanelButton onClick={() => setCoachingRevealed((r) => !r)}>{vectorSession.buttonLabel}</PanelButton>
+              )}
+              {!vectorSession.action && coachingRevealed ? <VectorCoachingReveal coaching={vectorSession.coaching} /> : null}
+            </div>
+          ) : primaryAction || (secondaryActions && secondaryActions.length > 0) ? (
             <div className="mt-6 flex flex-col gap-2.5">
               {primaryAction ? (
                 <>
@@ -184,8 +210,8 @@ export function StudentTrain({
         </Panel>
       </Section>
 
-      {radioPractice ? (
-        <Section title="Practice with Vector">
+      {radioPractice && !(radioPractice.cfiRecommendation === null && vectorSession?.action?.kind === "radio-practice") ? (
+        <Section title="Other training">
           <div className="flex flex-col gap-3">
             {radioPractice.cfiRecommendation ? (
               <Panel>
@@ -198,25 +224,30 @@ export function StudentTrain({
                 </div>
               </Panel>
             ) : null}
-            <Card>
-              <p className="flex items-center gap-1.5 text-[17px] font-medium text-foreground">
-                <Radio className="size-4 text-foreground-faint" aria-hidden />
-                Radio Practice
-              </p>
-              <p className="mt-1.5 text-[15px] leading-relaxed text-foreground-soft">
-                {radioPractice.contextNote ?? "Practice realistic ATC scenarios and get feedback on your responses."}
-              </p>
-              <div className="mt-4">
-                <PrimaryButton href={radioPractice.startHref}>Start practice</PrimaryButton>
-              </div>
-            </Card>
+            {/* Vector's own top panel already routes to this exact same
+                startHref -- a second, generic "Start practice" card here
+                would be a redundant standalone entry, not a second option. */}
+            {vectorSession?.action?.kind === "radio-practice" ? null : (
+              <Card>
+                <p className="flex items-center gap-1.5 text-[17px] font-medium text-foreground">
+                  <Radio className="size-4 text-foreground-faint" aria-hidden />
+                  Radio Practice
+                </p>
+                <p className="mt-1.5 text-[15px] leading-relaxed text-foreground-soft">
+                  {radioPractice.contextNote ?? "Practice realistic ATC scenarios and get feedback on your responses."}
+                </p>
+                <div className="mt-4">
+                  <PrimaryButton href={radioPractice.startHref}>Start practice</PrimaryButton>
+                </div>
+              </Card>
+            )}
           </div>
         </Section>
       ) : null}
 
       {afterHeader}
 
-      {stillWorkingOn.length > 0 ? (
+      {stillWorkingOn && stillWorkingOn.length > 0 ? (
         <Section title="Still working on">
           <div className="flex flex-col">
             {stillWorkingOn.map((s) => (
@@ -233,5 +264,68 @@ export function StudentTrain({
         </Section>
       ) : null}
     </Screen>
+  );
+}
+
+/**
+ * The "Train with Vector" coach-only reveal -- what shows up when there's
+ * no real interactive engine to route into. This is NOT a fake interactive
+ * session: every string here comes straight from lib/student/vector-coaching.ts,
+ * which only ever assembles curated TOPIC_LIBRARY fields (preparationPoints,
+ * commonErrors, citation) or a fixed classification note. Nothing is
+ * generated here, and nothing here is framed as an observation of this
+ * specific student -- that framing is Evidence's job, above this reveal.
+ */
+function VectorCoachingReveal({ coaching }: { coaching: VectorCoaching | null }) {
+  if (!coaching) {
+    return (
+      <p className="px-1 text-[14px] leading-relaxed text-panel-foreground-soft">
+        Nothing prepared for this yet -- bring it up with your instructor before your next flight.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl bg-panel-hairline/30 p-4">
+      {coaching.preparationPoints.length > 0 ? (
+        <div>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-panel-foreground-soft">Get ready</p>
+          <ul className="mt-2 flex flex-col gap-2">
+            {coaching.preparationPoints.map((point) => (
+              <li key={point} className="flex items-start gap-2.5 text-[15px] leading-snug text-panel-foreground">
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-brand" aria-hidden />
+                {point}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {coaching.commonErrors.length > 0 ? (
+        <div>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-panel-foreground-soft">Watch for</p>
+          <ul className="mt-2 flex flex-col gap-2">
+            {coaching.commonErrors.map((error) => (
+              <li key={error} className="text-[15px] leading-snug text-panel-foreground-soft">
+                {error}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {coaching.physicalSkillNote ? (
+        <p className="text-[13px] leading-relaxed text-panel-foreground-soft">{coaching.physicalSkillNote}</p>
+      ) : null}
+
+      {coaching.citation ? (
+        <p className="text-[13px] leading-relaxed text-panel-foreground-soft">
+          Based on {coaching.citation.source}.{" "}
+          <a href={coaching.citation.url} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+            View source
+          </a>
+        </p>
+      ) : null}
+    </div>
   );
 }

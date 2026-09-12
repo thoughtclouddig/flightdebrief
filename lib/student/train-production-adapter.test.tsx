@@ -158,7 +158,10 @@ describe("buildProductionTrainProps", () => {
       chairFlyHref: "/train/chair-fly",
       skillHref: (s) => `/progress/${s}`,
     });
-    expect(withoutScenario.primaryAction).toBeUndefined();
+    expect(withoutScenario.vectorSession?.action).toBeNull();
+    // Not a dead end -- an unsupported interactive skill still gets a real
+    // Vector session (grounded coaching), just not the Chair Fly engine.
+    expect(withoutScenario.vectorSession?.coaching).not.toBeNull();
 
     const repoWithAuthoredScenario = fakeRepo({
       lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Crosswind Landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
@@ -168,7 +171,11 @@ describe("buildProductionTrainProps", () => {
       chairFlyHref: "/train/chair-fly",
       skillHref: (s) => `/progress/${s}`,
     });
-    expect(withScenario.primaryAction?.href).toBe("/train/chair-fly");
+    expect(withScenario.vectorSession?.action).toEqual({
+      kind: "chair-fly",
+      href: "/train/chair-fly",
+      caption: "About 4 minutes",
+    });
   });
 
   it("returns radioPractice: null when the caller omits radioPracticeHref (today: /v2's real-data branch, no /v2/practice/[id] yet)", async () => {
@@ -238,10 +245,24 @@ describe("buildProductionTrainProps", () => {
     });
     expect(props.secondaryActions).toBeUndefined();
   });
+
+  it("never returns a Still Working On list -- Vector's one recommendation is the whole point of production Train", async () => {
+    const repo = fakeRepo({
+      signals: [
+        trainingSignal({ id: "a", skill: "CROSSWIND_LANDING" }),
+        trainingSignal({ id: "b", skill: "STEEP_TURNS", flightId: "flight-2" }),
+      ],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), {
+      chairFlyHref: "/train/chair-fly",
+      skillHref: (s) => `/progress/${s}`,
+    });
+    expect(props.stillWorkingOn).toBeUndefined();
+  });
 });
 
 describe("StudentTrain rendering with real production props", () => {
-  it("never shows a dead Chair Fly button when no authored scenario exists, and the recommendation still renders", async () => {
+  it("never shows a dead Chair Fly button when no authored scenario exists, and the recommendation still renders as a real, actionable Vector session", async () => {
     const { StudentTrain } = await import("@/components/student/student-train");
     const repo = fakeRepo({
       lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Steep turns", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
@@ -254,6 +275,100 @@ describe("StudentTrain rendering with real production props", () => {
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
     expect(markup).not.toContain("Start chair flying");
     expect(markup).toContain("Steep turns");
+    // Not a dead end -- Vector still offers one real, clickable control even
+    // with no interactive engine behind it (a button, since there's no href
+    // to route to -- the reveal happens client-side).
+    expect(markup).toContain("Train with Vector");
+  });
+
+  it("never renders a Still Working On section, no matter how many open skills exist", async () => {
+    const { StudentTrain } = await import("@/components/student/student-train");
+    const repo = fakeRepo({
+      signals: [
+        trainingSignal({ id: "a", skill: "CROSSWIND_LANDING" }),
+        trainingSignal({ id: "b", skill: "STEEP_TURNS", flightId: "flight-2" }),
+        trainingSignal({ id: "c", skill: "SLOW_FLIGHT", flightId: "flight-3" }),
+      ],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), {
+      chairFlyHref: "/train/chair-fly",
+      skillHref: (s) => `/progress/${s}`,
+    });
+    const markup = renderToStaticMarkup(<StudentTrain {...props} />);
+    expect(markup).not.toContain("Still working on");
+  });
+
+  it("shows exactly one primary Vector control -- no second, equal-weight action competes with it", async () => {
+    const { StudentTrain } = await import("@/components/student/student-train");
+    const repo = fakeRepo({
+      lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Crosswind Landings", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
+      signals: [trainingSignal()],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), {
+      chairFlyHref: "/train/chair-fly",
+      skillHref: (s) => `/progress/${s}`,
+      radioPracticeHref: "/train/radio-practice",
+    });
+    const markup = renderToStaticMarkup(<StudentTrain {...props} />);
+    const buttonCount = (markup.match(/Train with Vector/g) ?? []).length;
+    expect(buttonCount).toBe(1);
+    // Radio Practice still appears, but only as the secondary "Other
+    // training" entry -- never a second copy of the primary control.
+    expect(markup).toContain("Other training");
+  });
+
+  it("never duplicates the generic Radio Practice card when Vector's own primary action already routes to Radio Practice", async () => {
+    const { StudentTrain } = await import("@/components/student/student-train");
+    const repo = fakeRepo({
+      signals: [trainingSignal({ skill: "RADIO_COMMUNICATIONS" })],
+      radioAssignments: [],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), {
+      chairFlyHref: "/train/chair-fly",
+      skillHref: (s) => `/progress/${s}`,
+      radioPracticeHref: "/train/radio-practice",
+    });
+    expect(props.vectorSession?.action).toEqual({ kind: "radio-practice", href: "/train/radio-practice" });
+    const markup = renderToStaticMarkup(<StudentTrain {...props} />);
+    // The primary button itself links to radio practice; the generic
+    // "Other training" card offering the exact same href must not also
+    // appear.
+    const hrefCount = (markup.match(/href="\/train\/radio-practice"/g) ?? []).length;
+    expect(hrefCount).toBe(1);
+  });
+
+  it("keeps the FAA source/url provenance intact through the Vector router, unchanged from lib/topics.ts's own citation", async () => {
+    const { citationForSkill } = await import("@/lib/topics");
+    const repo = fakeRepo({
+      lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Steep turns", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
+      signals: [trainingSignal({ skill: "STEEP_TURNS" })],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), {
+      chairFlyHref: "/train/chair-fly",
+      skillHref: (s) => `/progress/${s}`,
+    });
+    expect(props.vectorSession?.coaching?.citation).toEqual(citationForSkill("STEEP_TURNS"));
+  });
+
+  it("never presents general curated guidance as if it were this student's own evidence", async () => {
+    const repo = fakeRepo({
+      lastDebrief: debrief({ assessmentDifferences: [{ taskLabel: "Steep turns", studentLevel: "INDEPENDENT", instructorLevel: "NEEDS_COACHING", note: "" }] }),
+      signals: [trainingSignal({ skill: "STEEP_TURNS", statement: "Entered the turn 200 feet high." })],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), {
+      chairFlyHref: "/train/chair-fly",
+      skillHref: (s) => `/progress/${s}`,
+    });
+    // The student-specific evidence and Vector's general coaching text must
+    // never be the same string -- they come from entirely separate fields
+    // (recommended.evidence vs vectorSession.coaching) and must stay
+    // distinguishable to a reader.
+    const coachingStrings = [
+      ...(props.vectorSession?.coaching?.preparationPoints ?? []),
+      ...(props.vectorSession?.coaching?.commonErrors ?? []),
+    ];
+    expect(coachingStrings.length).toBeGreaterThan(0);
+    expect(coachingStrings).not.toContain(props.recommended?.evidence.text);
   });
 
   it("renders the CFI-recommended scenario with real provenance and 'Start practice' copy -- never 'assign'", async () => {

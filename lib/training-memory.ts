@@ -180,6 +180,18 @@ export interface RecommendedFocus {
   theme: RecurringTheme | null;
   /** Every not-yet-demonstrated skill, for callers (Train's "Still working on") that need the full list rather than just the top pick -- computed here regardless, so exposing it avoids a second listTrainingSignals round trip for the same data. */
   openSkills: SkillProgression[];
+  /**
+   * The single skill code the recommendation resolves to, when one exists --
+   * contested's own matched skill first (even when it has no progression
+   * history yet), else the theme's skill, else the resolved progression's
+   * skill. Null only when there's a label but genuinely no matching skill
+   * code (a contested task whose label doesn't appear in allTrainingSkills()
+   * at all). The one field a caller (lib/student/vector-coaching.ts) needs
+   * to look up curated coaching content or a physical-skill classification
+   * without re-deriving the same contested/theme/progression priority this
+   * function already computed.
+   */
+  resolvedSkill: TrainingSkill | null;
 }
 
 /**
@@ -211,8 +223,9 @@ export async function computeRecommendedFocus(repo: Repository, brief: NextLesso
   const weakest = [...open].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status])[0] ?? null;
   const skillProgression = contestedProgression ?? (theme ? (progressions.find((p) => p.skill === theme.skill) ?? null) : weakest);
   const label = contested?.taskLabel ?? theme?.theme ?? skillProgression?.label ?? null;
+  const resolvedSkill = contestedSkillCode ?? theme?.skill ?? skillProgression?.skill ?? null;
 
-  return { skillProgression, label, contested, theme, openSkills: open };
+  return { skillProgression, label, contested, theme, openSkills: open, resolvedSkill };
 }
 
 /**

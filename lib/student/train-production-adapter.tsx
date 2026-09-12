@@ -1,10 +1,10 @@
-import type { StudentTrainAction, StudentTrainProps, StudentTrainRadioPractice, StudentTrainRecommended, StudentTrainSkillRow } from "@/components/student/student-train";
+import type { StudentTrainProps, StudentTrainRadioPractice, StudentTrainRecommended } from "@/components/student/student-train";
 import { acsAreaForSkill } from "@/lib/acs";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
 import { computeNextLessonBrief, computeRecommendedFocus } from "@/lib/training-memory";
-import { meterScoreForSkillStatus, toneForSkillStatus } from "@/lib/skill-progress";
-import { hasAuthoredScenario } from "@/lib/prototype/chair-fly";
+import { toneForSkillStatus } from "@/lib/skill-progress";
+import { buildVectorSession } from "@/lib/student/vector-coaching";
 import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 import { performanceLevelLabelFor } from "@/lib/performance-levels";
@@ -52,7 +52,7 @@ export async function buildProductionTrainProps(
     brief.lastFlight ? repo.listFlightTasks(brief.lastFlight.id) : Promise.resolve([]),
     computeRecommendedFocus(repo, brief),
   ]);
-  const { skillProgression: recommendedSkill, label: recommendedLabel, contested, theme, openSkills: open } = focus;
+  const { skillProgression: recommendedSkill, label: recommendedLabel, contested, theme, resolvedSkill } = focus;
   const lessonFocus = deriveLessonFocus(lastFlightTasks);
   const latestLesson = theme?.lessons[theme.lessons.length - 1] ?? null;
   const recommendedAcsArea = recommendedSkill ? acsAreaForSkill(recommendedSkill.skill, certificateType) : null;
@@ -91,27 +91,17 @@ export async function buildProductionTrainProps(
   const nextLessonDay = brief.upcomingReservation
     ? new Date(brief.upcomingReservation.scheduledStart).toLocaleDateString("en-US", { weekday: "long" })
     : null;
-  const primaryAction: StudentTrainAction | undefined =
-    contested && hasAuthoredScenario(contested.taskLabel)
-      ? {
-          label: "Start chair flying",
-          href: hrefs.chairFlyHref,
-          caption: nextLessonDay ? `About 4 minutes · rehearse it before ${nextLessonDay}` : "About 4 minutes",
-        }
-      : undefined;
+
+  const vectorSession = buildVectorSession({
+    resolvedSkill,
+    contested,
+    hrefs: { chairFlyHref: hrefs.chairFlyHref, radioPracticeHref: hrefs.radioPracticeHref },
+    nextLessonDay,
+  });
 
   const radioPractice = hrefs.radioPracticeHref
-    ? await buildRadioPracticeProps(repo, studentId, hrefs.radioPracticeHref, recommendedSkill?.skill === "RADIO_COMMUNICATIONS")
+    ? await buildRadioPracticeProps(repo, studentId, hrefs.radioPracticeHref, resolvedSkill === "RADIO_COMMUNICATIONS")
     : null;
-
-  const stillWorkingOn: StudentTrainSkillRow[] = open.map((p) => ({
-    key: p.skill,
-    label: p.label,
-    state: toneForSkillStatus(p.status),
-    score: meterScoreForSkillStatus(p.status),
-    max: 4,
-    href: hrefs.skillHref(p.skill),
-  }));
 
   return {
     recommended,
@@ -123,24 +113,27 @@ export async function buildProductionTrainProps(
             <strong className="font-semibold text-foreground">A recommendation</strong> &mdash; the one thing worth
             rehearsing before your next flight, drawn from your own debriefs.
           </span>
-          {primaryAction ? (
+          {vectorSession.action?.kind === "chair-fly" ? (
             <span>
               <strong className="font-semibold text-foreground">Chair flying</strong> &mdash; fly the scenario in
               your head. Vector stops at each decision point and asks what you&rsquo;d do.
             </span>
-          ) : null}
-          {radioPractice ? (
+          ) : vectorSession.action?.kind === "radio-practice" ? (
             <span>
               <strong className="font-semibold text-foreground">Radio Practice</strong> &mdash; realistic ATC
               scenarios, graded on what you actually said.
             </span>
-          ) : null}
+          ) : (
+            <span>
+              <strong className="font-semibold text-foreground">Grounded coaching</strong> &mdash; what to prepare and
+              watch for, drawn from FAA reference material, not invented on the spot.
+            </span>
+          )}
         </span>
       ),
     },
-    primaryAction,
+    vectorSession,
     radioPractice,
-    stillWorkingOn,
   };
 }
 
