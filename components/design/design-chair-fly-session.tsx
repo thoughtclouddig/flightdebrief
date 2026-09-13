@@ -128,14 +128,19 @@ export function DesignChairFlySession({ onExit }: { onExit: () => void }) {
       </p>
 
       <div className="flex flex-col gap-5 rounded-[28px] border border-[var(--dm-border)] bg-[var(--dm-surface-elevated)] p-6 shadow-[var(--dm-shadow)] md:p-8 xl:p-10">
-        <p className="text-pretty text-[16px] leading-relaxed text-[var(--dm-text-soft)]">{step.scene}</p>
-        <p className="text-pretty text-[19px] font-semibold leading-snug tracking-[-0.01em] text-[var(--dm-text)] xl:text-[21px]">
+        <div className="rounded-2xl bg-[var(--dm-surface-muted)] p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-text-faint)]">The situation</p>
+          <p className="mt-1.5 text-pretty text-[16px] leading-relaxed text-[var(--dm-text-soft)]">{step.scene}</p>
+        </div>
+
+        <p className="text-pretty text-[20px] font-semibold leading-snug tracking-[-0.01em] text-[var(--dm-text)] xl:text-[22px]">
           {step.prompt}
         </p>
 
         <div className="flex flex-col gap-2.5">
-          {step.options.map((o) => {
+          {step.options.map((o, i) => {
             const picked = chosenId === o.id;
+            const letter = String.fromCharCode(65 + i);
             return (
               <button
                 key={o.id}
@@ -144,15 +149,24 @@ export function DesignChairFlySession({ onExit }: { onExit: () => void }) {
                 onClick={() => !chosenId && setChosenId(o.id)}
                 aria-pressed={picked}
                 className={cn(
-                  "min-h-[52px] rounded-2xl border px-4 py-3 text-left text-[15px] leading-snug transition-colors duration-200",
+                  "flex min-h-[56px] items-center gap-2.5 rounded-2xl border-2 px-3.5 py-3 text-left text-[15px] leading-snug transition-colors duration-200",
                   // No right/wrong coloring here, ever -- see the module doc comment.
                   picked
                     ? "cursor-default border-[var(--dm-text)] bg-[var(--dm-surface-muted)] text-[var(--dm-text)]"
                     : chosenId
-                      ? "cursor-default border-[var(--dm-border)] text-[var(--dm-text-faint)]"
-                      : "cursor-pointer border-[var(--dm-border)] text-[var(--dm-text)] hover:bg-[var(--dm-surface-muted)]",
+                      ? "cursor-default border-[var(--dm-border)] text-[var(--dm-text-faint)] opacity-60"
+                      : "cursor-pointer border-[var(--dm-border)] text-[var(--dm-text)] hover:border-[var(--dm-text-faint)] hover:bg-[var(--dm-surface-muted)]",
                 )}
               >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-full border text-[12px] font-semibold",
+                    picked ? "border-[var(--dm-text)] bg-[var(--dm-text)] text-[var(--dm-surface-elevated)]" : "border-[var(--dm-border)] text-[var(--dm-text-faint)]",
+                  )}
+                >
+                  {letter}
+                </span>
                 {o.text}
               </button>
             );
