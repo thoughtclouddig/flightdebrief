@@ -1,9 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { ClipboardList, Home, PlaneTakeoff, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DesignThemeSwitch } from "@/components/design/design-theme";
+import { DesignThemeSwitch, useDesignTheme } from "@/components/design/design-theme";
 
 /**
  * The mockup's own app frame -- a centered max-width canvas with a fixed
@@ -29,12 +30,27 @@ export function DesignStudentShell({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * The real lockup, not a placeholder wordmark -- same two SVG cuts
+ * components/student/app-header.tsx uses (dark ink for a light ground,
+ * white for a dark one). That header picks its cut with a `dark:` utility
+ * tied to the document root's own data-theme; this mockup's theme lives on
+ * its own .design-canvas subtree instead, so it reads the resolved theme
+ * from DesignThemeProvider and swaps the cut directly rather than relying
+ * on a variant that wouldn't see this element's local attribute.
+ */
 function DesignTopBar() {
+  const { resolvedTheme } = useDesignTheme();
   return (
     <div className="flex items-center gap-2 px-4 pb-2 pt-5 md:px-8 md:pt-8 xl:px-12">
-      <PlaneTakeoff className="size-5 text-[var(--dm-accent)]" aria-hidden />
-      <span className="text-[17px] font-bold tracking-tight text-[var(--dm-text)]">AfterFlight</span>
-      <span className="ml-2 rounded-full border border-[var(--dm-border)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--dm-text-faint)]">
+      <Image
+        src={resolvedTheme === "dark" ? "/brand/afterflight-lockup-light.svg" : "/brand/afterflight-lockup-dark.svg"}
+        alt="AfterFlight"
+        width={132}
+        height={21}
+        priority
+      />
+      <span className="ml-1 rounded-full border border-[var(--dm-border)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--dm-text-faint)]">
         Design preview
       </span>
     </div>

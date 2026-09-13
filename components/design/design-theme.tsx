@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,15 +18,44 @@ type DesignThemePreference = "system" | "light" | "dark";
 const DesignThemeContext = createContext<{
   preference: DesignThemePreference;
   setPreference: (p: DesignThemePreference) => void;
+  /** "system" resolved against the OS's own preference -- consumers that
+   * can't do this in CSS (e.g. picking between two logo SVG cuts) read
+   * this instead of re-deriving it themselves. */
+  resolvedTheme: "light" | "dark";
 } | null>(null);
+
+function subscribeToSystemScheme(onChange: () => void) {
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
 
 export function DesignThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreference] = useState<DesignThemePreference>("system");
+  // useSyncExternalStore, not a state+effect pair -- matchMedia is exactly
+  // the external-store case that hook exists for, and it sidesteps the
+  // "setState inside an effect" footgun a manual useEffect version would
+  // have (an initial synchronous read plus a change listener). The server
+  // snapshot is "light": there is no OS preference to read before hydration.
+  const systemPrefersDark = useSyncExternalStore(
+    subscribeToSystemScheme,
+    () => window.matchMedia("(prefers-color-scheme: dark)").matches,
+    () => false,
+  );
+
+  const resolvedTheme: "light" | "dark" = preference === "system" ? (systemPrefersDark ? "dark" : "light") : preference;
+
   return (
     <div className="design-canvas min-h-dvh bg-[var(--dm-bg)] text-[var(--dm-text)]" data-theme={preference === "system" ? undefined : preference}>
-      <DesignThemeContext.Provider value={{ preference, setPreference }}>{children}</DesignThemeContext.Provider>
+      <DesignThemeContext.Provider value={{ preference, setPreference, resolvedTheme }}>{children}</DesignThemeContext.Provider>
     </div>
   );
+}
+
+export function useDesignTheme() {
+  const ctx = useContext(DesignThemeContext);
+  if (!ctx) throw new Error("useDesignTheme must be used within DesignThemeProvider");
+  return ctx;
 }
 
 const OPTIONS: { value: DesignThemePreference; label: string; icon: typeof Monitor }[] = [
