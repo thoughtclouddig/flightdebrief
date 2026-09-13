@@ -24,12 +24,16 @@ export default async function TrainChairFlyPage({ searchParams }: { searchParams
 
   if (itemId) {
     const owned = await resolveOwnedTrainingItem(repo, viewer.user.id, itemId);
+    // TEMP DIAGNOSTIC -- remove once this 404 is understood.
+    console.error("[chair-fly-diag]", { itemId, viewerUserId: viewer.user.id, ownedResolved: Boolean(owned), skill: owned?.skill ?? null });
     if (!owned) notFound();
     const drill = await buildChairFlyDrillForUnit(repo, viewer, {
       skill: owned.skill,
       skillLabel: skillLabel(owned.skill),
       evidence: { label: "", text: owned.item.description },
     });
+    // TEMP DIAGNOSTIC -- remove once this 404 is understood.
+    console.error("[chair-fly-diag]", { drillResolved: Boolean(drill) });
     if (!drill) notFound();
     return (
       <Screen>
