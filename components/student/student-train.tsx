@@ -51,9 +51,11 @@ export interface StudentTrainRecommended {
   skillLabel: string;
   acsArea: { name: string; code?: string } | null;
   contextLine: string;
-  /** "You called this X. {instructor} called it Y." -- only meaningful when a real contested-objective comparison exists. Prototype-only for now; production has no wiring for this comparison yet. */
+  /** "You called this X. {instructor} called it Y." -- only meaningful when a real contested-objective comparison exists. */
   comparisonLine?: ReactNode | null;
   evidence: { label: string; text: string };
+  /** "Vector recommends: Chair Flying" -- a read-only preview of the likely Vector strategy, from this unit's own already-persisted mechanism. Null when the evidence isn't enough to say honestly. See components/student/training-unit-card.tsx's own doc comment. */
+  recommendedTreatmentLabel?: string | null;
 }
 
 /**
@@ -70,6 +72,10 @@ export interface StudentTrainOtherUnit {
   skillLabel: string;
   acsArea: { name: string; code?: string } | null;
   evidence: { label: string; text: string };
+  /** Same real per-task comparison as StudentTrainRecommended's -- only ever set on whichever unit actually is this debrief's contested objective, wherever it lands in the deck. */
+  comparisonLine?: ReactNode | null;
+  /** Same read-only Vector-strategy preview as StudentTrainRecommended's. */
+  recommendedTreatmentLabel?: string | null;
   vectorSession: VectorSession;
 }
 
@@ -120,7 +126,7 @@ export interface StudentTrainProps {
   radioPractice?: StudentTrainRadioPractice | null;
   /** Production's real content (Recommended Study, Vector guidance) occupies the position primaryAction/secondaryActions would have -- passed in rather than hidden elsewhere. */
   afterHeader?: ReactNode;
-  /** Prototype/fixture-only "Still working on" list. Omitted entirely in production -- Vector's one recommendation is the whole point; a full skill inventory undercuts it. */
+  /** Recurring skills across flights, distinct from today's own deck above -- real longitudinal progression data in production (see lib/student/train-units.ts's stillWorkingOn), the same fixture list in the prototype. Omitted (undefined/empty) whenever there's nothing recurring to show. */
   stillWorkingOn?: StudentTrainSkillRow[];
   /** Defaults to "Today Vector recommends" (the fixtures' own heading, unchanged) -- production overrides it to "From your last debrief" once alsoTrain/moreTrain are in play. */
   sectionTitle?: string;
@@ -326,6 +332,7 @@ export function StudentTrain({
       comparisonLine={recommended.comparisonLine}
       evidence={recommended.evidence}
       vectorInfo={vectorInfo}
+      recommendedTreatmentLabel={recommended.recommendedTreatmentLabel}
       actions={startHereActions}
     />,
   ];
@@ -347,8 +354,10 @@ export function StudentTrain({
         eyebrow={unit.toneLabel}
         skillLabel={unit.skillLabel}
         acsArea={unit.acsArea}
+        comparisonLine={unit.comparisonLine}
         evidence={unit.evidence}
         vectorInfo={vectorInfo}
+        recommendedTreatmentLabel={unit.recommendedTreatmentLabel}
         actions={<PanelButton href={unit.vectorSession.href}>{unit.vectorSession.buttonLabel}</PanelButton>}
       />,
     );

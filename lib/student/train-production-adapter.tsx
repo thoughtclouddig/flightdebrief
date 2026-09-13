@@ -1,14 +1,18 @@
+import type { ReactNode } from "react";
 import type {
   StudentTrainOtherUnit,
   StudentTrainProps,
   StudentTrainRadioPractice,
   StudentTrainRecommended,
+  StudentTrainSkillRow,
 } from "@/components/student/student-train";
 import { acsAreaForSkill } from "@/lib/acs";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
-import { toneForSkillStatus } from "@/lib/skill-progress";
+import { meterScoreForSkillStatus, toneForSkillStatus } from "@/lib/skill-progress";
+import { performanceLevelLabelFor } from "@/lib/performance-levels";
 import { buildTrainingPlan, type TrainingUnit } from "@/lib/student/train-units";
+import { resolveVectorStrategy } from "@/lib/student/vector-coaching";
 import { RADIO_PRACTICE_SCENARIOS } from "@/lib/radio-practice-scenarios";
 
 /**
@@ -59,6 +63,52 @@ export async function buildProductionTrainProps(
   }
 
   /**
+   * "You called this X. {instructor} called it Y." -- built from
+   * TrainingUnit.comparison (a real, matched AssessmentDifference; see
+   * buildTrainingPlan's own doc comment), never invented when no real
+   * per-task rating gap exists for this unit.
+   */
+  function comparisonLineFor(unit: TrainingUnit): ReactNode | null {
+    if (!unit.comparison) return null;
+    const studentLabel = performanceLevelLabelFor(unit.comparison.studentLabel, "student");
+    const instructorLabel = performanceLevelLabelFor(unit.comparison.instructorLabel, "instructor");
+    const cfiName = plan.context?.cfiName ?? "your instructor";
+    return (
+      <>
+        You called this <span className="font-semibold text-panel-foreground">{studentLabel}</span>. {cfiName} called it{" "}
+        <span className="font-semibold text-panel-foreground">{instructorLabel}</span>.
+      </>
+    );
+  }
+
+  /**
+   * A read-only, non-committing preview of the likely Vector strategy --
+   * the exact same resolveVectorStrategy() /train/vector/[itemId] uses,
+   * called here with activityEvidence always null (nothing has run yet at
+   * Train-render time) purely to decide whether a label can be shown
+   * honestly. Never a second resolver, never persisted, and clicking
+   * "Train with Vector" re-runs the real resolution independently -- this
+   * value never substitutes for it. Null (no label) whenever the mechanism
+   * isn't known yet, or the resolved strategy isn't one of the three named
+   * treatments (a diagnose-mode radio-practice, a knowledge check, or a
+   * transfer are real next steps, just not confident enough to preview).
+   */
+  function previewTreatmentLabel(unit: TrainingUnit): string | null {
+    if (!unit.mechanism) return null;
+    const strategy = resolveVectorStrategy({
+      skill: unit.skill,
+      mechanism: unit.mechanism,
+      activityEvidence: null,
+      cfiName: plan.context?.cfiName ?? "your instructor",
+      fallbackEvidenceText: unit.evidence.text,
+    });
+    if (strategy.kind === "chair-fly") return "Vector recommends: Chair Flying";
+    if (strategy.kind === "radio-practice" && strategy.mode === "train") return "Vector recommends: Radio Practice";
+    if (strategy.kind === "coach") return "Vector recommends: A quick knowledge check";
+    return null;
+  }
+
+  /**
    * The shared fields every deck slide needs -- tone/skill/ACS area/evidence
    * are real for every current-debrief unit, not just the top pick, since
    * every unit gets the same rich card treatment now (see
@@ -67,7 +117,15 @@ export async function buildProductionTrainProps(
   function baseCard(unit: TrainingUnit) {
     const acsArea = acsAreaForSkill(unit.skill, certificateType);
     const tone = unit.progressionStatus ? toneForSkillStatus(unit.progressionStatus) : "Improving";
-    return { tone, toneLabel: tone, skillLabel: unit.skillLabel, acsArea: acsArea ? { name: acsArea.name } : null, evidence: resolveEvidence(unit) };
+    return {
+      tone,
+      toneLabel: tone,
+      skillLabel: unit.skillLabel,
+      acsArea: acsArea ? { name: acsArea.name } : null,
+      evidence: resolveEvidence(unit),
+      comparisonLine: comparisonLineFor(unit),
+      recommendedTreatmentLabel: previewTreatmentLabel(unit),
+    };
   }
 
   function toCard(unit: TrainingUnit): StudentTrainRecommended {
@@ -75,7 +133,6 @@ export async function buildProductionTrainProps(
       ...baseCard(unit),
       startHereEyebrow: "Start here",
       contextLine: plan.context ? `Starting where your last flight ended — ${plan.context.flightDate} with ${plan.context.cfiName}.` : "",
-      comparisonLine: null,
     };
   }
 
@@ -87,6 +144,15 @@ export async function buildProductionTrainProps(
   const vectorSession = plan.startHere?.vectorSession ?? null;
   const alsoTrain = plan.alsoTrain.map(toOtherUnit);
   const moreTrain = plan.more.map(toOtherUnit);
+
+  const stillWorkingOn: StudentTrainSkillRow[] = plan.stillWorkingOn.map((s) => ({
+    key: s.skill,
+    label: s.skillLabel,
+    state: toneForSkillStatus(s.status),
+    score: meterScoreForSkillStatus(s.status),
+    max: 4,
+    href: hrefs.skillHref(s.skill),
+  }));
 
   const radioPractice = hrefs.radioPracticeHref
     ? await buildRadioPracticeProps(repo, studentId, hrefs.radioPracticeHref, plan.startHere?.skill === "RADIO_COMMUNICATIONS")
@@ -111,6 +177,7 @@ export async function buildProductionTrainProps(
     sectionTitle: "From your last debrief",
     alsoTrain,
     moreTrain,
+    stillWorkingOn,
   };
 }
 

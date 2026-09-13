@@ -93,3 +93,15 @@ for (const sentence of result3.needsWork) {
 console.log("Deck skills:", [...bySkill.keys()]);
 const leaked = [...bySkill.keys()].filter((s) => s === "STABILIZED_APPROACH" || s === "TRAFFIC_PATTERN");
 console.log(leaked.length ? `FOUND leaked into deck (should NOT happen): ${leaked.join(", ")}` : "(none leaked into today's deck -- correct)");
+
+console.log("\n--- Deck ranking check: which unit actually becomes Start Here? ---");
+const STATUS_RANK = { "Needs Coaching": 0, Introduced: 1, Developing: 2, Improving: 3, Demonstrated: 4 };
+function rankFor(skill) {
+  const p = progressions.find((pr) => pr.skill === skill);
+  return p ? STATUS_RANK[p.status] : STATUS_RANK["Needs Coaching"];
+}
+const deckSkills = [...bySkill.keys()];
+const ranked = deckSkills.map((s) => ({ skill: s, label: skillLabel(s), rank: rankFor(s) }));
+ranked.sort((a, b) => a.rank - b.rank);
+console.log(ranked);
+console.log("Start Here would be:", ranked[0]);

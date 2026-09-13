@@ -7,6 +7,8 @@ import { resolveCfiFirstName } from "@/lib/instructor-attribution";
 import { formatFlightDate } from "@/lib/utils";
 import { buildVectorSession, type VectorSession } from "@/lib/student/vector-coaching";
 import { collectInstructorQuoteCandidates, resolveEvidenceInterpretation, type InstructorQuoteCandidate, type ObservedMechanism } from "@/lib/student/observed-mechanism";
+import { contestedObjective } from "@/lib/chair-fly";
+import type { PerformanceLevelCode } from "@/lib/performance-levels";
 
 /**
  * A skill that is a more specific case of a broader one already in
@@ -158,7 +160,16 @@ export interface TrainingUnit {
   mechanism: ObservedMechanism | null;
   /** Null when this skill has no prior progression row at all -- this debrief is its first appearance. */
   progressionStatus: SkillProgressionStatus | null;
+  /** "You called this X. {instructor} called it Y." -- non-null only when this unit's skill is the real, single most-contested objective from this debrief's own assessmentDifferences (contestedObjective, same function /train/chair-fly already uses). Never invented: most units will have no real per-task rating gap at all. */
+  comparison: { studentLabel: PerformanceLevelCode; instructorLabel: PerformanceLevelCode } | null;
   vectorSession: VectorSession;
+}
+
+/** One longitudinal skill still worth tracking across flights -- deliberately not today's debrief's own units (those are TrainingUnit above); this is the multi-flight picture computeSkillProgression already builds for Progress, reused as-is. */
+export interface StillWorkingOnSkill {
+  skill: TrainingSkill;
+  skillLabel: string;
+  status: SkillProgressionStatus;
 }
 
 export interface TrainingPlan {
@@ -170,6 +181,8 @@ export interface TrainingPlan {
   more: TrainingUnit[];
   /** The flight this plan is drawn from, for Train's page-level "starting where you left off" line -- null alongside startHere when there's nothing to train on yet. */
   context: { flightDate: string; cfiName: string } | null;
+  /** Recurring skills that aren't Demonstrated yet and aren't already one of this debrief's own units above -- the longer-running picture, not a duplicate of today's plan. */
+  stillWorkingOn: StillWorkingOnSkill[];
 }
 
 const VISIBLE_CAP = 3;
@@ -190,7 +203,7 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
   const brief = await computeNextLessonBrief(repo, studentId);
   const items = brief.keepWorkingOnTrainingItems;
   if (!brief.lastFlight || items.length === 0) {
-    return { startHere: null, alsoTrain: [], more: [], context: null };
+    return { startHere: null, alsoTrain: [], more: [], context: null, stillWorkingOn: [] };
   }
 
   const [signals, flightTasks] = await Promise.all([
@@ -217,31 +230,57 @@ export async function buildTrainingPlan(repo: Repository, studentId: string): Pr
     return progression ? STATUS_RANK[progression.status] : STATUS_RANK["Needs Coaching"];
   }
 
+  // The one real per-task rating gap from THIS debrief, if any -- same
+  // function /train/chair-fly already uses to decide what's worth
+  // rehearsing. Matched to a unit by skill label (case-insensitive, same
+  // convention lib/prototype/chair-fly.ts's own task-label lookup uses);
+  // never invented when no real AssessmentDifference exists for a unit.
+  const contested = contestedObjective(brief.lastDebrief?.structuredResult.assessmentDifferences ?? []);
+
   // Read-only: instructorQuote/observedMechanism were already computed once,
   // when this TrainingItem was created (app/api/debrief/analyze/route.ts),
   // and persisted onto the row itself. Train never recomputes them -- doing
   // so here would mean this exact same item could disagree with what the
   // Vector session (lib/student/vector-session-adapter.ts) shows for it,
   // since each would be an independent model call.
-  const units: TrainingUnit[] = [...bySkill.entries()].map(([skill, item]) => ({
-    id: item.id,
-    flightId: item.flightId,
-    debriefId: item.debriefId,
-    skill,
-    skillLabel: skillLabelFor(skill),
-    evidence: { label: evidenceLabel, text: item.description },
-    instructorQuote: item.instructorQuote,
-    mechanism: item.observedMechanism,
-    progressionStatus: progressions.find((p) => p.skill === skill)?.status ?? null,
-    vectorSession: buildVectorSession(item.id),
-  }));
+  const units: TrainingUnit[] = [...bySkill.entries()].map(([skill, item]) => {
+    const skillLabelValue = skillLabelFor(skill);
+    const comparison =
+      contested && contested.taskLabel.toLowerCase() === skillLabelValue.toLowerCase()
+        ? { studentLabel: contested.studentLevel, instructorLabel: contested.instructorLevel }
+        : null;
+    return {
+      id: item.id,
+      flightId: item.flightId,
+      debriefId: item.debriefId,
+      skill,
+      skillLabel: skillLabelValue,
+      evidence: { label: evidenceLabel, text: item.description },
+      instructorQuote: item.instructorQuote,
+      mechanism: item.observedMechanism,
+      progressionStatus: progressions.find((p) => p.skill === skill)?.status ?? null,
+      comparison,
+      vectorSession: buildVectorSession(item.id),
+    };
+  });
 
   units.sort((a, b) => rankFor(a.skill) - rankFor(b.skill));
+
+  // The longer-running picture: a recurring skill genuinely has more than
+  // one flight's evidence behind it ("Introduced" means exactly one signal
+  // -- a single mention, not a track record), isn't Demonstrated yet, and
+  // isn't already one of today's own units above. Reuses the same
+  // computeSkillProgression() result Progress itself is built from, never a
+  // second proficiency calculation.
+  const stillWorkingOn: StillWorkingOnSkill[] = progressions
+    .filter((p) => p.status !== "Demonstrated" && p.status !== "Introduced" && !bySkill.has(p.skill))
+    .map((p) => ({ skill: p.skill, skillLabel: p.label, status: p.status }));
 
   return {
     startHere: units[0] ?? null,
     alsoTrain: units.slice(1, VISIBLE_CAP),
     more: units.slice(VISIBLE_CAP),
+    stillWorkingOn,
     context: { flightDate: formatFlightDate(brief.lastFlight.flightDate), cfiName: cfi ?? "your instructor" },
   };
 }

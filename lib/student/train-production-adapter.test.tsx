@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildProductionTrainProps } from "./train-production-adapter";
 import type { Repository } from "@/lib/data/types";
 import type { Viewer } from "@/lib/viewer";
-import type { FlightWithRelations, Organization, RadioPracticeAssignment, TrainingItem, User } from "@/lib/types";
+import type { FlightWithRelations, Organization, RadioPracticeAssignment, TrainingItem, TrainingSignal, User } from "@/lib/types";
 
 const STUDENT_ID = "student-1";
 const HREFS = { chairFlyHref: "/train/chair-fly", skillHref: (s: string) => `/progress/${s}` };
@@ -85,11 +85,32 @@ function trainingItem(overrides: Partial<TrainingItem> = {}): TrainingItem {
   };
 }
 
+function trainingSignal(overrides: Partial<TrainingSignal> = {}): TrainingSignal {
+  return {
+    id: "signal-1",
+    organizationId: "org-1",
+    studentId: STUDENT_ID,
+    instructorId: "cfi-1",
+    aircraftId: null,
+    flightId: "flight-0",
+    debriefId: "debrief-0",
+    flightDate: "2026-08-01",
+    category: "AIRPORT_OPS",
+    skill: "TRAFFIC_PATTERN",
+    status: "NEEDS_COACHING",
+    source: "STUDENT_AND_INSTRUCTOR",
+    statement: "Pattern spacing was tight on the last two flights.",
+    dismissed: false,
+    ...overrides,
+  } as TrainingSignal;
+}
+
 function fakeRepo(opts: {
   lastFlight?: FlightWithRelations | null;
   items?: TrainingItem[];
   radioAssignments?: RadioPracticeAssignment[];
   cfiUser?: User | null;
+  signals?: TrainingSignal[];
 }): Repository {
   const lastFlight = opts.lastFlight === undefined ? flight() : opts.lastFlight;
   return {
@@ -97,7 +118,7 @@ function fakeRepo(opts: {
     listTrainingItems: async () => opts.items ?? [],
     listReservations: async () => [],
     getDebriefByFlight: async () => null,
-    listTrainingSignals: async () => [],
+    listTrainingSignals: async () => opts.signals ?? [],
     listMembershipsForUser: async () => [],
     listFlightTasks: async () => [],
     listRadioPracticeAssignments: async () => opts.radioAssignments ?? [],
@@ -174,7 +195,7 @@ describe("buildProductionTrainProps", () => {
     expect(props.secondaryActions).toBeUndefined();
   });
 
-  it("never returns a Still Working On list -- Vector's current-debrief plan is the whole point of production Train", async () => {
+  it("returns an empty Still Working On list, honestly, when there's no real recurring history beyond today's own items", async () => {
     const repo = fakeRepo({
       items: [
         trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." }),
@@ -182,7 +203,32 @@ describe("buildProductionTrainProps", () => {
       ],
     });
     const props = await buildProductionTrainProps(repo, viewer(), HREFS);
-    expect(props.stillWorkingOn).toBeUndefined();
+    expect(props.stillWorkingOn).toEqual([]);
+  });
+
+  it("surfaces a genuinely recurring skill in Still Working On, excluding whatever's already in today's own deck", async () => {
+    const repo = fakeRepo({
+      items: [trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." })],
+      signals: [
+        // Two flights' worth of Traffic Pattern evidence -- a real,
+        // multi-flight recurring gap, distinct from today's Crosswind item.
+        trainingSignal({ id: "s1", flightId: "flight-0", debriefId: "debrief-0", flightDate: "2026-08-01" }),
+        trainingSignal({ id: "s2", flightId: "flight-1", debriefId: "debrief-1", flightDate: "2026-08-20" }),
+      ],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
+    expect(props.stillWorkingOn).toEqual([
+      { key: "TRAFFIC_PATTERN", label: "Traffic pattern work", state: "Needs Work", score: 1, max: 4, href: "/progress/TRAFFIC_PATTERN" },
+    ]);
+  });
+
+  it("never surfaces a single-flight mention in Still Working On -- one signal is 'Introduced,' not a real track record", async () => {
+    const repo = fakeRepo({
+      items: [trainingItem({ id: "a", description: "Crosswind correction was late on the last two landings." })],
+      signals: [trainingSignal({ id: "s1", flightId: "flight-0", debriefId: "debrief-0", flightDate: "2026-08-01" })],
+    });
+    const props = await buildProductionTrainProps(repo, viewer(), HREFS);
+    expect(props.stillWorkingOn).toEqual([]);
   });
 
   it("surfaces up to two more current-debrief units as compact 'also train' cards", async () => {

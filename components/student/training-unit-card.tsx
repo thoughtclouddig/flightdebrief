@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Clock, PlaneTakeoff } from "lucide-react";
+import { Clock, PlaneTakeoff, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AcsBadge, Evidence, InfoTip, Panel, PanelEyebrow, PanelHeadline, VectorMark, stateTone } from "@/components/student/ui";
 import type { SkillState } from "@/lib/student/state-tone";
@@ -39,6 +39,17 @@ export interface TrainingUnitCardProps {
   /** "This connects to your next flight's short-field landings." -- how this unit ties back into the airplane, when that connection is known. */
   nextFlightConnection?: string | null;
   vectorInfo: { tipLabel: string; tipContent: ReactNode };
+  /**
+   * "Vector recommends: Chair Flying" -- a read-only, non-committing preview
+   * of what opening this unit will likely do, from this unit's own already-
+   * persisted mechanism (see lib/student/vector-coaching.ts's
+   * resolveVectorStrategy). Null whenever that preview can't be made
+   * honestly (no mechanism yet, or the resolved strategy isn't one of the
+   * three named treatments) -- never a guess dressed up as a label. Clicking
+   * "Train with Vector" always re-runs the real, authoritative resolution
+   * at /train/vector/[itemId]; this label never substitutes for it.
+   */
+  recommendedTreatmentLabel?: string | null;
   /** The card's own action row -- built by the caller (Train with Vector, or the prototype's menu buttons), never decided in here. */
   actions: ReactNode;
 }
@@ -54,6 +65,7 @@ export function TrainingUnitCard({
   timeHint,
   nextFlightConnection,
   vectorInfo,
+  recommendedTreatmentLabel,
   actions,
 }: TrainingUnitCardProps) {
   return (
@@ -103,6 +115,12 @@ export function TrainingUnitCard({
         ) : null}
 
         <div className={cn("flex flex-col gap-2.5 md:self-start", imageUrl ? "xl:w-[280px] xl:shrink-0" : "xl:w-[260px] xl:shrink-0")}>
+          {recommendedTreatmentLabel ? (
+            <p className="flex items-center gap-1.5 text-[13px] font-semibold text-panel-foreground-soft">
+              <Sparkles className="size-3.5 shrink-0 text-brand" aria-hidden />
+              {recommendedTreatmentLabel}
+            </p>
+          ) : null}
           {actions}
           {timeHint ? (
             <p className="flex items-center justify-center gap-1.5 text-[13px] text-panel-foreground-soft xl:justify-start">
