@@ -60,6 +60,24 @@ describe("resolveTrainingItemSkill — strongest structured evidence first, neve
     expect(skill).toBe("STABILIZED_APPROACH");
   });
 
+  it("still prefers the most specific skill when more than one candidate is a logged FlightTask -- not just whichever came first", () => {
+    const item = trainingItem();
+    const signals = [
+      trainingSignal({ id: "a", skill: "STABILIZED_APPROACH" }),
+      trainingSignal({ id: "b", skill: "CROSSWIND_LANDING" }),
+    ];
+    const skill = resolveTrainingItemSkill(item, signals, new Set(["STABILIZED_APPROACH", "CROSSWIND_LANDING", "SHORT_FIELD_LANDING"]));
+    expect(skill).toBe("CROSSWIND_LANDING");
+
+    // Order-independent: the same candidates, reversed, must resolve the same way.
+    const reversedSignals = [
+      trainingSignal({ id: "b", skill: "CROSSWIND_LANDING" }),
+      trainingSignal({ id: "a", skill: "STABILIZED_APPROACH" }),
+    ];
+    const skillReversed = resolveTrainingItemSkill(item, reversedSignals, new Set(["STABILIZED_APPROACH", "CROSSWIND_LANDING", "SHORT_FIELD_LANDING"]));
+    expect(skillReversed).toBe("CROSSWIND_LANDING");
+  });
+
   it("narrows to the most specific skill among this exact sentence's own TrainingSignal rows when no FlightTask evidence exists", () => {
     const item = trainingItem();
     const signals = [

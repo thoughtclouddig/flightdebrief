@@ -46,7 +46,13 @@ function narrowToMostSpecific(skills: TrainingSkill[]): TrainingSkill[] {
  *
  * 1. A FlightTask actually assigned/flown on this same flight, when its
  *    taskCode is among the candidates -- the CFI/student's own explicit
- *    label for what this flight covered.
+ *    label for what this flight covered. When more than one candidate is a
+ *    logged FlightTask (e.g. a debrief sentence produced both a specific and
+ *    a generalized TrainingSignal, and both codes were flown this flight),
+ *    the tie still goes to the most specific one -- flight-task membership
+ *    decides *whether* this source applies, not which of several tied
+ *    candidates wins; that's still SKILL_GENERALIZES_TO's job, and it must
+ *    stay deterministic regardless of what order the candidates arrived in.
  * 2. This exact sentence's own TrainingSignal rows -- classifyTrainingSignals
  *    already ran the same text match at analyze time against this identical
  *    string, so reusing it is free and unambiguous when it resolves to
@@ -70,8 +76,8 @@ export function resolveTrainingItemSkill(
   const candidates = fromSignals.length > 0 ? fromSignals : matchSkills(item.description).map((m) => m.skill);
   if (candidates.length === 0) return null;
 
-  const taskMatch = candidates.find((s) => flightTaskCodes.has(s));
-  if (taskMatch) return taskMatch;
+  const taskMatches = candidates.filter((s) => flightTaskCodes.has(s));
+  if (taskMatches.length > 0) return narrowToMostSpecific(taskMatches)[0]!;
 
   const narrowed = narrowToMostSpecific(candidates);
   return narrowed[0] ?? candidates[0]!;
