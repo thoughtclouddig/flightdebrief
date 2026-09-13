@@ -376,13 +376,35 @@ const ZOE_FLIGHT_TRANSCRIPT =
 // close out (Demonstrated) exactly like vector-data.ts's fixture, instead of
 // sitting open next to the two skills the story is actually about. Traced
 // and confirmed via lib/taxonomy.ts's classifyTrainingSignals().
+// Two of Mia's needsWork sentences below exist purely to give her a real,
+// multi-flight Traffic Pattern Operations signal (pattern spacing on flight
+// 1, pattern altitude discipline on flight 2) distinct from her landing/
+// crosswind/speed work -- a genuine recurring gap for Still Working On, not
+// a duplicate of anything in her current-debrief deck. See classifyTrainingSignals().
 const MIA_FLIGHT_1_TRANSCRIPT =
-  "Landings today with Dana. Landings were rough -- you were carrying too much speed into short final a couple of times. Dana had me get configured earlier next time instead of fixing speed right at the runway. Your short field approach looked good, nice and controlled. Crosswind correction needs work -- you were behind the airplane and let it drift once you got into the flare. Radio calls were clear and confident all flight.";
+  "Landings today with Dana. Landings were rough -- you were carrying too much speed into short final a couple of times. Dana had me get configured earlier next time instead of fixing speed right at the runway. Your short field approach looked good, nice and controlled. Crosswind correction needs work -- you were behind the airplane and let it drift once you got into the flare. I also got a little behind in the pattern once and let my pattern altitude drift more than I should have. Radio calls were clear and confident all flight.";
 const MIA_FLIGHT_2_TRANSCRIPT =
-  "Pattern work with Jake today. You were carrying too much speed into two of the landings again, still fixing it late instead of configuring earlier. Jake wanted me to get stabilized well before the turn to final next time. Crosswind landings were better today -- centerline control improved. You still need to work on holding the crosswind correction through the flare. Short-field landings looked solid, nailed the aiming point on a couple of them. Radio calls stayed confident all flight.";
-/** The flight the guided assessment below is attached to -- see seedMiaGuidedAssessment() in postgres-repository.ts for the real per-task ratings this transcript's summary gets paired with. */
+  "Pattern work with Jake today. You were carrying too much speed into two of the landings again, still fixing it late instead of configuring earlier. Jake wanted me to get stabilized well before the turn to final next time. Crosswind landings were better today -- centerline control improved. You still need to work on holding the crosswind correction through the flare. I still need to work on tightening up my spacing in the pattern so I'm not crowding the airplane ahead of me. Short-field landings looked solid, nailed the aiming point on a couple of them. Radio calls stayed confident all flight.";
+/**
+ * The flight the guided assessment below is attached to -- see
+ * seedMiaGuidedAssessment() in postgres-repository.ts for the real per-task
+ * ratings this transcript's summary gets paired with.
+ *
+ * Three distinct needsWork sentences here, each deliberately built to
+ * exercise a different existing Vector strategy honestly, from real
+ * classifyTrainingSignals()/matchSkills() text matching -- not a hardcoded
+ * modality:
+ *   - crosswind correction (real, unchanged) -> matches CROSSWIND_LANDING
+ *   - the tower clearance line -> matches TOWER_READBACKS
+ *   - the go-around line -> matches GO_AROUND
+ * The old standalone "carrying too much speed" sentence was removed from
+ * THIS flight only (it's still real, recurring evidence on flights 1 and 2)
+ * so it doesn't independently resolve to a fourth current-debrief unit --
+ * Stabilized Approach's own genuine multi-flight history is what surfaces
+ * it in Still Working On instead.
+ */
 const MIA_FLIGHT_3_TRANSCRIPT =
-  "Crosswind and short-field landings with Jake today. Centerline control was much better. On the crosswind landings you still need to work on holding the correction once you get into the flare. You were also carrying too much speed into two of the landings. Your short field approach was solid again, right on the aiming point. Jake wanted me to keep working crosswinds and get stabilized earlier so I'm not trying to fix the speed at the threshold. I thought the crosswinds were actually going pretty well and liked keeping the airplane on centerline. Radio calls were clear and confident again.";
+  "Crosswind and short-field landings with Jake today. Centerline control was much better. On the crosswind landings you still need to work on holding the correction once you get into the flare. Your short field approach was solid again, right on the aiming point. I missed an amended tower clearance once and Jake had to catch it for me. I still need to work on deciding earlier when I should call a go-around instead of trying to save an unstable approach. Jake wanted me to keep working crosswinds and get stabilized earlier so I'm not trying to fix the speed at the threshold. I thought the crosswinds were actually going pretty well and liked keeping the airplane on centerline. Radio calls were clear and confident again.";
 
 /**
  * flight-mia-3's real objectives -- the same 3 tasks vector-data.ts's
@@ -744,6 +766,48 @@ export function buildSeed(): SeedBundle {
     previousActionItems: mia2.result.actionItems,
   });
   mia3Result.assessmentDifferences = computeAssessmentDifferences(miaTaskLabels, miaStudentRatings, miaInstructorRatings);
+
+  /**
+   * The deterministic demo equivalent of what
+   * scripts/backfill-training-item-evidence.mjs's real analyzer call would
+   * persist for each of these three sentences -- see toTrainingItems()'s own
+   * evidenceOverrides doc comment. Keyed by the exact sentence text, one
+   * category per sentence, each one a real, honest reading of what that
+   * sentence itself describes (never inferred from the skill code):
+   *   - the crosswind sentence describes a physical correction that needs
+   *     rehearsing -> SEQUENCING_REHEARSAL
+   *   - the tower sentence describes a missed readback -> COMMUNICATION_PERFORMANCE
+   *   - the go-around sentence describes not knowing when to decide ->
+   *     UNDERSTANDING_KNOWLEDGE
+   * instructorQuote stays null for all three -- none of these sentences are
+   * Jake's own verbatim words (they're Mia's paraphrase), and the real
+   * extractor only ever attributes a quote it can find verbatim elsewhere in
+   * the structured debrief.
+   */
+  const MIA_FLIGHT_3_EVIDENCE_OVERRIDES: Record<string, { instructorQuote: TrainingItem["instructorQuote"]; observedMechanism: TrainingItem["observedMechanism"] }> = {
+    "On the crosswind landings you still need to work on holding the correction once you get into the flare.": {
+      instructorQuote: null,
+      observedMechanism: {
+        quote: "On the crosswind landings you still need to work on holding the correction once you get into the flare.",
+        category: "SEQUENCING_REHEARSAL",
+      },
+    },
+    "I missed an amended tower clearance once and Jake had to catch it for me.": {
+      instructorQuote: null,
+      observedMechanism: {
+        quote: "I missed an amended tower clearance once and Jake had to catch it for me.",
+        category: "COMMUNICATION_PERFORMANCE",
+      },
+    },
+    "I still need to work on deciding earlier when I should call a go-around instead of trying to save an unstable approach.": {
+      instructorQuote: null,
+      observedMechanism: {
+        quote: "I still need to work on deciding earlier when I should call a go-around instead of trying to save an unstable approach.",
+        category: "UNDERSTANDING_KNOWLEDGE",
+      },
+    },
+  };
+
   const debriefMia3: Debrief = {
     id: "debrief-mia-3",
     flightId: flightMia3.id,
@@ -959,7 +1023,7 @@ export function buildSeed(): SeedBundle {
     ...toTrainingItems(flightA.id, debriefA.id, debriefAResult, flightA.createdAt),
     ...toTrainingItems(flightB.id, debriefB.id, debriefBResult, flightB.createdAt),
     ...toTrainingItems(sarahFlight.id, debriefSarah.id, debriefSarahResult, sarahFlight.createdAt),
-    ...toTrainingItems(flightMia3.id, debriefMia3.id, mia3Result, flightMia3.createdAt),
+    ...toTrainingItems(flightMia3.id, debriefMia3.id, mia3Result, flightMia3.createdAt, MIA_FLIGHT_3_EVIDENCE_OVERRIDES),
     ...newStudentDebriefs.flatMap((d) => toTrainingItems(d.flight.id, d.debrief.id, d.result, d.flight.createdAt)),
   ];
 
@@ -1125,11 +1189,23 @@ function stableTrainingItemId(debriefId: string, category: string, description: 
   return `${debriefId}-${category}-${hashString(description)}`;
 }
 
+type TrainingItemEvidenceOverride = Pick<TrainingItem, "instructorQuote" | "observedMechanism">;
+
 function toTrainingItems(
   flightId: string,
   debriefId: string,
   result: ReturnType<typeof analyzeMock>,
   createdAt: string,
+  /**
+   * Keyed by the exact needsWork sentence -- the deterministic demo
+   * equivalent of what scripts/backfill-training-item-evidence.mjs's real
+   * analyzer call would persist for that sentence, hand-authored here only
+   * so a small, deliberately curated demo record can exercise Vector's real
+   * strategy variety without waiting on a live model call. Every other
+   * seeded student's items are unaffected -- they still start with real
+   * null interpretation and still require the actual backfill script.
+   */
+  evidenceOverrides?: Record<string, TrainingItemEvidenceOverride>,
 ): TrainingItem[] {
   const items: TrainingItem[] = [];
   // Same quality gate a real live debrief goes through
@@ -1139,6 +1215,7 @@ function toTrainingItems(
   // and had me pick a field...") this filter exists specifically to drop,
   // held to a lower bar than what a real analyzed debrief would ever show.
   for (const desc of filterTrainingItemDescriptions(result.needsWork)) {
+    const override = evidenceOverrides?.[desc];
     items.push({
       id: stableTrainingItemId(debriefId, "keep", desc),
       flightId,
@@ -1151,11 +1228,12 @@ function toTrainingItems(
       // buildSeed() must stay synchronous and deterministic (see
       // lib/data/seed.test.ts's own equality check across two calls) -- it
       // cannot make a real model call. Seeded items start with no
-      // interpretation; scripts/backfill-training-item-evidence.mjs computes
-      // and persists it for real, once, against the actual database, the
-      // same Development-only path any other seeded-data script uses.
-      instructorQuote: null,
-      observedMechanism: null,
+      // interpretation unless evidenceOverrides supplies one (above);
+      // scripts/backfill-training-item-evidence.mjs computes and persists it
+      // for real, once, against the actual database, the same
+      // Development-only path any other seeded-data script uses.
+      instructorQuote: override?.instructorQuote ?? null,
+      observedMechanism: override?.observedMechanism ?? null,
       createdAt,
     });
   }
