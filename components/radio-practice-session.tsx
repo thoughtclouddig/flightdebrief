@@ -3,8 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, Mic, Square, Volume2, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  BackLink,
+  PageTitle,
+  Panel,
+  PanelButton,
+  PrimaryButton,
+  Screen,
+  Section,
+  SecondaryButton,
+} from "@/components/student/ui";
 import { Waveform } from "@/components/waveform";
 import { useTranscription } from "@/lib/transcription";
 import { playWithRadioEffect } from "@/lib/radio-effect";
@@ -55,6 +63,7 @@ export function RadioPracticeSession({
   );
 
   const needsReadback = scenario.scoringPhrases.some((alts) => alts.length > 0);
+  const hasVectorReturn = Boolean(assignment.trainingItemId);
 
   async function playCall() {
     setPhase("call-playing");
@@ -139,155 +148,152 @@ export function RadioPracticeSession({
   }
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6">
-      <div>
-        <p className="text-sm font-medium uppercase tracking-wide text-brand">Radio Practice</p>
-        <h1 className="mt-1 text-2xl font-semibold text-foreground">{scenario.title}</h1>
-        <p className="mt-1.5 text-base text-foreground-soft">{scenario.setup}</p>
-      </div>
+    <Screen>
+      <BackLink href="/train">Train</BackLink>
 
-      <Card>
-        <CardContent className="flex flex-col items-center gap-4 py-8">
-          <Button onClick={playCall} disabled={phase === "call-playing"} size="lg" className="gap-2">
-            {phase === "call-playing" ? <Loader2 className="size-4 animate-spin" /> : <Volume2 className="size-4" />}
-            {phase === "call-playing" ? "Playing…" : "Play ATC Call"}
-          </Button>
+      <PageTitle kicker="Radio Practice">{scenario.title}</PageTitle>
+      <p className="-mt-4 px-1.5 text-pretty text-[15px] leading-relaxed text-foreground-soft">{scenario.setup}</p>
 
-          {phase === "recording" ? (
-            <div className="flex w-full flex-col items-center gap-3">
-              <Waveform amplitude={transcription.amplitude} active={transcription.status === "recording"} />
-              <p className="min-h-[2.5rem] max-w-sm text-center text-sm text-foreground-soft">
-                {transcription.transcript || transcription.interimTranscript || "Listening…"}
-              </p>
-              <Button onClick={stopAndSubmit} variant="outline" className="gap-2">
-                <Square className="size-4" /> Stop &amp; Submit
-              </Button>
-            </div>
-          ) : phase === "call-played" ? (
-            needsReadback ? (
-              <Button
-                onClick={startRecording}
-                size="lg"
-                className="gap-2 bg-good text-white hover:bg-good/90 focus-visible:ring-good"
-              >
-                <Mic className="size-4" /> Record Your Readback
-              </Button>
-            ) : (
-              <Button onClick={submitWithoutRecording} size="lg">
-                Got It -- Mark Done
-              </Button>
-            )
-          ) : null}
+      <Panel className="flex flex-col items-center gap-4">
+        <PanelButton onClick={playCall} disabled={phase === "call-playing"}>
+          {phase === "call-playing" ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              Playing…
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              <Volume2 className="size-4" aria-hidden />
+              Play ATC Call
+            </span>
+          )}
+        </PanelButton>
 
-          {phase === "submitting" ? <Loader2 className="size-5 animate-spin text-brand" /> : null}
+        {phase === "recording" ? (
+          <div className="flex w-full flex-col items-center gap-3">
+            <Waveform amplitude={transcription.amplitude} active={transcription.status === "recording"} />
+            <p className="min-h-[2.5rem] max-w-sm text-pretty text-center text-[14px] text-panel-foreground-soft">
+              {transcription.transcript || transcription.interimTranscript || "Listening…"}
+            </p>
+            <SecondaryButton onClick={stopAndSubmit} onPanel>
+              <Square className="size-4" aria-hidden />
+              Stop &amp; Submit
+            </SecondaryButton>
+          </div>
+        ) : phase === "call-played" ? (
+          needsReadback ? (
+            <PanelButton onClick={startRecording}>
+              <span className="flex items-center justify-center gap-2">
+                <Mic className="size-4" aria-hidden />
+                Record Your Readback
+              </span>
+            </PanelButton>
+          ) : (
+            <PanelButton onClick={submitWithoutRecording}>Got It — Mark Done</PanelButton>
+          )
+        ) : null}
 
-          {error ? <p className="text-sm text-danger">{error}</p> : null}
-        </CardContent>
-      </Card>
+        {phase === "submitting" ? <Loader2 className="size-5 animate-spin text-brand" aria-hidden /> : null}
+      </Panel>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>What&rsquo;s Being Checked</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="flex flex-col gap-1.5">
-            {scenario.requiredElements.map((el, i) => {
-              const matched = result?.matchedElements[i]?.matched;
-              return (
-                <li key={i} className="flex items-start gap-2 text-sm text-foreground-soft">
-                  {result ? (
-                    matched ? (
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-good" />
-                    ) : (
-                      <XCircle className="mt-0.5 size-4 shrink-0 text-danger" />
-                    )
+      {error ? <p className="px-1.5 text-[14px] text-danger">{error}</p> : null}
+
+      <Section title="What's Being Checked">
+        <ul className="flex flex-col gap-1.5">
+          {scenario.requiredElements.map((el, i) => {
+            const matched = result?.matchedElements[i]?.matched;
+            return (
+              <li key={i} className="flex items-start gap-2 text-[15px] leading-snug text-foreground-soft">
+                {result ? (
+                  matched ? (
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-good" aria-hidden />
                   ) : (
-                    <span className="mt-2 size-1.5 shrink-0 rounded-full bg-foreground-faint" />
-                  )}
-                  {el}
-                </li>
-              );
-            })}
-          </ul>
-        </CardContent>
-      </Card>
+                    <XCircle className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden />
+                  )
+                ) : (
+                  <span className="mt-2 size-1.5 shrink-0 rounded-full bg-foreground-faint" aria-hidden />
+                )}
+                {el}
+              </li>
+            );
+          })}
+        </ul>
+      </Section>
 
       {result?.transcript ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>What You Said</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-foreground-soft">&ldquo;{result.transcript}&rdquo;</p>
-          </CardContent>
-        </Card>
+        <Section title="What You Said">
+          <p className="text-pretty text-[15px] leading-relaxed text-foreground-soft">&ldquo;{result.transcript}&rdquo;</p>
+        </Section>
       ) : null}
 
       {result ? (
-        <Card className={cn(result.correct ? "border-good/40" : "border-danger/30")}>
-          <CardContent className="flex flex-col gap-2 py-5">
-            <p className={cn("font-semibold", result.correct ? "text-good" : "text-danger")}>
-              {result.correct ? "Nailed it." : "Not quite -- here's a model readback:"}
-            </p>
-            <p className="text-sm text-foreground-soft">{result.modelReadback}</p>
-            {result.coaching ? (
-              <p className="mt-1 text-sm text-foreground-soft">{result.coaching}</p>
-            ) : null}
-            <p className="mt-1 text-xs text-foreground-faint">
-              Source:{" "}
-              {aimSectionUrl(scenario.source) ? (
-                <a
-                  href={aimSectionUrl(scenario.source)!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-foreground-soft"
-                >
-                  {scenario.source}
-                </a>
-              ) : (
-                scenario.source
-              )}
-            </p>
-          </CardContent>
-        </Card>
+        <div
+          className={cn(
+            "flex flex-col gap-2 rounded-2xl border px-5 py-4",
+            result.correct ? "border-good/40 bg-good-soft" : "border-danger/30 bg-danger-soft",
+          )}
+        >
+          <p className={cn("font-semibold", result.correct ? "text-good-ink" : "text-danger-ink")}>
+            {result.correct ? "Nailed it." : "Not quite — here's a model readback:"}
+          </p>
+          <p className="text-pretty text-[15px] leading-relaxed text-foreground-soft">{result.modelReadback}</p>
+          {result.coaching ? (
+            <p className="mt-1 text-pretty text-[15px] leading-relaxed text-foreground-soft">{result.coaching}</p>
+          ) : null}
+          <p className="mt-1 text-[13px] text-foreground-faint">
+            Source:{" "}
+            {aimSectionUrl(scenario.source) ? (
+              <a
+                href={aimSectionUrl(scenario.source)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground-soft"
+              >
+                {scenario.source}
+              </a>
+            ) : (
+              scenario.source
+            )}
+          </p>
+        </div>
       ) : null}
 
       {phase === "done" ? (
-        <div className="flex flex-col gap-2">
-          {/* Only when this attempt was launched from a Vector training unit
-              (assignment.trainingItemId, set at assign time -- never a
-              client-supplied query param) -- returns to that exact unit,
-              which re-fetches this real result server-side rather than
-              trusting anything carried in the URL. Standalone Radio
-              Practice (trainingItemId null) never shows this. */}
-          {assignment.trainingItemId ? (
-            <Button onClick={() => router.push(`/train/vector/${assignment.trainingItemId}`)} className="flex-1">
-              Continue with Vector
-            </Button>
+        <div className="flex flex-col gap-2.5">
+          {hasVectorReturn ? (
+            <>
+              <PrimaryButton onClick={() => router.push(`/train/vector/${assignment.trainingItemId}`)}>
+                Continue with Vector
+              </PrimaryButton>
+              {!result?.correct || next ? (
+                <div className="flex gap-2.5">
+                  {!result?.correct ? <SecondaryButton onClick={tryAgain}>Try Again</SecondaryButton> : null}
+                  {next ? (
+                    <SecondaryButton onClick={() => router.push(`/practice/${next.id}`)}>Next: {next.title}</SecondaryButton>
+                  ) : null}
+                </div>
+              ) : null}
+            </>
+          ) : !result?.correct ? (
+            <>
+              <PrimaryButton onClick={tryAgain}>Try Again</PrimaryButton>
+              {next ? (
+                <SecondaryButton onClick={() => router.push(`/practice/${next.id}`)}>Next: {next.title}</SecondaryButton>
+              ) : null}
+            </>
+          ) : next ? (
+            <PrimaryButton onClick={() => router.push(`/practice/${next.id}`)}>Next: {next.title}</PrimaryButton>
           ) : null}
-          <div className="flex gap-2">
-            {!result?.correct ? (
-              <Button onClick={tryAgain} className="flex-1" variant={assignment.trainingItemId ? "outline" : "default"}>
-                Try Again
-              </Button>
-            ) : null}
-            {/* Straight to the next assigned call. A student working through
-                three of these shouldn't have to go home and find each one. */}
-            {next ? (
-              <Button
-                onClick={() => router.push(`/practice/${next.id}`)}
-                variant={result?.correct || assignment.trainingItemId ? "outline" : "default"}
-                className="flex-1"
-              >
-                Next: {next.title}
-              </Button>
-            ) : null}
-          </div>
-          <Button variant="ghost" onClick={() => router.push("/home")}>
+
+          <button
+            type="button"
+            onClick={() => router.push("/home")}
+            className="mt-1 flex min-h-[44px] cursor-pointer items-center justify-center text-[15px] font-medium text-foreground-faint"
+          >
             Back to Home
-          </Button>
+          </button>
         </div>
       ) : null}
-    </div>
+    </Screen>
   );
 }
