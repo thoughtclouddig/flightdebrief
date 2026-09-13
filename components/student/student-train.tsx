@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { ChevronRight, Radio } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, Radio } from "lucide-react";
 import Link from "next/link";
 import {
   Card,
@@ -19,6 +19,7 @@ import {
 } from "@/components/student/ui";
 import { TrainingContextHeader } from "@/components/student/training-context-header";
 import { TrainingUnitCard, TrainingUnitCompactRow } from "@/components/student/training-unit-card";
+import { cn } from "@/lib/utils";
 import type { SkillState } from "@/lib/student/state-tone";
 import type { VectorSession } from "@/lib/student/vector-coaching";
 
@@ -124,6 +125,131 @@ export interface StudentTrainProps {
   moreTrain?: StudentTrainCompactUnit[];
 }
 
+/**
+ * One card at a time, indexed across everything from this debrief -- no
+ * more "Start Here" vs. "Also Train" tiers, no separate hidden overflow
+ * list. Every unit past the first is reached the same way: swipe on touch,
+ * the arrows/dots below on desktop -- one deck, not a recommendation plus a
+ * quieter afterthought section.
+ *
+ * A single slide renders with no deck chrome at all (no dots, no arrows) --
+ * that machinery only earns its place once there's somewhere else to go.
+ *
+ * Built on CSS scroll-snap rather than a gesture library: on a touch device
+ * this already IS a native swipe (the browser's own horizontal scroll
+ * physics, not a simulation of one), and the same scroll position drives
+ * the desktop arrows/dots -- one source of truth for "which card is active."
+ */
+function TrainingDeck({ slides }: { slides: ReactNode[] }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const count = slides.length;
+
+  const scrollToIndex = useCallback((index: number) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollTo({ left: index * el.clientWidth, behavior: "smooth" });
+  }, []);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el || count <= 1) return;
+    let raf = 0;
+    function onScroll() {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        if (!el) return;
+        const index = Math.round(el.scrollLeft / el.clientWidth);
+        setActiveIndex((prev) => (prev === index ? prev : index));
+      });
+    }
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [count]);
+
+  if (count === 0) return null;
+  if (count === 1) return <>{slides[0]}</>;
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "ArrowRight" && activeIndex < count - 1) scrollToIndex(activeIndex + 1);
+    if (e.key === "ArrowLeft" && activeIndex > 0) scrollToIndex(activeIndex - 1);
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="relative">
+        <div
+          ref={scrollerRef}
+          tabIndex={0}
+          onKeyDown={onKeyDown}
+          role="region"
+          aria-label={`Training card ${activeIndex + 1} of ${count}`}
+          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {slides.map((slide, index) => (
+            <div key={index} className="w-full shrink-0 snap-center">
+              {slide}
+            </div>
+          ))}
+        </div>
+
+        {/* Prev/next: a desktop affordance. Touch already has real swipe,
+            so these stay hidden below md rather than duplicating it. */}
+        {activeIndex > 0 ? (
+          <button
+            type="button"
+            aria-label="Previous card"
+            onClick={() => scrollToIndex(activeIndex - 1)}
+            className="absolute left-2 top-1/2 hidden -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-hairline bg-surface p-2.5 shadow-md transition-colors hover:bg-surface-sunken md:flex"
+          >
+            <ChevronLeft className="size-5 text-foreground" aria-hidden />
+          </button>
+        ) : null}
+        {activeIndex < count - 1 ? (
+          <button
+            type="button"
+            aria-label="Next card"
+            onClick={() => scrollToIndex(activeIndex + 1)}
+            className="absolute right-2 top-1/2 hidden -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-hairline bg-surface p-2.5 shadow-md transition-colors hover:bg-surface-sunken md:flex"
+          >
+            <ChevronRight className="size-5 text-foreground" aria-hidden />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="flex items-center justify-center gap-1.5" role="tablist" aria-label="Training cards">
+        {slides.map((_, index) => (
+          <button
+            key={index}
+            type="button"
+            role="tab"
+            aria-selected={index === activeIndex}
+            aria-label={`Go to card ${index + 1} of ${count}`}
+            onClick={() => scrollToIndex(index)}
+            className={cn("h-2 cursor-pointer rounded-full transition-all", index === activeIndex ? "w-6 bg-brand" : "w-2 bg-hairline")}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** A CFI-assigned Radio Practice scenario, as its own deck slide -- own provenance ("{name} recommends"), own CTA ("Start practice," never "Train with Vector"), since there's no Vector diagnosis step to run here; the instructor already decided. */
+function CfiRadioAssignmentCard({ instructorFirstName, scenarioTitle, href }: { instructorFirstName: string; scenarioTitle: string; href: string }) {
+  return (
+    <Panel>
+      <PanelEyebrow icon={<Radio className="size-3.5" aria-hidden />}>{instructorFirstName} recommends</PanelEyebrow>
+      <PanelHeadline>{scenarioTitle}</PanelHeadline>
+      <div className="mt-5">
+        <PanelButton href={href}>Start practice</PanelButton>
+      </div>
+    </Panel>
+  );
+}
+
 export function StudentTrain({
   recommended,
   emptyMessage,
@@ -138,7 +264,6 @@ export function StudentTrain({
   alsoTrain,
   moreTrain,
 }: StudentTrainProps) {
-  const [moreRevealed, setMoreRevealed] = useState(false);
   if (!recommended) {
     return (
       <Screen>
@@ -178,99 +303,75 @@ export function StudentTrain({
     </>
   ) : null;
 
+  // The recommended unit is always slide 0. Every other current-debrief
+  // unit -- previously split into "also train" (visible) and "more train"
+  // (behind a disclosure) -- is now just more slides in the same deck, in
+  // the same order, nothing held back. A CFI-assigned Radio Practice
+  // scenario, when there is one, sits right after Start Here -- a direct
+  // instructor assignment is a strong enough signal to surface early,
+  // without overriding Vector's own top pick.
+  const otherUnits = [...(alsoTrain ?? []), ...(moreTrain ?? [])];
+  const slides: ReactNode[] = [
+    <TrainingUnitCard
+      key="recommended"
+      tone={recommended.tone}
+      eyebrow={recommended.startHereEyebrow ?? recommended.toneLabel}
+      skillLabel={recommended.skillLabel}
+      acsArea={recommended.acsArea}
+      comparisonLine={recommended.comparisonLine}
+      evidence={recommended.evidence}
+      vectorInfo={vectorInfo}
+      actions={startHereActions}
+    />,
+  ];
+  if (radioPractice?.cfiRecommendation) {
+    slides.push(
+      <CfiRadioAssignmentCard
+        key="radio-assignment"
+        instructorFirstName={radioPractice.cfiRecommendation.instructorFirstName}
+        scenarioTitle={radioPractice.cfiRecommendation.scenarioTitle}
+        href={radioPractice.cfiRecommendation.href}
+      />,
+    );
+  }
+  for (const unit of otherUnits) {
+    slides.push(
+      <TrainingUnitCompactRow
+        key={unit.vectorSession.href}
+        skillLabel={unit.skillLabel}
+        evidence={unit.evidence}
+        action={<PrimaryButton href={unit.vectorSession.href}>{unit.vectorSession.buttonLabel}</PrimaryButton>}
+      />,
+    );
+  }
+
   return (
     <Screen>
       <PageTitle>Train</PageTitle>
       <TrainingContextHeader>{recommended.contextLine}</TrainingContextHeader>
 
       <Section title={sectionTitle} flush>
-        <TrainingUnitCard
-          tone={recommended.tone}
-          eyebrow={recommended.startHereEyebrow ?? recommended.toneLabel}
-          skillLabel={recommended.skillLabel}
-          acsArea={recommended.acsArea}
-          comparisonLine={recommended.comparisonLine}
-          evidence={recommended.evidence}
-          vectorInfo={vectorInfo}
-          actions={startHereActions}
-        />
+        <TrainingDeck slides={slides} />
       </Section>
 
-      {alsoTrain && alsoTrain.length > 0 ? (
-        <Section title="Also train">
-          {/* Up to 2 units: a single column below xl, a 2-up grid once
-              there's genuinely room for both side by side rather than one
-              stretched to full width. */}
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-            {alsoTrain.map((unit) => (
-              <TrainingUnitCompactRow
-                key={unit.vectorSession.href}
-                skillLabel={unit.skillLabel}
-                evidence={unit.evidence}
-                action={<PrimaryButton href={unit.vectorSession.href}>{unit.vectorSession.buttonLabel}</PrimaryButton>}
-              />
-            ))}
-          </div>
-        </Section>
-      ) : null}
-
-      {moreTrain && moreTrain.length > 0 ? (
-        moreRevealed ? (
-          <div className="grid grid-cols-1 gap-3 px-1.5 xl:grid-cols-2">
-            {moreTrain.map((unit) => (
-              <TrainingUnitCompactRow
-                key={unit.vectorSession.href}
-                skillLabel={unit.skillLabel}
-                evidence={unit.evidence}
-                action={<PrimaryButton href={unit.vectorSession.href}>{unit.vectorSession.buttonLabel}</PrimaryButton>}
-              />
-            ))}
-          </div>
-        ) : (
-          <button
-            onClick={() => setMoreRevealed(true)}
-            className="flex items-center gap-1 self-start px-1.5 text-[15px] font-medium text-brand"
-          >
-            {moreTrain.length} more from this debrief
-            <ChevronRight className="size-4" aria-hidden />
-          </button>
-        )
-      ) : null}
-
-      {radioPractice && !(radioPractice.cfiRecommendation === null && radioPractice.contextNote !== null) ? (
-        <Section title="Other training">
-          <div className="flex flex-col gap-3">
-            {radioPractice.cfiRecommendation ? (
-              <Panel>
-                <PanelEyebrow icon={<Radio className="size-3.5" aria-hidden />}>
-                  {radioPractice.cfiRecommendation.instructorFirstName} recommends
-                </PanelEyebrow>
-                <PanelHeadline>{radioPractice.cfiRecommendation.scenarioTitle}</PanelHeadline>
-                <div className="mt-5">
-                  <PanelButton href={radioPractice.cfiRecommendation.href}>Start practice</PanelButton>
-                </div>
-              </Panel>
-            ) : null}
-            {/* contextNote is only ever set when Vector's own top panel is
-                already routing to this exact same startHref (see
-                lib/student/train-production-adapter.tsx's buildRadioPracticeProps)
-                -- a second, generic "Start practice" card here would be a
-                redundant standalone entry, not a second option. */}
-            {radioPractice.contextNote !== null ? null : (
-              <Card>
-                <p className="flex items-center gap-1.5 text-[17px] font-medium text-foreground">
-                  <Radio className="size-4 text-foreground-faint" aria-hidden />
-                  Radio Practice
-                </p>
-                <p className="mt-1.5 text-[15px] leading-relaxed text-foreground-soft">
-                  {radioPractice.contextNote ?? "Practice realistic ATC scenarios and get feedback on your responses."}
-                </p>
-                <div className="mt-4">
-                  <PrimaryButton href={radioPractice.startHref}>Start practice</PrimaryButton>
-                </div>
-              </Card>
-            )}
-          </div>
+      {/* The generic Radio Practice entry point -- only when there's no CFI
+          assignment already covering it (that case is a deck slide above)
+          and Vector's own top pick isn't already pointing here (contextNote
+          set) -- never a second, redundant standalone entry. */}
+      {radioPractice && !radioPractice.cfiRecommendation && !radioPractice.contextNote ? (
+        <Section title="Radio Practice">
+          <Card>
+            <p className="flex items-center gap-1.5 text-[17px] font-medium text-foreground">
+              <Radio className="size-4 text-foreground-faint" aria-hidden />
+              Radio Practice
+            </p>
+            <p className="mt-1.5 text-[15px] leading-relaxed text-foreground-soft">
+              Practice realistic ATC scenarios and get feedback on your responses.
+            </p>
+            <div className="mt-4">
+              <PrimaryButton href={radioPractice.startHref}>Start practice</PrimaryButton>
+            </div>
+          </Card>
         </Section>
       ) : null}
 

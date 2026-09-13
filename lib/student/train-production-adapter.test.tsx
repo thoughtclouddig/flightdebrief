@@ -249,7 +249,7 @@ describe("StudentTrain rendering with real production props", () => {
     expect(buttonCount).toBe(1);
   });
 
-  it("renders each Also Train unit as its own compact card, each with its own working Vector link", async () => {
+  it("renders each other current-debrief unit as its own compact slide in the deck, each with its own working Vector link", async () => {
     const { StudentTrain } = await import("@/components/student/student-train");
     const repo = fakeRepo({
       items: [
@@ -259,12 +259,11 @@ describe("StudentTrain rendering with real production props", () => {
     });
     const props = await buildProductionTrainProps(repo, viewer(), HREFS);
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
-    expect(markup).toContain("Also train");
     expect(markup).toContain("Radio communications");
     expect(markup).toContain('href="/train/vector/b"');
   });
 
-  it("keeps additional current-debrief units behind progressive disclosure, never silently dropped", async () => {
+  it("keeps every current-debrief unit directly reachable in the deck, never behind a hidden disclosure", async () => {
     const { StudentTrain } = await import("@/components/student/student-train");
     const repo = fakeRepo({
       items: [
@@ -275,11 +274,9 @@ describe("StudentTrain rendering with real production props", () => {
       ],
     });
     const props = await buildProductionTrainProps(repo, viewer(), HREFS);
-    // Not silently dropped at the data layer -- the fourth unit is a real
-    // unit with its own working link, just not immediately visible.
     expect(props.moreTrain?.[0]?.vectorSession.href).toBe("/train/vector/d");
     const markup = renderToStaticMarkup(<StudentTrain {...props} />);
-    expect(markup).toContain("1 more from this debrief");
+    expect(markup).toContain('href="/train/vector/d"');
   });
 
   it("never duplicates the generic Radio Practice card when Vector's own primary action already routes to Radio Practice", async () => {
