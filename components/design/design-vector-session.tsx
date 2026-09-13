@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DesignChairFlySession } from "@/components/design/design-chair-fly-session";
 import { DesignRadioPracticeSession } from "@/components/design/design-radio-practice-session";
-import { AileronEffectivenessDiagram, AudioCue } from "@/components/design/design-vector-diagrams";
+import { AudioCue } from "@/components/design/design-vector-diagrams";
 import {
   CHECK_QUESTION,
   CHECK_RESULT,
@@ -40,9 +40,9 @@ function SessionCard({ children }: { children: React.ReactNode }) {
 
 function CardEyebrow({ icon: Icon, children }: { icon: typeof Brain; children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-accent)]">
-      <Icon className="size-4 shrink-0" aria-hidden />
-      {children}
+    <p className="flex items-start gap-1.5 text-[13px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-accent)]">
+      <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <span>{children}</span>
     </p>
   );
 }
@@ -82,7 +82,7 @@ function QuietCta({ children, onClick }: { children: React.ReactNode; onClick?: 
     <button
       type="button"
       onClick={onClick}
-      className="mt-6 flex min-h-[44px] w-full max-w-[200px] cursor-pointer items-center justify-center rounded-xl border border-[var(--dm-border)] px-4 text-[15px] font-medium text-[var(--dm-text)] transition-colors hover:bg-[var(--dm-surface-muted)]"
+      className="mt-6 flex min-h-[52px] w-full cursor-pointer items-center justify-center rounded-2xl border border-[var(--dm-border)] px-5 text-[17px] font-semibold text-[var(--dm-text)] transition-colors hover:bg-[var(--dm-surface-muted)]"
     >
       {children}
     </button>
@@ -96,10 +96,10 @@ function QuietCta({ children, onClick }: { children: React.ReactNode; onClick?: 
  */
 function NextFlightObjective({ objective }: { objective: string }) {
   return (
-    <div className="-mx-6 mt-5 rounded-2xl border border-dashed border-[var(--dm-border)] bg-[var(--dm-surface-muted)] p-5 md:-mx-8 xl:-mx-10">
-      <p className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--dm-text-soft)]">
-        <PlaneTakeoff className="size-3.5 text-[var(--dm-accent)]" aria-hidden />
-        Take this into your next flight
+    <div className="mt-5 rounded-2xl border border-dashed border-[var(--dm-border)] bg-[var(--dm-surface-muted)] p-4">
+      <p className="flex items-start gap-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--dm-text-soft)]">
+        <PlaneTakeoff className="mt-0.5 size-3 shrink-0 text-[var(--dm-accent)]" aria-hidden />
+        <span>Take this into your next flight</span>
       </p>
       <p className="mt-1.5 text-pretty text-[15px] leading-relaxed text-[var(--dm-text)]">{objective}</p>
     </div>
@@ -278,9 +278,6 @@ export function DesignVectorSession({ state }: { state: DesignVectorState }) {
         <SessionCard>
           <CardEyebrow icon={Lightbulb}>Here&rsquo;s what to work on</CardEyebrow>
           <p className="mt-3 max-w-[56ch] text-pretty text-[19px] leading-relaxed text-[var(--dm-text)] xl:text-[21px]">{COACH_MESSAGE}</p>
-          <div className="mt-5 max-w-[420px] rounded-2xl bg-[var(--dm-surface-muted)] p-4">
-            <AileronEffectivenessDiagram />
-          </div>
           <NextFlightObjective objective="Next flight, notice how much more aileron it takes to hold the same bank as you slow down for landing." />
           <QuietCta>Done</QuietCta>
         </SessionCard>
@@ -317,9 +314,6 @@ export function DesignVectorSession({ state }: { state: DesignVectorState }) {
         <SessionCard>
           <CardEyebrow icon={CheckCircle2}>Feedback</CardEyebrow>
           <CardBody>{CHECK_RESULT.feedback}</CardBody>
-          <div className="mt-5 max-w-[420px] rounded-2xl bg-[var(--dm-surface-muted)] p-4">
-            <AileronEffectivenessDiagram />
-          </div>
           <NextFlightObjective objective={CHECK_RESULT.takeaway} />
           <a
             href={CHECK_RESULT.citation.url}
