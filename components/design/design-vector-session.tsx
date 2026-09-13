@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DesignInstructorEvidence } from "@/components/design/design-training-unit-card";
+import { DesignChairFlySession } from "@/components/design/design-chair-fly-session";
+import { DesignRadioPracticeSession } from "@/components/design/design-radio-practice-session";
 import { AileronEffectivenessDiagram, AudioCue, CrosswindProfileDiagram } from "@/components/design/design-vector-diagrams";
 import {
   CHECK_QUESTION,
@@ -203,6 +205,19 @@ function DesignRecallCheck() {
 
 export function DesignVectorSession({ state }: { state: DesignVectorState }) {
   const [answer, setAnswer] = useState("");
+  // Which full in-session experience has taken over the screen, if any --
+  // mirrors what really happens when "Rehearse with Vector" or "Start Radio
+  // Practice" navigates to a separate route (/train/chair-fly,
+  // /practice/[id]). Independent of `state`, since the real app doesn't
+  // keep the Vector card mounted underneath either.
+  const [activeSession, setActiveSession] = useState<"chair-fly" | "radio-practice" | null>(null);
+
+  if (activeSession === "chair-fly") {
+    return <DesignChairFlySession onExit={() => setActiveSession(null)} />;
+  }
+  if (activeSession === "radio-practice") {
+    return <DesignRadioPracticeSession onExit={() => setActiveSession(null)} />;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -229,7 +244,7 @@ export function DesignVectorSession({ state }: { state: DesignVectorState }) {
           <CardBody>
             I&rsquo;ll set the scene and stop at each decision point — you fly it in your head before you fly it for real.
           </CardBody>
-          <PrimaryCta>Rehearse with Vector</PrimaryCta>
+          <PrimaryCta onClick={() => setActiveSession("chair-fly")}>Rehearse with Vector</PrimaryCta>
           <p className="mt-4 max-w-[52ch] text-pretty text-[13px] leading-relaxed text-[var(--dm-text-faint)]">
             This is prep to bring into the aircraft with your instructor — not a substitute for in-aircraft instruction.
           </p>
@@ -248,7 +263,7 @@ export function DesignVectorSession({ state }: { state: DesignVectorState }) {
               ? "Graded on what you actually said, not a script — this is the same practice a real controller would expect."
               : "What you actually say tells us more than describing the problem would — respond like you would in the airplane."}
           </CardBody>
-          <PrimaryCta>Start Radio Practice</PrimaryCta>
+          <PrimaryCta onClick={() => setActiveSession("radio-practice")}>Start Radio Practice</PrimaryCta>
         </SessionCard>
       ) : null}
 
