@@ -53,7 +53,7 @@ export const RECALL_QUESTIONS: {
   explanation: string;
 }[] = [
   {
-    prompt: "As airspeed drops in the flare, the aileron correction you're holding needs to:",
+    prompt: "As airspeed drops in the flare, the aileron correction you're holding needs to:",
     options: ["Stay exactly the same", "Increase", "Decrease", "Switch to rudder instead"],
     correctIndex: 1,
     explanation: "Less airflow over the control surfaces means the same input does less — so it takes more aileron to hold the same bank.",

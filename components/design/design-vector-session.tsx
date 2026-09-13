@@ -16,17 +16,15 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DesignInstructorEvidence } from "@/components/design/design-training-unit-card";
 import { DesignChairFlySession } from "@/components/design/design-chair-fly-session";
 import { DesignRadioPracticeSession } from "@/components/design/design-radio-practice-session";
-import { AileronEffectivenessDiagram, AudioCue, CrosswindProfileDiagram } from "@/components/design/design-vector-diagrams";
+import { AileronEffectivenessDiagram, AudioCue } from "@/components/design/design-vector-diagrams";
 import {
   CHECK_QUESTION,
   CHECK_RESULT,
   COACH_MESSAGE,
   RADIO_MISSED_ELEMENT,
   RECALL_QUESTIONS,
-  SESSION_EVIDENCE,
   SESSION_SKILL_LABEL,
   TRANSFER_OBJECTIVE,
   type DesignVectorState,
@@ -70,7 +68,7 @@ function PrimaryCta({
     <button
       type="button"
       onClick={onClick}
-      className="mt-6 flex min-h-[52px] w-full max-w-[360px] cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--dm-accent)] px-5 text-[17px] font-semibold text-[var(--dm-on-accent)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+      className="mt-6 flex min-h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--dm-accent)] px-5 text-[17px] font-semibold text-[var(--dm-on-accent)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       disabled={loading}
     >
       {loading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
@@ -231,21 +229,17 @@ export function DesignVectorSession({ state }: { state: DesignVectorState }) {
         <p role="heading" aria-level={1} className="text-[28px] font-semibold leading-[1.1] tracking-[-0.01em] text-[var(--dm-text)] xl:text-[32px]">
           Let&rsquo;s work on your {SESSION_SKILL_LABEL.toLowerCase()}.
         </p>
-        <DesignInstructorEvidence quote={SESSION_EVIDENCE.quote} instructorName="Jake" flightDate="Sep 10" />
       </div>
 
       {state === "chair-fly" ? (
         <SessionCard>
-          <CardEyebrow icon={Brain}>Let&rsquo;s rehearse this</CardEyebrow>
+          <CardEyebrow icon={Brain}>Chair Fly — let&rsquo;s rehearse this</CardEyebrow>
           <CardHeadline>Fly it in your head first</CardHeadline>
-          <div className="mt-4 max-w-[420px] rounded-2xl bg-[var(--dm-surface-muted)] p-4">
-            <CrosswindProfileDiagram />
-          </div>
           <CardBody>
             I&rsquo;ll set the scene and stop at each decision point — you fly it in your head before you fly it for real.
           </CardBody>
           <PrimaryCta onClick={() => setActiveSession("chair-fly")}>Rehearse with Vector</PrimaryCta>
-          <p className="mt-4 max-w-[52ch] text-pretty text-[13px] leading-relaxed text-[var(--dm-text-faint)]">
+          <p className="mt-4 text-pretty text-[13px] leading-relaxed text-[var(--dm-text-faint)]">
             This is prep to bring into the aircraft with your instructor — not a substitute for in-aircraft instruction.
           </p>
         </SessionCard>

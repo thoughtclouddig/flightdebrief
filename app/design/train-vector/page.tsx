@@ -40,7 +40,12 @@ export default function DesignTrainVectorPage() {
             ))}
           </div>
 
-          <DesignVectorSession state={state} />
+          {/* key={state} -- remounts fresh on every pill switch so no
+              internal state (activeSession, the recall check's progress,
+              the check flow's answer draft) can leak from one state into
+              another. The real app never keeps a stale session mounted
+              across a navigation either. */}
+          <DesignVectorSession key={state} state={state} />
         </div>
       </DesignStudentShell>
     </DesignThemeProvider>

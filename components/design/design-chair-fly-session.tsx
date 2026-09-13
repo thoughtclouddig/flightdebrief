@@ -31,35 +31,44 @@ export function DesignChairFlySession({ onExit }: { onExit: () => void }) {
 
   if (stage === "intro") {
     return (
-      <div className="rounded-[28px] border border-[var(--dm-border)] bg-[var(--dm-surface-elevated)] p-6 shadow-[var(--dm-shadow)] md:p-8 xl:p-10">
-        <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-accent)]">Why this drill</p>
-        <p className="mt-1.5 text-pretty text-[22px] font-semibold leading-snug tracking-[-0.01em] text-[var(--dm-text)] xl:text-[26px]">
-          You called it {drill.reason.studentLabel}. {drill.reason.instructorName} called it{" "}
-          {drill.reason.instructorLabel}.
-        </p>
-        <p className="mt-2 text-[14px] text-[var(--dm-text-faint)]">
-          {drill.scenario}{"\u00A0"}·{"\u00A0"}about{"\u00A0"}{drill.estimatedMinutes}{"\u00A0"}minutes
-        </p>
-
-        <div className="mt-5 rounded-2xl border-l-[3px] border-[var(--dm-evidence-rule)] bg-[var(--dm-evidence-bg)] p-4">
-          <p className="text-pretty text-[15px] leading-relaxed text-[var(--dm-text)]">&ldquo;{drill.reason.evidence}&rdquo;</p>
-          <p className="mt-2 text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--dm-text-faint)]">
-            {drill.reason.instructorName} · {drill.reason.date}
+      <div className="flex flex-col gap-4">
+        <div>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--dm-text-faint)]">Chair fly</p>
+          <p role="heading" aria-level={1} className="mt-1.5 text-[28px] font-semibold leading-[1.1] tracking-[-0.01em] text-[var(--dm-text)] xl:text-[32px]">
+            {drill.objective}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setStage("running")}
-          className="mt-6 flex min-h-[52px] w-full max-w-[360px] cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--dm-accent)] px-5 text-[17px] font-semibold text-[var(--dm-on-accent)] transition-opacity hover:opacity-90"
-        >
-          Begin
-          <ArrowRight className="size-[18px]" aria-hidden />
-        </button>
+        <div className="rounded-[28px] border border-[var(--dm-border)] bg-[var(--dm-surface-elevated)] p-6 shadow-[var(--dm-shadow)] md:p-8 xl:p-10">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-accent)]">Why this drill</p>
+          <p className="mt-1.5 text-pretty text-[19px] font-semibold leading-snug tracking-[-0.01em] text-[var(--dm-text)] xl:text-[21px]">
+            You called it {drill.reason.studentLabel}. {drill.reason.instructorName} called it{" "}
+            {drill.reason.instructorLabel}.
+          </p>
+          <p className="mt-2 text-[14px] text-[var(--dm-text-faint)]">
+            {drill.scenario}{"\u00A0"}·{"\u00A0"}about{"\u00A0"}{drill.estimatedMinutes}{"\u00A0"}minutes
+          </p>
 
-        <p className="mt-4 max-w-[52ch] text-pretty text-[13px] leading-relaxed text-[var(--dm-text-faint)]">
-          Vector sets the situation and asks what you&rsquo;d do — {drill.steps.length} of them, starting where your last flight ended. {drill.guardrail}
-        </p>
+          <div className="mt-5 rounded-2xl border-l-[3px] border-[var(--dm-evidence-rule)] bg-[var(--dm-evidence-bg)] p-4">
+            <p className="text-pretty text-[15px] leading-relaxed text-[var(--dm-text)]">&ldquo;{drill.reason.evidence}&rdquo;</p>
+            <p className="mt-2 text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--dm-text-faint)]">
+              {drill.reason.instructorName} · {drill.reason.date}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setStage("running")}
+            className="mt-6 flex min-h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--dm-accent)] px-5 text-[17px] font-semibold text-[var(--dm-on-accent)] transition-opacity hover:opacity-90"
+          >
+            Begin
+            <ArrowRight className="size-[18px]" aria-hidden />
+          </button>
+
+          <p className="mt-4 text-pretty text-[13px] leading-relaxed text-[var(--dm-text-faint)]">
+            Vector sets the situation and asks what you&rsquo;d do — {drill.steps.length} of them, starting where your last flight ended. {drill.guardrail}
+          </p>
+        </div>
       </div>
     );
   }
@@ -100,7 +109,7 @@ export function DesignChairFlySession({ onExit }: { onExit: () => void }) {
           <button
             type="button"
             onClick={onExit}
-            className="mt-6 flex min-h-[52px] w-full max-w-[360px] cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--dm-accent)] px-5 text-[17px] font-semibold text-[var(--dm-on-accent)] transition-opacity hover:opacity-90"
+            className="mt-6 flex min-h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--dm-accent)] px-5 text-[17px] font-semibold text-[var(--dm-on-accent)] transition-opacity hover:opacity-90"
           >
             See my next flight
             <ArrowRight className="size-[18px]" aria-hidden />
@@ -179,7 +188,7 @@ export function DesignChairFlySession({ onExit }: { onExit: () => void }) {
         <button
           type="button"
           onClick={advance}
-          className="flex min-h-[52px] w-full max-w-[360px] cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--dm-accent)] px-5 text-[17px] font-semibold text-[var(--dm-on-accent)] transition-opacity hover:opacity-90"
+          className="flex min-h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--dm-accent)] px-5 text-[17px] font-semibold text-[var(--dm-on-accent)] transition-opacity hover:opacity-90"
         >
           {index + 1 >= drill.steps.length ? "Finish" : "Continue"}
           <ArrowRight className="size-[18px]" aria-hidden />
