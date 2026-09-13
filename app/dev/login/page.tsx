@@ -14,21 +14,28 @@ function staffEmails(): string[] {
 }
 
 /**
- * The five real-account scenarios this page exists for -- deliberately not
- * every seed persona in lib/data/seed.ts (most of those aren't real rows in
+ * The real-account scenarios this page exists for -- deliberately not every
+ * seed persona in lib/data/seed.ts (most of those aren't real rows in
  * whatever Postgres database this environment is actually connected to, and
- * fail at login with "not-invited"). Each of these is a real Gmail
- * plus-alias the app owner can actually receive mail at, but the link below
+ * fail at login with "not-invited"). Each of the Gmail plus-alias rows is a
+ * real account the app owner can actually receive mail at; the link below
  * goes through the same instant /api/auth/dev-login path as the company-
  * staff rows further down -- no magic-link email, straight into the account
  * -- IF this row is a real row in this environment's database. If it isn't
  * (same "not-invited" failure mode as the seed personas this page used to
  * list), the fallback is the real magic-link flow at /login, which only
  * needs the row to exist, not this environment's dev-login guard to be open.
+ *
+ * Mia is back on this list for one reason: she's the only seeded student
+ * whose last debrief produces a Crosswind Landings contested objective --
+ * the one scenario authored in lib/prototype/chair-fly.ts -- so she's the
+ * only account that can reach a real Chair Fly card without hand-building
+ * seed data first.
  */
 const REAL_ACCOUNT_LOGINS = [
   { role: "Solo student, no CFI", persona: "Alex Rivera", email: "andyrenk+indystudent@gmail.com" },
   { role: "Regular student", persona: "Andy", email: "andyrenk+student@gmail.com" },
+  { role: "Student with Chair Fly scenario", persona: "Mia Chen", email: "mia@example.com" },
   { role: "CFI (school)", persona: "Danny Franks, Falcon Aviation", email: "andyrenk+cfi@gmail.com" },
   { role: "Independent CFI", persona: "Kevin Ortiz", email: "andyrenk+indycfi@gmail.com" },
   { role: "School admin", persona: "Jordan Reyes, Falcon Aviation", email: "andyrenk+admin@gmail.com" },
