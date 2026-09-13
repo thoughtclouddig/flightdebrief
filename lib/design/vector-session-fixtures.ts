@@ -20,7 +20,8 @@ export type DesignVectorState =
   | "check-asking"
   | "check-loading"
   | "check-result"
-  | "check-error";
+  | "check-error"
+  | "recall";
 
 export const STATE_LABELS: Record<DesignVectorState, string> = {
   "chair-fly": "Chair Fly hand-off",
@@ -33,7 +34,42 @@ export const STATE_LABELS: Record<DesignVectorState, string> = {
   "check-loading": "Knowledge check — loading",
   "check-result": "Knowledge check — result",
   "check-error": "Knowledge check — error",
+  recall: "Quick recall (sketch, not real)",
 };
+
+/**
+ * SKETCH ONLY -- speculative, not a real VectorStrategy. Explores reviving
+ * the old prototype's multiple-choice "Check Yourself" as a shallow
+ * reinforcement pass that can follow Vector's own deep free-response
+ * question, never a replacement for it. Same non-negotiable carried over
+ * from the original: no score, ever -- "show me a score and it becomes
+ * another thing I'm failing at" (components/prototype/knowledge-check.tsx).
+ * Grounded in this session's own topic, not a generic question bank.
+ */
+export const RECALL_QUESTIONS: {
+  prompt: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}[] = [
+  {
+    prompt: "As airspeed drops in the flare, the aileron correction you're holding needs to:",
+    options: ["Stay exactly the same", "Increase", "Decrease", "Switch to rudder instead"],
+    correctIndex: 1,
+    explanation: "Less airflow over the control surfaces means the same input does less — so it takes more aileron to hold the same bank.",
+  },
+  {
+    prompt: "Why does a fixed aileron input lose effectiveness as the airplane slows down?",
+    options: [
+      "The wind gets weaker as you get closer to the ground",
+      "There's less airflow over the aileron to act on",
+      "The airplane gets heavier as fuel burns off",
+      "Ailerons only work above maneuvering speed",
+    ],
+    correctIndex: 1,
+    explanation: "Aileron effectiveness comes from airflow, not altitude or weight — slower airspeed means less air moving over the control surface.",
+  },
+];
 
 export const SESSION_SKILL_LABEL = "Crosswind landings";
 
@@ -46,13 +82,13 @@ export const CHECK_QUESTION = "Why do we add more aileron as an airplane slows 
 
 export const CHECK_RESULT = {
   feedback: "You've got it — that's exactly why the correction has to keep increasing as airspeed drops.",
-  takeaway: "As you slow down, keep feeding in aileron to hold the bank you want — it won't stay put on its own.",
+  takeaway: "As you slow down, keep feeding in aileron to hold the bank you want — it won't stay put on its own.",
   citation: { source: "Airplane Flying Handbook, Ch. 5", url: "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook" },
 };
 
 export const CHECK_RESULT_MISSED = {
   feedback: "Close, but the answer's really about how much less airflow is reaching the ailerons at low airspeed, not the angle of bank itself.",
-  takeaway: "As you slow down, keep feeding in aileron to hold the bank you want — it won't stay put on its own.",
+  takeaway: "As you slow down, keep feeding in aileron to hold the bank you want — it won't stay put on its own.",
   citation: { source: "Airplane Flying Handbook, Ch. 5", url: "https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/airplane_handbook" },
 };
 

@@ -42,7 +42,9 @@ export function DesignInstructorEvidence({ quote, instructorName, flightDate }: 
       <span aria-hidden className="pointer-events-none absolute -right-1 -top-3 select-none font-serif text-[64px] leading-none text-[var(--dm-accent)] opacity-[0.08]">
         {'"'}
       </span>
-      <p className="relative max-w-[30ch] text-pretty text-[17px] italic leading-relaxed text-[var(--dm-text)] xl:text-[19px]">{noOrphan(quote)}</p>
+      <p className="relative max-w-[30ch] text-pretty text-[17px] leading-relaxed text-[var(--dm-text)] xl:text-[19px]">
+        &ldquo;{noOrphan(quote)}&rdquo;
+      </p>
       <p className="relative mt-2 text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--dm-text-faint)]">
         {instructorName} · {flightDate}
       </p>

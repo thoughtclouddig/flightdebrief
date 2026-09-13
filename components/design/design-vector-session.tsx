@@ -4,13 +4,16 @@ import { useState } from "react";
 import {
   AlertCircle,
   Brain,
+  Check,
   CheckCircle2,
   ExternalLink,
   Lightbulb,
+  ListChecks,
   Loader2,
   MessageCircleQuestion,
   PlaneTakeoff,
   Radio,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DesignInstructorEvidence } from "@/components/design/design-training-unit-card";
@@ -20,6 +23,7 @@ import {
   CHECK_RESULT,
   COACH_MESSAGE,
   RADIO_MISSED_ELEMENT,
+  RECALL_QUESTIONS,
   SESSION_EVIDENCE,
   SESSION_SKILL_LABEL,
   TRANSFER_OBJECTIVE,
@@ -34,7 +38,7 @@ function SessionCard({ children }: { children: React.ReactNode }) {
   );
 }
 
-function CardEyebrow({ icon: Icon, children }: { icon: typeof Brain; children: string }) {
+function CardEyebrow({ icon: Icon, children }: { icon: typeof Brain; children: React.ReactNode }) {
   return (
     <p className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-accent)]">
       <Icon className="size-4 shrink-0" aria-hidden />
@@ -51,10 +55,19 @@ function CardBody({ children }: { children: React.ReactNode }) {
   return <p className="mt-3 max-w-[56ch] text-pretty text-[16px] leading-relaxed text-[var(--dm-text-soft)]">{children}</p>;
 }
 
-function PrimaryCta({ children, loading = false }: { children: React.ReactNode; loading?: boolean }) {
+function PrimaryCta({
+  children,
+  loading = false,
+  onClick,
+}: {
+  children: React.ReactNode;
+  loading?: boolean;
+  onClick?: () => void;
+}) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="mt-6 flex min-h-[52px] w-full max-w-[360px] cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--dm-accent)] px-5 text-[17px] font-semibold text-[var(--dm-on-accent)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       disabled={loading}
     >
@@ -64,10 +77,11 @@ function PrimaryCta({ children, loading = false }: { children: React.ReactNode; 
   );
 }
 
-function QuietCta({ children }: { children: React.ReactNode }) {
+function QuietCta({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="mt-6 flex min-h-[44px] w-full max-w-[200px] cursor-pointer items-center justify-center rounded-xl border border-[var(--dm-border)] px-4 text-[15px] font-medium text-[var(--dm-text)] transition-colors hover:bg-[var(--dm-surface-muted)]"
     >
       {children}
@@ -89,6 +103,101 @@ function NextFlightObjective({ objective }: { objective: string }) {
       </p>
       <p className="mt-1.5 text-pretty text-[15px] leading-relaxed text-[var(--dm-text)]">{objective}</p>
     </div>
+  );
+}
+
+/**
+ * SKETCH ONLY -- speculative, not a real Vector state. See
+ * lib/design/vector-session-fixtures.ts's RECALL_QUESTIONS doc comment for
+ * the full rationale. Deliberately reuses the radio-retry "you missed"
+ * evidence-bg treatment for a wrong answer and the coach state's
+ * --dm-state-improving hue for a right one, rather than inventing a third
+ * semantic color the rest of this design system doesn't have.
+ */
+function DesignRecallCheck() {
+  const [index, setIndex] = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [done, setDone] = useState(false);
+
+  if (done) {
+    return (
+      <SessionCard>
+        <CardEyebrow icon={ListChecks}>Quick recall — sketch</CardEyebrow>
+        <CardHeadline>That&rsquo;s the idea</CardHeadline>
+        <CardBody>
+          A couple of fast, low-stakes questions on the same skill Vector just covered — still no score, just a quick check that it stuck before you move on.
+        </CardBody>
+        <QuietCta>Done</QuietCta>
+      </SessionCard>
+    );
+  }
+
+  const question = RECALL_QUESTIONS[index]!;
+  const isLast = index === RECALL_QUESTIONS.length - 1;
+
+  return (
+    <SessionCard>
+      <CardEyebrow icon={ListChecks}>
+        Quick recall — sketch · {index + 1} of {RECALL_QUESTIONS.length}
+      </CardEyebrow>
+      <p className="mt-3 max-w-[52ch] text-pretty text-[19px] leading-snug text-[var(--dm-text)] xl:text-[21px]">{question.prompt}</p>
+      <div className="mt-4 flex flex-col gap-2">
+        {question.options.map((option, i) => {
+          const isCorrectOption = i === question.correctIndex;
+          const isPicked = selected === i;
+          const revealed = selected !== null;
+          return (
+            <button
+              key={option}
+              type="button"
+              disabled={revealed}
+              onClick={() => setSelected((prev) => (prev === null ? i : prev))}
+              className={cn(
+                "flex min-h-[52px] w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-[15px] leading-snug transition-colors",
+                !revealed && "cursor-pointer border-[var(--dm-border)] text-[var(--dm-text)] hover:bg-[var(--dm-surface-muted)]",
+                revealed && isCorrectOption && "border-[var(--dm-state-improving)] bg-[var(--dm-state-improving)]/10 text-[var(--dm-text)]",
+                revealed && isPicked && !isCorrectOption && "border-[var(--dm-evidence-rule)] bg-[var(--dm-evidence-bg)] text-[var(--dm-text)]",
+                revealed && !isPicked && !isCorrectOption && "cursor-default border-[var(--dm-border)] text-[var(--dm-text-faint)] opacity-60",
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "flex size-5 shrink-0 items-center justify-center rounded-full border",
+                  !revealed && "border-[var(--dm-border)]",
+                  revealed && isCorrectOption && "border-[var(--dm-state-improving)] bg-[var(--dm-state-improving)] text-white",
+                  revealed && isPicked && !isCorrectOption && "border-[var(--dm-evidence-rule)] bg-[var(--dm-evidence-rule)] text-white",
+                  revealed && !isPicked && !isCorrectOption && "border-[var(--dm-border)]",
+                )}
+              >
+                {revealed && isCorrectOption ? <Check className="size-3" /> : null}
+                {revealed && isPicked && !isCorrectOption ? <X className="size-3" /> : null}
+              </span>
+              {option}
+            </button>
+          );
+        })}
+      </div>
+      {selected !== null ? (
+        <div className="mt-4 rounded-2xl border-l-[3px] border-[var(--dm-evidence-rule)] bg-[var(--dm-evidence-bg)] p-4">
+          <p className="text-pretty text-[15px] leading-relaxed text-[var(--dm-text)]">{question.explanation}</p>
+        </div>
+      ) : null}
+      {selected !== null ? (
+        <PrimaryCta
+          onClick={() => {
+            if (isLast) {
+              setDone(true);
+            } else {
+              setIndex((prev) => prev + 1);
+              setSelected(null);
+            }
+          }}
+        >
+          {isLast ? "Done" : "Next question"}
+        </PrimaryCta>
+      ) : null}
+    </SessionCard>
   );
 }
 
@@ -136,7 +245,7 @@ export function DesignVectorSession({ state }: { state: DesignVectorState }) {
           </div>
           <CardBody>
             {state === "radio-train"
-              ? "Graded on what you actually said, not a script — this is the same practice a real controller would expect."
+              ? "Graded on what you actually said, not a script — this is the same practice a real controller would expect."
               : "What you actually say tells us more than describing the problem would — respond like you would in the airplane."}
           </CardBody>
           <PrimaryCta>Start Radio Practice</PrimaryCta>
@@ -223,6 +332,8 @@ export function DesignVectorSession({ state }: { state: DesignVectorState }) {
           <PrimaryCta>Try again</PrimaryCta>
         </SessionCard>
       ) : null}
+
+      {state === "recall" ? <DesignRecallCheck /> : null}
     </div>
   );
 }
