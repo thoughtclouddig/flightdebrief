@@ -18,7 +18,7 @@ import {
   StateLabel,
 } from "@/components/student/ui";
 import { TrainingContextHeader } from "@/components/student/training-context-header";
-import { TrainingUnitCard, TrainingUnitCompactRow } from "@/components/student/training-unit-card";
+import { TrainingUnitCard } from "@/components/student/training-unit-card";
 import { cn } from "@/lib/utils";
 import type { SkillState } from "@/lib/student/state-tone";
 import type { VectorSession } from "@/lib/student/vector-coaching";
@@ -57,13 +57,18 @@ export interface StudentTrainRecommended {
 }
 
 /**
- * One of the current debrief's other training units -- deliberately thin:
- * WHAT (skillLabel), WHY (one evidence line), WHAT DO I DO (one button).
- * The training experience itself never lives in the card; it happens after
- * opening the unit at vectorSession.href.
+ * One of the current debrief's other training units -- the same rich
+ * treatment as the recommended card (tone, ACS area, full evidence), since
+ * every unit in the deck is a real Vector-ranked recommendation, not a
+ * lesser afterthought. Only the recommended slide adds "Start here"; every
+ * other slide's own toneLabel (e.g. "Needs Work") is eyebrow enough -- its
+ * position in the deck already says it isn't the top pick.
  */
-export interface StudentTrainCompactUnit {
+export interface StudentTrainOtherUnit {
+  tone: SkillState;
+  toneLabel: string;
   skillLabel: string;
+  acsArea: { name: string; code?: string } | null;
   evidence: { label: string; text: string };
   vectorSession: VectorSession;
 }
@@ -120,9 +125,9 @@ export interface StudentTrainProps {
   /** Defaults to "Today Vector recommends" (the fixtures' own heading, unchanged) -- production overrides it to "From your last debrief" once alsoTrain/moreTrain are in play. */
   sectionTitle?: string;
   /** Other current-debrief training units, immediately visible -- production only, up to 2. */
-  alsoTrain?: StudentTrainCompactUnit[];
+  alsoTrain?: StudentTrainOtherUnit[];
   /** Current-debrief units beyond the immediately-visible set -- never silently dropped, revealed via progressive disclosure. */
-  moreTrain?: StudentTrainCompactUnit[];
+  moreTrain?: StudentTrainOtherUnit[];
 }
 
 /**
@@ -336,11 +341,15 @@ export function StudentTrain({
   }
   for (const unit of otherUnits) {
     slides.push(
-      <TrainingUnitCompactRow
+      <TrainingUnitCard
         key={unit.vectorSession.href}
+        tone={unit.tone}
+        eyebrow={unit.toneLabel}
         skillLabel={unit.skillLabel}
+        acsArea={unit.acsArea}
         evidence={unit.evidence}
-        action={<PrimaryButton href={unit.vectorSession.href}>{unit.vectorSession.buttonLabel}</PrimaryButton>}
+        vectorInfo={vectorInfo}
+        actions={<PanelButton href={unit.vectorSession.href}>{unit.vectorSession.buttonLabel}</PanelButton>}
       />,
     );
   }

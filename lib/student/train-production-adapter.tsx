@@ -1,5 +1,5 @@
 import type {
-  StudentTrainCompactUnit,
+  StudentTrainOtherUnit,
   StudentTrainProps,
   StudentTrainRadioPractice,
   StudentTrainRecommended,
@@ -58,29 +58,35 @@ export async function buildProductionTrainProps(
     return unit.evidence;
   }
 
-  function toCard(unit: TrainingUnit): StudentTrainRecommended {
+  /**
+   * The shared fields every deck slide needs -- tone/skill/ACS area/evidence
+   * are real for every current-debrief unit, not just the top pick, since
+   * every unit gets the same rich card treatment now (see
+   * components/student/training-unit-card.tsx).
+   */
+  function baseCard(unit: TrainingUnit) {
     const acsArea = acsAreaForSkill(unit.skill, certificateType);
     const tone = unit.progressionStatus ? toneForSkillStatus(unit.progressionStatus) : "Improving";
+    return { tone, toneLabel: tone, skillLabel: unit.skillLabel, acsArea: acsArea ? { name: acsArea.name } : null, evidence: resolveEvidence(unit) };
+  }
+
+  function toCard(unit: TrainingUnit): StudentTrainRecommended {
     return {
-      tone,
-      toneLabel: tone,
+      ...baseCard(unit),
       startHereEyebrow: "Start here",
-      skillLabel: unit.skillLabel,
-      acsArea: acsArea ? { name: acsArea.name } : null,
       contextLine: plan.context ? `Starting where your last flight ended — ${plan.context.flightDate} with ${plan.context.cfiName}.` : "",
       comparisonLine: null,
-      evidence: resolveEvidence(unit),
     };
   }
 
-  function toCompact(unit: TrainingUnit): StudentTrainCompactUnit {
-    return { skillLabel: unit.skillLabel, evidence: resolveEvidence(unit), vectorSession: unit.vectorSession };
+  function toOtherUnit(unit: TrainingUnit): StudentTrainOtherUnit {
+    return { ...baseCard(unit), vectorSession: unit.vectorSession };
   }
 
   const recommended = plan.startHere ? toCard(plan.startHere) : null;
   const vectorSession = plan.startHere?.vectorSession ?? null;
-  const alsoTrain = plan.alsoTrain.map(toCompact);
-  const moreTrain = plan.more.map(toCompact);
+  const alsoTrain = plan.alsoTrain.map(toOtherUnit);
+  const moreTrain = plan.more.map(toOtherUnit);
 
   const radioPractice = hrefs.radioPracticeHref
     ? await buildRadioPracticeProps(repo, studentId, hrefs.radioPracticeHref, plan.startHere?.skill === "RADIO_COMMUNICATIONS")

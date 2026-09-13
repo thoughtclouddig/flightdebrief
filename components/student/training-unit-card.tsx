@@ -1,24 +1,25 @@
 import type { ReactNode } from "react";
 import { Clock, PlaneTakeoff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AcsBadge, Card, Evidence, InfoTip, Panel, PanelEyebrow, PanelHeadline, VectorMark, stateTone } from "@/components/student/ui";
+import { AcsBadge, Evidence, InfoTip, Panel, PanelEyebrow, PanelHeadline, VectorMark, stateTone } from "@/components/student/ui";
 import type { SkillState } from "@/lib/student/state-tone";
 
 /**
- * Train's one rich unit -- the "Start here" recommendation.
+ * Train's one rich unit card -- used for every slide in the deck, not just
+ * the recommended one. Every unit is a real Vector-ranked recommendation,
+ * so every unit earns the same visual weight; only the eyebrow text differs
+ * ("Start here" for the top pick, the unit's own toneLabel for the rest --
+ * its position in the deck already says it isn't the top pick).
  *
  * Composition changes with width rather than just stretching:
  *
- * - Mobile: one vertical column, exactly the shape this card has always
- *   had (Vector byline, eyebrow, headline, evidence, actions).
+ * - Mobile: one vertical column (Vector byline, eyebrow, headline, evidence,
+ *   actions).
  * - Tablet (md+): the same column, but text keeps a real reading measure
  *   instead of running the full width of a now-wider panel, and the action
  *   row stops being a stretched full-width button.
  * - Large desktop (xl+): a genuine two-column split -- the claim and its
- *   evidence on the left, the optional image and the action on the right --
- *   rather than a mobile card that simply got wider. This is the one place
- *   in the system that earns two columns: there is only ever one Start
- *   Here unit, so it can afford the width a compact row never could.
+ *   evidence on the left, the optional image and the action on the right.
  *
  * imageUrl/timeHint/nextFlightConnection are all optional and unrendered
  * when absent -- this card has to look complete without any of them, since
@@ -115,35 +116,3 @@ export function TrainingUnitCard({
   );
 }
 
-/**
- * One of the other current-debrief units -- deliberately thin: WHAT
- * (skillLabel), WHY (one evidence line), WHAT DO I DO (one button). The
- * training experience itself never lives here; it happens after opening
- * the unit at the action's own href.
- *
- * A row at md+, not a taller card: title and evidence sit to the left,
- * the action sits to the right at its own intrinsic width, one line where
- * the content allows it -- the mobile shape (everything stacked, button
- * stretched full width) only applies below md.
- */
-export interface TrainingUnitCompactRowProps {
-  skillLabel: string;
-  evidence: { label: string; text: string };
-  timeHint?: string | null;
-  action: ReactNode;
-}
-
-export function TrainingUnitCompactRow({ skillLabel, evidence, timeHint, action }: TrainingUnitCompactRowProps) {
-  return (
-    <Card className="md:flex md:items-center md:gap-5">
-      <div className="min-w-0 md:flex-1">
-        <p className="text-[17px] font-medium text-foreground">{skillLabel}</p>
-        <div className="mt-2 md:mt-1.5">
-          <Evidence label={evidence.label} tone="instructor" text={evidence.text} />
-        </div>
-        {timeHint ? <p className="mt-2 text-[13px] text-foreground-faint md:hidden">{timeHint}</p> : null}
-      </div>
-      <div className="mt-4 shrink-0 md:mt-0">{action}</div>
-    </Card>
-  );
-}
