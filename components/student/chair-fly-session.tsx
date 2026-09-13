@@ -163,12 +163,18 @@ export function ChairFlySession({ drill, homeHref = "/prototype/vector" }: { dri
       </p>
 
       <Card className="flex flex-col gap-5">
-        <p className="text-[17px] leading-relaxed text-foreground-soft">{step.scene}</p>
-        <p className="text-[19px] font-semibold leading-snug tracking-[-0.01em] text-foreground">{step.prompt}</p>
+        <div>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-brand">The situation</p>
+          <p className="mt-1.5 text-[17px] leading-relaxed text-foreground-soft">{step.scene}</p>
+        </div>
+        <p className="border-t border-hairline pt-5 text-[19px] font-semibold leading-snug tracking-[-0.01em] text-foreground">
+          {step.prompt}
+        </p>
 
         <div className="flex flex-col gap-2.5">
-          {step.options.map((o) => {
+          {step.options.map((o, i) => {
             const picked = chosen?.id === o.id;
+            const letter = String.fromCharCode(65 + i);
             return (
               <button
                 key={o.id}
@@ -176,17 +182,26 @@ export function ChairFlySession({ drill, homeHref = "/prototype/vector" }: { dri
                 disabled={Boolean(chosen)}
                 aria-pressed={picked}
                 className={cn(
-                  "min-h-[52px] cursor-pointer rounded-2xl border px-4 py-3 text-left text-[16px] leading-snug transition-colors duration-200",
+                  "flex min-h-[56px] cursor-pointer items-center gap-2.5 rounded-2xl border-2 px-3.5 py-3 text-left text-[16px] leading-snug transition-colors duration-200",
                   // No right/wrong coloring. The chosen option is marked as
                   // chosen and nothing else -- Vector's words carry whether
                   // the reasoning holds up.
                   picked
                     ? "border-foreground bg-surface-sunken text-foreground"
                     : chosen
-                      ? "border-hairline text-foreground-faint"
+                      ? "cursor-default border-hairline text-foreground-faint opacity-60"
                       : "border-hairline text-foreground hover:border-foreground-faint/50",
                 )}
               >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-full border text-[12px] font-semibold",
+                    picked ? "border-foreground bg-foreground text-surface" : "border-hairline text-foreground-faint",
+                  )}
+                >
+                  {letter}
+                </span>
                 {o.text}
               </button>
             );
