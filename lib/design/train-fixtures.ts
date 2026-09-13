@@ -36,7 +36,7 @@ export interface DesignTransferUnit {
 }
 
 export const CONTEXT_LINE = "Starting where your last flight ended — Sep 10 with Jake.";
-export const CONTEXT_SUBLINE = "Vector picked one thing to start with. Everything else from that debrief is still here.";
+export const CONTEXT_SUBLINE = "Swipe through everything from that debrief — Vector just picked where to start.";
 
 /** Case 1 -- Start Here. A known rehearsal/sequencing mechanism: Chair Flying is a real, named recommendation. */
 export const CROSSWIND_LANDING: DesignTrainingUnit = {
@@ -56,7 +56,7 @@ export const CROSSWIND_LANDING: DesignTrainingUnit = {
 export const TOWER_COMMUNICATIONS: DesignTrainingUnit = {
   id: "tower-communications",
   skillLabel: "Tower communications",
-  acsArea: "Radio Communications and ATC Light Signals",
+  acsArea: "Radio Communications and ATC Light Signals",
   evidence: {
     quote: "I need you to work on talking on the radio more confidently.",
     instructorName: "Jake",
@@ -93,22 +93,57 @@ export const STEEP_TURNS_TRANSFER: DesignTransferUnit = {
   nextFlightObjective: "Hold altitude within 100 feet through both directions of a steep turn.",
 };
 
-/** Two lightweight filler units behind "View 2 more from this debrief," to show the progressive-disclosure pattern working. */
-export const MORE_UNITS: DesignTrainingUnit[] = [
-  {
-    id: "short-field-landing",
-    skillLabel: "Short-field landings",
-    acsArea: "Short-Field Approach and Landing",
-    evidence: { quote: "Touchdown point was long by a couple hundred feet on the second one.", instructorName: "Jake", flightDate: "Sep 10" },
-    recommendedTreatment: null,
-    recommendedTreatmentLabel: null,
-  },
-  {
-    id: "airspace-knowledge",
-    skillLabel: "Airspace",
-    acsArea: "National Airspace System",
-    evidence: { quote: "Let's go back over the Class D entry requirements before next time.", instructorName: "Jake", flightDate: "Sep 10" },
-    recommendedTreatment: "coach",
-    recommendedTreatmentLabel: "Vector recommends: A quick knowledge check",
-  },
+/** Two more of this debrief's units -- part of the same swipeable deck as everything else, not a separate hidden overflow list. */
+export const SHORT_FIELD_LANDING: DesignTrainingUnit = {
+  id: "short-field-landing",
+  skillLabel: "Short-field landings",
+  acsArea: "Short-Field Approach and Landing",
+  evidence: { quote: "Touchdown point was long by a couple hundred feet on the second one.", instructorName: "Jake", flightDate: "Sep 10" },
+  recommendedTreatment: null,
+  recommendedTreatmentLabel: null,
+};
+
+export const AIRSPACE_KNOWLEDGE: DesignTrainingUnit = {
+  id: "airspace-knowledge",
+  skillLabel: "Airspace",
+  acsArea: "National Airspace System",
+  evidence: { quote: "Let's go back over the Class D entry requirements before next time.", instructorName: "Jake", flightDate: "Sep 10" },
+  recommendedTreatment: "coach",
+  recommendedTreatmentLabel: "Vector recommends: A quick knowledge check",
+};
+
+/**
+ * Every card in the swipeable deck, in Vector's own ranked order -- position
+ * 0 is where "Start here" lands, everything else is reached the same way
+ * (swipe on mobile, arrows/dots on desktop), never a separate "more" list.
+ * The transfer case is a real card in this deck too, just one that renders
+ * without a Train-with-Vector CTA -- there's nothing to start for it.
+ */
+export type DesignDeckItem = ({ kind: "unit" } & DesignTrainingUnit) | ({ kind: "transfer" } & DesignTransferUnit);
+
+export const DECK: DesignDeckItem[] = [
+  { kind: "unit", ...CROSSWIND_LANDING },
+  { kind: "unit", ...TOWER_COMMUNICATIONS },
+  { kind: "unit", ...SLOW_FLIGHT_KNOWLEDGE },
+  { kind: "unit", ...SHORT_FIELD_LANDING },
+  { kind: "unit", ...AIRSPACE_KNOWLEDGE },
+  { kind: "transfer", ...STEEP_TURNS_TRANSFER },
+];
+
+export interface DesignSkillProgress {
+  skillLabel: string;
+  state: "Needs Work" | "Improving";
+  score: number;
+  max: number;
+}
+
+/**
+ * Recurring skills that need work across flights, not just this one --
+ * deliberately distinct skills from anything in DECK above, since the whole
+ * point is "this is bigger than today's debrief," matching the Sep 3
+ * reference's own still-working-on section.
+ */
+export const STILL_WORKING_ON: DesignSkillProgress[] = [
+  { skillLabel: "Stabilized Approach", state: "Needs Work", score: 2, max: 4 },
+  { skillLabel: "Traffic Pattern Operations", state: "Improving", score: 3, max: 4 },
 ];

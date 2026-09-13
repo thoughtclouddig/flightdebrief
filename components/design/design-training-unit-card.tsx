@@ -3,6 +3,13 @@ import { Compass, Gauge, PlaneTakeoff, Radio, Sparkles, Wind } from "lucide-reac
 import { cn } from "@/lib/utils";
 import type { DesignTrainingUnit, DesignTransferUnit } from "@/lib/design/train-fixtures";
 
+/** Binds the last three words together with non-breaking spaces so a long line can never strand one or two orphaned words on their own last line. */
+function noOrphan(text: string) {
+  const words = text.split(" ");
+  if (words.length < 4) return text;
+  return [...words.slice(0, -3), words.slice(-3).join(" ")].join(" ");
+}
+
 /** Keyed purely by fixture id -- a real build would key this off skill/category, but nothing here reads from a real image library. Restrained: an icon on a gradient plate, never a stock photo standing in for evidence. */
 const HERO_ICON: Record<string, ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean }>> = {
   "crosswind-landing": Wind,
@@ -34,7 +41,7 @@ export function DesignInstructorEvidence({ quote, instructorName, flightDate }: 
       <span aria-hidden className="pointer-events-none absolute -right-1 -top-3 select-none font-serif text-[64px] leading-none text-[var(--dm-accent)] opacity-[0.08]">
         {'"'}
       </span>
-      <p className="relative max-w-[30ch] text-pretty text-[17px] italic leading-relaxed text-[var(--dm-text)] xl:text-[19px]">{quote}</p>
+      <p className="relative max-w-[30ch] text-pretty text-[17px] italic leading-relaxed text-[var(--dm-text)] xl:text-[19px]">{noOrphan(quote)}</p>
       <p className="relative mt-2 text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--dm-text-faint)]">
         {instructorName} · {flightDate}
       </p>
@@ -75,17 +82,21 @@ export function DesignVectorAction({
 }
 
 /**
- * The one rich "Start here" unit.
+ * The rich per-card treatment every unit in DesignTrainDeck gets -- not just
+ * a "Start here" special case anymore. Only the card Vector actually ranked
+ * first carries the "Start here" eyebrow (the deck passes it in); every
+ * other card is reached by swiping/paging to it and needs no special label
+ * of its own -- its position in the deck already says what it is.
  *
  * Mobile: hero visual, skill title, evidence, ACS status line, full-width
  * CTA -- one column, in that exact order.
  * Tablet (md-xl): the same column, but the action becomes its own bordered
  * panel rather than a button floating at the card's bottom edge.
  * Large desktop (xl+): a genuine three-part horizontal composition --
- * visual, skill/evidence, action panel -- since there is only ever one of
- * these on screen and it can afford real width.
+ * visual, skill/evidence, action panel -- since only one card is ever
+ * visible at a time and it can afford real width.
  */
-export function DesignTrainingUnitCard({ unit }: { unit: DesignTrainingUnit }) {
+export function DesignTrainingUnitCard({ unit, eyebrow }: { unit: DesignTrainingUnit; eyebrow?: string }) {
   return (
     <div className="rounded-[28px] border border-[var(--dm-border)] bg-[var(--dm-surface-elevated)] p-6 shadow-[var(--dm-shadow)] md:p-8 xl:p-10">
       <div className="flex flex-col gap-6 xl:flex-row xl:items-stretch xl:gap-8">
@@ -93,14 +104,14 @@ export function DesignTrainingUnitCard({ unit }: { unit: DesignTrainingUnit }) {
 
         <div className="flex min-w-0 flex-1 flex-col gap-5 xl:flex-row xl:gap-8">
           <div className="min-w-0 xl:max-w-[42ch] xl:flex-1">
-            <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-accent)]">Start here</p>
-            <h2 className="mt-1.5 text-[26px] font-semibold leading-[1.1] tracking-[-0.01em] text-[var(--dm-text)] xl:text-[30px]">
+            {eyebrow ? <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-accent)]">{eyebrow}</p> : null}
+            <h2 className={cn("text-[26px] font-semibold leading-[1.1] tracking-[-0.01em] text-[var(--dm-text)] xl:text-[30px]", eyebrow && "mt-1.5")}>
               {unit.skillLabel}
             </h2>
-            <p className="mt-1.5 text-[13px] text-[var(--dm-text-faint)]">
+            <p className="mt-1.5 max-w-[30ch] text-pretty text-[13px] text-[var(--dm-text-faint)]">
               <span className="font-semibold uppercase tracking-[0.06em]">FAA ACS</span>
               <span className="px-1.5 opacity-60">·</span>
-              {unit.acsArea}
+              {noOrphan(unit.acsArea)}
             </p>
             <div className="mt-4">
               <DesignInstructorEvidence {...unit.evidence} />
@@ -122,48 +133,28 @@ export function DesignTrainingUnitCard({ unit }: { unit: DesignTrainingUnit }) {
 }
 
 /**
- * "Also train" / "more" units -- thin by design: what, why, what to do.
- * Mobile: a stacked card. md+: an actual single-line row, title+evidence
- * left, action right at its own width, never stretched to fill the row.
- */
-export function DesignCompactTrainingUnit({ unit }: { unit: DesignTrainingUnit }) {
-  return (
-    <div className="rounded-2xl border border-[var(--dm-border)] bg-[var(--dm-surface)] p-5 md:flex md:items-center md:gap-5">
-      <div className="min-w-0 md:flex-1">
-        <p className="text-[17px] font-semibold text-[var(--dm-text)]">{unit.skillLabel}</p>
-        <div className="mt-2 md:mt-1.5">
-          <DesignInstructorEvidence {...unit.evidence} />
-        </div>
-      </div>
-      <div className="mt-4 shrink-0 md:mt-0 md:w-[200px]">
-        <DesignVectorAction recommendedTreatmentLabel={unit.recommendedTreatmentLabel} compact />
-      </div>
-    </div>
-  );
-}
-
-/**
  * The transfer treatment -- deliberately NOT a "Train with Vector" card.
  * There is no manufactured activity here, so there is no CTA that starts
  * one; the objective itself, framed for the next flight, is the whole
- * action. Visually quieter than the Vector units (no accent hero, no
- * filled button) so it never competes with the units that DO have
- * something to train right now.
+ * action. Visually quieter than the Vector units (dashed border, no hero,
+ * no filled button) so it never competes with the cards that DO have
+ * something to train right now, but sized to match them -- it's a real
+ * card in the same deck, not an aside.
  */
 export function DesignTransferCard({ unit }: { unit: DesignTransferUnit }) {
   return (
-    <div className="rounded-2xl border border-dashed border-[var(--dm-border)] bg-[var(--dm-surface)] p-5 md:p-6">
+    <div className="rounded-[28px] border border-dashed border-[var(--dm-border)] bg-[var(--dm-surface)] p-6 md:p-8 xl:p-10">
       <p className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--dm-text-soft)]">
         <PlaneTakeoff className="size-3.5 text-[var(--dm-accent)]" aria-hidden />
         Take this into your next flight
       </p>
-      <h3 className="mt-1.5 text-[19px] font-semibold text-[var(--dm-text)]">{unit.skillLabel}</h3>
-      <div className="mt-3">
+      <h3 className="mt-1.5 text-[26px] font-semibold leading-[1.1] tracking-[-0.01em] text-[var(--dm-text)] xl:text-[30px]">{unit.skillLabel}</h3>
+      <div className="mt-4 max-w-[52ch]">
         <DesignInstructorEvidence {...unit.evidence} />
       </div>
-      <div className="mt-4 rounded-xl bg-[var(--dm-surface-muted)] px-4 py-3">
+      <div className="mt-4 max-w-[52ch] rounded-xl bg-[var(--dm-surface-muted)] px-4 py-3">
         <p className="text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--dm-text-faint)]">Next flight objective</p>
-        <p className="mt-1 text-pretty text-[15px] leading-relaxed text-[var(--dm-text)]">{unit.nextFlightObjective}</p>
+        <p className="mt-1 text-pretty text-[15px] leading-relaxed text-[var(--dm-text)]">{noOrphan(unit.nextFlightObjective)}</p>
       </div>
     </div>
   );

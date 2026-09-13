@@ -32,6 +32,11 @@
   --dm-accent-hover: #d65e15;
   --dm-accent-soft: #fbe2ce;
   --dm-on-accent: #ffffff;
+  /* Needs Work reuses --dm-accent -- attention and the brand accent are the
+     same hue here, and the Sep 3 reference used exactly that pairing.
+     Improving needs a second hue so the two states read apart at a glance;
+     reuses the real app's own --state-improving value for continuity. */
+  --dm-state-improving: #2c6c93;
   --dm-shadow: 0 20px 45px -20px rgb(16 25 43 / 0.18);
 }
 
@@ -39,9 +44,9 @@
   .design-canvas:not([data-theme="light"]) {
     --dm-bg: #101727;
     --dm-surface: #171f33;
-    --dm-surface-elevated: #1b283d;
+    --dm-surface-elevated: #24334a;
     --dm-surface-muted: #1b243a;
-    --dm-evidence-bg: #22314a;
+    --dm-evidence-bg: #2d3f5c;
     --dm-evidence-rule: #ef6b1ea6;
     --dm-text: #eef0f3;
     --dm-text-soft: #b3bcc9;
@@ -51,6 +56,7 @@
     --dm-accent-hover: #ff8f3d;
     --dm-accent-soft: #3a2312;
     --dm-on-accent: #ffffff;
+    --dm-state-improving: #6f9fbd;
     --dm-shadow: 0 20px 45px -20px rgb(0 0 0 / 0.55);
   }
 }
@@ -70,6 +76,7 @@
   --dm-accent-hover: #ff8f3d;
   --dm-accent-soft: #3a2312;
   --dm-on-accent: #ffffff;
+  --dm-state-improving: #6f9fbd;
   --dm-shadow: 0 20px 45px -20px rgb(0 0 0 / 0.55);
 }
 
@@ -88,5 +95,10 @@
   --dm-accent-hover: #d65e15;
   --dm-accent-soft: #fbe2ce;
   --dm-on-accent: #ffffff;
+  /* Needs Work reuses --dm-accent -- attention and the brand accent are the
+     same hue here, and the Sep 3 reference used exactly that pairing.
+     Improving needs a second hue so the two states read apart at a glance;
+     reuses the real app's own --state-improving value for continuity. */
+  --dm-state-improving: #2c6c93;
   --dm-shadow: 0 20px 45px -20px rgb(16 25 43 / 0.18);
 }
