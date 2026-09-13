@@ -96,7 +96,7 @@ function QuietCta({ children, onClick }: { children: React.ReactNode; onClick?: 
  */
 function NextFlightObjective({ objective }: { objective: string }) {
   return (
-    <div className="mt-5 rounded-2xl border border-dashed border-[var(--dm-border)] bg-[var(--dm-surface-muted)] p-5">
+    <div className="-mx-6 mt-5 rounded-2xl border border-dashed border-[var(--dm-border)] bg-[var(--dm-surface-muted)] p-5 md:-mx-8 xl:-mx-10">
       <p className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--dm-text-soft)]">
         <PlaneTakeoff className="size-3.5 text-[var(--dm-accent)]" aria-hidden />
         Take this into your next flight
@@ -296,7 +296,7 @@ export function DesignVectorSession({ state }: { state: DesignVectorState }) {
 
       {state === "check-asking" || state === "check-loading" ? (
         <SessionCard>
-          <CardEyebrow icon={MessageCircleQuestion}>One question before your next flight</CardEyebrow>
+          <CardEyebrow icon={MessageCircleQuestion}>Before your next flight</CardEyebrow>
           <p className="mt-3 max-w-[52ch] text-pretty text-[19px] leading-snug text-[var(--dm-text)] xl:text-[21px]">{CHECK_QUESTION}</p>
           <textarea
             value={answer}
