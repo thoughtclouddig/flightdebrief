@@ -113,16 +113,47 @@ export const AIRSPACE_KNOWLEDGE: DesignTrainingUnit = {
 };
 
 /**
+ * A CFI-assigned Radio Practice scenario -- a real, already-shipped
+ * production concept (train-production-adapter.tsx's buildRadioPracticeProps,
+ * fed by listRadioPracticeAssignments), distinct from anything Vector itself
+ * picked from the debrief. An instructor chose this specific scenario for
+ * this specific student, independent of the debrief-derived plan, so it
+ * carries its own provenance and its own CTA -- "Start practice," never
+ * "Train with Vector," since there is no Vector diagnosis step to run here
+ * at all; the instructor already decided what to practice.
+ */
+export interface DesignRadioAssignment {
+  id: string;
+  instructorFirstName: string;
+  scenarioTitle: string;
+  scenarioContext: string;
+}
+
+export const RADIO_ASSIGNMENT: DesignRadioAssignment = {
+  id: "radio-assignment-initial-atis",
+  instructorFirstName: "Jake",
+  scenarioTitle: "Initial Contact and ATIS Request",
+  scenarioContext: "Real recorded tower audio — listen, then respond exactly as you would on frequency.",
+};
+
+/**
  * Every card in the swipeable deck, in Vector's own ranked order -- position
  * 0 is where "Start here" lands, everything else is reached the same way
  * (swipe on mobile, arrows/dots on desktop), never a separate "more" list.
  * The transfer case is a real card in this deck too, just one that renders
- * without a Train-with-Vector CTA -- there's nothing to start for it.
+ * without a Train-with-Vector CTA -- there's nothing to start for it. The
+ * CFI-assigned scenario sits right after Start Here -- a direct instructor
+ * assignment is a strong enough signal to surface early, without literally
+ * overriding Vector's own top pick for the debrief.
  */
-export type DesignDeckItem = ({ kind: "unit" } & DesignTrainingUnit) | ({ kind: "transfer" } & DesignTransferUnit);
+export type DesignDeckItem =
+  | ({ kind: "unit" } & DesignTrainingUnit)
+  | ({ kind: "transfer" } & DesignTransferUnit)
+  | ({ kind: "radio-assignment" } & DesignRadioAssignment);
 
 export const DECK: DesignDeckItem[] = [
   { kind: "unit", ...CROSSWIND_LANDING },
+  { kind: "radio-assignment", ...RADIO_ASSIGNMENT },
   { kind: "unit", ...TOWER_COMMUNICATIONS },
   { kind: "unit", ...SLOW_FLIGHT_KNOWLEDGE },
   { kind: "unit", ...SHORT_FIELD_LANDING },

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DesignTrainingUnitCard, DesignTransferCard } from "@/components/design/design-training-unit-card";
+import { DesignAssignedPracticeCard, DesignTrainingUnitCard, DesignTransferCard } from "@/components/design/design-training-unit-card";
 import type { DesignDeckItem } from "@/lib/design/train-fixtures";
 
 /**
@@ -68,6 +68,8 @@ export function DesignTrainDeck({ items }: { items: DesignDeckItem[] }) {
             <div key={item.id} className="w-full shrink-0 snap-center">
               {item.kind === "transfer" ? (
                 <DesignTransferCard unit={item} />
+              ) : item.kind === "radio-assignment" ? (
+                <DesignAssignedPracticeCard assignment={item} />
               ) : (
                 <DesignTrainingUnitCard unit={item} eyebrow={index === 0 ? "Start here" : undefined} />
               )}

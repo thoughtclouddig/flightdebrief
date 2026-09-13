@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import { Compass, Gauge, PlaneTakeoff, Radio, Sparkles, Wind } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { DesignTrainingUnit, DesignTransferUnit } from "@/lib/design/train-fixtures";
+import type { DesignRadioAssignment, DesignTrainingUnit, DesignTransferUnit } from "@/lib/design/train-fixtures";
 
 /** Binds the last three words together with non-breaking spaces so a long line can never strand one or two orphaned words on their own last line. */
 function noOrphan(text: string) {
@@ -18,6 +18,7 @@ const HERO_ICON: Record<string, ComponentType<{ className?: string; strokeWidth?
   "steep-turns-transfer": Compass,
   "short-field-landing": Wind,
   "airspace-knowledge": Compass,
+  "radio-assignment-initial-atis": Radio,
 };
 
 function DesignHeroVisual({ unitId, className }: { unitId: string; className?: string }) {
@@ -125,6 +126,47 @@ export function DesignTrainingUnitCard({ unit, eyebrow }: { unit: DesignTraining
               itself. */}
           <div className="rounded-2xl bg-[var(--dm-surface-muted)] p-5 md:border md:border-[var(--dm-border)] xl:w-[260px] xl:shrink-0 xl:self-start">
             <DesignVectorAction recommendedTreatmentLabel={unit.recommendedTreatmentLabel} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A CFI-assigned Radio Practice scenario -- deliberately NOT a Vector card.
+ * An instructor picked this specific scenario for this specific student,
+ * independent of anything the debrief itself surfaced, so it carries its
+ * own provenance ("{name} assigned this," never "Vector recommends") and
+ * its own CTA ("Start practice," never "Train with Vector") -- there is no
+ * diagnosis step to run here at all; the instructor already decided.
+ */
+export function DesignAssignedPracticeCard({ assignment }: { assignment: DesignRadioAssignment }) {
+  return (
+    <div className="rounded-[28px] border border-[var(--dm-border)] bg-[var(--dm-surface-elevated)] p-6 shadow-[var(--dm-shadow)] md:p-8 xl:p-10">
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-stretch xl:gap-8">
+        <DesignHeroVisual unitId={assignment.id} className="h-36 w-full shrink-0 md:h-44 xl:h-auto xl:w-[220px]" />
+
+        <div className="flex min-w-0 flex-1 flex-col gap-5 xl:flex-row xl:gap-8">
+          <div className="min-w-0 xl:max-w-[42ch] xl:flex-1">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-accent)]">
+              {assignment.instructorFirstName} assigned this
+            </p>
+            <h2 className="mt-1.5 text-[26px] font-semibold leading-[1.1] tracking-[-0.01em] text-[var(--dm-text)] xl:text-[30px]">
+              {assignment.scenarioTitle}
+            </h2>
+            <p className="mt-3 max-w-[38ch] text-pretty text-[15px] leading-relaxed text-[var(--dm-text-soft)]">
+              {noOrphan(assignment.scenarioContext)}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-[var(--dm-surface-muted)] p-5 md:border md:border-[var(--dm-border)] xl:w-[260px] xl:shrink-0 xl:self-start">
+            <button
+              type="button"
+              className="flex min-h-[52px] w-full cursor-pointer items-center justify-center rounded-2xl bg-[var(--dm-accent)] px-5 text-[17px] font-semibold text-[var(--dm-on-accent)] transition-opacity hover:opacity-90"
+            >
+              Start practice
+            </button>
           </div>
         </div>
       </div>
