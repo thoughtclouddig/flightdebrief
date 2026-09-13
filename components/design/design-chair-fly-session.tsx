@@ -128,12 +128,12 @@ export function DesignChairFlySession({ onExit }: { onExit: () => void }) {
       </p>
 
       <div className="flex flex-col gap-5 rounded-[28px] border border-[var(--dm-border)] bg-[var(--dm-surface-elevated)] p-6 shadow-[var(--dm-shadow)] md:p-8 xl:p-10">
-        <div className="rounded-2xl bg-[var(--dm-surface-muted)] p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-text-faint)]">The situation</p>
+        <div>
+          <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-[var(--dm-accent)]">The situation</p>
           <p className="mt-1.5 text-pretty text-[16px] leading-relaxed text-[var(--dm-text-soft)]">{step.scene}</p>
         </div>
 
-        <p className="text-pretty text-[20px] font-semibold leading-snug tracking-[-0.01em] text-[var(--dm-text)] xl:text-[22px]">
+        <p className="text-pretty border-t border-[var(--dm-border)] pt-5 text-[20px] font-semibold leading-snug tracking-[-0.01em] text-[var(--dm-text)] xl:text-[22px]">
           {step.prompt}
         </p>
 
